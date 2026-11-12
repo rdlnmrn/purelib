@@ -35,6 +35,8 @@ import Purelib.Riemann.Branches.ClearSheetContinuation
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Integration.Polynomial.Gaussian.Cell.Basic
 
+open Purelib.Curves.Hyperelliptic
+
 /-!
 # Prepared direct dyadic refinements
 
@@ -73,12 +75,12 @@ open Purelib.Polynomial
 open Purelib.Riemann.Paths
 /-- The executed checked centered parent count equals the original retained preparation's step count. -/
 @[simp] theorem ofExecutedCheckedDyadic_parents_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     forall {ambient : Box} {start finish : Basic.Canonical}
-      {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+      {path : Geometry.ClearPath curve.polynomial ambient start finish}
       {owner : Owner (curve.polynomial.eval start)}
       (checked :
         PreparedClearPathModels.PreparedPath.ExecutedCheckedDyadic
@@ -101,12 +103,12 @@ open Purelib.Riemann.Paths
 
 /-- Recasting checked canonical parents to their original differential preserves their exact list. -/
 theorem ofCheckedDyadic_recast_self {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     forall {ambient : Box} {start finish : Basic.Canonical}
-      {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+      {path : Geometry.ClearPath curve.polynomial ambient start finish}
       {owner : Owner (curve.polynomial.eval start)}
       (checked :
         PreparedClearPathModels.PreparedPath.CheckedDyadic depth
@@ -120,12 +122,12 @@ theorem ofCheckedDyadic_recast_self {genus : Nat}
 
 /-- Recasting executed checked canonical parents to their original differential preserves their exact list. -/
 theorem ofExecutedCheckedDyadic_recast_self {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     forall {ambient : Box} {start finish : Basic.Canonical}
-      {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+      {path : Geometry.ClearPath curve.polynomial ambient start finish}
       {owner : Owner (curve.polynomial.eval start)}
       (checked :
         PreparedClearPathModels.PreparedPath.ExecutedCheckedDyadic
@@ -147,12 +149,12 @@ theorem ofExecutedCheckedDyadic_recast_self {genus : Nat}
 Safe, successful, executed-certified and request-certified banks use their own original preparation and endpoint owners
 to construct the exact centered parent list. -/
 @[expose] def ofDyadicBank {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -181,12 +183,12 @@ open Purelib.Riemann.Integration
 open Purelib.Riemann.Paths
 /-- The dyadic bank's real integral lower reading equals that of its exact centered parents. -/
 theorem ofDyadicBank_integralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -213,13 +215,13 @@ theorem ofDyadicBank_integralRealLower {genus : Nat}
 
 /-- The dyadic bank's prepared directional integral lower reading equals that of its exact centered parents. -/
 theorem ofDyadicBank_directionalIntegralLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) (direction : Basic.Canonical)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -256,12 +258,12 @@ open Purelib.Riemann.Paths in
 /-- Every dyadic-bank evidence form gives the requested-diameter total weighted-allowance bound for its exact centered
 parents. -/
 theorem ofDyadicBank_totalWeightedAllowance_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -291,12 +293,12 @@ open Purelib.Polynomial
 open Purelib.Riemann.Paths
 /-- Every dyadic-bank evidence form gives the requested-diameter natural-ceiling squared-integral sum bound. -/
 theorem ofDyadicBank_integralNormSqSum_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -323,12 +325,12 @@ theorem ofDyadicBank_integralNormSqSum_le {genus : Nat}
 
 /-- Read the weighted bound using actual cached root diameters from the bank's original preparation. -/
 @[expose] def dyadicBankPreparedTotalWeightedBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) : Fraction.Rational :=
@@ -344,12 +346,12 @@ theorem ofDyadicBank_integralNormSqSum_le {genus : Nat}
 
 /-- Read the upward dyadic rounded actual-cache weighted estimate of the original bank preparation. -/
 @[expose] def dyadicBankPreparedTotalWeightedDyadicBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) : Fraction.Rational :=
@@ -366,12 +368,12 @@ theorem ofDyadicBank_integralNormSqSum_le {genus : Nat}
 
 /-- The bank's upward dyadic rounded estimate dominates its actual-cache weighted bound. -/
 theorem dyadicBankPreparedTotalWeightedBound_le_dyadicBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -382,12 +384,12 @@ theorem dyadicBankPreparedTotalWeightedBound_le_dyadicBound {genus : Nat}
 
 /-- Read the actual-cache squared-integral sum bound of the bank's original preparation. -/
 @[expose] def dyadicBankPreparedIntegralNormSqSumBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) : Fraction.Rational :=
@@ -404,12 +406,12 @@ theorem dyadicBankPreparedTotalWeightedBound_le_dyadicBound {genus : Nat}
 
 /-- Read the summed natural-ceiling actual-cache squared-integral estimate of the original bank preparation. -/
 @[expose] def dyadicBankPreparedIntegralNormSqCeilBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) : Fraction.Rational :=
@@ -426,12 +428,12 @@ theorem dyadicBankPreparedTotalWeightedBound_le_dyadicBound {genus : Nat}
 
 /-- The natural-ceiling estimate dominates the bank's actual-cache squared-integral sum bound. -/
 theorem dyadicBankPreparedIntegralNormSqSumBound_le_ceilBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -445,12 +447,12 @@ theorem dyadicBankPreparedIntegralNormSqSumBound_le_ceilBound {genus : Nat}
 Each evidence form retains its original prepared path, and the shared computation uses its actual segment cache
 diameters. -/
 @[expose] def dyadicBankPreparedPreflightBounds {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -467,12 +469,12 @@ diameters. -/
 
 /-- The bank preflight weighted projection is its summed upward dyadic rounded weighted estimate. -/
 @[simp] theorem dyadicBankPreparedPreflightBounds_totalWeighted {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -486,12 +488,12 @@ diameters. -/
 
 /-- The bank's preflight weighted projection bounds its actual-cache weighted expression. -/
 theorem dyadicBankPreparedTotalWeightedBound_le_preflight {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -503,12 +505,12 @@ theorem dyadicBankPreparedTotalWeightedBound_le_preflight {genus : Nat}
 /-- The bank preflight squared-integral projection is its summed natural-ceiling estimate. -/
 @[simp] theorem dyadicBankPreparedPreflightBounds_integralNormSqSum
     {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -523,12 +525,12 @@ theorem dyadicBankPreparedTotalWeightedBound_le_preflight {genus : Nat}
 /-- The bank's preflight squared-integral projection bounds its actual-cache squared-integral expression. -/
 theorem dyadicBankPreparedIntegralNormSqSumBound_le_preflight
     {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -545,12 +547,12 @@ open Purelib.Riemann.Integration in
 open Purelib.Riemann.Paths in
 /-- The exact centered parents of the original bank satisfy its actual-cache weighted bound. -/
 theorem ofDyadicBank_preparedTotalWeightedAllowance_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -581,12 +583,12 @@ open Purelib.Riemann.Paths
 /-- The exact integral samples of the original bank's centered parents satisfy its actual-cache squared-integral sum
 bound. -/
 theorem ofDyadicBank_preparedIntegralNormSqSum_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -613,12 +615,12 @@ theorem ofDyadicBank_preparedIntegralNormSqSum_le {genus : Nat}
 
 /-- The bank's exact centered parent count is the dyadic count times the original path segment count. -/
 @[simp] theorem ofDyadicBank_parents_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -651,11 +653,11 @@ open Purelib.Polynomial in
 /-- The requested-diameter path weighted bound multiplied by the exact dyadic cell count across all original segments.
 -/
 @[expose] def dyadicPathAggregateBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     (rootDiameter : Fraction.Rational) (depth : Nat)
     {ambient : Box} {start finish : Basic.Canonical}
-    (path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish) : Fraction.Rational :=
+    (path : Geometry.ClearPath curve.polynomial ambient start finish) : Fraction.Rational :=
   ((2 ^ depth * path.segmentCount : Nat) : Fraction.Rational) *
     dyadicPathTotalWeightedBound differential rootDiameter depth path
 
@@ -665,12 +667,12 @@ open Purelib.Riemann.Integration in
 open Purelib.Riemann.Paths in
 /-- The original bank's centered model aggregate allowance satisfies the requested-diameter path aggregate bound. -/
 theorem ofDyadicBank_aggregateAllowance_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -689,12 +691,12 @@ open Purelib.Polynomial
 open Purelib.Riemann.Paths
 /-- Recasting the bank's canonical centered parents to their original differential preserves their exact list. -/
 theorem ofDyadicBank_recast_self {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
@@ -724,12 +726,12 @@ theorem ofDyadicBank_recast_self {genus : Nat}
 
 /-- Package the original checked dyadic centered chain and its properness as a direct refinement state. -/
 @[expose] def stateOfCheckedDyadic {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2) {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (checked :
       PreparedClearPathModels.PreparedPath.CheckedDyadic depth
@@ -751,7 +753,7 @@ open Purelib.Geometry.Path.Gaussian in
 
 The result keeps the original lifted endpoint indices and uses each block's retained path in original parent order. -/
 @[expose] def refinedPath {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {parents : List (CenteredEdge curve differential)}
       {start finish : Lifted.Basic.LiftedPoint 2}
@@ -771,20 +773,20 @@ open Purelib.Riemann.Integration in
 The certified cells are the model projection of the exact concatenated child list, with no replacement of the parent
 blocks. -/
 @[expose] def refinedCertificates {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {parents : List (CenteredEdge curve differential)}
       {start finish : Lifted.Basic.LiftedPoint 2}
       (blocks : DirectBlockRefinement parents)
       (chain : CenteredPathChain parents (start := start) (finish := finish)),
-      Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential
+      Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential
         (blocks.children.map
           PreparedSubdivisionModelCore.CenteredEdge.model)
         (blocks.refinedPath chain)
   | [], _, _, .nil, .nil point => .nil point
   | _ :: _, _, _, .cons block tailBlocks, .cons _ tailChain => by
       simpa only [children, Map.map_append, refinedPath] using
-        Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates.append block.lifted
+        Integration.Algebraic.Path.Basis.UniformPathCertificates.append block.lifted
           block.certificates
           (refinedCertificates tailBlocks tailChain)
 
@@ -799,7 +801,7 @@ open Purelib.Riemann.Integration in
 Each parent chooses its own sufficient depth; the dependent list retains the original parent order and each block's root
 and displacement certificates. -/
 @[expose] def directBlockRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (rootDiameter : Fraction.Rational) (rootDiameterPositive : 0 < rootDiameter) :
     (parents : List (CenteredEdge curve differential)) ->
@@ -820,7 +822,7 @@ open Purelib.Riemann.Integration in
 
 The dependent refinement retains the original root comparisons and displacement equalities for these children. -/
 structure DirectRefinementResult {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parents : List (CenteredEdge curve differential)) where
   /-- The exact ordered centered children retained by the direct refinement. -/ children : List (CenteredEdge curve
@@ -838,7 +840,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- Read the compatible constant-path refinement between the original parent models and exact retained child models. -/
 @[expose] def toCompatible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parents : List (CenteredEdge curve differential)}
     (result : DirectRefinementResult parents) :
@@ -856,7 +858,7 @@ open Purelib.Data.Rat in
 open Purelib.Riemann.Integration in
 /-- Construct the direct parent blocks and retain their exact concatenated children and centered-edge refinement. -/
 @[expose] def directRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (rootDiameter : Fraction.Rational) (rootDiameterPositive : 0 < rootDiameter) :
     (parents : List (CenteredEdge curve differential)) ->

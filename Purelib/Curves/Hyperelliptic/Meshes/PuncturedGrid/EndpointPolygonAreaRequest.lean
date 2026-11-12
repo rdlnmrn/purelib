@@ -112,29 +112,29 @@ open Purelib.Riemann.Paths.PreparedPathParentCaches.PreparedClearPathModels (Par
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
-    Riemann.Meshes.PuncturedGridFaces.RegularFace bank}
-  {firstModels : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames
-    firstFace} {lastModels : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels
+    RegularFace bank}
+  {firstModels : FaceModels frames
+    firstFace} {lastModels : FaceModels
     frames lastFace}
-  {start : Data.Gaussian.Basic.Canonical} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+  {start : Gaussian} {owner : Owner
     (curve.polynomial.eval start)}
-  {leftEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry firstModels start owner}
-    {rightEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry lastModels start owner}
-  {leftDomain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain firstModels leftEntry.sheet}
-    {rightDomain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain lastModels rightEntry.sheet}
+  {leftEntry : Entry firstModels start owner}
+    {rightEntry : Entry lastModels start owner}
+  {leftDomain : PeriodDomain firstModels leftEntry.sheet}
+    {rightDomain : PeriodDomain lastModels rightEntry.sheet}
 
 open Purelib.Riemann.Integration.RectangularOwnedTriangulation (OwnedVertex)
 open Purelib.Riemann.Readings.RectangularPairedEndpointReadings (PairedEndpointReadingsGeometry)
 
 variable {count : Nat}
-  {first : Fin (count + 1) → Purelib.Integration.Path.JoinedTrace.VertexTrace
-    (Riemann.Integration.RectangularOwnedTriangulation.OwnedVertex leftDomain.geometry)}
-  {last : Fin (count + 1) → Purelib.Integration.Path.JoinedTrace.VertexTrace
-    (Riemann.Integration.RectangularOwnedTriangulation.OwnedVertex rightDomain.geometry)}
+  {first : Fin (count + 1) → JoinedTrace.VertexTrace
+    (OwnedVertex leftDomain.geometry)}
+  {last : Fin (count + 1) → JoinedTrace.VertexTrace
+    (OwnedVertex rightDomain.geometry)}
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
@@ -145,7 +145,7 @@ open _root_.Purelib.Data.Gaussian.Basic (conj)
 
 namespace EndpointPolygonPreparation
 
-variable {geometry : Riemann.Readings.RectangularPairedEndpointReadings.PairedEndpointReadingsGeometry first last}
+variable {geometry : PairedEndpointReadingsGeometry first last}
 
 set_option genInjectivity false in
 /-- A computed contact request comparing the two original endpoint polygons.
@@ -155,19 +155,19 @@ requested positive target and stage floor. -/
 structure AreaRequest
     (preparation : EndpointPolygonPreparation (leftEntry := leftEntry) (rightEntry :=
       rightEntry) geometry)
-    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstSheet secondSheet : Fin 2)
-    (target : InverseRootPolynomial.Coordinate) (floor : Nat) where
+    (firstDifferential secondDifferential : Differential genus) (firstSheet secondSheet : Fin 2)
+    (target : Coordinate) (floor : Nat) where
   /-- The original last-face primitive overlap bounds for the first differential. -/ firstBounds :
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds lastFace.clearance (PreparedPrimitiveSamples.differentialNumerator
+    PrimitiveOverlapBounds lastFace.clearance (PreparedPrimitiveSamples.differentialNumerator
     firstDifferential)
   /-- The original last-face primitive overlap bounds for the second differential. -/ secondBounds :
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds lastFace.clearance (PreparedPrimitiveSamples.differentialNumerator
+    PrimitiveOverlapBounds lastFace.clearance (PreparedPrimitiveSamples.differentialNumerator
     secondDifferential)
   /-- The retained endpoint contact bank for the first original differential and sheet. -/ firstBank :
-    TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
+    TraceContactBank leftEntry rightEntry leftDomain rightDomain
     (fun vertex => geometry.points vertex) firstDifferential firstSheet
   /-- The retained endpoint contact bank for the second original differential and sheet. -/ secondBank :
-    TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
+    TraceContactBank leftEntry rightEntry leftDomain rightDomain
     (fun vertex => geometry.points vertex) secondDifferential secondSheet
   /-- The first contact bank is exactly the original endpoint preparation's bank. -/ firstBank_eq : firstBank =
     preparation.contacts firstDifferential firstSheet
@@ -186,17 +186,17 @@ namespace AreaRequest
 
 variable {preparation : EndpointPolygonPreparation
   (leftEntry := leftEntry) (rightEntry := rightEntry) geometry}
-  {firstDifferential secondDifferential : Curves.Hyperelliptic.Differentials.Basic.Differential genus} {firstSheet
+  {firstDifferential secondDifferential : Differential genus} {firstSheet
     secondSheet : Fin 2}
-  {target : Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {target : Coordinate} {floor : Nat}
 
 /-- Compute both original primitive bounds and endpoint contact banks, then prepare their common positive area request.
 -/
 @[expose] def build (preparation : EndpointPolygonPreparation (leftEntry := leftEntry)
   (rightEntry := rightEntry) geometry)
-    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstSheet secondSheet : Fin 2)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonAreaRequest.EndpointPolygonPreparation.AreaRequest
+    (firstDifferential secondDifferential : Differential genus) (firstSheet secondSheet : Fin 2)
+    (target : Coordinate) (positive : 0 < target) (floor : Nat) :
+    AreaRequest
       preparation firstDifferential secondDifferential firstSheet secondSheet target floor := by
   let firstBounds := PrimitiveOverlapBounds.build lastFace.clearance (PreparedPrimitiveSamples.differentialNumerator
     firstDifferential)
@@ -219,41 +219,41 @@ variable {preparation : EndpointPolygonPreparation
 
 /-- The actual retained paired contact request's stage. -/
 @[expose] def index (assembled :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonAreaRequest.EndpointPolygonPreparation.AreaRequest
+  AreaRequest
   preparation firstDifferential secondDifferential firstSheet secondSheet target floor) : Nat :=
   assembled.request.index
 
 /-- The computed paired contact stage is above the supplied original floor. -/
 theorem floor_le (assembled :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonAreaRequest.EndpointPolygonPreparation.AreaRequest
+  AreaRequest
   preparation firstDifferential secondDifferential firstSheet secondSheet target floor) :
     floor ≤ assembled.index := assembled.request.floor_le
 
 /-- At a stage paying the contact request, the two retained conjugate-centered endpoint areas differ by less than the
 target. -/
 theorem conjugate_accurate (assembled :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonAreaRequest.EndpointPolygonPreparation.AreaRequest
+  AreaRequest
   preparation firstDifferential secondDifferential firstSheet secondSheet target floor)
     {stage : Nat} (later : assembled.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives leftDomain firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives rightDomain firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives leftDomain secondDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives rightDomain secondDifferential stage)
-    (left : CenteredBilinearPath.Sample (fun vertex => ⟨conj ((geometry.leftReadings firstLeft.anchors
+    (firstLeft : DomainPrimitives leftDomain firstDifferential stage)
+    (firstRight : DomainPrimitives rightDomain firstDifferential stage)
+    (secondLeft : DomainPrimitives leftDomain secondDifferential stage)
+    (secondRight : DomainPrimitives rightDomain secondDifferential stage)
+    (left : Sample (fun vertex => ⟨conj ((geometry.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex),
       (geometry.leftReadings secondLeft.anchors secondLeft.offsets).values vertex⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex => ⟨conj ((geometry.rightReadings firstRight.anchors
+    (right : Sample (fun vertex => ⟨conj ((geometry.rightReadings firstRight.anchors
       firstRight.offsets).values vertex),
       (geometry.rightReadings secondRight.anchors secondRight.offsets).values vertex⟩)) :
     Data.Gaussian.Norm.Basic.normSq (left.centeredArea - right.centeredArea) < target := by
-  have bounded (vertex) : PrimitivePoint.Bounded (right.centered vertex)
+  have bounded (vertex) : Bounded (right.centered vertex)
       (max (RectangularEndpointMagnitude.endpointMagnitude rightDomain.steps rightDomain.steps
         (RectangularSeamBounds.boundarySlope assembled.firstBounds))
         (RectangularEndpointMagnitude.endpointMagnitude rightDomain.steps rightDomain.steps
           (RectangularSeamBounds.boundarySlope assembled.secondBounds))) := by
     rw [right.centered_eq]
     constructor
-    · change Data.Gaussian.Basic.Canonical.normSq
+    · change Gaussian.normSq
         (Data.Gaussian.Basic.conj
           ((geometry.rightReadings firstRight.anchors firstRight.offsets).values vertex) -
           Data.Gaussian.Basic.conj
@@ -279,7 +279,7 @@ theorem conjugate_accurate (assembled :
         (geometry.rightReadings secondRight.anchors secondRight.offsets) 0 vertex).trans
           (Fraction.Order.Basic.le_max_right (RectangularEndpointMagnitude.endpointMagnitude rightDomain.steps
           rightDomain.steps (RectangularSeamBounds.boundarySlope assembled.firstBounds)) _)
-      change Data.Gaussian.Basic.Canonical.normSq ((geometry.rightReadings secondRight.anchors
+      change Gaussian.normSq ((geometry.rightReadings secondRight.anchors
         secondRight.offsets).values vertex - (geometry.rightReadings secondRight.anchors secondRight.offsets).values 0)
         ≤ _
       exact scalar
@@ -298,9 +298,9 @@ theorem conjugate_accurate (assembled :
   exact estimate
 
 /-- Values retain each original endpoint's cell owner. -/
-@[expose] def energyValues {stage : Nat} (first : PrimitiveData.DomainPrimitives leftDomain firstDifferential stage)
-    (second : PrimitiveData.DomainPrimitives leftDomain secondDifferential stage) (owner :
-      RectangularOwnedTriangulation.OwnedVertex leftDomain.geometry) : PrimitivePoint :=
+@[expose] def energyValues {stage : Nat} (first : DomainPrimitives leftDomain firstDifferential stage)
+    (second : DomainPrimitives leftDomain secondDifferential stage) (owner :
+      OwnedVertex leftDomain.geometry) : PrimitivePoint :=
   ⟨conj (first.anchors.alignedValue first.offsets owner.column owner.row owner.point),
     second.anchors.alignedValue second.offsets owner.column owner.row owner.point⟩
 
@@ -308,41 +308,41 @@ theorem conjugate_accurate (assembled :
 and independent cached samples. -/
 theorem original_polygons_accurate
     (assembled :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonAreaRequest.EndpointPolygonPreparation.AreaRequest
+      AreaRequest
       preparation firstDifferential secondDifferential firstSheet secondSheet target floor)
     {stage : Nat} (later : assembled.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives leftDomain firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives rightDomain firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives leftDomain secondDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives rightDomain secondDifferential stage)
-    (left : CenteredBilinearPath.Sample (fun vertex => ⟨conj ((geometry.leftReadings firstLeft.anchors
+    (firstLeft : DomainPrimitives leftDomain firstDifferential stage)
+    (firstRight : DomainPrimitives rightDomain firstDifferential stage)
+    (secondLeft : DomainPrimitives leftDomain secondDifferential stage)
+    (secondRight : DomainPrimitives rightDomain secondDifferential stage)
+    (left : Sample (fun vertex => ⟨conj ((geometry.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex),
       (geometry.leftReadings secondLeft.anchors secondLeft.offsets).values vertex⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex => ⟨conj ((geometry.rightReadings firstRight.anchors
+    (right : Sample (fun vertex => ⟨conj ((geometry.rightReadings firstRight.anchors
       firstRight.offsets).values vertex),
       (geometry.rightReadings secondRight.anchors secondRight.offsets).values vertex⟩))
-    (leftPolygon : CenteredBilinearPath.Sample (fun vertex =>
+    (leftPolygon : Sample (fun vertex =>
       energyValues
       firstLeft secondLeft ((JoinedCenteredArea.endpointPolygon first).indexed vertex)))
-    (rightPolygon : CenteredBilinearPath.Sample (fun vertex =>
+    (rightPolygon : Sample (fun vertex =>
       energyValues
       firstRight secondRight ((JoinedCenteredArea.endpointPolygon last).indexed vertex))) :
     Data.Gaussian.Norm.Basic.normSq (leftPolygon.centeredArea - rightPolygon.centeredArea) < target := by
-  let pairedLeft := CenteredBilinearPath.Sample.build (fun vertex =>
+  let pairedLeft := Sample.build (fun vertex =>
     energyValues
     firstLeft secondLeft
     ((PairedEndpointPolygon.pairedEndpointPolygon first last).indexed vertex).1)
-  let pairedRight := CenteredBilinearPath.Sample.build (fun vertex =>
+  let pairedRight := Sample.build (fun vertex =>
     energyValues
     firstRight secondRight
     ((PairedEndpointPolygon.pairedEndpointPolygon first last).indexed vertex).2)
   have leftReadback : left.centeredArea = pairedLeft.centeredArea := by
-    apply Riemann.Periods.CenteredBilinearPath.Sample.centeredArea_congr
+    apply Sample.centeredArea_congr
     intro vertex
     rw [geometry.leftReadings_value, geometry.leftReadings_value]
     rfl
   have rightReadback : right.centeredArea = pairedRight.centeredArea := by
-    apply Riemann.Periods.CenteredBilinearPath.Sample.centeredArea_congr
+    apply Sample.centeredArea_congr
     intro vertex
     rw [geometry.rightReadings_value, geometry.rightReadings_value]
     rfl

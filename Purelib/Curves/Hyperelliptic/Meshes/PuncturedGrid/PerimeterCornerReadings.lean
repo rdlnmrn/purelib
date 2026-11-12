@@ -52,6 +52,8 @@ import Purelib.Riemann.Readings.RectangularPointReadings
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CornerReadingBounds
@@ -86,7 +88,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (DomainPrimitives)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -94,9 +96,9 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     FaceModels frames face}
   {sheet : Fin 2} {domain : PeriodDomain models sheet}
     {differential : Differential genus}
-  {bounds : Purelib.Riemann.Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
-    (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator differential)}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+  {bounds : Riemann.Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
+    (Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator differential)}
+  {target : Riemann.Normalization.InverseRootPolynomial.Coordinate}
   {mesh : ObservationMesh domain.cuts face.cell.box}
 
 /-- The retained bottom perimeter's first owner reading differs from the fixed lower-left corner value by at most four
@@ -104,8 +106,8 @@ times the paid global overlap bound. -/
 theorem perimeter_bottom_first_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.bottom.leftReadings cached.anchors cached.offsets).values 0 -
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.bottom.leftReadings cached.anchors cached.offsets).values 0 -
       cached.corners.values 0) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached
   change Trace.point traces.bottom (traces.bottom.vertices.indexed 0) =
@@ -117,8 +119,8 @@ times the paid global overlap bound. -/
 theorem perimeter_bottom_last_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.bottom.leftReadings cached.anchors cached.offsets).values
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.bottom.leftReadings cached.anchors cached.offsets).values
       (Fin.last traces.bottom.vertices.rest.length) -
       cached.corners.values 1) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached
@@ -131,8 +133,8 @@ times the paid global overlap bound. -/
 theorem perimeter_top_first_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.top.leftReadings cached.anchors cached.offsets).values 0 -
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.top.leftReadings cached.anchors cached.offsets).values 0 -
       cached.corners.values 3) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached
   change Trace.point traces.top (traces.top.vertices.indexed 0) =
@@ -144,8 +146,8 @@ times the paid global overlap bound. -/
 theorem perimeter_top_last_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.top.leftReadings cached.anchors cached.offsets).values (Fin.last
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.top.leftReadings cached.anchors cached.offsets).values (Fin.last
       traces.top.vertices.rest.length) -
       cached.corners.values 2) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached
@@ -158,8 +160,8 @@ times the paid global overlap bound. -/
 theorem perimeter_left_first_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.left.leftReadings cached.anchors cached.offsets).values 0 -
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.left.leftReadings cached.anchors cached.offsets).values 0 -
       cached.corners.values 0) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached
   change Trace.point traces.left (traces.left.vertices.indexed 0) =
@@ -171,8 +173,8 @@ times the paid global overlap bound. -/
 theorem perimeter_left_last_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.left.leftReadings cached.anchors cached.offsets).values (Fin.last
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.left.leftReadings cached.anchors cached.offsets).values (Fin.last
       traces.left.vertices.rest.length) -
       cached.corners.values 3) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached
@@ -185,8 +187,8 @@ times the paid global overlap bound. -/
 theorem perimeter_right_first_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.right.leftReadings cached.anchors cached.offsets).values 0 -
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.right.leftReadings cached.anchors cached.offsets).values 0 -
       cached.corners.values 1) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached
   change Trace.point traces.right (traces.right.vertices.indexed 0) =
@@ -198,8 +200,8 @@ times the paid global overlap bound. -/
 theorem perimeter_right_last_bound
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
     (cached : PrimitiveData.DomainPrimitives domain differential request.index) (traces :
-      RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.right.leftReadings cached.anchors cached.offsets).values (Fin.last
+      PerimeterTraces mesh) :
+    Basic.normSq ((traces.right.leftReadings cached.anchors cached.offsets).values (Fin.last
       traces.right.vertices.rest.length) -
       cached.corners.values 2) ≤ 4 * request.globalBound := by
   apply DomainPrimitives.reading_corner_bound request cached

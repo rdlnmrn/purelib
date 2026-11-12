@@ -89,6 +89,8 @@ open Purelib.Topology.Polygon
 /-! The actual two-function boundary on a refining domain mesh, expressed
 on its coordinate polygons. Subdivided boundary paths are retained. -/
 
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
+
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
@@ -108,43 +110,43 @@ open Purelib.Riemann.Integration.RectangularSharedPrimitives (SharedPrimitiveVal
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint edgeListArea triangleWedgeArea)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
-    Purelib.Riemann.Meshes.PuncturedGridFaces.RegularFace bank} {models :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet :
+    RegularFace bank} {models :
+    FaceModels frames face} {sheet :
     Fin 2}
-  {domain : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet} {stage : Nat}
-  {cached : (row : Fin genus) → Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives
-    domain (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential row) stage}
-  {triangles : List (Purelib.Riemann.Integration.RectangularOwnedTriangulation.ModelTriangle domain.geometry)} {surface
-    : Purelib.Riemann.Integration.RectangularOwnedTriangulation.OwnedTriangulation triangles}
+  {domain : PeriodDomain models sheet} {stage : Nat}
+  {cached : (row : Fin genus) → DomainPrimitives
+    domain (Riemann.Periods.PeriodMatrix.standardDifferential row) stage}
+  {triangles : List (ModelTriangle domain.geometry)} {surface
+    : OwnedTriangulation triangles}
 
 /-- Read the supplied coefficient combination of the actual cached basis primitive values at one coordinate point. -/
 def DomainBasisEnergy.BasisReadings.atPoint
-    (readings : DomainBasisEnergy.BasisReadings cached surface) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (readings : BasisReadings cached surface) (coefficients :
+      GaussianVector genus)
     (point : Data.Gaussian.Basic.Canonical) : Gaussian :=
   FiniteSum.Fin.sumFin (fun row => coefficients row *
-    SharedPrimitiveValues.atPoint (readings.rows.get row) point)
+    SharedValues.atPoint (readings.rows.get row) point)
 
 /-- At an actual retained mesh vertex, the coordinate reading equals the original affine basis combination. -/
 theorem DomainBasisEnergy.BasisReadings.atPoint_coordinate
-    (readings : DomainBasisEnergy.BasisReadings cached surface)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (vertex : Fin surface.mesh.vertices.length) :
+    (readings : BasisReadings cached surface)
+    (coefficients : GaussianVector genus) (vertex : Fin surface.mesh.vertices.length) :
     readings.atPoint coefficients (surface.mesh.coordinate vertex) = readings.affine.value coefficients vertex := by
   apply FiniteSum.Fin.sumFin_congr
   intro row
-  rw [SharedPrimitiveValues.atPoint_coordinate, readings.values_eq]
+  rw [SharedValues.atPoint_coordinate, readings.values_eq]
 
 /-- The actual two-row mesh boundary area equals the sum of coordinate wedge areas of its original retained triangles.
 -/
 theorem
   DomainBasisEnergy.BasisReadings.bilinear_boundary_eq_wedges
-    (readings : DomainBasisEnergy.BasisReadings cached surface)
-    (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    (readings : BasisReadings cached surface)
+    (left right : GaussianVector genus) :
     Stokes.edgeListArea (fun vertex => ⟨readings.affine.value left vertex, readings.affine.value right vertex⟩)
       surface.mesh.triangulation.boundary =
       PreparedBoxBoundary.sumCoordinateWedges
@@ -170,9 +172,9 @@ theorem
 /-- The actual two-row observation-mesh boundary equals the complete coordinate boundary sum of its retained boxes. -/
 theorem
   DomainBasisEnergy.BasisReadings.bilinear_boundary_eq_boxes
-    {box : Rational.Box} {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (readings : DomainBasisEnergy.BasisReadings cached mesh.surface) (left right :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    {box : Box} {mesh : ObservationMesh domain.cuts box}
+    (readings : BasisReadings cached mesh.surface) (left right :
+      GaussianVector genus) :
     Stokes.edgeListArea (fun vertex => ⟨readings.affine.value left vertex, readings.affine.value right vertex⟩)
       mesh.surface.mesh.triangulation.boundary =
       PreparedBoxBoundary.sumBoxBoundaries
@@ -183,8 +185,8 @@ theorem
 /-- Summing all actual refined-cell boundaries gives the sum of the original boxes' retained subdivided rectangle
 boundaries. -/
 private theorem DomainBilinearBoundary.refined_boundaries (primitive : Data.Gaussian.Basic.Canonical →
-  Stokes.PrimitivePoint) (depth : Nat)
-  (boxes : List Rational.Box) :
+  PrimitivePoint) (depth : Nat)
+  (boxes : List Box) :
     PreparedBoxBoundary.sumBoxBoundaries primitive (boxes.flatMap (PreparedBoxPartitions.cells depth)) =
       Data.Gaussian.Norm.Sum.Basic.gaussianSum (boxes.map (PreparedBoxBoundary.rectangleBoundary primitive depth))
         := by
@@ -199,23 +201,23 @@ private theorem DomainBilinearBoundary.refined_boundaries (primitive : Data.Gaus
 refinement depth. -/
 theorem
   DomainBasisEnergy.BasisReadings.bilinear_boundary_eq_partition
-    {box : Rational.Box} {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (readings : DomainBasisEnergy.BasisReadings cached mesh.surface) (left right :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    {box : Box} {mesh : ObservationMesh domain.cuts box}
+    (readings : BasisReadings cached mesh.surface) (left right :
+      GaussianVector genus) :
     Stokes.edgeListArea (fun vertex => ⟨readings.affine.value left vertex, readings.affine.value right vertex⟩)
       mesh.surface.mesh.triangulation.boundary =
       Data.Gaussian.Norm.Sum.Basic.gaussianSum (mesh.partition.boxes.map
         (PreparedBoxBoundary.rectangleBoundary
           (fun point => ⟨readings.atPoint left point, readings.atPoint right point⟩) mesh.depth)) := by
   rw [readings.bilinear_boundary_eq_boxes, mesh.boxes_eq,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBilinearBoundary.refined_boundaries]
+    DomainBilinearBoundary.refined_boundaries]
 
 /-- The actual two-row mesh boundary reads exactly the retained partition's exterior boundary at its original depth. -/
 theorem
   DomainBasisEnergy.BasisReadings.bilinear_boundary_eq_exterior
-    {box : Rational.Box} {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (readings : DomainBasisEnergy.BasisReadings cached mesh.surface) (left right :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    {box : Box} {mesh : ObservationMesh domain.cuts box}
+    (readings : BasisReadings cached mesh.surface) (left right :
+      GaussianVector genus) :
     Stokes.edgeListArea (fun vertex => ⟨readings.affine.value left vertex, readings.affine.value right vertex⟩)
       mesh.surface.mesh.triangulation.boundary =
       mesh.partition.boundary (fun point => ⟨readings.atPoint left point, readings.atPoint right point⟩) mesh.depth :=
@@ -224,13 +226,13 @@ theorem
 
 /-- The complete actual two-row box boundary satisfies the paid energy target scaled by both original coefficient
 squared norms. -/
-theorem DomainBilinearBoundary.bilinear_boxes_bound {box : Rational.Box} {preflight :
-  DomainBasisBounds.EnergyPreflight domain}
-    {coarse : RectangularObservationMesh.ObservationMesh domain.cuts box} {target : Fraction.Rational}
-    (request : DomainEnergyRequest.EnergyRequest preflight coarse target) (stage_eq : stage =
+theorem DomainBilinearBoundary.bilinear_boxes_bound {box : Box} {preflight :
+  EnergyPreflight domain}
+    {coarse : ObservationMesh domain.cuts box} {target : Fraction.Rational}
+    (request : EnergyRequest preflight coarse target) (stage_eq : stage =
       request.modelRequest.index)
-    (readings : DomainBasisEnergy.BasisReadings cached request.mesh.surface) (left right :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (readings : BasisReadings cached request.mesh.surface) (left right :
+      GaussianVector genus)
       :
     Data.Gaussian.Norm.Basic.normSq (PreparedBoxBoundary.sumBoxBoundaries
       (fun point => ⟨readings.atPoint left point, readings.atPoint right point⟩) request.mesh.boxes) ≤

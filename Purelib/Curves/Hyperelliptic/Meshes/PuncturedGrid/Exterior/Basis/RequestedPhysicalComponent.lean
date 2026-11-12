@@ -63,6 +63,8 @@ import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Periods.CenteredBilinearPath
 
+open Purelib.Data.Vector
+
 public section
 
 /-! Acquire the complete component occurrence bank from shared physical samples. -/
@@ -83,15 +85,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccu
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -102,62 +104,62 @@ namespace RequestedSurfaceRuns
 variable {whole :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {previous :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  RegularDomainMeshes.RegularMeshes.CommonCuts domains}
   (selected : SourceCuts whole previous)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  (request : TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
 
 /-- The dependent vector of complete perimeter traces on the actual requested occurrence meshes. -/
-@[expose] def Traces := Data.Vector.DependentVector (fun outer : Fin prepared.occurrences.length =>
+@[expose] def Traces := DependentVector (fun outer : Fin prepared.occurrences.length =>
   Paths.RectangularPerimeterTraces.PerimeterTraces
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+    (RequestedOccurrenceRuns.mesh outer selected
     request))
 
 /-- Construct every retained occurrence perimeter trace on its original requested mesh. -/
 @[expose] def prepareTraces :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.Traces (prepared :=
+  Traces (prepared :=
   prepared) selected request :=
-  Data.Vector.DependentVector.ofFn fun outer => Paths.RectangularPerimeterTraces.PerimeterTraces.build
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+  DependentVector.ofFn fun outer => Paths.RectangularPerimeterTraces.PerimeterTraces.build
+    (RequestedOccurrenceRuns.mesh outer selected
     request)
 
 variable (traces :
   Traces
   (prepared := prepared) selected request) {stage : Nat} (cache :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+  RegularDomainMeshes.RegularMeshes.Numerics domains stage)
 
 /-- The dependent vector of perimeter sample banks on the retained traces and one numerical cache. -/
-@[expose] def Perimeters := Data.Vector.DependentVector (fun outer : Fin prepared.occurrences.length =>
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterSamples.SharedPerimeter.Banks (occurrence :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) (traces.get
+@[expose] def Perimeters := DependentVector (fun outer : Fin prepared.occurrences.length =>
+  SharedPerimeter.Banks (occurrence :=
+    ParentIndices.occurrenceAt prepared.occurrences outer) (traces.get
     outer) cache)
 
 /-- Build every occurrence perimeter bank from the exact retained trace and common numerical cache. -/
 @[expose] def preparePerimeters :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.Perimeters selected
+  Perimeters selected
   request traces cache :=
-  Data.Vector.DependentVector.ofFn fun outer =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterSamples.SharedPerimeter.Banks.build (traces.get outer)
+  DependentVector.ofFn fun outer =>
+    SharedPerimeter.Banks.build (traces.get outer)
     cache
 
 /-- Read the dyadic physical-piece count from each actual occurrence mesh depth. -/
 @[expose] def pieceCounts (outer : Fin prepared.occurrences.length) : Nat :=
   Paths.RectangularDyadicPairedTrace.dyadicCount
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+    (RequestedOccurrenceRuns.mesh outer selected
     request).depth
 
-variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
+variable {retained : Preparation.CommonBasisPreparation prepared}
   {index : Nat} {inputs : retained.Inputs index}
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) {requested :
-    Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  (schedules : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+    InverseRootPolynomial.Coordinate} {minimum : Nat}
+  (schedules : SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
     selected request retained inputs requested minimum)
   {vertices : (outer : Fin prepared.occurrences.length) → Fin
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
+    (SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
     request outer) → Nat}
   (owners :
     RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.SharedOwnerBanks
@@ -170,23 +172,23 @@ variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparati
 
 /-- The dependent vector of acquired physical samples retaining the original occurrence schedules and shared-owner
 banks. -/
-@[expose] def PhysicalSamples := Data.Vector.DependentVector (fun outer : Fin prepared.occurrences.length =>
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalSample.RequestedOccurrenceRuns.PhysicalSample
+@[expose] def PhysicalSamples := DependentVector (fun outer : Fin prepared.occurrences.length =>
+  RequestedPhysicalSample.RequestedOccurrenceRuns.PhysicalSample
     retained inputs outer selected request (traces.get outer) cache
     (perimeters.get outer) coefficients (schedules.get outer) (owners.get outer))
 
 /-- The selected face stage includes the refined surface index and all physical
 piece, junction and parent owners. Every occurrence uses the same numerical bank. -/
 @[expose] def acquirePhysicalSamples (member : ∀ outer,
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer ∈
+  ParentIndices.occurrenceAt prepared.occurrences outer ∈
   whole.occurrences)
     (face :
       RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.FaceStage
       owners request.index) (later : face.stage ≤ stage) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.PhysicalSamples
+    PhysicalSamples
       selected request traces cache coefficients schedules owners perimeters :=
-  Data.Vector.DependentVector.ofFn fun outer =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalSample.RequestedOccurrenceRuns.acquireSample
+  DependentVector.ofFn fun outer =>
+    RequestedPhysicalSample.RequestedOccurrenceRuns.acquireSample
     retained inputs outer selected request
     (traces.get outer) cache (perimeters.get outer) coefficients (schedules.get outer) (owners.get outer)
     (member outer) ((face.owner_le outer).trans later)
@@ -194,34 +196,34 @@ piece, junction and parent owners. Every occurrence uses the same numerical bank
 namespace PhysicalSamples
 variable {selected request traces cache coefficients schedules owners perimeters}
   (samples :
-    RequestedSurfaceRuns.PhysicalSamples
+    PhysicalSamples
     selected request traces cache coefficients schedules owners perimeters)
 
 /-- Package each acquired occurrence bank with its original geometry, sample area and budget indices. -/
 @[expose] def entries : PhysicalRunEntries retained
   inputs coefficients stage :=
-  Data.Vector.DependentVector.ofFn fun outer => (samples.get outer).entry
+  DependentVector.ofFn fun outer => (samples.get outer).entry
 
 /-- Each packaged physical bank preserves its actual requested occurrence mesh depth. -/
 theorem entry_depth (outer : Fin prepared.occurrences.length) :
     (samples.entries.get outer).depth =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+      (RequestedOccurrenceRuns.mesh outer selected
       request).depth := by
   dsimp only
     [entries,
     -eq_self, -iff_self]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  rw [DependentVector.ofFn_get]
   exact (samples.get outer).entry_depth
 
 /-- Each packaged physical bank preserves its actual requested side capacity. -/
 theorem entry_capacity (outer : Fin prepared.occurrences.length) :
     (samples.entries.get outer).capacity =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
+      SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
       request outer := by
   dsimp only
     [entries,
     -eq_self, -iff_self]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  rw [DependentVector.ofFn_get]
   exact (samples.get outer).entry_capacity
 
 /-- Every packaged occurrence allowance is bounded by one. -/
@@ -229,30 +231,30 @@ theorem entry_allowance (outer : Fin prepared.occurrences.length) : (samples.ent
   dsimp only
     [entries,
     -eq_self, -iff_self]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  rw [DependentVector.ofFn_get]
   exact (samples.get outer).entry_allowance
 
 /-- Every packaged occurrence tolerance fits each original retained parent request. -/
 theorem entry_tolerance (outer : Fin prepared.occurrences.length)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
     (samples.entries.get outer).tolerance ≤ ((schedules.get outer).requests.get position).blocks.budget.tolerance := by
   dsimp only
     [entries,
     -eq_self, -iff_self]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  rw [DependentVector.ofFn_get]
   exact (samples.get outer).entry_tolerance position
 
 /-- Each packaged area is the centered area of its exact cached weighted side sample. -/
 theorem entry_sideArea (outer : Fin prepared.occurrences.length) :
     (samples.entries.get outer).sideArea =
       (((samples.get outer).samples.get (traces.get outer) cache coefficients
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+        (ParentIndices.occurrenceAt prepared.occurrences
           outer).sideOccurrence.side).centeredArea) := by
   dsimp only
     [entries,
     -eq_self, -iff_self]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  rw [DependentVector.ofFn_get]
   rfl
 
 end PhysicalSamples

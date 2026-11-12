@@ -19,6 +19,10 @@ import Purelib.RootIsolation.Curve.Chart.Analysis
 import Purelib.RootIsolation.Curve.Event.Partition.Squarefree.Basic
 import Purelib.RootIsolation.Curve.Event.Partition.Subdivision
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
+open Purelib.Geometry.Projective
+
 open Purelib
 
 open Purelib.Geometry.Rational
@@ -53,10 +57,10 @@ namespace Purelib.RootIsolation.Curve.Event.Basic
 set_option genInjectivity false in
 /-- One squarefree parameter leaf whose doubled Sturm count is nonzero. -/
 structure EventLeaf
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -75,79 +79,79 @@ namespace EventLeaf
 
 /-- Read the original partition classification of this retained event leaf. -/
 @[expose] def classification
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).natDegree}
     {factorAnalysis : CCL.Boundary.Charts.SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) :=
+    (leaf : EventLeaf factorAnalysis) :=
   factorAnalysis.partition.classify leaf.cell leaf.member
 
 /-- Construct the persistent nonzero-count Sturm state on the original retained leaf. -/
 @[expose] def state
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).natDegree}
     {factorAnalysis : CCL.Boundary.Charts.SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) :
+    (leaf : EventLeaf factorAnalysis) :
     Sturm.Track.Basic.State factorAnalysis.factor.polynomial :=
   leaf.classification.eventState leaf.countNonzero
 
 /-- The original partition classification preserves the retained leaf exactly. -/
 theorem classification_cell
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).natDegree}
     {factorAnalysis : CCL.Boundary.Charts.SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) :
+    (leaf : EventLeaf factorAnalysis) :
     leaf.classification.cell = leaf.cell :=
   factorAnalysis.partition.classify_cell leaf.cell leaf.member
 
 /-- The retained event state uses the exact original leaf cell. -/
 theorem state_cell
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).natDegree}
     {factorAnalysis : CCL.Boundary.Charts.SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) : leaf.state.cell = leaf.cell := by
+    (leaf : EventLeaf factorAnalysis) : leaf.state.cell = leaf.cell := by
   exact leaf.classification_cell
 
 /-- The retained event leaf refines its original bounded chart interval. -/
 theorem cell_refines_chart
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).natDegree}
     {factorAnalysis : CCL.Boundary.Charts.SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) :
+    (leaf : EventLeaf factorAnalysis) :
     leaf.cell.interval.Refines chart.cell.interval := by
   rw [← leaf.classification_cell]
   exact leaf.classification.refines

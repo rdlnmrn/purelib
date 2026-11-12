@@ -127,11 +127,11 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempt
 namespace CompleteSegment
 
 /-- A complete accepted segment from parameter zero to one contains at least one actual subdivision step. -/
-theorem stepCount_positive {polynomial : ClearPath.GaussianPolynomial} {ambient :
-  Rational.Box}
+theorem stepCount_positive {polynomial : GaussianPolynomial} {ambient :
+  Box}
     {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment polynomial ambient start finish}
-    {within : segment.WithinAmbient} {owner : SquareRootContinuationChain.Owner (polynomial.eval start)}
-    (prepared : PreparedClearPathModels.CompleteSegment segment within owner) : 0 < prepared.subdivision.stepCount := by
+    {within : segment.WithinAmbient} {owner : Owner (polynomial.eval start)}
+    (prepared : CompleteSegment segment within owner) : 0 < prepared.subdivision.stepCount := by
   rcases prepared with ⟨subdivision, endpoint⟩
   cases subdivision with
   | stop => exact (show (0 : Fraction.Rational) ≠ 1 by decide) endpoint |>.elim
@@ -142,11 +142,11 @@ end CompleteSegment
 namespace PreparedPath
 
 /-- The complete prepared path has at least as many actual subdivision steps as original segments. -/
-theorem segmentCount_le_stepCount {polynomial : ClearPath.GaussianPolynomial} {ambient :
-  Rational.Box}
+theorem segmentCount_le_stepCount {polynomial : GaussianPolynomial} {ambient :
+  Box}
     {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath polynomial ambient start
       finish}
-    {owner : SquareRootContinuationChain.Owner (polynomial.eval start)} (prepared : PreparedClearPathModels.PreparedPath
+    {owner : Owner (polynomial.eval start)} (prepared : PreparedPath
       path owner) :
     path.segmentCount ≤ prepared.stepCount := by
   induction prepared with
@@ -175,8 +175,8 @@ namespace Step
 
 /-- Root-safe refinement preserves positivity of the actual retained parent count. -/
 theorem parents_positive {current : PreparedRefinementRootEndpoints.RootClosedState curve source root}
-    {targets : List (Differentials.Basic.Differential genus)} {target : PreparedPrimitiveRequests.Coordinate} (step :
-      RootClosedState.Step current targets target)
+    {targets : List (Differential genus)} {target : PreparedPrimitiveRequests.Coordinate} (step :
+      Step current targets target)
     (positive : 0 < current.state.parents.length) : 0 < step.next.state.parents.length := by
   rw [step.parents_eq, SynchronizedDirectBlockRefinement.children_length]
   exact Nat.mul_pos positive (Nat.pow_pos (by decide))
@@ -185,10 +185,10 @@ end Step
 
 /-- Every retained refinement stage has positive parent count when the original stage does. -/
 theorem states_parents_positive (initial : PreparedRefinementRootEndpoints.RootClosedState curve source root)
-    (targets : List (Differentials.Basic.Differential genus)) (positive : 0 < initial.state.parents.length) :
+    (targets : List (Differential genus)) (positive : 0 < initial.state.parents.length) :
     ∀ stage, 0 < (initial.states targets stage).state.parents.length
   | 0 => positive
-  | stage + 1 => Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.RootClosedState.Step.parents_positive
+  | stage + 1 => Step.parents_positive
     (initial.scheduledStep targets stage)
       (states_parents_positive
         initial targets positive stage)
@@ -203,7 +203,7 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Polynomial.Geometry.ClearPath (GaussianPolynomial)
 
 variable {polynomial : GaussianPolynomial} {ambient :
-  Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+  Box} {grid : ClearGrid polynomial
   ambient}
 
 namespace Walk
@@ -237,16 +237,16 @@ end Walk
 namespace PeriodWalk
 
 /-- Every model stage of the retained period program has positive cell count when its original walk is nonempty. -/
-theorem program_cells_positive {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial ambient} {base : Data.Gaussian.Basic.Canonical}
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval base)} {source : Differentials.Basic.Differential
+theorem program_cells_positive {genus : Nat} {curve : HyperellipticCurve genus}
+    {grid : ClearGrid curve.polynomial ambient} {base : Data.Gaussian.Basic.Canonical}
+    {owner : Owner (curve.polynomial.eval base)} {source : Differential
       genus}
     (prepared : PreparedGridPeriodPrograms.PeriodWalk grid base owner source) (nonempty : 0 <
       prepared.closed.walk.edgeCount)
     (differential : Fin genus) (stage : Nat) :
     0 < ((prepared.program differential).integral.model stage).cells.length := by
   rw [prepared.program_cellCount]
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.RootClosedState.states_parents_positive
+  apply RootClosedState.states_parents_positive
     prepared.initial
   rw [prepared.initial_parentCount]
   apply Nat.lt_of_lt_of_le nonempty
@@ -264,7 +264,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempt
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -276,7 +276,7 @@ namespace BasedBranchBank
 theorem liftedLoop_edgeCount (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (index : BranchIsolation.Data.Index
   branches) (sheet : Fin 2) :
     (bank.liftedLoop index sheet).walk.edgeCount = (bank.rows.get index).reference.walk.edgeCount :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.Grid.Walk.edgeCount_castEndpoints _ _ _
+  Grid.Walk.edgeCount_castEndpoints _ _ _
 
 end BasedBranchBank
 
@@ -284,13 +284,13 @@ namespace BasedBranchBank.Pair
 
 /-- The original closed branch-pair walk is nonempty because its winding-one excursion contains an edge. -/
 theorem closed_edgeCount_positive {first last : BranchIsolation.Data.Index branches}
-    (pair : BasedBranchBank.Pair bank first last sheet) : 0 < pair.closed.walk.edgeCount := by
+    (pair : Pair bank first last sheet) : 0 < pair.closed.walk.edgeCount := by
   rw [pair.closed_eq]
   change 0 < (pair.outward.walk.append pair.returning.walk).edgeCount
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.Grid.Walk.edgeCount_append, pair.outward_eq,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.BasedBranchBank.liftedLoop_edgeCount]
+  rw [Grid.Walk.edgeCount_append, pair.outward_eq,
+    BasedBranchBank.liftedLoop_edgeCount]
   have positive :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.Grid.Walk.edgeCount_positive_of_winding
+    Grid.Walk.edgeCount_positive_of_winding
     (bank.rows.get first).reference.walk (by
     rw [(bank.rows.get first).reference.winding]
     decide)
@@ -302,14 +302,14 @@ namespace BasedBranchBank.PairedRow
 
 /-- The actual corrected B walk remains nonempty after adjoining its retained preceding correction walks. -/
 theorem corrected_edgeCount_positive {reference : BranchIsolation.Data.Index branches}
-    {labels : BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches} {prior : BranchArea.CommonLoop
+    {labels : BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches} {prior : CommonLoop
       lifted sheet}
     (row : BranchArea.PairedRow bank reference sheet labels prior) : 0 < row.corrected.walk.edgeCount := by
   rw [row.corrected_eq]
   change 0 < (row.b.closed.walk.append prior.walk).edgeCount
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.Grid.Walk.edgeCount_append]
+  rw [Grid.Walk.edgeCount_append]
   exact Nat.lt_of_lt_of_le
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.BasedBranchBank.Pair.closed_edgeCount_positive
+    (Pair.closed_edgeCount_positive
       row.b)
     (Nat.le_add_right _ _)
 
@@ -325,16 +325,16 @@ variable {ordered :
 /-- Every genus-indexed retained A period program has positive cell count at every model stage. -/
 theorem aProgram_cells_positive (differential index : Fin genus) (stage : Nat) :
     0 < ((prepared.periodData.aProgram differential index).integral.model stage).cells.length := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.Grid.PeriodWalk.program_cells_positive
+  apply Grid.PeriodWalk.program_cells_positive
     (prepared.aWalk index)
   rw [prepared.a_walk_eq]
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.BasedBranchBank.Pair.closed_edgeCount_positive
+  exact BasedBranchBank.Pair.closed_edgeCount_positive
     (paired.row index).row.a
 
 /-- Every genus-indexed retained B period program has positive cell count at every model stage. -/
 theorem bProgram_cells_positive (differential index : Fin genus) (stage : Nat) :
     0 < ((prepared.periodData.bProgram differential index).integral.model stage).cells.length := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodNonempty.Grid.PeriodWalk.program_cells_positive
+  apply Grid.PeriodWalk.program_cells_positive
     (prepared.bWalk index)
   rw [prepared.b_walk_eq]
   exact

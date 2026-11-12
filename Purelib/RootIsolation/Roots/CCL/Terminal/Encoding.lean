@@ -75,22 +75,22 @@ namespace Encoding.TerminalTransducer
 
 /-- Initialize a cursor from an exact root terminal, retaining the distinguished zero case. -/
 def ofTerminal {p :
-  CoefficientPolynomial} : RootIsolation.Roots.CCL.Terminal p →
-  Roots.CCL.Terminal.Encoding.TerminalTransducer p
+  CoefficientPolynomial} : Terminal p →
+  TerminalTransducer p
   | .zero root => .zero root
   | .nonzero data => .nonzero data data.transducer.state
 
 /-- Advance the nonzero terminal's existing prefix cursor by the requested bit count; zero remains terminal. -/
 def advance {p :
   CoefficientPolynomial} :
-    Roots.CCL.Terminal.Encoding.TerminalTransducer p → Nat → Roots.CCL.Terminal.Encoding.TerminalTransducer p
+    TerminalTransducer p → Nat → TerminalTransducer p
   | .zero root, _ => .zero root
   | .nonzero data state, count => .nonzero data (state.advance count)
 
 /-- Read the emitted raw prefix, or return no word for the distinguished zero terminal. -/
 def emitted? {p :
   CoefficientPolynomial} :
-    Roots.CCL.Terminal.Encoding.TerminalTransducer p → Option
+    TerminalTransducer p → Option
   Data.List.Basic.BinaryWord
   | .zero _ => none
   | .nonzero _ state => some state.emitted
@@ -98,21 +98,21 @@ def emitted? {p :
 /-- Read the emitted prefix length, with length zero for the zero terminal. -/
 def emittedLength {p :
   CoefficientPolynomial} :
-    Roots.CCL.Terminal.Encoding.TerminalTransducer p → Nat
+    TerminalTransducer p → Nat
   | .zero _ => 0
   | .nonzero _ state => state.emitted.length
 
 /-- The cursor has exhausted its finite encoding, or is the distinguished zero terminal. -/
 def IsTerminal {p :
   CoefficientPolynomial} :
-    Roots.CCL.Terminal.Encoding.TerminalTransducer p → Prop
+    TerminalTransducer p → Prop
   | .zero _ => True
   | .nonzero _ state => state.IsTerminal
 
 /-- Read the pending encoding length, with no pending bits for the zero terminal. -/
 def remaining {p :
   CoefficientPolynomial} :
-    Roots.CCL.Terminal.Encoding.TerminalTransducer p → Nat
+    TerminalTransducer p → Nat
   | .zero _ => 0
   | .nonzero _ state => state.pending.length
 
@@ -120,7 +120,7 @@ def remaining {p :
 the same non-word terminal under every request. -/
 theorem advance_prefix {p :
   CoefficientPolynomial}
-    (transducer : Roots.CCL.Terminal.Encoding.TerminalTransducer p) (count : Nat) :
+    (transducer : TerminalTransducer p) (count : Nat) :
     match transducer.emitted?, (transducer.advance count).emitted? with
     | none, none => True
     | some earlier, some later => earlier.IsPrefix later
@@ -136,7 +136,7 @@ theorem advance_prefix {p :
 explicit finite pending length; zero is terminal immediately. -/
 theorem advance_remaining_terminal {p :
   CoefficientPolynomial}
-    (transducer : Roots.CCL.Terminal.Encoding.TerminalTransducer p) :
+    (transducer : TerminalTransducer p) :
     (transducer.advance transducer.remaining).IsTerminal := by
   cases transducer with
   | zero root => exact True.intro
@@ -146,7 +146,7 @@ theorem advance_remaining_terminal {p :
 of bits or reaches the terminal state. -/
 theorem advance_progress_or_terminal {p :
   CoefficientPolynomial}
-    (transducer : Roots.CCL.Terminal.Encoding.TerminalTransducer p) (count : Nat) :
+    (transducer : TerminalTransducer p) (count : Nat) :
     (transducer.advance count).emittedLength =
         transducer.emittedLength + count ∨
       (transducer.advance count).IsTerminal := by

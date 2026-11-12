@@ -20,6 +20,8 @@ import Purelib.Approximation.Gaussian.Logarithm.Chart.Basic
 import Purelib.Approximation.Gaussian.Name.Basic
 import Purelib.Approximation.Gaussian.Process.Basic
 
+open Purelib.Approximation.Gaussian.Logarithm.Chart.Partial
+
 @[expose] public section
 
 /-!
@@ -81,12 +83,12 @@ theorem initial_not_safe :
 
 /-- The first partial logarithm step retains a refinement transition. -/
 theorem first_step_progresses :
-    Logarithm.Chart.Partial.Step.step sourceInput
+    Step.step sourceInput
       targetInput sourceAnchor
       initial =
       .progressed refined (.refined
         initial) := by
-  exact Logarithm.Chart.Partial.Step.step_eq_progressed_of_not_safe sourceInput
+  exact Step.step_eq_progressed_of_not_safe sourceInput
     targetInput sourceAnchor
     initial initial_not_safe
 
@@ -103,11 +105,11 @@ theorem refinedSafety :
 Safety alone yields the exact retained overlap requirement rather than a ready chart transport. -/
 theorem
   second_step_blocks_for_overlap :
-    Logarithm.Chart.Partial.Step.step sourceInput
+    Step.step sourceInput
       targetInput sourceAnchor
       refined =
       .blocked (.overlap refinedSafety) := by
-  rw [Logarithm.Chart.Partial.Step.step, dif_pos refinedSafety]
+  rw [Step.step, dif_pos refinedSafety]
 
 /-- The common possible value one witnesses overlap with the once-refined target. -/
 def refinedOverlap :
@@ -119,7 +121,7 @@ def refinedOverlap :
 
 /-- The overlap requirement retaining the once-refined safety certificate. -/
 def refinedRequirement :
-    Approximation.Gaussian.Logarithm.Chart.Partial.Requirement sourceInput
+    Requirement sourceInput
       targetInput sourceAnchor
       refined :=
   .overlap refinedSafety
@@ -144,7 +146,7 @@ def refinedOutput :
 
 /-- Readiness certificate retaining the once-refined extension and its exact output. -/
 def refinedReady :
-    Approximation.Gaussian.Logarithm.Chart.Partial.Ready sourceInput
+    Ready sourceInput
       targetInput sourceAnchor
       refined refinedOutput where
   extension := refinedExtension
@@ -152,7 +154,7 @@ def refinedReady :
 
 /-- Supplying the retained overlap witness resumes to the exact ready chart. -/
 theorem resume_overlap_is_ready :
-    Logarithm.Chart.Partial.Step.resume sourceInput
+    Step.resume sourceInput
       targetInput sourceAnchor
       refined refinedRequirement
       refinedOverlap = .ready
@@ -161,40 +163,40 @@ theorem resume_overlap_is_ready :
 
 /-- The expected one-step result: refinement followed by budget exhaustion. -/
 def oneFuelExpected :
-    Logarithm.Chart.Partial.Run.RunResult sourceInput
+    Run.RunResult sourceInput
       targetInput sourceAnchor
       initial :=
-  Logarithm.Chart.Partial.Run.prefixResult (.refined initial)
-    (Logarithm.Chart.Partial.Run.exhaustedResult sourceInput
+  Run.prefixResult (.refined initial)
+    (Run.exhaustedResult sourceInput
       targetInput sourceAnchor
       refined)
 
 /-- The original one-step partial logarithm attempt. -/
 def oneFuelRun :
-    Logarithm.Chart.Partial.Run.RunResult sourceInput
+    Run.RunResult sourceInput
       targetInput sourceAnchor
       initial :=
-  Logarithm.Chart.Partial.Run.attempt sourceInput
+  Run.attempt sourceInput
     targetInput sourceAnchor
     initial 1
 
 /-- The expected two-step result: refinement followed by an overlap requirement. -/
 def twoFuelExpected :
-    Logarithm.Chart.Partial.Run.RunResult sourceInput
+    Run.RunResult sourceInput
       targetInput sourceAnchor
       initial :=
-  Logarithm.Chart.Partial.Run.prefixResult (.refined initial)
-    (Logarithm.Chart.Partial.Run.blockedResult sourceInput
+  Run.prefixResult (.refined initial)
+    (Run.blockedResult sourceInput
       targetInput sourceAnchor
       refined
       (.overlap refinedSafety))
 
 /-- The original two-step partial logarithm attempt. -/
 def twoFuelRun :
-    Logarithm.Chart.Partial.Run.RunResult sourceInput
+    Run.RunResult sourceInput
       targetInput sourceAnchor
       initial :=
-  Logarithm.Chart.Partial.Run.attempt sourceInput
+  Run.attempt sourceInput
     targetInput sourceAnchor
     initial 2
 
@@ -235,7 +237,7 @@ def refinedAgainOutput :
 
 /-- Readiness certificate for the exact twice-refined transported chart. -/
 def refinedAgainReady :
-    Approximation.Gaussian.Logarithm.Chart.Partial.Ready sourceInput
+    Ready sourceInput
       targetInput sourceAnchor
       refinedAgain
       refinedAgainOutput where
@@ -249,7 +251,7 @@ def different_schedules_equivalent
   :
     Equivalence.NamedEquivalent refinedOutput.output.name
       refinedAgainOutput.output.name :=
-  Logarithm.Chart.Partial.Equivalence.ready_respects refinedReady
+  Equivalence.ready_respects refinedReady
     refinedAgainReady
 
 end Purelib.Examples.Approximation.Gaussian.Logarithm.Chart.Partial.WorkedExamples

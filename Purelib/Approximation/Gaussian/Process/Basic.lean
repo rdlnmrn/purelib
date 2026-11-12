@@ -114,6 +114,11 @@ def exact (value : Data.Gaussian.Basic.Canonical) :
   centerBound := Data.Gaussian.Norm.Basic.normSq value
   centerBound_nonneg := Data.Gaussian.Norm.Basic.normSq_nonneg value
   center_bounded := by intro _state; exact le_rfl
+
+/-- The finite state of an exact Gaussian process has executable equality. -/
+instance exactStateDecidableEq (value : Data.Gaussian.Basic.Canonical) : DecidableEq (exact value).State := by
+  change DecidableEq Unit
+  infer_instance
 end Process
 
 end Purelib.Approximation.Gaussian

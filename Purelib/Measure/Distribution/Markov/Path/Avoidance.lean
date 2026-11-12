@@ -14,6 +14,8 @@ import Purelib.Measure.Weighted.Event
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 /-!
 # Finite Markov return estimates
@@ -61,7 +63,7 @@ theorem markovPathFrom_probability_pathAvoids {alpha : Type}
       markovAvoidanceProbability transition event count item := by
   induction count generalizing item with
   | zero =>
-      change (Distribution.pure ([] : List alpha)).probability
+      change (pure ([] : List alpha)).probability
           (Data.List.pathAvoids event) = 1
       rw [pure_probability]
       rfl
@@ -83,10 +85,10 @@ theorem markovPathFrom_probability_pathAvoids {alpha : Type}
                   rfl)
             _ = markovAvoidanceProbability transition event count next :=
               inductionHypothesis next
-            _ = Distribution.indicator (complementEvent event) next *
+            _ = indicator (complementEvent event) next *
                   markovAvoidanceProbability transition event count next := by
               simp only [complementEvent, selected, Bool.not_false,
-                Distribution.indicator, one_mul, -eq_self, -iff_self]
+                indicator, one_mul, -eq_self, -iff_self]
               rfl
         · calc
             (markovPathFrom transition count next).probability
@@ -100,10 +102,10 @@ theorem markovPathFrom_probability_pathAvoids {alpha : Type}
                   rfl)
             _ = 0 :=
               (markovPathFrom transition count next).probability_false
-            _ = Distribution.indicator (complementEvent event) next *
+            _ = indicator (complementEvent event) next *
                   markovAvoidanceProbability transition event count next := by
               simp only [complementEvent, selected, Bool.not_true,
-                Distribution.indicator, zero_mul, -eq_self, -iff_self]
+                indicator, zero_mul, -eq_self, -iff_self]
               rfl)
 
 /-- Avoidance probability for the exact original-source path law equals the source expectation of recursive avoidance
@@ -134,32 +136,32 @@ theorem markovAvoidanceProbability_le_pow {alpha : Type}
   | 0, item => le_rfl
   | count + 1, item => by
       have allowanceNonnegative : 0 ≤ (1 - rate) ^ count :=
-        Fraction.Order.Arithmetic.pow_nonneg_direct
-          (Fraction.Order.Arithmetic.sub_nonneg_direct rateAtMostOne) count
+        Arithmetic.pow_nonneg_direct
+          (Arithmetic.sub_nonneg_direct rateAtMostOne) count
       have pointwise : ∀ atom, atom ∈ (transition item).atoms →
-          Distribution.indicator (complementEvent event) atom.item *
+          indicator (complementEvent event) atom.item *
               markovAvoidanceProbability transition event count atom.item ≤
-            Distribution.indicator (complementEvent event) atom.item *
+            indicator (complementEvent event) atom.item *
               (1 - rate) ^ count := by
         intro atom member
         have indicatorNonnegative :
-            0 ≤ Distribution.indicator (complementEvent event) atom.item := by
+            0 ≤ indicator (complementEvent event) atom.item := by
           cases selected : complementEvent event atom.item <;>
-            simp only [Distribution.indicator, selected] <;> decide
+            simp only [indicator, selected] <;> decide
         exact
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (markovAvoidanceProbability_le_pow transition event rate
               rateNonnegative rateAtMostOne hitLower count atom.item)
             indicatorNonnegative
       have averaged := (transition item).expectation_mono
-        (fun next => Distribution.indicator (complementEvent event) next *
+        (fun next => indicator (complementEvent event) next *
           markovAvoidanceProbability transition event count next)
-        (fun next => Distribution.indicator (complementEvent event) next *
+        (fun next => indicator (complementEvent event) next *
           (1 - rate) ^ count)
         pointwise
       have complementBound :
           (transition item).probability (complementEvent event) ≤ 1 - rate := by
-        have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+        have shifted := Arithmetic.add_le_add_right_direct
           (hitLower item)
           ((transition item).probability (complementEvent event) - rate)
         calc
@@ -178,27 +180,27 @@ theorem markovAvoidanceProbability_le_pow {alpha : Type}
       calc
         markovAvoidanceProbability transition event (count + 1) item =
             (transition item).expectation (fun next =>
-              Distribution.indicator (complementEvent event) next *
+              indicator (complementEvent event) next *
                 markovAvoidanceProbability transition event count next) := rfl
         _ ≤ (transition item).expectation (fun next =>
-              Distribution.indicator (complementEvent event) next *
+              indicator (complementEvent event) next *
                 (1 - rate) ^ count) := averaged
         _ = (1 - rate) ^ count *
               (transition item).probability (complementEvent event) := by
           calc
             (transition item).expectation (fun next =>
-                Distribution.indicator (complementEvent event) next *
+                indicator (complementEvent event) next *
                   (1 - rate) ^ count) =
                 (transition item).expectation (fun next =>
                   (1 - rate) ^ count *
-                    Distribution.indicator (complementEvent event) next) :=
+                    indicator (complementEvent event) next) :=
               (transition item).expectation_congr _ _ (fun next => Fraction.Field.mul_comm _ _)
             _ = (1 - rate) ^ count *
                   (transition item).probability (complementEvent event) := by
               rw [(transition item).expectation_scale,
                 (transition item).expectation_indicator]
         _ ≤ (1 - rate) ^ count * (1 - rate) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             complementBound allowanceNonnegative
         _ = (1 - rate) ^ (count + 1) := by
           rw [pow_succ]
@@ -240,7 +242,7 @@ theorem markovPaths_probability_pathHits_lower {alpha : Type}
     markovPaths_probability_pathAvoids_le_pow transition event rate
       rateNonnegative rateAtMostOne hitLower count source
   have total := paths.probability_add_complement (Data.List.pathAvoids event)
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+  have shifted := Arithmetic.add_le_add_right_direct
     avoidanceBound
     (paths.probability (Data.List.pathHits event) - (1 - rate) ^ count)
   calc

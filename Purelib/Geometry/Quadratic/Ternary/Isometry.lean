@@ -34,45 +34,45 @@ does not repeat those calculations or recover an inverse by choice.
 
 namespace Purelib.Algebra.Quadratic.Ternary.Basic.TernaryForm
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 section TernaryForm
 
 /-- A displayed linear action preserving the bilinear form on every pair has the corresponding finite matrix
 preservation certificate. -/
 theorem preservesMatrix_of_bilinear_rowMul (form :
-  Ternary.Basic.TernaryForm K)
-    (matrix : Coordinates3.Matrix3 K)
+  TernaryForm K)
+    (matrix : Matrix3 K)
     (preserves : ∀ left right : Coordinates3.Vector K,
       form.bilinear (Matrix3.rowMul left matrix)
           (Matrix3.rowMul right matrix) = form.bilinear left right) :
     Matrix3.mul (Matrix3.mul matrix form.matrix)
       (Matrix3.transpose matrix) = form.matrix := by
   apply Matrix3.ext
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨1, 0, 0⟩ : Coordinates3.Vector K) (⟨1, 0, 0⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨1, 0, 0⟩ : Coordinates3.Vector K) (⟨0, 1, 0⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨1, 0, 0⟩ : Coordinates3.Vector K) (⟨0, 0, 1⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨0, 1, 0⟩ : Coordinates3.Vector K) (⟨1, 0, 0⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨0, 1, 0⟩ : Coordinates3.Vector K) (⟨0, 1, 0⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨0, 1, 0⟩ : Coordinates3.Vector K) (⟨0, 0, 1⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨0, 0, 1⟩ : Coordinates3.Vector K) (⟨1, 0, 0⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨0, 0, 1⟩ : Coordinates3.Vector K) (⟨0, 1, 0⟩ : Coordinates3.Vector K)
-  · simpa [TernaryForm.bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
+  · simpa [bilinear, Matrix3.rowMul, Matrix3.mul, Matrix3.transpose,
       Coordinates3.Vector.dot] using
       preserves (⟨0, 0, 1⟩ : Coordinates3.Vector K) (⟨0, 0, 1⟩ : Coordinates3.Vector K)
 
@@ -81,9 +81,9 @@ theorem preservesMatrix_of_bilinear_rowMul (form :
 set_option genInjectivity false in
 /-- An executable isometry of a displayed ternary form. Its inverse is cached together with both multiplication
 certificates. -/
-structure Isometry (form : Ternary.Basic.TernaryForm K) where
-  /-- The forward row-action matrix. -/ matrix : Coordinates3.Matrix3 K
-  /-- The retained inverse matrix. -/ inverseMatrix : Coordinates3.Matrix3 K
+structure Isometry (form : TernaryForm K) where
+  /-- The forward row-action matrix. -/ matrix : Matrix3 K
+  /-- The retained inverse matrix. -/ inverseMatrix : Matrix3 K
   /-- The forward matrix times the cached inverse is the identity. -/ matrix_mul_inverse : Matrix3.mul matrix
     inverseMatrix = Matrix3.identity
   /-- The cached inverse times the forward matrix is the identity. -/ inverse_mul_matrix : Matrix3.mul inverseMatrix
@@ -101,14 +101,14 @@ end Isometry.mk
 namespace Isometry
 
 /-- Right action of a form isometry on a displayed row vector. -/
-def act {form : Ternary.Basic.TernaryForm K}
+def act {form : TernaryForm K}
   (isometry : form.Isometry)
     (vector : Coordinates3.Vector K) : Coordinates3.Vector K :=
   Matrix3.rowMul vector isometry.matrix
 
 /-- Cached inverse data are unique, so displayed isometries are equal when their forward matrices are equal. -/
 theorem eq_of_matrix_eq {form :
-  Ternary.Basic.TernaryForm K}
+  TernaryForm K}
     (left right : form.Isometry) (matrixEq : left.matrix = right.matrix) :
     left = right := by
   have inverseEq : left.inverseMatrix = right.inverseMatrix := by
@@ -140,7 +140,7 @@ theorem eq_of_matrix_eq {form :
 
 /-- The isometry preserves the form on every pair of row vectors. -/
 theorem bilinear_act {form :
-  Ternary.Basic.TernaryForm K} (isometry : form.Isometry)
+  TernaryForm K} (isometry : form.Isometry)
     (left right : Coordinates3.Vector K) :
     form.bilinear ((act isometry) left)
       ((act isometry) right) =
@@ -178,38 +178,38 @@ theorem bilinear_act {form :
 
 /-- The isometry preserves the quadrance of every row vector. -/
 theorem quadrance_act {form :
-  Ternary.Basic.TernaryForm K} (isometry : form.Isometry)
+  TernaryForm K} (isometry : form.Isometry)
     (vector : Coordinates3.Vector K) :
     form.quadrance ((act isometry) vector) = form.quadrance
       vector := by
-  unfold TernaryForm.quadrance
+  unfold quadrance
   exact (bilinear_act isometry) vector vector
 
 /-- An isometry sends a vector with nonzero quadrance to another vector with nonzero quadrance. -/
-theorem quadrance_act_ne_zero {form : Ternary.Basic.TernaryForm K} (isometry : form.Isometry)
+theorem quadrance_act_ne_zero {form : TernaryForm K} (isometry : form.Isometry)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0) :
     form.quadrance (act isometry vector) ≠ 0 :=
   fun zero => nonNull ((quadrance_act isometry vector).symm.trans zero)
 
 /-- An isometry sends a null vector to a null vector. -/
 theorem isNull_act {form :
-  Ternary.Basic.TernaryForm K} (isometry : form.Isometry)
+  TernaryForm K} (isometry : form.Isometry)
     {vector : Coordinates3.Vector K} (null : form.IsNull vector) :
     form.IsNull ((act isometry) vector) := by
-  unfold TernaryForm.IsNull at null ⊢
+  unfold IsNull at null ⊢
   rw [(quadrance_act isometry), null]
 
 /-- An isometry preserves perpendicularity of two vectors. -/
 theorem perpendicular_act {form :
-  Ternary.Basic.TernaryForm K} (isometry : form.Isometry)
+  TernaryForm K} (isometry : form.Isometry)
     {left right : Coordinates3.Vector K} (perpendicular : form.Perpendicular left right) :
     form.Perpendicular ((act isometry) left)
       ((act isometry) right) := by
-  unfold TernaryForm.Perpendicular at perpendicular ⊢
+  unfold Perpendicular at perpendicular ⊢
   rw [(bilinear_act isometry), perpendicular]
 
 /-- The identity isometry, with no inferred inverse data. -/
-def identity (form : Ternary.Basic.TernaryForm
+def identity (form : TernaryForm
   K) : form.Isometry where
   matrix := Matrix3.identity
   inverseMatrix := Matrix3.identity
@@ -220,7 +220,7 @@ def identity (form : Ternary.Basic.TernaryForm
       Matrix3.mul_identity]
 
 /-- Product of two form isometries in the row-action order. -/
-def mul {form : Ternary.Basic.TernaryForm K}
+def mul {form : TernaryForm K}
   (left right : form.Isometry) :
     form.Isometry where
   matrix := Matrix3.mul left.matrix right.matrix
@@ -277,7 +277,7 @@ def mul {form : Ternary.Basic.TernaryForm K}
       _ = form.matrix := left.preservesMatrix
 
 /-- Inverse form isometry, using the inverse already cached in the input. -/
-def inverse {form : Ternary.Basic.TernaryForm K}
+def inverse {form : TernaryForm K}
   (isometry : form.Isometry) :
     form.Isometry where
   matrix := isometry.inverseMatrix
@@ -286,26 +286,26 @@ def inverse {form : Ternary.Basic.TernaryForm K}
   inverse_mul_matrix := isometry.matrix_mul_inverse
   preservesMatrix := by
     calc
-      Purelib.LinearAlgebra.Coordinates3.Matrix3.mul (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul
+      Matrix3.mul (Matrix3.mul
         isometry.inverseMatrix form.matrix)
           (Matrix3.transpose isometry.inverseMatrix) =
-        Purelib.LinearAlgebra.Coordinates3.Matrix3.mul
-          (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul isometry.inverseMatrix
-            (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul
-              (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul isometry.matrix form.matrix)
+        Matrix3.mul
+          (Matrix3.mul isometry.inverseMatrix
+            (Matrix3.mul
+              (Matrix3.mul isometry.matrix form.matrix)
               (Matrix3.transpose isometry.matrix)))
           (Matrix3.transpose isometry.inverseMatrix) := by
             rw [isometry.preservesMatrix]
-      _ = Purelib.LinearAlgebra.Coordinates3.Matrix3.mul
-          (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul
-            (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul isometry.inverseMatrix isometry.matrix) form.matrix)
-          (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul (Matrix3.transpose isometry.matrix)
+      _ = Matrix3.mul
+          (Matrix3.mul
+            (Matrix3.mul isometry.inverseMatrix isometry.matrix) form.matrix)
+          (Matrix3.mul (Matrix3.transpose isometry.matrix)
             (Matrix3.transpose isometry.inverseMatrix)) := by
-        ext <;> unfold Purelib.LinearAlgebra.Coordinates3.Matrix3.mul <;> ring1
-      _ = Purelib.LinearAlgebra.Coordinates3.Matrix3.mul
-          (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul Matrix3.identity form.matrix)
+        ext <;> unfold Matrix3.mul <;> ring1
+      _ = Matrix3.mul
+          (Matrix3.mul Matrix3.identity form.matrix)
           (Matrix3.transpose
-            (Purelib.LinearAlgebra.Coordinates3.Matrix3.mul isometry.inverseMatrix isometry.matrix)) := by
+            (Matrix3.mul isometry.inverseMatrix isometry.matrix)) := by
         rw [Matrix3.transpose_mul, isometry.inverse_mul_matrix]
       _ = form.matrix := by
         rw [isometry.inverse_mul_matrix, Matrix3.transpose_identity,
@@ -313,7 +313,7 @@ def inverse {form : Ternary.Basic.TernaryForm K}
 
 /-- The identity isometry fixes each vector. -/
 theorem act_identity (form :
-  Ternary.Basic.TernaryForm K) (vector : Coordinates3.Vector K) :
+  TernaryForm K) (vector : Coordinates3.Vector K) :
     (act
       (identity form)) vector = vector := by
   unfold act
@@ -322,7 +322,7 @@ theorem act_identity (form :
 
 /-- The product isometry acts first by the left factor, then by the right factor. -/
 theorem act_mul {form :
-  Ternary.Basic.TernaryForm K} (left right : form.Isometry)
+  TernaryForm K} (left right : form.Isometry)
     (vector : Coordinates3.Vector K) :
     (act
       (mul left right)) vector =
@@ -334,7 +334,7 @@ theorem act_mul {form :
 
 /-- Applying the retained inverse after the forward isometry recovers the vector. -/
 theorem act_inverse_left {form :
-  Ternary.Basic.TernaryForm K} (isometry : form.Isometry)
+  TernaryForm K} (isometry : form.Isometry)
     (vector : Coordinates3.Vector K) :
     (act
       (inverse isometry))
@@ -346,7 +346,7 @@ theorem act_inverse_left {form :
 
 /-- Applying the forward isometry after the retained inverse recovers the vector. -/
 theorem act_inverse_right {form :
-  Ternary.Basic.TernaryForm K} (isometry : form.Isometry)
+  TernaryForm K} (isometry : form.Isometry)
     (vector : Coordinates3.Vector K) :
     (act isometry)
       ((act
@@ -361,8 +361,8 @@ end Isometry
 /-- A bilinear preservation law on all displayed vectors determines the matrix preservation certificate, proved by the
 nine coordinate pairs. -/
 theorem preservesMatrix_of_bilinear (form :
-  Ternary.Basic.TernaryForm K)
-    (matrix : Coordinates3.Matrix3 K)
+  TernaryForm K)
+    (matrix : Matrix3 K)
     (preserves : ∀ left right : Coordinates3.Vector K,
       form.bilinear (Matrix3.rowMul left matrix)
           (Matrix3.rowMul right matrix) = form.bilinear left right) :
@@ -372,23 +372,23 @@ theorem preservesMatrix_of_bilinear (form :
   let basisR : Coordinates3.Vector K := ⟨0, 1, 0⟩
   let basisS : Coordinates3.Vector K := ⟨0, 0, 1⟩
   apply Matrix3.ext
-  · simpa [TernaryForm.bilinear, basisT, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisT, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisT basisT
-  · simpa [TernaryForm.bilinear, basisT, basisR, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisT, basisR, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisT basisR
-  · simpa [TernaryForm.bilinear, basisT, basisS, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisT, basisS, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisT basisS
-  · simpa [TernaryForm.bilinear, basisT, basisR, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisT, basisR, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisR basisT
-  · simpa [TernaryForm.bilinear, basisR, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisR, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisR basisR
-  · simpa [TernaryForm.bilinear, basisR, basisS, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisR, basisS, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisR basisS
-  · simpa [TernaryForm.bilinear, basisT, basisS, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisT, basisS, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisS basisT
-  · simpa [TernaryForm.bilinear, basisR, basisS, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisR, basisS, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisS basisR
-  · simpa [TernaryForm.bilinear, basisS, Matrix3.rowMul, Matrix3.mul,
+  · simpa [bilinear, basisS, Matrix3.rowMul, Matrix3.mul,
       Matrix3.transpose, Coordinates3.Vector.dot] using preserves basisS basisS
 end TernaryForm
 

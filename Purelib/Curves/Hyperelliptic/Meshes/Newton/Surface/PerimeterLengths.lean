@@ -35,6 +35,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface
@@ -71,7 +73,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePer
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -100,7 +102,7 @@ open Purelib.Data.Gaussian.Basic (sub_re sub_im)
 
 /-- The complete actual bottom trace is ordered by its original horizontal coordinate, including the retained joins. -/
 theorem bottom_ordered (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Ordered traces.bottom (fun owner => owner.point.re) := by
+    Ordered traces.bottom (fun owner => owner.point.re) := by
   rw [traces.bottom_eq]
   apply VertexTrace.ordered_concatenate
   · intro column
@@ -137,13 +139,13 @@ theorem bottom_last_re (traces : PerimeterTraces.FacePerimeterTraces energy posi
 
 /-- Cache nonnegative horizontal lengths on every actual original bottom trace edge. -/
 def bottomLengths (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Lengths traces.bottom (fun owner => owner.point.re) :=
+    Lengths traces.bottom (fun owner => owner.point.re) :=
   Lengths.build traces.bottom _
     (bottom_ordered traces)
 
 /-- The retained bottom trace length total equals the original physical face's horizontal width. -/
 theorem bottom_total (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.bottom (fun owner => owner.point.re)) :
+    (lengths : Lengths traces.bottom (fun owner => owner.point.re)) :
     lengths.total = (grid.faces.regulars[position.val]'position.isLt).cell.box.xUpper -
       (grid.faces.regulars[position.val]'position.isLt).cell.box.xLower := by
   rw [lengths.endpoints, bottom_last_re
@@ -152,17 +154,17 @@ theorem bottom_total (traces : PerimeterTraces.FacePerimeterTraces energy positi
 /-- Each actual original bottom trace step has squared Gaussian displacement equal to its retained squared scalar
 length. -/
 theorem bottom_movement (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.bottom (fun owner => owner.point.re)) (edge : Fin traces.bottom.rest.length) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.bottom.indexed edge.succ).point - (traces.bottom.indexed
+    (lengths : Lengths traces.bottom (fun owner => owner.point.re)) (edge : Fin traces.bottom.rest.length) :
+    Norm.Basic.normSq ((traces.bottom.indexed edge.succ).point - (traces.bottom.indexed
       edge.castSucc).point) = (lengths.values edge)^2 := by
   rw [lengths.values_eq]
-  simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+  simp only [Norm.Basic.normSq, Basic.sub_re, Basic.sub_im,
     FacePerimeterTraces.bottom_height traces]
   ring1
 
 /-- The complete actual top trace is ordered by its original horizontal coordinate, including the retained joins. -/
 theorem top_ordered (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Ordered traces.top (fun owner => owner.point.re) := by
+    Ordered traces.top (fun owner => owner.point.re) := by
   rw [traces.top_eq]
   apply VertexTrace.ordered_concatenate
   · intro column
@@ -201,13 +203,13 @@ theorem top_last_re (traces : PerimeterTraces.FacePerimeterTraces energy positio
 
 /-- Cache nonnegative horizontal lengths on every actual original top trace edge. -/
 def topLengths (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Lengths traces.top (fun owner => owner.point.re) :=
+    Lengths traces.top (fun owner => owner.point.re) :=
   Lengths.build traces.top _
     (top_ordered traces)
 
 /-- The retained top trace length total equals the original physical face's horizontal width. -/
 theorem top_total (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.top (fun owner => owner.point.re)) :
+    (lengths : Lengths traces.top (fun owner => owner.point.re)) :
     lengths.total = (grid.faces.regulars[position.val]'position.isLt).cell.box.xUpper -
       (grid.faces.regulars[position.val]'position.isLt).cell.box.xLower := by
   rw [lengths.endpoints, top_last_re
@@ -216,17 +218,17 @@ theorem top_total (traces : PerimeterTraces.FacePerimeterTraces energy position)
 /-- Each actual original top trace step has squared Gaussian displacement equal to its retained squared scalar length.
 -/
 theorem top_movement (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.top (fun owner => owner.point.re)) (edge : Fin traces.top.rest.length) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.top.indexed edge.succ).point - (traces.top.indexed
+    (lengths : Lengths traces.top (fun owner => owner.point.re)) (edge : Fin traces.top.rest.length) :
+    Norm.Basic.normSq ((traces.top.indexed edge.succ).point - (traces.top.indexed
       edge.castSucc).point) = (lengths.values edge)^2 := by
   rw [lengths.values_eq]
-  simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+  simp only [Norm.Basic.normSq, Basic.sub_re, Basic.sub_im,
     FacePerimeterTraces.top_height traces]
   ring1
 
 /-- The complete actual left trace is ordered by its original vertical coordinate, including the retained joins. -/
 theorem left_ordered (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Ordered traces.left (fun owner => owner.point.im) := by
+    Ordered traces.left (fun owner => owner.point.im) := by
   rw [traces.left_eq]
   apply VertexTrace.ordered_concatenate
   · intro column
@@ -262,13 +264,13 @@ theorem left_last_im (traces : PerimeterTraces.FacePerimeterTraces energy positi
 
 /-- Cache nonnegative vertical lengths on every actual original left trace edge. -/
 def leftLengths (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Lengths traces.left (fun owner => owner.point.im) :=
+    Lengths traces.left (fun owner => owner.point.im) :=
   Lengths.build traces.left _
     (left_ordered traces)
 
 /-- The retained left trace length total equals the original physical face's vertical width. -/
 theorem left_total (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.left (fun owner => owner.point.im)) :
+    (lengths : Lengths traces.left (fun owner => owner.point.im)) :
     lengths.total = (grid.faces.regulars[position.val]'position.isLt).cell.box.yUpper -
       (grid.faces.regulars[position.val]'position.isLt).cell.box.yLower := by
   rw [lengths.endpoints, left_last_im
@@ -277,17 +279,17 @@ theorem left_total (traces : PerimeterTraces.FacePerimeterTraces energy position
 /-- Each actual original left trace step has squared Gaussian displacement equal to its retained squared scalar length.
 -/
 theorem left_movement (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.left (fun owner => owner.point.im)) (edge : Fin traces.left.rest.length) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.left.indexed edge.succ).point - (traces.left.indexed
+    (lengths : Lengths traces.left (fun owner => owner.point.im)) (edge : Fin traces.left.rest.length) :
+    Norm.Basic.normSq ((traces.left.indexed edge.succ).point - (traces.left.indexed
       edge.castSucc).point) = (lengths.values edge)^2 := by
   rw [lengths.values_eq]
-  simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+  simp only [Norm.Basic.normSq, Basic.sub_re, Basic.sub_im,
     FacePerimeterTraces.left_horizontal traces]
   ring1
 
 /-- The complete actual right trace is ordered by its original vertical coordinate, including the retained joins. -/
 theorem right_ordered (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Ordered traces.right (fun owner => owner.point.im) := by
+    Ordered traces.right (fun owner => owner.point.im) := by
   rw [traces.right_eq]
   apply VertexTrace.ordered_concatenate
   · intro column
@@ -325,13 +327,13 @@ theorem right_last_im (traces : PerimeterTraces.FacePerimeterTraces energy posit
 
 /-- Cache nonnegative vertical lengths on every actual original right trace edge. -/
 def rightLengths (traces : PerimeterTraces.FacePerimeterTraces energy position) :
-    VertexTrace.Lengths traces.right (fun owner => owner.point.im) :=
+    Lengths traces.right (fun owner => owner.point.im) :=
   Lengths.build traces.right _
     (right_ordered traces)
 
 /-- The retained right trace length total equals the original physical face's vertical width. -/
 theorem right_total (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.right (fun owner => owner.point.im)) :
+    (lengths : Lengths traces.right (fun owner => owner.point.im)) :
     lengths.total = (grid.faces.regulars[position.val]'position.isLt).cell.box.yUpper -
       (grid.faces.regulars[position.val]'position.isLt).cell.box.yLower := by
   rw [lengths.endpoints, right_last_im
@@ -340,11 +342,11 @@ theorem right_total (traces : PerimeterTraces.FacePerimeterTraces energy positio
 /-- Each actual original right trace step has squared Gaussian displacement equal to its retained squared scalar length.
 -/
 theorem right_movement (traces : PerimeterTraces.FacePerimeterTraces energy position)
-    (lengths : VertexTrace.Lengths traces.right (fun owner => owner.point.im)) (edge : Fin traces.right.rest.length) :
-    Data.Gaussian.Norm.Basic.normSq ((traces.right.indexed edge.succ).point - (traces.right.indexed
+    (lengths : Lengths traces.right (fun owner => owner.point.im)) (edge : Fin traces.right.rest.length) :
+    Norm.Basic.normSq ((traces.right.indexed edge.succ).point - (traces.right.indexed
       edge.castSucc).point) = (lengths.values edge)^2 := by
   rw [lengths.values_eq]
-  simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+  simp only [Norm.Basic.normSq, Basic.sub_re, Basic.sub_im,
     FacePerimeterTraces.right_horizontal traces]
   ring1
 

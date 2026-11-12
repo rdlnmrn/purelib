@@ -44,6 +44,12 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Topology.BranchedCover.Double
+
+open Purelib.Integration
+
+open Purelib.Approximation.Gaussian.Name.Coherent
+
 @[expose] public section
 
 /-!
@@ -68,17 +74,17 @@ open Purelib.Data.Rat in
 /-- The rational coordinate carrier of finite face and comparison budgets. -/
 abbrev Coordinate := Fraction.Rational
 /-- A coherent named Gaussian quantity with its retained approximation program. -/
-abbrev CoherentNamed := Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
+abbrev CoherentNamed := Approximation.Gaussian.Name.Coherent.CoherentNamed
 /-- Operational equivalence of the two retained Gaussian names. -/
-abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 /-- The finite Gaussian integral refinement program with explicit error and sample bounds. -/
 abbrev RefinementProgram :=
-  Purelib.Integration.Program.Gaussian.Basic.RefinementProgram
+  Program.Gaussian.Basic.RefinementProgram
 open Purelib.Curves.Hyperelliptic in
 /-- A retained local wedge chart for the exact curve and ordered differential pair. -/
 abbrev WedgeChart {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Differentials.Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedSubdivisionModelCore.WedgeChart curve leftDifferential
+  Integration.PreparedSubdivisionModelCore.WedgeChart curve leftDifferential
     rightDifferential
 
 /-- The rational parameter zero lies in the closed unit interval. -/
@@ -106,16 +112,16 @@ def chartContribution_zero {genus : Nat}
     {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
     (chart : WedgeChart curve leftDifferential rightDifferential) :
     NamedEquivalent (chartContribution chart).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name :=
+      (CoherentNamed.Coherence.exact 0).name :=
   chart.zero 0 zeroInsidePublic
 
 /-- Sum the ordered chart contributions as coherent Gaussian names. -/
 def wedgeSum {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {leftDifferential rightDifferential : Differentials.Basic.Differential genus} :
     List (WedgeChart curve leftDifferential rightDifferential) -> CoherentNamed
-  | [] => Name.Coherent.CoherentNamed.Coherence.exact 0
+  | [] => CoherentNamed.Coherence.exact 0
   | chart :: remaining =>
-      Name.Coherent.CoherentNamed.add (chartContribution chart)
+      CoherentNamed.add (chartContribution chart)
         (wedgeSum remaining)
 
 /-- A finite sum of the retained zero wedge contributions is equivalent to exact zero. -/
@@ -124,15 +130,15 @@ def wedgeSum_zero {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (charts : List
       (WedgeChart curve leftDifferential rightDifferential)) ->
       NamedEquivalent (wedgeSum charts).name
-        (Name.Coherent.CoherentNamed.Coherence.exact 0).name
+        (CoherentNamed.Coherence.exact 0).name
   | [] => Equivalence.NamedEquivalent.refl _
   | chart :: remaining => by
-      let zero := Name.Coherent.CoherentNamed.Coherence.exact 0
+      let zero := CoherentNamed.Coherence.exact 0
       have replaceBoth : NamedEquivalent
-          (Name.Coherent.CoherentNamed.add
+          (CoherentNamed.add
             (chartContribution chart) (wedgeSum remaining)).name
-          (Name.Coherent.CoherentNamed.add zero zero).name :=
-        Name.Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects
+          (CoherentNamed.add zero zero).name :=
+        Arithmetic.Sum.Congruence.coherentAdd_respects
           (chartContribution chart) zero (wedgeSum remaining) zero
           (chartContribution_zero chart) (wedgeSum_zero remaining)
       exact Equivalence.NamedEquivalent.trans replaceBoth
@@ -177,7 +183,7 @@ def surfaceWedgeSum_zero {genus : Nat}
       PreparedCycleModels.SymplecticCycleSchedule curve)
     (row column : Fin genus) (refinement : Nat) :
     NamedEquivalent (surfaceWedgeSum geometry row column refinement).name
-    (Name.Coherent.CoherentNamed.Coherence.exact 0).name :=
+    (CoherentNamed.Coherence.exact 0).name :=
   wedgeSum_zero (surfaceCharts geometry row column refinement)
 
 /-! ## Edge pairs indexed by the actual hyperelliptic cell surface -/
@@ -187,7 +193,7 @@ open Purelib.Integration.Path in
 /-- Sum the paired boundary-program readings over both sheets and original base indices. -/
 def cellularBoundarySum {baseCount : Nat}
     (pairs : Fin baseCount ->
-      Topology.BranchedCover.Double.Attachment.Sheet ->
+      Attachment.Sheet ->
         Cancellation.ProgramBoundaryPair) : CoherentNamed :=
   sumNamed fun base =>
     Cancellation.boundarySum fun sheet =>
@@ -199,10 +205,10 @@ open Purelib.Integration.Path in
 /-- The finite paired cellular boundary sum is equivalent to exact zero. -/
 def cellularBoundarySum_zero {baseCount : Nat}
     (pairs : Fin baseCount ->
-      Topology.BranchedCover.Double.Attachment.Sheet ->
+      Attachment.Sheet ->
         Cancellation.ProgramBoundaryPair) :
     NamedEquivalent (cellularBoundarySum pairs).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name :=
+      (CoherentNamed.Coherence.exact 0).name :=
   Coherent.FiniteSum.sumNamed_zero
     (fun base =>
       Cancellation.boundarySum fun sheet =>
@@ -224,12 +230,12 @@ inductive CellularEdgePairs {genus : Nat}
   /-- Paired boundary programs for the retained odd-degree cell decomposition. -/ | odd
       (degree_eq : curve.polynomial.natDegree = 2 * genus + 1)
       (pairs : Fin (Topology.Cells.oddBaseCount genus) ->
-        Topology.BranchedCover.Double.Attachment.Sheet ->
+        Attachment.Sheet ->
           Cancellation.ProgramBoundaryPair)
   /-- Paired boundary programs for the retained even-degree cell decomposition. -/ | even
       (degree_eq : curve.polynomial.natDegree = 2 * genus + 2)
       (pairs : Fin (Topology.Cells.evenBaseCount genus) ->
-        Topology.BranchedCover.Double.Attachment.Sheet ->
+        Attachment.Sheet ->
           Cancellation.ProgramBoundaryPair)
 
 constructive_injectivity CellularEdgePairs
@@ -251,9 +257,9 @@ open Purelib.Integration.Path
 theorem odd_pairCount {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (degree_eq : curve.polynomial.natDegree = 2 * genus + 1)
     (pairs : Fin (Topology.Cells.oddBaseCount genus) ->
-      Topology.BranchedCover.Double.Attachment.Sheet ->
+      Attachment.Sheet ->
         Cancellation.ProgramBoundaryPair) :
-    (CellularEdgePairs.odd degree_eq pairs).pairCount =
+    (odd degree_eq pairs).pairCount =
       (Topology.Cells.oddCellComplex genus).edges.length := by
   rw [Topology.Cells.oddCellComplex_edgeCount]
   rfl
@@ -262,9 +268,9 @@ theorem odd_pairCount {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 theorem even_pairCount {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (degree_eq : curve.polynomial.natDegree = 2 * genus + 2)
     (pairs : Fin (Topology.Cells.evenBaseCount genus) ->
-      Topology.BranchedCover.Double.Attachment.Sheet ->
+      Attachment.Sheet ->
         Cancellation.ProgramBoundaryPair) :
-    (CellularEdgePairs.even degree_eq pairs).pairCount =
+    (even degree_eq pairs).pairCount =
       (Topology.Cells.evenCellComplex genus).edges.length := by
   rw [Topology.Cells.evenCellComplex_edgeCount]
   rfl
@@ -284,7 +290,7 @@ open Purelib.Curves.Hyperelliptic in
 def boundarySum_zero {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (pairs : CellularEdgePairs curve) :
     NamedEquivalent pairs.boundarySum.name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name := by
+      (CoherentNamed.Coherence.exact 0).name := by
   cases pairs with
   | odd degree_eq pairs => exact cellularBoundarySum_zero pairs
   | even degree_eq pairs => exact cellularBoundarySum_zero pairs
@@ -318,7 +324,7 @@ structure BoundaryReduction {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingPrimitiveFinish
         schedules.toPeriodData row column).name
-      (Name.Coherent.CoherentNamed.add
+      (CoherentNamed.add
         (Cancellation.boundarySum fun index =>
           (edgePairs row column index).toBoundaryPair)
         (surfaceWedgeSum geometry row column
@@ -348,7 +354,7 @@ def toStokesClosure {genus : Nat}
       (reduction.edgePairs row column index).toBoundaryPair
     let wedges := surfaceWedgeSum geometry row column
       (reduction.refinement row column)
-    let zero := Name.Coherent.CoherentNamed.Coherence.exact 0
+    let zero := CoherentNamed.Coherence.exact 0
     have pairedZero : NamedEquivalent paired.name zero.name := by
       simpa only [paired, zero] using
         Cancellation.boundarySum_zero fun index =>
@@ -358,10 +364,10 @@ def toStokesClosure {genus : Nat}
         surfaceWedgeSum_zero geometry row column
           (reduction.refinement row column)
     have totalZero : NamedEquivalent
-        (Name.Coherent.CoherentNamed.add paired wedges).name
+        (CoherentNamed.add paired wedges).name
         zero.name :=
       Equivalence.NamedEquivalent.trans
-        (Name.Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects
+        (Arithmetic.Sum.Congruence.coherentAdd_respects
           paired zero wedges zero pairedZero wedgesZero)
         (Arithmetic.Add.coherentAdd_zero_right zero)
     exact Equivalence.NamedEquivalent.trans
@@ -381,7 +387,7 @@ def toStokesCertificate {genus : Nat}
     {schedules :
       PreparedCycleModels.PeriodSchedules curve geometry}
     (reduction : BoundaryReduction schedules) :
-    Riemann.BilinearRelations.Certificate.StokesCertificate schedules.toPeriodData :=
+    BilinearRelations.Certificate.StokesCertificate schedules.toPeriodData :=
   reduction.toStokesClosure.toStokesCertificate
 
 open Purelib.Approximation.Gaussian in
@@ -401,7 +407,7 @@ def genusOne {curve : Basic.HyperellipticCurve 1}
   boundary_eq_surface := by
     intro row column
     let wedges := surfaceWedgeSum geometry row column 0
-    let zero := Name.Coherent.CoherentNamed.Coherence.exact 0
+    let zero := CoherentNamed.Coherence.exact 0
     have finishZero : NamedEquivalent
         (Periods.Pairing.periodPairingPrimitiveFinish
           schedules.toPeriodData row column).name zero.name := by
@@ -412,7 +418,7 @@ def genusOne {curve : Basic.HyperellipticCurve 1}
       simpa only [wedges, zero] using
         surfaceWedgeSum_zero geometry row column 0
     have totalToWedges : NamedEquivalent
-        (Name.Coherent.CoherentNamed.add
+        (CoherentNamed.add
           (Cancellation.boundarySum
             (fun index : Fin 0 =>
               (Fin.elim0 index :
@@ -420,11 +426,11 @@ def genusOne {curve : Basic.HyperellipticCurve 1}
           wedges).name
         wedges.name := by
       change NamedEquivalent
-        (Name.Coherent.CoherentNamed.add
-          (Name.Coherent.CoherentNamed.Coherence.exact 0) wedges).name
+        (CoherentNamed.add
+          (CoherentNamed.Coherence.exact 0) wedges).name
         wedges.name
-      simpa only [Name.Coherent.CoherentNamed.add,
-        Name.Coherent.CoherentNamed.Coherence.exact] using
+      simpa only [CoherentNamed.add,
+        CoherentNamed.Coherence.exact] using
         Arithmetic.Add.coherentAdd_zero_left wedges
     have totalZero :=
       Equivalence.NamedEquivalent.trans totalToWedges wedgesZero
@@ -458,7 +464,7 @@ structure CellularBoundaryReduction {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingPrimitiveFinish
         schedules.toPeriodData row column).name
-      (Name.Coherent.CoherentNamed.add
+      (CoherentNamed.add
         (edgePairs row column).boundarySum
         (surfaceWedgeSum geometry row column
           (refinement row column))).name
@@ -485,7 +491,7 @@ def toStokesClosure {genus : Nat}
     let paired := (reduction.edgePairs row column).boundarySum
     let wedges := surfaceWedgeSum geometry row column
       (reduction.refinement row column)
-    let zero := Name.Coherent.CoherentNamed.Coherence.exact 0
+    let zero := CoherentNamed.Coherence.exact 0
     have pairedZero : NamedEquivalent paired.name zero.name := by
       simpa only [paired, zero] using
         (reduction.edgePairs row column).boundarySum_zero
@@ -494,10 +500,10 @@ def toStokesClosure {genus : Nat}
         surfaceWedgeSum_zero geometry row column
           (reduction.refinement row column)
     have totalZero : NamedEquivalent
-        (Name.Coherent.CoherentNamed.add paired wedges).name
+        (CoherentNamed.add paired wedges).name
         zero.name :=
       Equivalence.NamedEquivalent.trans
-        (Name.Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects
+        (Arithmetic.Sum.Congruence.coherentAdd_respects
           paired zero wedges zero pairedZero wedgesZero)
         (Arithmetic.Add.coherentAdd_zero_right zero)
     exact Equivalence.NamedEquivalent.trans
@@ -517,7 +523,7 @@ def toStokesCertificate {genus : Nat}
     {schedules :
       PreparedCycleModels.PeriodSchedules curve geometry}
     (reduction : CellularBoundaryReduction schedules) :
-    Riemann.BilinearRelations.Certificate.StokesCertificate schedules.toPeriodData :=
+    BilinearRelations.Certificate.StokesCertificate schedules.toPeriodData :=
   reduction.toStokesClosure.toStokesCertificate
 
 end CellularBoundaryReduction
@@ -556,7 +562,7 @@ end PrimitiveStream
 open Purelib.Data.Gaussian in
 /-- The inverse of two in the canonical Gaussian rational field. -/
 def gaussianHalf : Basic.Canonical :=
-  Data.Gaussian.Field.inv 2
+  Field.inv 2
 
 open Purelib.Data.Gaussian in
 open Purelib.Topology.Polygon in
@@ -589,15 +595,15 @@ theorem normSq_triangleIntegral_le {vertexCount : Nat}
     (points : Fin vertexCount -> Stokes.PrimitivePoint)
     (triangle : Stokes.OrientedTriangle vertexCount)
     {budget : Coordinate}
-    (bounded : Data.Gaussian.Norm.Basic.normSq
+    (bounded : Norm.Basic.normSq
       (Stokes.triangleWedgeArea
         (points triangle.first) (points triangle.second) (points triangle.third)) ≤ budget) :
-    Data.Gaussian.Norm.Basic.normSq (triangleIntegral points triangle) ≤
+    Norm.Basic.normSq (triangleIntegral points triangle) ≤
       budget * ((1 : Coordinate) / 4) := by
-  have halfSquare : Data.Gaussian.Norm.Basic.normSq
-      (Data.Gaussian.Field.inv (2 : Basic.Canonical)) = (1 : Coordinate) / 4 := by
+  have halfSquare : Norm.Basic.normSq
+      (Field.inv (2 : Basic.Canonical)) = (1 : Coordinate) / 4 := by
     rw [Field.normSq_inv (2 : Basic.Canonical) (by decide +kernel)]
-    rw [show Data.Gaussian.Norm.Basic.normSq (2 : Basic.Canonical) = 4 by decide +kernel]
+    rw [show Norm.Basic.normSq (2 : Basic.Canonical) = 4 by decide +kernel]
     exact (Fraction.Field.one_mul ((4 : Coordinate)⁻¹)).symm
   unfold triangleIntegral gaussianHalf
   rw [Norm.Basic.normSq_mul, halfSquare]
@@ -624,7 +630,7 @@ structure LocalFaceCertificate {genus : Nat}
   /-- The original oriented faces and boundary with their exact cancellation certificate. -/ triangulation :
     Stokes.Triangulation vertexCount faceCount
   /-- The original double-cover face label retained for each triangle. -/ faceLabel : Fin faceCount ->
-    Topology.BranchedCover.Double.Attachment.Face
+    Attachment.Face
   /-- The original paired primitive data at each retained vertex. -/ primitive : Fin vertexCount -> PrimitiveStream
   /-- The retained boundary area equals the symplectic area of the original sampled period matrices. -/ boundary_matches
     : forall index : Nat,
@@ -638,7 +644,7 @@ structure LocalFaceCertificate {genus : Nat}
   /-- Each retained face scale is nonnegative. -/ faceScale_nonnegative : forall face, 0 <= faceScale face
   /-- Each exact triangle integral satisfies its retained squared-norm bound. -/ face_close : forall face : Fin
     faceCount, forall index : Nat,
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (triangleIntegral
           (fun vertex => (primitive vertex).sample index)
           (triangulation.faces face)) <=
@@ -703,26 +709,26 @@ theorem residualSample_close_zero {genus : Nat}
     {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {row column : Fin genus}
     (certificate : LocalFaceCertificate data row column) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((Periods.Pairing.synchronizedPeriodPairingResidual
           data row column).sample index) <=
       Geometric.Basic.quarterRadius
-        (PeriodMatrix.sumBound certificate.faceScale) index := by
+        (sumBound certificate.faceScale) index := by
   rw [← certificate.triangleIntegralSum_eq_residualSample index]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (FiniteSum.Fin.sumFin fun face =>
           triangleIntegral
             (fun vertex => (certificate.primitive vertex).sample index)
             (certificate.triangulation.faces face)) <=
-        PeriodMatrix.sumBound (fun face =>
+        sumBound (fun face =>
           Geometric.Basic.quarterRadius
             (certificate.faceScale face) index) :=
-      PeriodMatrix.normSq_sumFin_le_sumBound _ _
+      normSq_sumFin_le_sumBound _ _
         (fun face => certificate.face_close face index)
     _ = Geometric.Basic.quarterRadius
-          (PeriodMatrix.sumBound certificate.faceScale) index :=
-      PeriodMatrix.sumBound_quarterRadius
+          (sumBound certificate.faceScale) index :=
+      sumBound_quarterRadius
         certificate.faceScale index
 
 open Purelib in
@@ -741,7 +747,7 @@ def residual_zero {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingResidual
         data row column).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name := by
+      (CoherentNamed.Coherence.exact 0).name := by
   let source :=
     Periods.Pairing.synchronizedPeriodPairingResidual
       data row column
@@ -749,23 +755,23 @@ def residual_zero {genus : Nat}
     Geometric.GeometricApproximation.exact
       (0 : Basic.Canonical)
   let sourceProgram :=
-    Integration.Program.Comparison.geometricRefinementProgram source
+    Program.Comparison.geometricRefinementProgram source
   let zeroProgram :=
-    Integration.Program.Comparison.geometricRefinementProgram zeroSource
+    Program.Comparison.geometricRefinementProgram zeroSource
   have scaleNonnegative :
-      0 <= PeriodMatrix.sumBound certificate.faceScale :=
-    PeriodMatrix.sumBound_nonneg certificate.faceScale
+      0 <= sumBound certificate.faceScale :=
+    sumBound_nonneg certificate.faceScale
       certificate.faceScale_nonnegative
   have programsEquivalent : NamedEquivalent sourceProgram.output.name
       zeroProgram.output.name := by
-    apply Integration.Program.Comparison.refinementProgram_output_equivalent_of_samples_close
+    apply Program.Comparison.refinementProgram_output_equivalent_of_samples_close
       sourceProgram zeroProgram
-      (PeriodMatrix.sumBound certificate.faceScale)
+      (sumBound certificate.faceScale)
       scaleNonnegative
     intro index
-    rw [Integration.Program.Comparison.geometricRefinementProgram_integralSample,
-      Integration.Program.Comparison.geometricRefinementProgram_integralSample]
-    change Data.Gaussian.Norm.Basic.normSq
+    rw [Program.Comparison.geometricRefinementProgram_integralSample,
+      Program.Comparison.geometricRefinementProgram_integralSample]
+    change Norm.Basic.normSq
         (source.sample index - 0) <= _
     rw [Basic.sub_zero]
     simpa only [source] using certificate.residualSample_close_zero index
@@ -773,12 +779,12 @@ def residual_zero {genus : Nat}
     (Periods.Pairing.periodPairingResidual_equivalent_synchronized
       data row column)
     (Equivalence.NamedEquivalent.trans
-      (Integration.Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
+      (Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
         source)
       (Equivalence.NamedEquivalent.trans programsEquivalent
         (Equivalence.NamedEquivalent.trans
           (Equivalence.NamedEquivalent.symm
-            (Integration.Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
+            (Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
               zeroSource))
           (by
               simpa only [zeroSource]
@@ -794,7 +800,7 @@ def closePrimitive {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingPrimitiveFinish
         data row column).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name :=
+      (CoherentNamed.Coherence.exact 0).name :=
   Equivalence.NamedEquivalent.trans
     (Periods.Pairing.periodPairingPrimitiveFinish_equivalent_residual
       data row column)
@@ -821,7 +827,7 @@ structure RefiningFaceSample {genus : Nat}
   /-- The original oriented faces and boundary with their exact cancellation certificate. -/ triangulation :
     Stokes.Triangulation vertexCount faceCount
   /-- The original double-cover face label retained for each triangle. -/ faceLabel : Fin faceCount ->
-    Topology.BranchedCover.Double.Attachment.Face
+    Attachment.Face
   /-- The original paired primitive data at each retained vertex. -/ primitive : Fin vertexCount ->
     Stokes.PrimitivePoint
   /-- The retained boundary area equals the symplectic area of the original sampled period matrices. -/ boundary_matches
@@ -836,7 +842,7 @@ structure RefiningFaceSample {genus : Nat}
   /-- Each retained face budget is nonnegative. -/ faceBudget_nonnegative : forall face, 0 <= faceBudget face
   /-- Each exact triangle integral satisfies its retained squared-norm bound. -/ face_close : forall face : Fin
     faceCount,
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (triangleIntegral primitive (triangulation.faces face)) <=
       faceBudget face
 
@@ -857,7 +863,7 @@ def ofWedge {genus : Nat} {curve : Basic.HyperellipticCurve genus} {data : Perio
     {row column : Fin genus} {index : Nat}
     (vertexCount faceCount : Nat)
     (triangulation : Stokes.Triangulation vertexCount faceCount)
-    (faceLabel : Fin faceCount -> Topology.BranchedCover.Double.Attachment.Face)
+    (faceLabel : Fin faceCount -> Attachment.Face)
     (primitive : Fin vertexCount -> Stokes.PrimitivePoint)
     (boundary_matches :
       Stokes.edgeListArea primitive triangulation.boundary =
@@ -866,7 +872,7 @@ def ofWedge {genus : Nat} {curve : Basic.HyperellipticCurve genus} {data : Perio
     (wedgeBudget : Fin faceCount -> Coordinate)
     (wedgeBudget_nonnegative : forall face, 0 <= wedgeBudget face)
     (wedge_close : forall face : Fin faceCount,
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (Stokes.triangleWedgeArea
           (primitive (triangulation.faces face).first)
           (primitive (triangulation.faces face).second)
@@ -939,12 +945,12 @@ theorem residualSample_le_sumBudget {genus : Nat}
     {curve : Basic.HyperellipticCurve genus} {data : PeriodData curve}
     {row column : Fin genus} {index : Nat}
     (sample : RefiningFaceSample data row column index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((Periods.Pairing.synchronizedPeriodPairingResidual
           data row column).sample index) <=
-      PeriodMatrix.sumBound sample.faceBudget := by
+      sumBound sample.faceBudget := by
   rw [<- sample.triangleIntegralSum_eq_residualSample]
-  exact PeriodMatrix.normSq_sumFin_le_sumBound _ _
+  exact normSq_sumFin_le_sumBound _ _
     sample.face_close
 
 end RefiningFaceSample
@@ -966,7 +972,7 @@ structure RefiningLocalFaceCertificate {genus : Nat}
   /-- The retained global scale is nonnegative. -/ scale_nonnegative : 0 <= scale
   /-- The exact face-budget sum bound meets the retained geometric radius at every stage. -/ summedBudget_close : forall
     index : Nat,
-    PeriodMatrix.sumBound (sample index).faceBudget <=
+    sumBound (sample index).faceBudget <=
       Geometric.Basic.quarterRadius scale index
 
 constructive_injectivity RefiningLocalFaceCertificate
@@ -983,7 +989,7 @@ def ofSamples {genus : Nat}
     (sample : forall index : Nat, RefiningFaceSample data row column index)
     (scale : Coordinate) (nonnegative : 0 <= scale)
     (summedBudget_close : forall index : Nat,
-      PeriodMatrix.sumBound (sample index).faceBudget <=
+      sumBound (sample index).faceBudget <=
         Geometric.Basic.quarterRadius scale index) :
     RefiningLocalFaceCertificate data row column where
   sample := sample
@@ -1000,7 +1006,7 @@ theorem residualSample_close_zero {genus : Nat}
     {row column : Fin genus}
     (certificate : RefiningLocalFaceCertificate data row column)
     (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((Periods.Pairing.synchronizedPeriodPairingResidual
           data row column).sample index) <=
       Geometric.Basic.quarterRadius certificate.scale index :=
@@ -1022,7 +1028,7 @@ def residual_zero {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingResidual
         data row column).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name := by
+      (CoherentNamed.Coherence.exact 0).name := by
   let source :=
     Periods.Pairing.synchronizedPeriodPairingResidual
       data row column
@@ -1030,17 +1036,17 @@ def residual_zero {genus : Nat}
     Geometric.GeometricApproximation.exact
       (0 : Basic.Canonical)
   let sourceProgram :=
-    Integration.Program.Comparison.geometricRefinementProgram source
+    Program.Comparison.geometricRefinementProgram source
   let zeroProgram :=
-    Integration.Program.Comparison.geometricRefinementProgram zeroSource
+    Program.Comparison.geometricRefinementProgram zeroSource
   have programsEquivalent : NamedEquivalent sourceProgram.output.name
       zeroProgram.output.name := by
-    apply Integration.Program.Comparison.refinementProgram_output_equivalent_of_samples_close
+    apply Program.Comparison.refinementProgram_output_equivalent_of_samples_close
       sourceProgram zeroProgram certificate.scale certificate.scale_nonnegative
     intro index
-    rw [Integration.Program.Comparison.geometricRefinementProgram_integralSample,
-      Integration.Program.Comparison.geometricRefinementProgram_integralSample]
-    change Data.Gaussian.Norm.Basic.normSq
+    rw [Program.Comparison.geometricRefinementProgram_integralSample,
+      Program.Comparison.geometricRefinementProgram_integralSample]
+    change Norm.Basic.normSq
         (source.sample index - 0) <= _
     rw [Basic.sub_zero]
     simpa only [source] using certificate.residualSample_close_zero index
@@ -1048,12 +1054,12 @@ def residual_zero {genus : Nat}
     (Periods.Pairing.periodPairingResidual_equivalent_synchronized
       data row column)
     (Equivalence.NamedEquivalent.trans
-      (Integration.Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
+      (Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
         source)
       (Equivalence.NamedEquivalent.trans programsEquivalent
         (Equivalence.NamedEquivalent.trans
           (Equivalence.NamedEquivalent.symm
-            (Integration.Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
+            (Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
               zeroSource))
           (by
               simpa only [zeroSource]
@@ -1069,7 +1075,7 @@ def closePrimitive {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingPrimitiveFinish
         data row column).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name :=
+      (CoherentNamed.Coherence.exact 0).name :=
   Equivalence.NamedEquivalent.trans
     (Periods.Pairing.periodPairingPrimitiveFinish_equivalent_residual
       data row column)
@@ -1105,7 +1111,7 @@ def ofSamples {genus : Nat}
       RefiningFaceSample data row column index)
     (scale : Coordinate) (nonnegative : 0 <= scale)
     (summedBudget_close : forall (row column : Fin genus) (index : Nat),
-      PeriodMatrix.sumBound (sample row column index).faceBudget <=
+      sumBound (sample row column index).faceBudget <=
         Geometric.Basic.quarterRadius scale index) :
     UpperRefiningLocalFaceReduction data where
   certificate := fun row column _ =>
@@ -1292,7 +1298,7 @@ structure HandleFaceCertificate {genus : Nat}
   /-- The retained global scale is nonnegative. -/ scale_nonnegative : 0 <= scale
   /-- The exact finite handle-triangle sum satisfies the retained geometric squared-norm bound. -/ total_close : forall
     index : Nat,
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (FiniteSum.Fin.sumFin fun cycle =>
           FiniteSum.Fin.sumFin fun face : Fin 2 =>
             handleTriangleIntegral data row column cycle face index) <=
@@ -1310,7 +1316,7 @@ theorem residualSample_close_zero {genus : Nat}
     {curve : Basic.HyperellipticCurve genus} {data : PeriodData curve}
     {row column : Fin genus}
     (certificate : HandleFaceCertificate data row column) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((Periods.Pairing.synchronizedPeriodPairingResidual
           data row column).sample index) <=
       Geometric.Basic.quarterRadius certificate.scale index := by
@@ -1332,7 +1338,7 @@ def ofCycleBound {genus : Nat}
     (scale perCycle : Coordinate) (nonnegative : 0 <= scale)
     (count_paid : (genus : Coordinate) * ((genus : Coordinate) * perCycle) <= scale)
     (cycleClose : forall (cycle : Fin genus) (index : Nat),
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (FiniteSum.Fin.sumFin fun face : Fin 2 =>
             handleTriangleIntegral data row column cycle face index) <=
         Geometric.Basic.quarterRadius perCycle index) :
@@ -1370,7 +1376,7 @@ def ofCycleMinor {genus : Nat}
     (scale perCycle : Coordinate) (nonnegative : 0 <= scale)
     (count_paid : (genus : Coordinate) * ((genus : Coordinate) * perCycle) <= scale)
     (minorClose : forall (cycle : Fin genus) (index : Nat),
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (sampledMatrix data.aMatrix index row cycle * sampledMatrix data.bMatrix index column cycle -
             sampledMatrix data.bMatrix index row cycle * sampledMatrix data.aMatrix index column cycle) <=
         Geometric.Basic.quarterRadius perCycle index) :
@@ -1394,7 +1400,7 @@ def residual_zero {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingResidual
         data row column).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name := by
+      (CoherentNamed.Coherence.exact 0).name := by
   let source :=
     Periods.Pairing.synchronizedPeriodPairingResidual
       data row column
@@ -1402,18 +1408,18 @@ def residual_zero {genus : Nat}
     Geometric.GeometricApproximation.exact
       (0 : Basic.Canonical)
   let sourceProgram :=
-    Integration.Program.Comparison.geometricRefinementProgram source
+    Program.Comparison.geometricRefinementProgram source
   let zeroProgram :=
-    Integration.Program.Comparison.geometricRefinementProgram zeroSource
+    Program.Comparison.geometricRefinementProgram zeroSource
   have programsEquivalent : NamedEquivalent sourceProgram.output.name
       zeroProgram.output.name := by
-    apply Integration.Program.Comparison.refinementProgram_output_equivalent_of_samples_close
+    apply Program.Comparison.refinementProgram_output_equivalent_of_samples_close
       sourceProgram zeroProgram certificate.scale
         certificate.scale_nonnegative
     intro index
-    rw [Integration.Program.Comparison.geometricRefinementProgram_integralSample,
-      Integration.Program.Comparison.geometricRefinementProgram_integralSample]
-    change Data.Gaussian.Norm.Basic.normSq
+    rw [Program.Comparison.geometricRefinementProgram_integralSample,
+      Program.Comparison.geometricRefinementProgram_integralSample]
+    change Norm.Basic.normSq
         (source.sample index - 0) <= _
     rw [Basic.sub_zero]
     simpa only [source] using certificate.residualSample_close_zero index
@@ -1421,12 +1427,12 @@ def residual_zero {genus : Nat}
     (Periods.Pairing.periodPairingResidual_equivalent_synchronized
       data row column)
     (Equivalence.NamedEquivalent.trans
-      (Integration.Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
+      (Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
         source)
       (Equivalence.NamedEquivalent.trans programsEquivalent
         (Equivalence.NamedEquivalent.trans
           (Equivalence.NamedEquivalent.symm
-            (Integration.Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
+            (Program.Comparison.geometricNamed_equivalent_geometricRefinementProgram
               zeroSource))
           (by
               simpa only [zeroSource]
@@ -1442,7 +1448,7 @@ def closePrimitive {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingPrimitiveFinish
         data row column).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name :=
+      (CoherentNamed.Coherence.exact 0).name :=
   Equivalence.NamedEquivalent.trans
     (Periods.Pairing.periodPairingPrimitiveFinish_equivalent_residual
       data row column)
@@ -1517,7 +1523,7 @@ def ofCycleBounds {genus : Nat} {curve : Basic.HyperellipticCurve genus} (data :
     (count_paid : (genus : Coordinate) * ((genus : Coordinate) * perCycle) <= scale)
     (cycleClose : forall (row column : Fin genus)
       (cycle : Fin genus) (index : Nat),
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (FiniteSum.Fin.sumFin fun face : Fin 2 =>
             handleTriangleIntegral data row column cycle face index) <=
         Geometric.Basic.quarterRadius perCycle index) :
@@ -1534,7 +1540,7 @@ def ofCycleMinors {genus : Nat} {curve : Basic.HyperellipticCurve genus} (data :
     (scale perCycle : Coordinate) (nonnegative : 0 <= scale)
     (count_paid : (genus : Coordinate) * ((genus : Coordinate) * perCycle) <= scale)
     (minorClose : forall (row column : Fin genus) (cycle : Fin genus) (index : Nat),
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (sampledMatrix data.aMatrix index row cycle * sampledMatrix data.bMatrix index column cycle -
             sampledMatrix data.bMatrix index row cycle * sampledMatrix data.aMatrix index column cycle) <=
         Geometric.Basic.quarterRadius perCycle index) :
@@ -1614,7 +1620,7 @@ def cellularBoundaryProgram {genus : Nat}
     (pairs : CellularEdgePairs curve) (row column : Fin genus)
     (refinement : Nat) : RefinementProgram :=
   Gaussian.Basic.RefinementProgram.ofCoherentNamed
-    (Name.Coherent.CoherentNamed.add pairs.boundarySum
+    (CoherentNamed.add pairs.boundarySum
       (surfaceWedgeSum geometry row column refinement))
 
 open Purelib in
@@ -1637,7 +1643,7 @@ def closePrimitive_of_cellularProgramComparison {genus : Nat}
     (pairs : CellularEdgePairs curve) (bridgeScale : Coordinate)
     (bridgeScale_nonnegative : 0 <= bridgeScale)
     (sample_close : forall index : Nat,
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (((Periods.Pairing.periodPairingCycleSumProgram
             schedules.toPeriodData row column).model index).integralSample -
           ((cellularBoundaryProgram geometry pairs row column refinement).model
@@ -1646,18 +1652,18 @@ def closePrimitive_of_cellularProgramComparison {genus : Nat}
     NamedEquivalent
       (Periods.Pairing.periodPairingPrimitiveFinish
         schedules.toPeriodData row column).name
-      (Name.Coherent.CoherentNamed.Coherence.exact 0).name := by
+      (CoherentNamed.Coherence.exact 0).name := by
   let paired := pairs.boundarySum
   let wedges := surfaceWedgeSum geometry row column refinement
-  let total := Name.Coherent.CoherentNamed.add paired wedges
+  let total := CoherentNamed.add paired wedges
   let boundaryProgram := cellularBoundaryProgram geometry pairs row column
     refinement
-  let zero := Name.Coherent.CoherentNamed.Coherence.exact 0
+  let zero := CoherentNamed.Coherence.exact 0
   have programsEquivalent : NamedEquivalent
       (Periods.Pairing.periodPairingCycleSumProgram
         schedules.toPeriodData row column).output.name
       boundaryProgram.output.name := by
-    apply Integration.Program.Comparison.refinementProgram_output_equivalent_of_samples_close
+    apply Program.Comparison.refinementProgram_output_equivalent_of_samples_close
       _ _ bridgeScale bridgeScale_nonnegative
     intro index
     simpa only [boundaryProgram] using sample_close index
@@ -1665,7 +1671,7 @@ def closePrimitive_of_cellularProgramComparison {genus : Nat}
       boundaryProgram.output.name := by
     simpa only [total, boundaryProgram, cellularBoundaryProgram, paired,
       wedges] using
-      Integration.Program.Comparison.ofCoherentNamed_output_equivalent total
+      Program.Comparison.ofCoherentNamed_output_equivalent total
   have pairedZero : NamedEquivalent paired.name zero.name := by
     simpa only [paired, zero] using pairs.boundarySum_zero
   have wedgesZero : NamedEquivalent wedges.name zero.name := by
@@ -1673,7 +1679,7 @@ def closePrimitive_of_cellularProgramComparison {genus : Nat}
       surfaceWedgeSum_zero geometry row column refinement
   have totalZero : NamedEquivalent total.name zero.name :=
     Equivalence.NamedEquivalent.trans
-      (Name.Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects
+      (Arithmetic.Sum.Congruence.coherentAdd_respects
         paired zero wedges zero pairedZero wedgesZero)
       (Arithmetic.Add.coherentAdd_zero_right zero)
   exact Equivalence.NamedEquivalent.trans
@@ -1710,7 +1716,7 @@ structure CellularProgramBoundaryReduction {genus : Nat}
     0 <= bridgeScale row column
   /-- The exact difference of the retained program samples meets its original geometric bound. -/ sample_close : forall
     row column : Fin genus, forall index : Nat,
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (((Periods.Pairing.periodPairingCycleSumProgram
           schedules.toPeriodData row column).model index).integralSample -
         ((cellularBoundaryProgram geometry (edgePairs row column) row column
@@ -1768,7 +1774,7 @@ def toCellularBoundaryReduction {genus : Nat}
   edgePairs := reduction.edgePairs
   boundary_eq_surface := by
     intro row column
-    let total := Name.Coherent.CoherentNamed.add
+    let total := CoherentNamed.add
       (reduction.edgePairs row column).boundarySum
       (surfaceWedgeSum geometry row column
         (reduction.refinement row column))
@@ -1779,7 +1785,7 @@ def toCellularBoundaryReduction {genus : Nat}
         (Periods.Pairing.periodPairingCycleSumProgram
           schedules.toPeriodData row column).output.name
         boundaryProgram.output.name := by
-      apply Integration.Program.Comparison.refinementProgram_output_equivalent_of_samples_close
+      apply Program.Comparison.refinementProgram_output_equivalent_of_samples_close
         _ _ (reduction.bridgeScale row column)
           (reduction.bridgeScale_nonnegative row column)
       intro index
@@ -1787,7 +1793,7 @@ def toCellularBoundaryReduction {genus : Nat}
     have boundaryProgramEquivalent : NamedEquivalent total.name
         boundaryProgram.output.name := by
       simpa only [total, boundaryProgram, cellularBoundaryProgram] using
-        Integration.Program.Comparison.ofCoherentNamed_output_equivalent total
+        Program.Comparison.ofCoherentNamed_output_equivalent total
     exact Equivalence.NamedEquivalent.trans
       (Periods.Pairing.periodPairingPrimitiveFinish_equivalent_program
         schedules.toPeriodData row column)
@@ -1839,7 +1845,7 @@ structure UpperCellularProgramBoundaryReduction {genus : Nat}
   /-- The exact difference of the retained program samples meets its original geometric bound. -/ sample_close : forall
     row column : Fin genus,
     (less : row.val < column.val) -> forall index : Nat,
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (((Periods.Pairing.periodPairingCycleSumProgram
           schedules.toPeriodData row column).model index).integralSample -
         ((cellularBoundaryProgram geometry (edgePairs row column less)
@@ -1899,7 +1905,7 @@ def genusTwo {curve : Basic.HyperellipticCurve 2}
     (refinement : Nat) (pairs : CellularEdgePairs curve)
     (bridgeScale : Coordinate) (bridgeScale_nonnegative : 0 <= bridgeScale)
     (sample_close : forall index : Nat,
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (((Periods.Pairing.periodPairingCycleSumProgram
             schedules.toPeriodData 0 1).model index).integralSample -
           ((cellularBoundaryProgram geometry pairs 0 1 refinement).model

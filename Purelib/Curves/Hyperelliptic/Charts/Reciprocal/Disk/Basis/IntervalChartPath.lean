@@ -117,43 +117,43 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues (Basis
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations
   (PrimitiveBank)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 namespace BasisIntervalChartRequest
 
-variable {interval : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover
-  covers} {depth index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest
+variable {interval : BasisCommonInterval cover
+  covers} {depth index minimum : Nat} {box : Geometry.Rational.Box}
+  {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 namespace Plan.Evaluation
 
 variable {plan :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan
+  Plan
   request capSample polynomials minimum}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.anchor.cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {bank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank
+  {comparison : ArcSamples.Data regular interval.anchor.cell}
+  {sample : ArcSamples.Sample comparison capSample}
+  {bank : BasisSourceLocations.SampleBank
     covers index} {stage : Nat}
 
 /-- Reuse the acquired midpoint and extreme root readings. -/
@@ -162,20 +162,20 @@ variable {plan :
 
 /-- The actual coefficient-weighted source value at the original acquired first root reading. -/
 @[expose] def firstValue (evaluated : Plan.Evaluation plan sample bank stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector
+  GaussianVector
   genus) : Gaussian :=
-  FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.firstSources.evaluated.sources row)
+  sumFin (fun row => coefficients row * evaluated.firstSources.evaluated.sources row)
 
 /-- The actual coefficient-weighted source value at the original acquired last root reading. -/
 @[expose] def lastValue (evaluated : Plan.Evaluation plan sample bank stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector
+  GaussianVector
   genus) : Gaussian :=
-  FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.lastSources.evaluated.sources row)
+  sumFin (fun row => coefficients row * evaluated.lastSources.evaluated.sources row)
 
 /-- The paired source/chart path on the exact retained midpoint and endpoint readings, with their original source
 accuracy certificates. -/
 @[expose] def values (evaluated : Plan.Evaluation plan sample bank stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  GaussianVector genus)
   :=
   Plans.pathValues bank coefficients request.tree request.treeSources plan.treeSources
     evaluated.readings evaluated.treeSources evaluated.first evaluated.last interval.ordered
@@ -189,8 +189,8 @@ accuracy certificates. -/
 /-- The actual retained source increments equal the original dyadic pullback increments on the complete common interval.
 -/
 theorem source_path (evaluated : Plan.Evaluation plan sample bank stage)
-    (originals : BasisSourceLocations.PrimitiveBank covers index) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    (originals : PrimitiveBank covers index) (coefficients :
+      GaussianVector genus) :
 
       (values
       evaluated coefficients).pairs.map Prod.fst = DyadicPrimitivePaths.dyadicIncrements
@@ -218,20 +218,20 @@ open
 set_option genInjectivity false in
 /-- Both polygon summaries refer to the original acquired root path. -/
 structure PathData (evaluated : Plan.Evaluation plan sample bank stage)
-    (originals : BasisSourceLocations.PrimitiveBank covers index) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) where
+    (originals : PrimitiveBank covers index) (coefficients :
+      GaussianVector genus) where
   /-- The cached coefficient-weighted source value at the original first acquired endpoint. -/ firstSource :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The first source cache reads the original retained first endpoint transports. -/ first_eq : firstSource =
     firstValue
     evaluated coefficients
   /-- The cached coefficient-weighted source value at the original last acquired endpoint. -/ lastSource :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The last source cache reads the original retained last endpoint transports. -/ last_eq : lastSource =
     lastValue
     evaluated coefficients
   /-- The actual paired source/chart path on the retained original root segments and endpoint values. -/ paired :
-    PathValues.BasisPathValues polynomials coefficients sourceTarget (path evaluated).segments firstSource lastSource
+    BasisPathValues polynomials coefficients sourceTarget (path evaluated).segments firstSource lastSource
   /-- The retained complete source path is exactly the original interval pullback increment path. -/ source_path :
     paired.pairs.map Prod.fst = DyadicPrimitivePaths.dyadicIncrements
     ((BasisCommonInterval.primitiveSample interval regular polynomials originals bank).pullbackValue coefficients)
@@ -244,8 +244,8 @@ constructive_injectivity PathData
 /-- Materialize the paired source/chart path from the existing original endpoint and midpoint acquisitions and cache its
 complete chart summary. -/
 @[expose] def acquirePath (evaluated : Plan.Evaluation plan sample bank stage)
-    (originals : BasisSourceLocations.PrimitiveBank covers index) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    (originals : PrimitiveBank covers index) (coefficients :
+      GaussianVector genus) :
 
       PathData
       evaluated originals coefficients :=
@@ -269,8 +269,8 @@ open
 /-- The source summary is the same complete area used by the common-depth comparison; this is a path identity, not just
 an endpoint equality. -/
 theorem PathData.source_area (evaluated : Plan.Evaluation plan sample bank stage)
-    {originals : BasisSourceLocations.PrimitiveBank covers index} {coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+    {originals : PrimitiveBank covers index} {coefficients :
+      GaussianVector genus}
     (path :
       PathData
       evaluated originals coefficients)
@@ -284,8 +284,8 @@ open
   in
 /-- The retained source path total equals the exact original common-depth pullback block total. -/
 theorem PathData.source_total (evaluated : Plan.Evaluation plan sample bank stage)
-    {originals : BasisSourceLocations.PrimitiveBank covers index} {coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+    {originals : PrimitiveBank covers index} {coefficients :
+      GaussianVector genus}
     (path :
       PathData
       evaluated originals coefficients)

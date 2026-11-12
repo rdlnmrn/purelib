@@ -93,12 +93,12 @@ open Purelib.Topology.Surface.Sewing.SewnFaceAreaComparison (FaceAreaRequest)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces}
   {patch : SewnPatch mesh.triangulation.faces} {domains :
@@ -107,17 +107,17 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 set_option genInjectivity false in
 /-- The original differential's magnitude references and covered sewing contacts on a retained shared face bank. -/
-structure SelectionAreaPreparation (patch : SewingTree.SewnPatch mesh.triangulation.faces)
-    (domains : DomainBanks.FaceDomainBank frames faces.regulars) (differential : Differentials.Basic.Differential genus)
+structure SelectionAreaPreparation (patch : SewnPatch mesh.triangulation.faces)
+    (domains : FaceDomainBank frames faces.regulars) (differential : Differential genus)
       where
   /-- The cached magnitude references on the exact original differential and face domains. -/ references :
-    MagnitudeBank.FaceMagnitudeBank domains differential
+    FaceMagnitudeBank domains differential
   /-- The retained list of actual source contacts, possibly containing an existing covered superset. -/ contacts : List
-    (SewnPrimitiveContacts.SourceContact mesh.triangulation.faces)
+    (SourceContact mesh.triangulation.faces)
   /-- Every original polygon assembly contact belongs to the retained contact list. -/ coverage : ∀ contact ∈
     SewnPrimitiveContacts.sourceContacts patch.assembly, contact ∈ contacts
   /-- The differential's actual preparations on this exact retained contact list and domains. -/ covered :
-    ContactBanks.ContactPreparations contacts differential domains
+    ContactPreparations contacts differential domains
 
 constructive_injectivity SelectionAreaPreparation
 
@@ -125,10 +125,10 @@ namespace SelectionAreaPreparation
 
 /-- A caller with an existing covered contact superset may retain it directly in the structure. The default constructor
 discharges coverage from the actual assembly and reuses the supplied domains unchanged. -/
-def build (patch : SewingTree.SewnPatch mesh.triangulation.faces) (domains : DomainBanks.FaceDomainBank frames
+def build (patch : SewnPatch mesh.triangulation.faces) (domains : FaceDomainBank frames
   faces.regulars)
-    (differential : Differentials.Basic.Differential genus) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation patch domains
+    (differential : Differential genus) :
+      SelectionAreaPreparation patch domains
       differential :=
   let contacts := ContactBank.build patch.assembly
   ⟨FaceMagnitudeBank.build domains differential, contacts.entries,
@@ -136,10 +136,10 @@ def build (patch : SewingTree.SewnPatch mesh.triangulation.faces) (domains : Dom
 
 set_option genInjectivity false in
 /-- A selected-area budget and complete paid contact request on the original preparation. -/
-structure Request (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation
-  patch domains differential) (target : SewnPrimitiveFaces.Coordinate) (floor : Nat) where
+structure Request (prepared : SelectionAreaPreparation
+  patch domains differential) (target : Coordinate) (floor : Nat) where
   /-- The retained face-area budget using the original cached magnitude bound. -/ budget :
-    SewnFaceAreaComparison.FaceAreaRequest patch.assembly prepared.references.bound target
+    FaceAreaRequest patch.assembly prepared.references.bound target
   /-- The retained contact request meeting both the caller floor and magnitude-reference stage. -/ contact :
     ContactPreparations.Request prepared.covered budget.sewing.tolerance (max floor prepared.references.index)
 
@@ -147,15 +147,15 @@ constructive_injectivity Request
 
 namespace Request
 
-variable {prepared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation
-  patch domains differential} {target : Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate} {floor : Nat}
+variable {prepared : SelectionAreaPreparation
+  patch domains differential} {target : Coordinate} {floor : Nat}
 
 /-- Allocate the original positive selected-area target and cache its covered contact request above both retained stage
 floors. -/
-def build (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation patch
-  domains differential) (target : SewnPrimitiveFaces.Coordinate)
+def build (prepared : SelectionAreaPreparation patch
+  domains differential) (target : Coordinate)
     (positive : 0 < target) (floor : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation.Request prepared target
+      Request prepared target
       floor :=
   let budget := FaceAreaRequest.build patch.assembly prepared.references.bound target prepared.references.nonnegative
     positive
@@ -164,16 +164,16 @@ def build (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionReq
 
 /-- The actual retained contact stage meets the original caller floor. -/
 theorem floor_le (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation.Request prepared target
+  Request prepared target
   floor) : floor ≤ request.contact.index :=
   (Order.le_max_left _ _).trans request.contact.floor_le
 
 /-- Every actual selection mask and shared later sample satisfy the original selected-area target. -/
 theorem accurate (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation.Request prepared target
+  Request prepared target
   floor) {index : Nat} (later : request.contact.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank differential index domains} (triangles :
-      TrianglePrimitiveReadings.TriangleReadings shared mesh)
+    {shared : FacePrimitiveBank differential index domains} (triangles :
+      TriangleReadings shared mesh)
     (sample : SewnPrimitiveSamples.CachedSample patch triangles.values) {keep : Fin mesh.triangles.length → Bool}
     (selected : CachedSample.FaceSelection sample keep)
     (area : selected.LocalArea) : Data.Gaussian.Norm.Basic.normSq (selected.area - area.value) < target :=

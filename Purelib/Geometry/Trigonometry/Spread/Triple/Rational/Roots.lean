@@ -19,6 +19,8 @@ public import Purelib.Data.Rat.Fraction.Field
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 open Purelib.Algebra
 open Purelib.Data
@@ -82,7 +84,7 @@ theorem spreadTriple_eq_little_or_big
     (rootWitness : SpreadRootWitness first second root) :
     third = littleSpread first second root ∨
       third = bigSpread first second root := by
-  have normalForm := (Triple.exercise_7_6 triple).2.2.2.2
+  have normalForm := (exercise_7_6 triple).2.2.2.2
   have equalSquares :
       (third - (first + second - 2 * first * second)) ^ 2 =
         (2 * root) ^ 2 := by
@@ -124,7 +126,7 @@ theorem spreadTriple_eq_little_or_big
               ring1
         _ = 0 := lowerRoot
     · exact False.elim
-        ((Algebra.Field.ExplicitField.mul_ne_zero upperRoot lowerRoot) factorProduct)
+        ((Field.ExplicitField.mul_ne_zero upperRoot lowerRoot) factorProduct)
 
 /-- The big root automatically makes the first two sectors acute. -/
 theorem bigSpread_first_second_acute
@@ -136,33 +138,33 @@ theorem bigSpread_first_second_acute
       second ≤ bigSpread first second root + first := by
   have twoNonnegative : (0 : Fraction.Rational) ≤ 2 := by decide
   have firstComplementNonnegative : 0 ≤ 1 - first :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct firstAtMostOne
+    Arithmetic.sub_nonneg_direct firstAtMostOne
   have secondComplementNonnegative : 0 ≤ 1 - second :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct secondAtMostOne
+    Arithmetic.sub_nonneg_direct secondAtMostOne
   have firstTermNonnegative :
       0 ≤ 2 * second * (1 - first) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct twoNonnegative
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct twoNonnegative
         secondNonnegative)
       firstComplementNonnegative
   have secondTermNonnegative :
       0 ≤ 2 * first * (1 - second) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct twoNonnegative
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct twoNonnegative
         firstNonnegative)
       secondComplementNonnegative
   have rootTermNonnegative : 0 ≤ 2 * root :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct twoNonnegative
+    Arithmetic.mul_nonneg_direct twoNonnegative
       rootNonnegative
   constructor
-  · apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  · apply Arithmetic.le_of_sub_nonneg_direct
     calc
       bigSpread first second root + second - first =
           2 * second * (1 - first) + 2 * root := by
             unfold bigSpread
             ring1
       _ ≥ 0 := Fraction.Order.add_nonnegative firstTermNonnegative rootTermNonnegative
-  · apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  · apply Arithmetic.le_of_sub_nonneg_direct
     calc
       bigSpread first second root + first - second =
           2 * first * (1 - second) + 2 * root := by
@@ -183,13 +185,13 @@ theorem triangle_spread_rule_1
     third = bigSpread first second root ↔
       first ≤ third + second ∧ second ≤ third + first := by
   have firstNonnegative : 0 ≤ first :=
-    Fraction.Order.Arithmetic.le_of_lt_direct firstRange.1
+    Arithmetic.le_of_lt_direct firstRange.1
   have secondNonnegative : 0 ≤ second :=
-    Fraction.Order.Arithmetic.le_of_lt_direct secondRange.1
+    Arithmetic.le_of_lt_direct secondRange.1
   have firstComplementNonnegative : 0 ≤ 1 - first :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct firstRange.2
+    Arithmetic.sub_nonneg_direct firstRange.2
   have secondComplementNonnegative : 0 ≤ 1 - second :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct secondRange.2
+    Arithmetic.sub_nonneg_direct secondRange.2
   constructor
   · intro thirdBig
     rw [thirdBig]
@@ -219,32 +221,32 @@ theorem triangle_spread_rule_1
             _ = (second * (1 - first)) *
                 (first * (1 - second)) := by ring1
         have firstArmNonnegative : 0 ≤ second * (1 - first) :=
-          Fraction.Order.Arithmetic.mul_nonneg_direct secondNonnegative
+          Arithmetic.mul_nonneg_direct secondNonnegative
             firstComplementNonnegative
         have secondArmNonnegative : 0 ≤ first * (1 - second) :=
-          Fraction.Order.Arithmetic.mul_nonneg_direct firstNonnegative
+          Arithmetic.mul_nonneg_direct firstNonnegative
             secondComplementNonnegative
         have rootSquarePositive : 0 < root ^ 2 :=
-          Fraction.Order.Arithmetic.pow_pos_direct rootPositive 2
+          Arithmetic.pow_pos_direct rootPositive 2
         have armProductPositive :
             0 < (second * (1 - first)) * (first * (1 - second)) := by
           rw [← rootSquareProduct]
           exact rootSquarePositive
         have secondArmPositive : 0 < first * (1 - second) :=
-          Fraction.Order.Arithmetic.pos_of_mul_pos_right_direct
+          Arithmetic.pos_of_mul_pos_right_direct
             armProductPositive firstArmNonnegative
         have firstArmPositive : 0 < second * (1 - first) := by
-          exact Fraction.Order.Arithmetic.pos_of_mul_pos_right_direct
+          exact Arithmetic.pos_of_mul_pos_right_direct
             (by simpa only [mul_comm] using armProductPositive)
             secondArmNonnegative
         have rootLeFirstArm : root ≤ second * (1 - first) := by
-          apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+          apply Arithmetic.le_of_mul_le_mul_right_direct
             (c := (2 : Fraction.Rational))
           · have acuteDifference : 0 ≤ third + second - first :=
-              Fraction.Order.Arithmetic.sub_nonneg_direct firstAcute
+              Arithmetic.sub_nonneg_direct firstAcute
             have scaled :
                 root * 2 ≤ (second * (1 - first)) * 2 := by
-              apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+              apply Arithmetic.le_of_sub_nonneg_direct
               calc
                 (second * (1 - first)) * 2 - root * 2 =
                     third + second - first := by
@@ -255,13 +257,13 @@ theorem triangle_spread_rule_1
             exact scaled
           · decide
         have rootLeSecondArm : root ≤ first * (1 - second) := by
-          apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+          apply Arithmetic.le_of_mul_le_mul_right_direct
             (c := (2 : Fraction.Rational))
           · have acuteDifference : 0 ≤ third + first - second :=
-              Fraction.Order.Arithmetic.sub_nonneg_direct secondAcute
+              Arithmetic.sub_nonneg_direct secondAcute
             have scaled :
                 root * 2 ≤ (first * (1 - second)) * 2 := by
-              apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+              apply Arithmetic.le_of_sub_nonneg_direct
               calc
                 (first * (1 - second)) * 2 - root * 2 =
                     third + first - second := by
@@ -273,15 +275,15 @@ theorem triangle_spread_rule_1
           · decide
         have rootSquareLeFirstArmSquare :
             root ^ 2 ≤ (second * (1 - first)) ^ 2 :=
-          Fraction.Order.Arithmetic.pow_le_pow_direct rootWitness.1
+          Arithmetic.pow_le_pow_direct rootWitness.1
             rootLeFirstArm 2
         have rootSquareLeSecondArmSquare :
             root ^ 2 ≤ (first * (1 - second)) ^ 2 :=
-          Fraction.Order.Arithmetic.pow_le_pow_direct rootWitness.1
+          Arithmetic.pow_le_pow_direct rootWitness.1
             rootLeSecondArm 2
         have secondArmLeFirstArm :
             first * (1 - second) ≤ second * (1 - first) := by
-          apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+          apply Arithmetic.le_of_mul_le_mul_right_direct
             (c := second * (1 - first))
           · calc
               (first * (1 - second)) * (second * (1 - first)) =
@@ -293,7 +295,7 @@ theorem triangle_spread_rule_1
           · exact firstArmPositive
         have firstArmLeSecondArm :
             second * (1 - first) ≤ first * (1 - second) := by
-          apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+          apply Arithmetic.le_of_mul_le_mul_right_direct
             (c := first * (1 - second))
           · calc
               (second * (1 - first)) * (first * (1 - second)) =
@@ -321,7 +323,7 @@ theorem triangle_spread_rule_1
                   ring1
             _ = root ^ 2 := rootSquareProduct.symm
         have firstArmLeRoot : second * (1 - first) ≤ root :=
-          Fraction.Order.Arithmetic.le_of_sq_le_sq_direct rootWitness.1
+          Arithmetic.le_of_sq_le_sq_direct rootWitness.1
             (by rw [firstArmSquareEqualsRootSquare])
         have rootEqualsFirstArm : root = second * (1 - first) :=
           le_antisymm rootLeFirstArm firstArmLeRoot
@@ -345,18 +347,18 @@ theorem spreadRoot_product_le_iff_sum_le_one
     (rootWitness : SpreadRootWitness first second root) :
     first * second ≤ root ↔ first + second ≤ 1 := by
   have firstNonnegative : 0 ≤ first :=
-    Fraction.Order.Arithmetic.le_of_lt_direct firstRange.1
+    Arithmetic.le_of_lt_direct firstRange.1
   have secondNonnegative : 0 ≤ second :=
-    Fraction.Order.Arithmetic.le_of_lt_direct secondRange.1
+    Arithmetic.le_of_lt_direct secondRange.1
   have productPositive : 0 < first * second :=
-    Fraction.Order.Arithmetic.mul_pos_direct firstRange.1 secondRange.1
+    Arithmetic.mul_pos_direct firstRange.1 secondRange.1
   have productNonnegative : 0 ≤ first * second :=
-    Fraction.Order.Arithmetic.le_of_lt_direct productPositive
+    Arithmetic.le_of_lt_direct productPositive
   constructor
   · intro productLeRoot
     have squareOrder :
         (first * second) ^ 2 ≤ root ^ 2 :=
-      Fraction.Order.Arithmetic.pow_le_pow_direct productNonnegative
+      Arithmetic.pow_le_pow_direct productNonnegative
         productLeRoot 2
     have factoredNonnegative :
         0 ≤ (first * second) * (1 - (first + second)) := by
@@ -365,28 +367,28 @@ theorem spreadRoot_product_le_iff_sum_le_one
             root ^ 2 - (first * second) ^ 2 := by
               rw [rootWitness.2]
               ring1
-        _ ≥ 0 := Fraction.Order.Arithmetic.sub_nonneg_direct squareOrder
+        _ ≥ 0 := Arithmetic.sub_nonneg_direct squareOrder
     have complementNonnegative : 0 ≤ 1 - (first + second) :=
-      (Fraction.Order.PositiveMul.nonnegative_mul_iff_of_positive (first * second)
+      (PositiveMul.nonnegative_mul_iff_of_positive (first * second)
         (1 - (first + second)) productPositive).1 factoredNonnegative
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    exact Arithmetic.le_of_sub_nonneg_direct
       complementNonnegative
   · intro sumLeOne
     have complementNonnegative : 0 ≤ 1 - (first + second) :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct sumLeOne
+      Arithmetic.sub_nonneg_direct sumLeOne
     have factoredNonnegative :
         0 ≤ (first * second) * (1 - (first + second)) :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct productNonnegative
+      Arithmetic.mul_nonneg_direct productNonnegative
         complementNonnegative
     have squareOrder : (first * second) ^ 2 ≤ root ^ 2 := by
-      apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+      apply Arithmetic.le_of_sub_nonneg_direct
       calc
         root ^ 2 - (first * second) ^ 2 =
             (first * second) * (1 - (first + second)) := by
               rw [rootWitness.2]
               ring1
         _ ≥ 0 := factoredNonnegative
-    exact Fraction.Order.Arithmetic.le_of_sq_le_sq_direct rootWitness.1
+    exact Arithmetic.le_of_sq_le_sq_direct rootWitness.1
       squareOrder
 
 /-- For the big root, being at least `s₁+s₂` is equivalent to `s₁+s₂≤1`. -/
@@ -403,28 +405,28 @@ theorem bigSpread_obtuse_iff_sum_le_one
   constructor
   · intro bigObtuse
     apply rootComparison.1
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := (2 : Fraction.Rational))
-    · apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    · apply Arithmetic.le_of_sub_nonneg_direct
       calc
         root * 2 - (first * second) * 2 =
             bigSpread first second root - (first + second) := by
               unfold bigSpread
               ring1
-        _ ≥ 0 := Fraction.Order.Arithmetic.sub_nonneg_direct bigObtuse
+        _ ≥ 0 := Arithmetic.sub_nonneg_direct bigObtuse
     · exact twoPositive
   · intro sumLeOne
     have productLeRoot := rootComparison.2 sumLeOne
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       bigSpread first second root - (first + second) =
           (root - first * second) * 2 := by
             unfold bigSpread
             ring1
       _ ≥ 0 :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Fraction.Order.Arithmetic.sub_nonneg_direct productLeRoot)
-          (Fraction.Order.Arithmetic.le_of_lt_direct twoPositive)
+        Arithmetic.mul_nonneg_direct
+          (Arithmetic.sub_nonneg_direct productLeRoot)
+          (Arithmetic.le_of_lt_direct twoPositive)
 
 /-- Triangle spread rule 2: the third sector is obtuse exactly when the first two are acute and their spreads sum to at
 most one. -/
@@ -452,17 +454,17 @@ theorem triangle_spread_rule_2
       by_cases acute : first ≤ third + second
       · exact acute
       · have strictObtuse : third + second < first :=
-          Fraction.Order.Arithmetic.lt_of_not_ge_direct acute
+          Arithmetic.lt_of_not_ge_direct acute
         have firstObtuse : TriangleBounds.ObtuseAtFirst first third second :=
-          Fraction.Order.Arithmetic.le_of_lt_direct strictObtuse
+          Arithmetic.le_of_lt_direct strictObtuse
         exact False.elim (noTwoObtuse.2.2 ⟨thirdObtuse, firstObtuse⟩)
     have secondAcute : second ≤ third + first := by
       by_cases acute : second ≤ third + first
       · exact acute
       · have strictObtuse : third + first < second :=
-          Fraction.Order.Arithmetic.lt_of_not_ge_direct acute
+          Arithmetic.lt_of_not_ge_direct acute
         have secondObtuse : TriangleBounds.ObtuseAtFirst second third first :=
-          Fraction.Order.Arithmetic.le_of_lt_direct strictObtuse
+          Arithmetic.le_of_lt_direct strictObtuse
         have reorderedThirdObtuse : TriangleBounds.ObtuseAtFirst third second first := by
           unfold TriangleBounds.ObtuseAtFirst at thirdObtuse ⊢
           simpa only [add_comm] using thirdObtuse

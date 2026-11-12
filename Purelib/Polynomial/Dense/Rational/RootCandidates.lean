@@ -10,7 +10,7 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Integer.Homogeneous
 import Purelib.Polynomial.Dense.Rational.Denominator
 public import Purelib.Polynomial.Dense.Rational.RootBounds
-public import Purelib.Polynomial.Dense.Rational.TrimTrailing
+public import Purelib.Polynomial.Dense.TrimTrailing
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 
@@ -32,8 +32,8 @@ open Purelib.Data.List Purelib.Data.Int
 /-- Coarse finite search bound obtained from the actually displayed,
 normalized, trailing-trimmed, denominator-cleared coefficients. -/
 @[expose] public def candidateBound (p : Basic.RootCandidates.CoefficientPolynomial) : Nat :=
-  Dense.Rational.RootBounds.coefficientBound
-    (Dense.Rational.Denominator.clear (Dense.Rational.TrimTrailing.trimTrailing p.normalize.coeffs)).coefficients
+  RootBounds.coefficientBound
+    (Denominator.clear (TrimTrailing.trimTrailing p.normalize.coeffs)).coefficients
 
 /-- A defensive upper bound on the number of displayed fractions inspected
 by `candidates` for one polynomial.  It deliberately charges for both copies
@@ -53,11 +53,11 @@ applied.
 Normalization and trailing-zero trimming produce the original rational table.
 Its exact denominator-clearance result retains the integer coefficient order. -/
 @[expose] public def preparedCoefficients (p : Basic.RootCandidates.CoefficientPolynomial) : List Int :=
-  (Dense.Rational.Denominator.clear (Dense.Rational.TrimTrailing.trimTrailing p.normalize.coeffs)).coefficients
+  (Denominator.clear (TrimTrailing.trimTrailing p.normalize.coeffs)).coefficients
 
 /-- Read the absolute constant coefficient of the normalized, trailing-trimmed, denominator-cleared integer table. -/
 @[expose] public def numeratorEndpointMagnitude (p : Basic.RootCandidates.CoefficientPolynomial) : Nat :=
-  (Dense.Integer.Homogeneous.constantCoefficient (preparedCoefficients p)).natAbs
+  (Integer.Homogeneous.constantCoefficient (preparedCoefficients p)).natAbs
 
 /-- Read the absolute leading coefficient of the normalized, trailing-trimmed, denominator-cleared integer table. -/
 @[expose] public def denominatorEndpointMagnitude (p : Basic.RootCandidates.CoefficientPolynomial) : Nat :=
@@ -76,7 +76,7 @@ The normalized and trimmed table determines the original cleared endpoints.
 Their signed/positive divisor occurrences keep their order before the exact
 evaluation test selects each original candidate. -/
 @[expose] public def candidates (p : Basic.RootCandidates.CoefficientPolynomial) : List Fraction.Rational :=
-  (0 :: Data.Rat.Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
+  (0 :: Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
       (denominatorEndpointMagnitude p)).filter
     (fun candidate => p.eval candidate = 0)
 
@@ -85,17 +85,17 @@ public theorem candidates_length_le (p : Basic.RootCandidates.CoefficientPolynom
     (candidates p).length ≤ divisorCandidateSearchSize p := by
   calc
     (candidates p).length ≤
-        (0 :: Data.Rat.Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
+        (0 :: Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
           (denominatorEndpointMagnitude p)).length := by
       exact Filter.length_filter_le _ _
-    _ = 1 + (Data.Rat.Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
+    _ = 1 + (Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
           (denominatorEndpointMagnitude p)).length := by
       simp only [List.length_cons]
       exact Nat.add_comm _ _
     _ ≤ 1 + 2 * numeratorEndpointMagnitude p *
           denominatorEndpointMagnitude p :=
       Nat.add_le_add_left
-        (Data.Rat.Enumeration.Divisors.divisorFractions_length_le (numeratorEndpointMagnitude p)
+        (Enumeration.Divisors.divisorFractions_length_le (numeratorEndpointMagnitude p)
           (denominatorEndpointMagnitude p)) 1
     _ = divisorCandidateSearchSize p := rfl
 
@@ -114,39 +114,39 @@ public theorem root_mem_candidates (p : Basic.RootCandidates.CoefficientPolynomi
   · subst point
     apply Filter.mem_filter.mpr
     exact ⟨List.Mem.head _, decide_eq_true root⟩
-  · rcases Dense.Basic.DensePolynomial.normalized_coeffs_shape nonzero with
+  · rcases Basic.DensePolynomial.normalized_coeffs_shape nonzero with
       ⟨remaining, normalizedShape, _degreeShape⟩
-    have leadingNonzero := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
-    rcases Dense.Rational.TrimTrailing.trimTrailing_cons_of_leading_nonzero p.leadingCoeff remaining
+    have leadingNonzero := Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
+    rcases TrimTrailing.trimTrailing_cons_of_leading_nonzero p.leadingCoeff remaining
         leadingNonzero with ⟨trimmedRemaining, trimmedShape⟩
     have normalizedRoot :
-        Dense.Basic.DensePolynomial.evalCoeffs point p.normalize.coeffs = 0 := by
+        Basic.DensePolynomial.evalCoeffs point p.normalize.coeffs = 0 := by
       change p.normalize.eval point = 0
-      rewrite [Dense.Basic.DensePolynomial.eval_normalize]
+      rewrite [Basic.DensePolynomial.eval_normalize]
       exact root
-    have trimmedRoot := Dense.Rational.TrimTrailing.eval_trimTrailing_eq_zero_of_nonzero_root point
+    have trimmedRoot := TrimTrailing.eval_trimTrailing_eq_zero_of_nonzero_root point
       p.normalize.coeffs pointZero normalizedRoot
     rw [normalizedShape, trimmedShape] at trimmedRoot
-    have homogeneousZero := Dense.Rational.RootBounds.homogeneous_zero_of_eval_zero point
+    have homogeneousZero := RootBounds.homogeneous_zero_of_eval_zero point
       p.leadingCoeff trimmedRemaining trimmedRoot
-    rcases Dense.Rational.Denominator.clear_leading_nonzero p.leadingCoeff trimmedRemaining
+    rcases Denominator.clear_leading_nonzero p.leadingCoeff trimmedRemaining
         leadingNonzero with
       ⟨integerLeading, integerRemaining, clearedShape,
         integerLeadingNonzero⟩
     rw [clearedShape] at homogeneousZero
-    have rationalConstantNonzero := Dense.Rational.TrimTrailing.trimTrailing_constant_nonzero
+    have rationalConstantNonzero := TrimTrailing.trimTrailing_constant_nonzero
       (p.leadingCoeff :: remaining) p.leadingCoeff trimmedRemaining
       trimmedShape
-    have integerConstantNonzero := Dense.Rational.Denominator.clear_constant_nonzero
+    have integerConstantNonzero := Denominator.clear_constant_nonzero
       p.leadingCoeff trimmedRemaining rationalConstantNonzero
     rw [clearedShape] at integerConstantNonzero
-    have divisors := Dense.Rational.RootBounds.reduced_divisors_of_homogeneous_zero
+    have divisors := RootBounds.reduced_divisors_of_homogeneous_zero
       (Fraction.Basic.representative point) integerLeading integerRemaining
       integerLeadingNonzero integerConstantNonzero homogeneousZero
     have divisorMember : point ∈
-        Data.Rat.Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
+        Enumeration.Divisors.divisorFractions (numeratorEndpointMagnitude p)
           (denominatorEndpointMagnitude p) := by
-      apply Data.Rat.Enumeration.Divisors.mem_divisorFractions_of_representative_divisors point
+      apply Enumeration.Divisors.mem_divisorFractions_of_representative_divisors point
       · exact pointZero
       · simpa only [numeratorEndpointMagnitude, preparedCoefficients,
           normalizedShape, trimmedShape, clearedShape, leadingCoefficient]

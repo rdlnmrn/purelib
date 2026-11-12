@@ -56,6 +56,8 @@ import Purelib.Topology.Surface.Cut.Patch
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -131,7 +133,7 @@ open Purelib.Topology.Surface.Sewing.CenteredSewnSamples (Centered)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {count : Nat}
@@ -148,26 +150,26 @@ set_option genInjectivity false in
 
 The complete retained word count determines one per-entry allowance; the contact allocation cancels its own pair-count
 factor before the final word estimate. -/
-structure WordBudget (family : PeriodFamilies.PrimitiveFamily programs domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
+structure WordBudget (family : PrimitiveFamily programs domains differential)
+    (prepared : BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
       differential) domains)
-    (lengthBound : Nat) (pathTarget wordTarget : PreparedPrimitiveChargeBounds.Coordinate) (targets :
-      Data.Vector PreparedPrimitiveChargeBounds.Coordinate count) (floor : Nat) where
+    (lengthBound : Nat) (pathTarget wordTarget : Coordinate) (targets :
+      Data.Vector Coordinate count) (floor : Nat) where
   /-- The requested complete word-error target is strictly positive. -/ positive : 0 < wordTarget
   /-- The cached complete original cut-boundary length. -/ wordCount : Nat
   /-- The cached word count equals the exact original cut-boundary length. -/ wordCount_eq : wordCount =
     patch.cut.boundary.length
   /-- The cached positive error allowance per original word entry. -/ perEntry :
-    PreparedPrimitiveChargeBounds.Coordinate
+    Coordinate
   /-- The per-entry allowance is the aggregate allocation using the retained word target and count. -/ perEntry_eq :
     perEntry = Aggregate.perTerm wordTarget wordCount
   /-- The cached contact-boundary target before cancellation of the original pair-count scale. -/ boundaryTarget :
-    PreparedPrimitiveChargeBounds.Coordinate
+    Coordinate
   /-- The contact target is the original pair-count scale multiplied by the cached word-entry allowance. -/
     boundaryTarget_eq : boundaryTarget =
     (2 * (Aggregate.countCoordinate prepared.pairCount + 1) ^ 2) * perEntry
   /-- The original joint period and contact request paying the cached boundary target. -/ request :
-    ContactPeriodRequests.ContactBudget family prepared lengthBound pathTarget boundaryTarget targets floor
+    ContactBudget family prepared lengthBound pathTarget boundaryTarget targets floor
 
 constructive_injectivity WordBudget
 
@@ -176,22 +178,22 @@ namespace WordBudget
 variable {family : PrimitiveFamily programs domains
   differential}
   {prepared : BoundaryContactPreparations patch
-    pairing (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential differential) domains}
+    pairing (PeriodMatrix.standardDifferential differential) domains}
   {lengthBound : Nat} {pathTarget wordTarget : Coordinate}
   {targets : Data.Vector Coordinate count}
     {floor : Nat}
 
 /-- Consume a previously cached complete boundary count. In particular, an implicit canonical patch must not be
 materialized just to count its edges. Generated and intrinsic boundary programs supply the same exact readback. -/
-@[expose] def build (family : PeriodFamilies.PrimitiveFamily programs domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
+@[expose] def build (family : PrimitiveFamily programs domains differential)
+    (prepared : BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
       differential) domains)
     (wordCount : Nat) (wordCount_eq : wordCount = patch.cut.boundary.length)
-    (lengthBound : Nat) (pathTarget : PreparedPrimitiveChargeBounds.Coordinate) (pathPositive : 0 < pathTarget)
-    (wordTarget : PreparedPrimitiveChargeBounds.Coordinate) (wordPositive : 0 < wordTarget)
-    (targets : Data.Vector PreparedPrimitiveChargeBounds.Coordinate count) (positive : ∀ index, 0 < targets
+    (lengthBound : Nat) (pathTarget : Coordinate) (pathPositive : 0 < pathTarget)
+    (wordTarget : Coordinate) (wordPositive : 0 < wordTarget)
+    (targets : Data.Vector Coordinate count) (positive : ∀ index, 0 < targets
       index) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests.WordBudget family prepared lengthBound pathTarget
+    WordBudget family prepared lengthBound pathTarget
       wordTarget targets floor :=
   let perEntry := Aggregate.perTerm wordTarget wordCount
   let boundaryTarget := (2 * (Aggregate.countCoordinate prepared.pairCount + 1) ^ 2) * perEntry
@@ -203,7 +205,7 @@ materialized just to count its edges. Generated and intrinsic boundary programs 
       positive floor⟩
 
 /-- Cancellation of the contact pair-count scale leaves exactly the allocation for the complete original word count. -/
-theorem perPair_eq (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests.WordBudget family prepared
+theorem perPair_eq (budget : WordBudget family prepared
   lengthBound pathTarget wordTarget targets floor) :
     budget.request.perPair = Aggregate.perTerm wordTarget patch.cut.boundary.length := by
   have countEq : budget.request.pairCount = prepared.pairCount := budget.request.pairCount_eq.trans
@@ -214,63 +216,63 @@ theorem perPair_eq (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordR
         (budget.perEntry_eq.trans (congrArg (Aggregate.perTerm wordTarget) budget.wordCount_eq))))
 
 /-- The squared original word-count error scale remains strictly below the requested complete target. -/
-theorem total_error_lt (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests.WordBudget family prepared
+theorem total_error_lt (budget : WordBudget family prepared
   lengthBound pathTarget wordTarget targets floor) :
-    (patch.cut.boundary.length : PreparedPrimitiveChargeBounds.Coordinate) * ((patch.cut.boundary.length :
-      PreparedPrimitiveChargeBounds.Coordinate) * budget.request.perPair) < wordTarget := by
+    (patch.cut.boundary.length : Coordinate) * ((patch.cut.boundary.length :
+      Coordinate) * budget.request.perPair) < wordTarget := by
   rw [budget.perPair_eq]
   exact Aggregate.count_mul_perTerm_lt budget.positive _
 
 /-- The actual period request retains the supplied minimum stage floor. -/
-theorem floor_le (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests.WordBudget family prepared
+theorem floor_le (budget : WordBudget family prepared
   lengthBound pathTarget wordTarget targets floor) :
     floor ≤ budget.request.periods.index := budget.request.contacts.floor_le.trans budget.request.periods.surface_later
 
 /-- Both components of the complete original word-error total satisfy the retained positive word target. -/
-theorem word_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests.WordBudget family prepared
+theorem word_accurate (budget : WordBudget family prepared
   lengthBound pathTarget wordTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.request.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) (centered : CenteredSewnSamples.Centered sample.surface) {origin :
-      Stokes.PrimitivePoint}
+    (sample : Requested.Sewn requested patch) (centered : Centered sample.surface) {origin :
+      PrimitivePoint}
     (wordSample : CutBoundaryWord.AreaSample (ProjectedEdgePairing.boundaryWord pairing) centered.energyValues origin) :
-    Data.Gaussian.Norm.Basic.normSq wordSample.errorTotal.left < wordTarget ∧
-      Data.Gaussian.Norm.Basic.normSq wordSample.errorTotal.right < wordTarget :=
+    Basic.normSq wordSample.errorTotal.left < wordTarget ∧
+      Basic.normSq wordSample.errorTotal.right < wordTarget :=
   let bounded := WordErrors.word_errorTotal_bounded (budget := budget.request) sample centered wordSample
   by
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using
+    simpa only [Basic.normSq_eq_canonical] using
       (show _ ∧ _ from ⟨bounded.1.trans_lt budget.total_error_lt,
         bounded.2.trans_lt budget.total_error_lt⟩)
 
 /-- Each original chord error satisfies the same retained word target in both primitive coordinates. -/
-theorem chords_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests.WordBudget family prepared
+theorem chords_accurate (budget : WordBudget family prepared
   lengthBound pathTarget wordTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.request.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) (centered : CenteredSewnSamples.Centered sample.surface) {origin :
-      Stokes.PrimitivePoint}
+    (sample : Requested.Sewn requested patch) (centered : Centered sample.surface) {origin :
+      PrimitivePoint}
     (wordSample : CutBoundaryWord.AreaSample (ProjectedEdgePairing.boundaryWord pairing) centered.energyValues origin)
-    {bank : Topology.Surface.Sewing.ChordCycleBank (ProjectedEdgePairing.boundaryWord pairing)} {integral :
-      Topology.Surface.Cut.IntegralPairing.CutBoundaryWord (ProjectedEdgePairing.boundaryWord pairing)}
+    {bank : ChordCycleBank (ProjectedEdgePairing.boundaryWord pairing)} {integral :
+      IntegralPairing.CutBoundaryWord (ProjectedEdgePairing.boundaryWord pairing)}
     (chords : bank.Sample integral centered.energyValues wordSample.values) (index : Fin
       (ProjectedEdgePairing.boundaryWord pairing).alphabet.count) :
-    Data.Gaussian.Norm.Basic.normSq (chords.errors index).left < wordTarget ∧
-      Data.Gaussian.Norm.Basic.normSq (chords.errors index).right < wordTarget :=
+    Basic.normSq (chords.errors index).left < wordTarget ∧
+      Basic.normSq (chords.errors index).right < wordTarget :=
   let bounded := WordErrors.chord_errors_bounded (budget := budget.request) sample centered wordSample chords index
   by
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using
+    simpa only [Basic.normSq_eq_canonical] using
       (show _ ∧ _ from ⟨bounded.1.trans_lt budget.total_error_lt,
         bounded.2.trans_lt budget.total_error_lt⟩)
 
 /-- Every actual original word-prefix drift satisfies the retained target in both primitive coordinates. -/
-theorem prefix_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests.WordBudget family prepared
+theorem prefix_accurate (budget : WordBudget family prepared
   lengthBound pathTarget wordTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.request.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) (centered : CenteredSewnSamples.Centered sample.surface) {origin :
-      Stokes.PrimitivePoint}
+    (sample : Requested.Sewn requested patch) (centered : Centered sample.surface) {origin :
+      PrimitivePoint}
     (wordSample : CutBoundaryWord.AreaSample (ProjectedEdgePairing.boundaryWord pairing) centered.energyValues origin)
-    {first last : List (BoundaryWord.CutWordEntry patch.cut.vertexLabels (ProjectedEdgePairing.boundaryWord
+    {first last : List (CutWordEntry patch.cut.vertexLabels (ProjectedEdgePairing.boundaryWord
       pairing).alphabet.generators)}
     (equal : first ++ last = (ProjectedEdgePairing.boundaryWord pairing).alphabet.entries) {start finish : Fin
       patch.cut.count}
@@ -278,11 +280,11 @@ theorem prefix_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.
       finish) :
     let drift := (centered.energyValues finish).sub ((centered.energyValues start).add
       (Pairing.linear (Pairing.totalAt (CutWordArea.word first)) wordSample.values))
-    Data.Gaussian.Norm.Basic.normSq drift.left < wordTarget ∧ Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq drift.left < wordTarget ∧ Basic.normSq
       drift.right < wordTarget :=
   let bounded := WordErrors.word_prefix_drift_bounded (budget := budget.request) sample centered wordSample equal path
   by
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using
+    simpa only [Basic.normSq_eq_canonical] using
       (show _ ∧ _ from ⟨bounded.1.trans_lt budget.total_error_lt,
         bounded.2.trans_lt budget.total_error_lt⟩)
 

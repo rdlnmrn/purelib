@@ -14,6 +14,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -43,14 +45,14 @@ namespace Purelib.Geometry.Projective.Chordal.Basic
 /-- The paper's exact squared chordal expression `χ²`. -/
 def chordalSq (x y : GaussianLine) :
   Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (x.p * y.q - y.p * x.q) /
-    ((Data.Gaussian.Norm.Basic.normSq x.p + Data.Gaussian.Norm.Basic.normSq x.q) *
-      (Data.Gaussian.Norm.Basic.normSq y.p + Data.Gaussian.Norm.Basic.normSq y.q))
+  Basic.normSq (x.p * y.q - y.p * x.q) /
+    ((Basic.normSq x.p + Basic.normSq x.q) *
+      (Basic.normSq y.p + Basic.normSq y.q))
 
 /-- Express squared chordal quadrance using the alternating product and homogeneous weights. -/
 theorem chordalSq_eq_cross (x y : GaussianLine)
   :
-    chordalSq x y = Data.Gaussian.Norm.Basic.normSq ((Proj.cross x) y) /
+    chordalSq x y = Basic.normSq ((Proj.cross x) y) /
       ((Proj.weight x) * (Proj.weight y)) :=
   rfl
 
@@ -58,7 +60,7 @@ theorem chordalSq_eq_cross (x y : GaussianLine)
 theorem chordalSq_nonneg (x y : GaussianLine) :
   0 ≤ chordalSq x y := by
   rw [chordalSq_eq_cross]
-  exact Fraction.Order.Field.div_nonneg_direct (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+  exact Fraction.Order.Field.div_nonneg_direct (Basic.normSq_nonneg _)
     (Fraction.Order.Arithmetic.mul_nonneg_direct (Proj.weight_nonneg x)
       (Proj.weight_nonneg y))
 
@@ -73,7 +75,7 @@ theorem chordalSq_le_one {x y : GaussianLine}
   apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
   rw [Fraction.Field.one_mul]
   rw [← Proj.normSq_hermitian_add_normSq_cross x y]
-  exact le_add_of_nonneg_left (Data.Gaussian.Norm.Basic.normSq_nonneg (Proj.hermitian x y))
+  exact le_add_of_nonneg_left (Basic.normSq_nonneg (Proj.hermitian x y))
 
 /-- Equivalent homogeneous pairs have zero squared chordal quadrance. -/
 theorem chordalSq_eq_zero_of_equivalent {x y :
@@ -83,7 +85,7 @@ theorem chordalSq_eq_zero_of_equivalent {x y :
     dsimp [Proj.cross, Proj.Equivalent] at equivalent ⊢
     rw [equivalent]
     exact Data.Gaussian.Basic.sub_self _
-  rw [chordalSq_eq_cross, crossZero, Data.Gaussian.Norm.Basic.normSq_zero]
+  rw [chordalSq_eq_cross, crossZero, Basic.normSq_zero]
   exact Fraction.Field.zero_div_direct _
 
 /-- Squared chordal quadrance is symmetric in the two homogeneous pairs. -/
@@ -95,7 +97,7 @@ theorem chordalSq_comm (x y : GaussianLine) :
       simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.mul_re,
         Data.Gaussian.Basic.mul_im, Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;>
       ring1
-  simp only [chordalSq, numerator, Data.Gaussian.Norm.Basic.normSq_neg]
+  simp only [chordalSq, numerator, Basic.normSq_neg]
   congr 1
   all_goals ring1
 end Purelib.Geometry.Projective.Chordal.Basic

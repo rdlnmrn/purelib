@@ -212,26 +212,40 @@ structure Located {columns rows : Nat} (geometry : RectangularInverseModels.Geom
 
 constructive_injectivity Located
 
+/-- Locate a point by scanning the two supplied cached rectangular axes.
+
+The four endpoint inequalities keep the query inside the original finite
+axis bounds. Both scans use those exact retained cuts and return the same
+geometric cell indices and containment certificate without rebuilding axes.
+-/
+@[expose] def locate {columns rows : Nat} (geometry : RectangularInverseModels.Geometry columns rows)
+    (point : InverseRootPolynomial.Gaussian)
+    (left : geometry.x.coordinates 0 ≤ point.re)
+    (right : point.re ≤ geometry.x.coordinates (Fin.last (columns + 1)))
+    (lower : geometry.y.coordinates 0 ≤ point.im)
+    (upper : point.im ≤ geometry.y.coordinates (Fin.last (rows + 1))) : Located geometry point :=
+  let horizontal := Axis.locate geometry.x point.re left right
+  let vertical := Axis.locate geometry.y point.im lower upper
+  ⟨horizontal.index, vertical.index, horizontal.inside.1, horizontal.inside.2,
+    vertical.inside.1, vertical.inside.2⟩
+
 /-- An actual cell covering any point of the original face; generated locations can instead supply their indices and
 four exact inequalities. -/
 @[expose] def locateUniform (box : InverseRootPolynomial.Box) (proper : box.Proper) (steps : Nat) (point :
   InverseRootPolynomial.Gaussian)
     (inside : box.Contains point) : Located (uniform box proper steps) point :=
-  let horizontal := Axis.locate (Axis.uniform steps box.xLower box.xUpper proper.1) point.re
+  locate (uniform box proper steps) point
     ((Axis.uniform_first steps _ _ proper.1).trans_le inside.1)
     (inside.2.1.trans_eq (Axis.uniform_last steps _ _ proper.1).symm)
-  let vertical := Axis.locate (Axis.uniform steps box.yLower box.yUpper proper.2) point.im
     ((Axis.uniform_first steps _ _ proper.2).trans_le inside.2.2.1)
     (inside.2.2.2.trans_eq (Axis.uniform_last steps _ _ proper.2).symm)
-  ⟨horizontal.index, vertical.index, horizontal.inside.1, horizontal.inside.2,
-    vertical.inside.1, vertical.inside.2⟩
 
 /-- Uniform cell squared diagonals equal the original divided by the square of the cell count. -/
 theorem uniform_diagonalSq (box : InverseRootPolynomial.Box) (proper : box.Proper) (steps : Nat)
     (column row : Fin (steps + 1)) :
     ((uniform box proper steps).box column row).diagonalSq =
       box.diagonalSq / (steps + 1 : Nat) ^ (2 : Nat) := by
-  change (_ - _) ^ 2 + (_ - _) ^ 2 = _
+  rewrite [Geometry.Rational.Box.diagonalSq_eq_original, Geometry.Rational.Box.diagonalSq_eq_original]
   dsimp only [uniform, Geometry.box]
   rw [Axis.uniform_width, Axis.uniform_width]
   change (box.widthX / _) ^ 2 + (box.widthY / _) ^ 2 = (box.widthX ^ 2 + box.widthY ^ 2) / _

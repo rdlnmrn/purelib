@@ -62,7 +62,7 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -80,20 +80,20 @@ open Purelib.Curves in
 The retained source-position map covers regular and enclosing branch regions without replacing their actual selected
 triangles. -/
 theorem selected_conjugate_source_sum (left :
-  Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh)
-    (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh)
+  TriangleReadings (cache.get i) current.mesh)
+    (right : TriangleReadings (cache.get j) current.mesh)
       (keep : Fin grid.faces.regulars.length → Bool) :
-    FiniteSum.Fin.sumFin (fun source => if keep (Topology.NewtonSewnExcision.AllHoleExcision.sourcePosition current
-      source) then Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings.conjugateArea left
+    sumFin (fun source => if keep (NewtonSewnExcision.AllHoleExcision.sourcePosition current
+      source) then TriangleReadings.conjugateArea left
       right source else 0) =
-      Hyperelliptic.Meshes.PuncturedGrid.ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right keep := by
+      selectedConjugateFullTriangleArea left right keep := by
   rw [Hyperelliptic.Meshes.PuncturedGrid.TriangleSums.LiftedMesh.triangle_sum current.mesh]
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro position
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro sheet
-  rw [Topology.NewtonSewnExcision.AllHoleExcision.sourcePosition_triangleIndex current position sheet false,
-    Topology.NewtonSewnExcision.AllHoleExcision.sourcePosition_triangleIndex current position sheet true]
+  rw [NewtonSewnExcision.AllHoleExcision.sourcePosition_triangleIndex current position sheet false,
+    NewtonSewnExcision.AllHoleExcision.sourcePosition_triangleIndex current position sheet true]
   rfl
 
 namespace OriginalRegularFaces.ConjugateRegionSample
@@ -108,28 +108,28 @@ open Purelib.Data in
 /-- The original regular-region conjugate receipt approximates its exact selected source triangles.
 
 Both retained sewn surfaces and their conjugate pair use the same original region mask and permitted numerical stage. -/
-theorem selected_accurate (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+theorem selected_accurate (left : TriangleReadings
   (cache.get i) current.mesh)
-    (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh)
-    {leftSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch left.values}
-    {rightSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch right.values}
-    {pair : Surface.Sewing.SewnConjugateSamples.ConjugatePair leftSurface rightSurface}
-    (sample : Hyperelliptic.Meshes.Newton.Regular.ConjugateRegion.ConjugateRegionSample region words leftSurface
+    (right : TriangleReadings (cache.get j) current.mesh)
+    {leftSurface : CachedSample current.cutPolygon.patch left.values}
+    {rightSurface : CachedSample current.cutPolygon.patch right.values}
+    {pair : ConjugatePair leftSurface rightSurface}
+    (sample : ConjugateRegionSample region words leftSurface
       rightSurface pair)
-    {prepared : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i
+    {prepared : BilinearPreparation current.cutPolygon domains i
       j} {error : Rational} {floor : Nat}
-    (request : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request prepared error floor)
+    (request : BilinearPreparation.Request prepared error floor)
       (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (sample.area -
-      Hyperelliptic.Meshes.PuncturedGrid.ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right (fun
+    normSq (sample.area -
+      selectedConjugateFullTriangleArea left right (fun
       position =>
       decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines face.cell.box))) < error := by
   have estimated := request.selected_conjugate_accurate later left right pair sample.balance.selected
   rw [← sample.area_eq] at estimated
-  have read := Topology.NewtonSelectedConjugateSewing.NewtonGrid.selected_conjugate_source_sum
+  have read := selected_conjugate_source_sum
     left right (fun position =>
     decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines face.cell.box))
-  exact (congrArg (fun triangles => Data.Gaussian.Norm.Basic.normSq (sample.area - triangles)) read).symm.trans_lt
+  exact (congrArg (fun triangles => normSq (sample.area - triangles)) read).symm.trans_lt
     estimated
 
 end OriginalRegularFaces.ConjugateRegionSample
@@ -169,13 +169,13 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces hiding Coordinate
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
   {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Rational}
   {grid : NewtonGrid preparation target radius} {index :
-    Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+    Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
   {current : LiftedPuncturedGrid grid.punctured}
   {domains : FaceDomainBank current.frames
     grid.faces.regulars} {i j : Fin genus}
@@ -190,32 +190,32 @@ open Purelib.Data in
 
 The original cut balance and conjugate pair retain the selected annulus, including its physical inner boundary. -/
 theorem selected_accurate
-    {outer : OriginalAnnularFaces grid index} {annulus : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid
+    {outer : OriginalAnnularFaces grid index} {annulus : AnnularFaces grid
       index}
-    {region : Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus current}
+    {region : Lifted annulus current}
     {geometry : IncludedHoleSewing bank grid.shrunk.included index domains (standardDifferential i)}
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh)
-    {leftSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch left.values}
-    {rightSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch right.values}
-    {pair : Surface.Sewing.SewnConjugateSamples.ConjugatePair leftSurface rightSurface}
-    {balance : Curves.Hyperelliptic.Meshes.Newton.OriginalCutBalance outer region geometry leftSurface}
-    (sample : Hyperelliptic.Meshes.Newton.OriginalConjugateCutBalance.ConjugateSample balance rightSurface pair)
-    {prepared : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i
+    (left : TriangleReadings (cache.get i) current.mesh)
+      (right : TriangleReadings (cache.get j) current.mesh)
+    {leftSurface : CachedSample current.cutPolygon.patch left.values}
+    {rightSurface : CachedSample current.cutPolygon.patch right.values}
+    {pair : ConjugatePair leftSurface rightSurface}
+    {balance : OriginalCutBalance outer region geometry leftSurface}
+    (sample : ConjugateSample balance rightSurface pair)
+    {prepared : BilinearPreparation current.cutPolygon domains i
       j} {error : Rational} {floor : Nat}
-    (request : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request prepared error floor)
+    (request : BilinearPreparation.Request prepared error floor)
       (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (sample.area -
-      Hyperelliptic.Meshes.PuncturedGrid.ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right (fun
+    normSq (sample.area -
+      selectedConjugateFullTriangleArea left right (fun
       position =>
       decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (base.bank.cell index).box))) < error
         := by
   have estimated := request.selected_conjugate_accurate later left right pair balance.selected
   rw [← sample.area_eq] at estimated
-  have read := Topology.NewtonSelectedConjugateSewing.NewtonGrid.selected_conjugate_source_sum
+  have read := NewtonGrid.selected_conjugate_source_sum
     left right (fun position =>
     decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (base.bank.cell index).box))
-  exact (congrArg (fun triangles => Data.Gaussian.Norm.Basic.normSq (sample.area - triangles)) read).symm.trans_lt
+  exact (congrArg (fun triangles => normSq (sample.area - triangles)) read).symm.trans_lt
     estimated
 
 end Purelib.Riemann.Topology.NewtonSelectedConjugateSewing.ConjugateSample

@@ -70,34 +70,34 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank (L
 
 set_option genInjectivity false in
 /-- Cache the common sheet bit, with both signed polynomial identities. -/
-structure PairedPrimitiveSign (first last left right : InverseRootPolynomial.Polynomial) where
+structure PairedPrimitiveSign (first last left right : Polynomial) where
   /-- The actual common reciprocal sheet sign retained for both primitive polynomials. -/ flip : Bool
   /-- Both retained polynomials equal their original cap samples with that exact common sign. -/ signed : (first, last)
     = (if flip then -left else left, if flip then -right else right)
 
 constructive_injectivity PairedPrimitiveSign
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source target :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {index depth otherDepth : Nat}
-    {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap source index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap target index otherBox}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {source target :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {index depth otherDepth : Nat}
+    {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap source index box}
+  {otherSample : Cap.Primitives.Sample cap target index otherBox}
 
 /-- Independent numerical depths and reciprocal covers are allowed. The original parent list and its recast root names
 fix the common sign. -/
 def RegularWitnesses.recastSign
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
+    {parents : List (CenteredEdge curve source)} {covers :
       UniformReciprocalCover.ParentCovers parents}
-    {bank : ParentJoins.SideBank regular covers} {paths : List (List InverseRootPolynomial.Gaussian)}
+    {bank : SideBank regular covers} {paths : List (List Gaussian)}
     (first : RegularWitnesses sample depth bank paths) :
-    ∀ {otherCovers : UniformReciprocalCover.ParentCovers (parents.map (PreparedEdgeRecasting.recastCenteredEdge
+    ∀ {otherCovers : UniformReciprocalCover.ParentCovers (parents.map (recastCenteredEdge
       target))}
-      {otherBank : ParentJoins.SideBank regular otherCovers} {otherPaths : List (List InverseRootPolynomial.Gaussian)}
+      {otherBank : SideBank regular otherCovers} {otherPaths : List (List Gaussian)}
       (last : RegularWitnesses otherSample otherDepth otherBank otherPaths),
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedWitnessSigns.PairedPrimitiveSign first.primitive last.primitive
+      PairedPrimitiveSign first.primitive last.primitive
         sample.primitive.value otherSample.primitive.value := by
   cases first with
   | nil =>
@@ -115,17 +115,17 @@ def RegularWitnesses.recastSign
 /-- Consume the cached common sign on both complete retained paths. Each bank's own root joins identify its polynomial
 along all original parents. -/
 theorem RegularWitnesses.paired_paths_signed
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
+    {parents : List (CenteredEdge curve source)} {covers :
       UniformReciprocalCover.ParentCovers parents}
-    {bank : ParentJoins.SideBank regular covers} {paths : List (List InverseRootPolynomial.Gaussian)}
-    {otherParents : List (PreparedSubdivisionModelCore.CenteredEdge curve target)} {otherCovers :
+    {bank : SideBank regular covers} {paths : List (List Gaussian)}
+    {otherParents : List (CenteredEdge curve target)} {otherCovers :
       UniformReciprocalCover.ParentCovers otherParents}
-    {otherBank : ParentJoins.SideBank regular otherCovers} {otherPaths : List (List InverseRootPolynomial.Gaussian)}
+    {otherBank : SideBank regular otherCovers} {otherPaths : List (List Gaussian)}
     (first : RegularWitnesses sample depth bank paths) (last : RegularWitnesses otherSample otherDepth
       otherBank otherPaths)
-    (sign : Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedWitnessSigns.PairedPrimitiveSign first.primitive
+    (sign : PairedPrimitiveSign first.primitive
       last.primitive sample.primitive.value otherSample.primitive.value)
-    (links : SideBank.Links bank) (otherLinks : SideBank.Links otherBank) :
+    (links : Links bank) (otherLinks : Links otherBank) :
     paths = SideBank.regularPrimitivePaths
       (if sign.flip then -sample.primitive.value else sample.primitive.value) depth bank ∧
       otherPaths = SideBank.regularPrimitivePaths

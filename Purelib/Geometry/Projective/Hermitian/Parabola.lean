@@ -9,6 +9,8 @@ import Purelib.Data.List.DropWhile.Basic
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Basic
+
 /-!
 # Finite Hermitian restrictions to retained parabolic arcs
 
@@ -33,7 +35,7 @@ cubic term, quadratic imaginary term, linear real term and centre value.
 Each coefficient uses the same original centre and coordinate radius.
 -/
 @[expose] def restrictParabola {outer : Box} (form : HermitianForm) (arc : Box.Sample.Parabola outer) :
-    Dense.Basic.DensePolynomial Fraction.Rational :=
+    DensePolynomial Fraction.Rational :=
   ⟨[form.radial * arc.radius ^ 2, 0,
     form.radial * (arc.radius ^ 2 + 2 * arc.center.im * arc.radius) + form.imagLinear * arc.radius,
     (2 * form.radial * arc.center.re + form.realLinear) * arc.radius,
@@ -43,8 +45,8 @@ Each coefficient uses the same original centre and coordinate radius.
 theorem eval_restrictParabola {outer : Box} (form : HermitianForm) (arc : Box.Sample.Parabola outer)
     (parameter : Fraction.Rational) :
     (form.restrictParabola arc).eval parameter = form.eval (arc.point parameter) := by
-  unfold restrictParabola Dense.Basic.DensePolynomial.eval Dense.Basic.DensePolynomial.evalCoeffs
-    Box.Sample.Parabola.point HermitianForm.eval Gaussian.Norm.Basic.normSq
+  unfold restrictParabola DensePolynomial.eval DensePolynomial.evalCoeffs
+    Box.Sample.Parabola.point eval Gaussian.Norm.Basic.normSq
   dsimp only [List.foldl]
   ring1
 
@@ -85,21 +87,21 @@ theorem restrictParabola_nonzero {outer : Box} (form : HermitianForm) (arc : Box
     · have quadraticNonzero := Fraction.Field.mul_ne_zero_direct imaginaryZero radiusNonzero
       rewrite [List.DropWhile.cons_of_false _ (form.imagLinear * arc.radius) _ (decide_eq_false quadraticNonzero)]
       rfl
-  · exact Dense.Basic.DensePolynomial.isZero_false_of_coeffs_cons rfl
+  · exact DensePolynomial.isZero_false_of_coeffs_cons rfl
       (Fraction.Field.mul_ne_zero_direct radialZero (Fraction.Order.Arithmetic.pow_pos_direct arc.positive 2).ne')
 
 /-- Retain the nonzero restriction polynomial, using the unit polynomial for a coefficientwise universal zero form. -/
 @[expose] def guardedRestriction {outer : Box} (form : HermitianForm) (arc : Box.Sample.Parabola outer) :
-    Dense.Basic.DensePolynomial Fraction.Rational :=
-  if form.IsZero then Dense.Basic.DensePolynomial.constant 1 else form.restrictParabola arc
+    DensePolynomial Fraction.Rational :=
+  if form.IsZero then DensePolynomial.constant 1 else form.restrictParabola arc
 
 /-- Every guarded restriction is a represented nonzero polynomial. -/
 theorem guardedRestriction_nonzero {outer : Box} (form : HermitianForm) (arc : Box.Sample.Parabola outer) :
     (form.guardedRestriction arc).isZero = false := by
   by_cases zero : form.IsZero
   · rewrite [guardedRestriction, if_pos zero]
-    exact Dense.Basic.DensePolynomial.isZero_false_of_eval_ne (x := 0) (by
-      rewrite [Dense.Basic.DensePolynomial.eval_constant]
+    exact DensePolynomial.isZero_false_of_eval_ne (x := 0) (by
+      rewrite [DensePolynomial.eval_constant]
       exact Fraction.Field.zero_ne_one.symm)
   · rewrite [guardedRestriction, if_neg zero]
     exact form.restrictParabola_nonzero arc zero

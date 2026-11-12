@@ -85,27 +85,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.FineConjugatePolygonAggre
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateTriangleAreas (selectedConjugateFullTriangleArea)
 open Purelib.Polynomial.Geometry.Grid.CellBoundary (sumValues)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_succ)
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
-  {grid : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-    {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {current : Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+  {preparation : NewtonPreparation original} {target
+    radius : Rational}
+  {grid : NewtonGrid preparation target radius}
+    {index : Branches.BranchIsolation.Data.Index branches}
+  {current : LiftedPuncturedGrid grid.punctured}
+  {domains : FaceDomainBank current.frames
     grid.faces.regulars} {i j : Fin genus}
-  {stage : Nat} {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+  {stage : Nat} {cache : Numerics
     domains stage}
 
 /-- Both initial sheets together cover the retained face triangles, even when the compiler transports them along
 different stems. -/
-theorem fine_conjugate_triangles_selected (region : NewtonOriginalAnnularFaces.OriginalAnnularFaces grid index)
-    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh) :
+theorem fine_conjugate_triangles_selected (region : OriginalAnnularFaces grid index)
+    (left : TriangleReadings (cache.get i) current.mesh) (right :
+      TriangleReadings (cache.get j) current.mesh) :
     CellBoundary.sumValues (FineConjugatePolygonAggregate.fineConjugateTriangleArea left right)
       (WindowCircuits.fineCompiler (current := current) region 0).regulars +
       CellBoundary.sumValues (FineConjugatePolygonAggregate.fineConjugateTriangleArea left right)
@@ -132,7 +132,7 @@ theorem fine_conjugate_triangles_selected (region : NewtonOriginalAnnularFaces.O
     apply FiniteSum.Fin.sumFin_congr
     intro sheet
     dsimp only [value]
-    exact (congrArg₂ (fun a b : Data.Gaussian.Basic.Canonical => a + b)
+    exact (congrArg₂ (fun a b : Gaussian => a + b)
       (if_pos (decide_eq_true selected)) (if_pos (decide_eq_true selected))).symm
   · rewrite [if_neg selected]
     symm
@@ -141,7 +141,7 @@ theorem fine_conjugate_triangles_selected (region : NewtonOriginalAnnularFaces.O
     intro sheet
     have rejected : ¬ decide _ = true := fun equal =>
       Bool.noConfusion ((decide_eq_false selected).symm.trans equal)
-    exact (congrArg₂ (fun a b : Data.Gaussian.Basic.Canonical => a + b)
+    exact (congrArg₂ (fun a b : Gaussian => a + b)
       (if_neg rejected) (if_neg rejected)).trans (Data.Gaussian.Basic.add_zero 0)
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Branch.ConjugateWindowSelectedTriangles

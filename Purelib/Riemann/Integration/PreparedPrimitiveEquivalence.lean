@@ -19,6 +19,10 @@ import Purelib.Integration.Polynomial.Gaussian.Cell.Constant
 import Purelib.Riemann.Readings.PreparedPrimitiveRequests
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Geometric
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Integration.Polynomial.Gaussian
 
 @[expose] public section
@@ -53,8 +57,8 @@ open Purelib.Approximation in
 /-- Operational equivalence of named Gaussian processes. -/
 abbrev NamedEquivalent := Gaussian.Equivalence.NamedEquivalent
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
+  Curves.Hyperelliptic.Differentials.Basic.Differential genus}
   {patch : ContinuedNeighborhood curve.polynomial count} {point : Gaussian}
 
 /-- Restrict the retained root process to the selected accurate reading state. -/
@@ -96,16 +100,16 @@ theorem coefficient_possible_bound (sample : ContinuedNeighborhood.Point patch p
     (state : (coefficient sample index differential).name.process.State) {value : Gaussian}
     (possible : (coefficient sample index differential).name.process.Possible state value) :
     normSq ((differentialNumerator differential).eval point * (patch.base.refine index).value.eval point - value) ≤
-      normSq ((differentialNumerator differential).eval point) * Rational.Geometric.Basic.quarterRadius
+      normSq ((differentialNumerator differential).eval point) * Basic.quarterRadius
         patch.inverseErrorScale index := by
   obtain ⟨root, rootPossible, equal⟩ := Hyperelliptic.Differentials.Value.differentialValue_possible_components
     differential point
     (basedRoot sample index) (basedApart sample index) state possible
   have atReading := state.2.persists rootPossible
   have inverseBound := sample.reading_inverse_error inside index atReading
-  have inverseEq : root⁻¹ = Gaussian.Basic.Canonical.inv root := by
+  have inverseEq : root⁻¹ = inv root := by
     rw [Gaussian.Field.inv_eq]
-    simp only [Gaussian.Field.inv, Gaussian.Basic.Canonical.inv,
+    simp only [Gaussian.Field.inv, inv,
       Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self]
     rfl
   have identity : (differentialNumerator differential).eval point * (patch.base.refine index).value.eval point - value =
@@ -117,8 +121,8 @@ theorem coefficient_possible_bound (sample : ContinuedNeighborhood.Point patch p
     ((differentialNumerator differential).eval point) ((patch.base.refine index).value.eval point - inv root)
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at productNorm
   rw [identity, productNorm]
-  exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inverseBound
-    (Gaussian.Basic.Canonical.normSq_nonneg _)
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct inverseBound
+    (normSq_nonneg _)
 
 open Purelib.Curves in
 open Purelib.Approximation in
@@ -150,7 +154,7 @@ private theorem later_sub_center_le (prepared : PreparedEdge curve differential)
       center.value)) := by
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
     _ ≤ 2 * (prepared.modelErrorAllowance + prepared.modelErrorAllowance) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add
         (by
           have scalar := (prepared.laterBaseValue_sub_baseReading_lt index).le
           rw [Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
@@ -178,7 +182,7 @@ theorem coefficient_center_le (prepared : PreparedEdge curve differential)
     normSq ((differentialNumerator differential).eval (prepared.point 0) *
       (patch.base.refine index).value.eval (prepared.point 0) - center.value) ≤
         2 * normSq ((differentialNumerator differential).eval (prepared.point 0)) *
-          Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 20 * prepared.modelErrorAllowance := by
+          Basic.quarterRadius patch.inverseErrorScale index + 20 * prepared.modelErrorAllowance := by
   let value := coefficient sample index differential
   let equivalent := Gaussian.Equivalence.NamedEquivalent.trans (coefficientEquivalent prepared sample index roots).symm
     (PreparedEdge.CenterState.baseEquivalent prepared)
@@ -196,7 +200,7 @@ theorem coefficient_center_le (prepared : PreparedEdge curve differential)
       _ ≤ 2 * (normSq (left - right) + normSq (right - center.value)) := by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
       _ ≤ 2 * (prepared.modelErrorAllowance + 4 * prepared.modelErrorAllowance) :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add close (later_sub_center_le prepared center comparison.rightIndex)) (by decide)
       _ = _ := by ring1
   calc
@@ -204,8 +208,8 @@ theorem coefficient_center_le (prepared : PreparedEdge curve differential)
         (patch.base.refine index).value.eval (prepared.point 0) - left) + normSq (left - center.value)) := by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
     _ ≤ 2 * (normSq ((differentialNumerator differential).eval (prepared.point 0)) *
-        Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 10 * prepared.modelErrorAllowance) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add modeled centerBound) (by decide)
+        Basic.quarterRadius patch.inverseErrorScale index + 10 * prepared.modelErrorAllowance) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add modeled centerBound) (by decide)
     _ = _ := by ring1
 
 open Purelib.Integration in
@@ -224,7 +228,7 @@ theorem integral_error_le {index : Nat} (model : PrimitiveModel patch index (dif
       (prepared.centeredModel center).integralSample) ≤
         2 * model.primitive.remainderBound * prepared.pointMovement ^ 2 +
           (4 * normSq ((differentialNumerator differential).eval (prepared.point 0)) *
-            Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 40 * prepared.modelErrorAllowance) *
+            Basic.quarterRadius patch.inverseErrorScale index + 40 * prepared.modelErrorAllowance) *
               prepared.pointMovement := by
   have taylor := model.primitive.increment_bound startInside finishInside
   rw [model.coefficient_eq] at taylor
@@ -250,17 +254,17 @@ theorem integral_error_le {index : Nat} (model : PrimitiveModel patch index (dif
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Bounds.normSq_add_le_two _ _
     _ ≤ 2 * (model.primitive.remainderBound * prepared.pointMovement ^ 2 +
         (2 * normSq ((differentialNumerator differential).eval (prepared.point 0)) *
-          Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 20 * prepared.modelErrorAllowance) *
+          Basic.quarterRadius patch.inverseErrorScale index + 20 * prepared.modelErrorAllowance) *
             prepared.pointMovement) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add taylor (by
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add taylor (by
         have productNorm := Gaussian.Norm.Basic.normSq_mul (value - center.value) delta
         simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at productNorm
         have movement : normSq delta = prepared.pointMovement := by
-          change Gaussian.Basic.Canonical.normSq (prepared.point 1 - prepared.point 0) =
+          change normSq (prepared.point 1 - prepared.point 0) =
             Gaussian.Norm.Basic.normSq (prepared.point 1 - prepared.point 0)
           rw [Gaussian.Norm.Basic.normSq_eq_canonical]
         rw [productNorm, movement]
-        exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct centerBound
+        exact Arithmetic.mul_le_mul_of_nonneg_right_direct centerBound
           (Gaussian.Norm.Basic.normSq_nonneg _))) (by decide)
     _ = _ := by ring1
 
@@ -282,28 +286,28 @@ theorem integral_error_le_uniform {index : Nat} (model : PrimitiveModel patch in
     normSq (model.primitive.value.eval (prepared.point 1) - model.primitive.value.eval (prepared.point 0) -
       (prepared.centeredModel center).integralSample) ≤
         2 * model.primitive.remainderBound * movement ^ 2 +
-          (4 * numeratorBound * Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 40 * error) *
+          (4 * numeratorBound * Basic.quarterRadius patch.inverseErrorScale index + 40 * error) *
             movement := by
   have movementNonnegative : 0 ≤ prepared.pointMovement := Gaussian.Norm.Basic.normSq_nonneg _
-  have numeratorNonnegative := (Gaussian.Basic.Canonical.normSq_nonneg _).trans numeratorLe
+  have numeratorNonnegative := (normSq_nonneg _).trans numeratorLe
   have errorNonnegative := prepared.modelErrorAllowance_positive.le.trans errorLe
-  have inverseNonnegative := Rational.Geometric.Basic.quarterRadius_nonneg patch.inverseErrorScale_positive.le index
+  have inverseNonnegative := Basic.quarterRadius_nonneg patch.inverseErrorScale_positive.le index
   have coefficientBound : 4 * normSq ((differentialNumerator differential).eval (prepared.point 0)) *
-      Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 40 * prepared.modelErrorAllowance ≤
-        4 * numeratorBound * Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 40 * error :=
-    add_le_add (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct numeratorLe (by decide)) inverseNonnegative)
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide +kernel))
+      Basic.quarterRadius patch.inverseErrorScale index + 40 * prepared.modelErrorAllowance ≤
+        4 * numeratorBound * Basic.quarterRadius patch.inverseErrorScale index + 40 * error :=
+    add_le_add (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct numeratorLe (by decide)) inverseNonnegative)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide +kernel))
   have coefficientNonnegative : 0 ≤ 4 * numeratorBound *
-      Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index + 40 * error :=
-    add_nonneg (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) numeratorNonnegative) inverseNonnegative)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) errorNonnegative)
+      Basic.quarterRadius patch.inverseErrorScale index + 40 * error :=
+    add_nonneg (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) numeratorNonnegative) inverseNonnegative)
+      (Arithmetic.mul_nonneg_direct (by decide +kernel) errorNonnegative)
   exact (integral_error_le model prepared center sample startInside finishInside roots).trans (add_le_add
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Rat.Fraction.Order.Arithmetic.pow_le_pow_direct movementNonnegative movementLe 2)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) model.primitive.remainderBound_nonnegative))
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_direct coefficientBound movementLe movementNonnegative
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.pow_le_pow_direct movementNonnegative movementLe 2)
+      (Arithmetic.mul_nonneg_direct (by decide) model.primitive.remainderBound_nonnegative))
+    (Arithmetic.mul_le_mul_direct coefficientBound movementLe movementNonnegative
       coefficientNonnegative))
 
 end Purelib.Riemann.Integration.PreparedPrimitiveEquivalence

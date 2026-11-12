@@ -36,6 +36,8 @@ name completed limits or collections of compatible points.
 -/
 
 namespace Purelib.Approximation.Gaussian.Enclosure.Ball
+
+open Purelib.Data.Gaussian
 section Ball
 
 /-- Negate a ball's centre while retaining its exact squared-error allowance. -/
@@ -49,12 +51,12 @@ theorem contains_neg {ball : Ball} {value :
   Data.Gaussian.Basic.Canonical}
     (inside : ball.Contains value) : ball.neg.Contains (-value) := by
   unfold Contains at inside ⊢
-  change Data.Gaussian.Norm.Basic.normSq (-value - -ball.center) ≤ ball.radiusSq
+  change Norm.Basic.normSq (-value - -ball.center) ≤ ball.radiusSq
   have difference : -value - -ball.center = -(value - ball.center) := by
     apply Data.Gaussian.Basic.ext <;>
       simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.neg_re,
         Data.Gaussian.Basic.neg_im] <;> ring1
-  rw [difference, Data.Gaussian.Norm.Basic.normSq_neg]
+  rw [difference, Norm.Basic.normSq_neg]
   exact inside
 
 /-- Addition requires no magnitude bound. The factor two is the rational square-root-free triangle estimate. -/
@@ -65,6 +67,26 @@ def add (left right : Ball) : Ball
     radiusSq_nonneg :=
       Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg left.radiusSq_nonneg right.radiusSq_nonneg) }
+
+/-- Doubling the same separated enclosure retains its sufficient whole-ball separation.
+
+The combined centre is twice the original centre, and its squared-error
+allowance is four times the original allowance. The same strict margin
+therefore scales by four on both sides.
+-/
+theorem add_self_separated (ball : Ball) (separated : ball.Separated) : (ball.add ball).Separated := by
+  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    (by decide : (0 : Fraction.Rational) < 4) separated
+  have radius : 2 * (2 * (ball.radiusSq + ball.radiusSq)) = 4 * (2 * ball.radiusSq) := by ring1
+  have center : Norm.Basic.normSq (ball.center + ball.center) =
+      4 * Norm.Basic.normSq ball.center := by
+    unfold Norm.Basic.normSq
+    rewrite [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im]
+    ring1
+  change 2 * (2 * (ball.radiusSq + ball.radiusSq)) <
+    Norm.Basic.normSq (ball.center + ball.center)
+  rewrite [radius, center]
+  exact scaled
 
 /-- The sum ball admits sums of readings admitted by its two original balls. -/
 theorem contains_add {left right : Ball} {x y
@@ -80,10 +102,10 @@ theorem contains_add {left right : Ball} {x y
   unfold Contains add
   rw [difference]
   calc
-    Data.Gaussian.Norm.Basic.normSq ((x - left.center) + (y - right.center)) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq (x - left.center) + Data.Gaussian.Norm.Basic.normSq (y -
+    Norm.Basic.normSq ((x - left.center) + (y - right.center)) ≤
+        2 * (Norm.Basic.normSq (x - left.center) + Norm.Basic.normSq (y -
           right.center)) :=
-      Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+      Norm.Bounds.normSq_add_le_two _ _
     _ ≤ 2 * (left.radiusSq + right.radiusSq) :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add xInside yInside) (by decide)

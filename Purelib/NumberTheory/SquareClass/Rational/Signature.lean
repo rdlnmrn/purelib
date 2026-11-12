@@ -28,6 +28,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Algebra.Field.SquareClass.Basic
+
 public section
 
 /-!
@@ -279,7 +281,7 @@ namespace PositiveSquareClassSignatures
 The supplied positive natural is cast with the canonical rational operations. Cast injectivity certifies its nonzero
 field. -/
 @[expose] def positiveNaturalClass (value : Nat) (positive : 0 < value) :
-    Algebra.Field.SquareClass.Basic.SquareClassRepresentative Scalar where
+    SquareClassRepresentative Scalar where
   value := (value : Scalar)
   nonzero := by
     intro zero
@@ -293,7 +295,7 @@ namespace PositiveSquareClassSignatures
 
 The retained natural cast supplies both the square-class representative and its strict positivity certificate. -/
 @[expose] def positiveNaturalTarget (value : Nat) (positive : 0 < value) :
-    Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative where
+    Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative where
   representative := positiveNaturalClass value positive
   positive := Fraction.Cast.Order.natCast_pos_direct positive
 
@@ -305,7 +307,7 @@ set_option genInjectivity false in
 The record keeps the exact numerator-times-denominator source, factorization root and ordered odd-prime support. Its
 kernel and rational scaling factor relate those same caches to the supplied positive target. -/
 structure Positive
-    (target : Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) where
+    (target : Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) where
   /-- The retained natural source obtained by multiplying the target numerator and denominator. -/ source : Nat
   /-- The retained source is exactly the canonical numerator times denominator. -/ source_eq : source = target.numerator
     * target.denominator
@@ -348,7 +350,7 @@ namespace PositiveSquareClassSignatures
 The canonical numerator and denominator determine one retained natural source. Its prime-parity decomposition supplies
 the ordered support, kernel and square root; the same denominator then determines the rational scaling factor. -/
 @[expose] def compute
-    (target : Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) :
+    (target : Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) :
     Positive target := by
   let source := target.numerator * target.denominator
   have sourcePositive : 0 < source :=
@@ -452,7 +454,7 @@ odd-prime support is empty.
 Every retained support entry is prime and thus greater than one. A nonempty support contributes a prime divisor of the
 kernel, which excludes the unit value. -/
 theorem kernel_eq_one_iff_primes_eq_nil
-    {target : Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative}
+    {target : Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative}
     (signature : Positive target) :
     signature.kernel = 1 ↔ signature.primes = [] := by
   constructor
@@ -609,7 +611,7 @@ The two cached kernel representatives retain their target equivalences. An unmat
 square-free support products. -/
 private theorem equivalent_kernel_membership
     {leftTarget rightTarget :
-      Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative}
+      Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative}
     (left : Positive leftTarget) (right : Positive rightTarget)
     (equivalent : leftTarget.representative.Equivalent
       rightTarget.representative) :
@@ -622,9 +624,9 @@ private theorem equivalent_kernel_membership
       have kernelEquivalent :
           (positiveNaturalClass left.kernel left.kernel_positive).Equivalent
             (positiveNaturalClass right.kernel right.kernel_positive) :=
-        Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_trans left.equivalent
-          (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_trans equivalent
-            (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_symm right.equivalent))
+        SquareClassRepresentative.equivalent_trans left.equivalent
+          (SquareClassRepresentative.equivalent_trans equivalent
+            (SquareClassRepresentative.equivalent_symm right.equivalent))
       have displayedKernelEquivalent :
           (positiveNaturalClass left.primes.prod
             (Prime.prod_pos left.primes_prime)).Equivalent
@@ -671,7 +673,7 @@ theorem primeSupportEquivalent_iff
           exact False.elim
             ((not_equivalent_of_prime_mismatch rightPrime leftPrime
               rightNodup memberRight notMemberLeft)
-              (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_symm equivalent))
+              (SquareClassRepresentative.equivalent_symm equivalent))
   · intro sameMembers
     have permutation : left.Perm right :=
       Permutation.of_nodup_mem_iff leftNodup rightNodup sameMembers
@@ -683,7 +685,7 @@ theorem primeSupportEquivalent_iff
       apply Algebra.Field.SquareClass.Basic.SquareClassRepresentative.ext
       exact congrArg (fun value : Nat => (value : Scalar)) productsEqual
     rw [representativesEqual]
-    exact Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_refl _
+    exact SquareClassRepresentative.equivalent_refl _
 
 end PositiveSquareClassSignatures
 
@@ -743,7 +745,7 @@ theorem xorSupport_nodup {left right : List Nat}
     (leftNodup : left.Nodup) (rightNodup : right.Nodup) :
     (xorSupport left right).Nodup := by
   unfold xorSupport
-  apply Data.List.Nodup.nodup_append
+  apply Nodup.nodup_append
     (Filter.pairwise_filter _ leftNodup) (Filter.pairwise_filter _ rightNodup)
   intro leftValue leftMember rightValue rightMember equal
   have leftProperties :=
@@ -806,11 +808,11 @@ namespace PositiveSquareClassSignatures
 The supplied canonical rational values are multiplied with their original field operations. Direct positivity supplies
 the retained positive target certificate. -/
 @[expose] def mulTarget
-    (left right : Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) :
-    Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative where
-  representative := Algebra.Field.SquareClass.Basic.SquareClassRepresentative.mul
+    (left right : Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) :
+    Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative where
+  representative := SquareClassRepresentative.mul
     left.representative right.representative
-  positive := Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_pos_direct left.positive
+  positive := Fraction.Order.Arithmetic.mul_pos_direct left.positive
     right.positive
 
 end PositiveSquareClassSignatures
@@ -830,7 +832,7 @@ theorem xorSupport_equivalent_mul
     (positiveNaturalClass (xorSupport left right).prod
         (Prime.prod_pos
           (xorSupport_prime leftPrime rightPrime))).Equivalent
-      (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.mul
+      (SquareClassRepresentative.mul
         (positiveNaturalClass left.prod (Prime.prod_pos leftPrime))
         (positiveNaturalClass right.prod (Prime.prod_pos rightPrime))) := by
   have commonPrime : ∀ prime ∈ intersection left right,
@@ -861,7 +863,7 @@ the computed supports of its factors.
 The three cached decompositions represent the supplied classes and their product. Their equivalences and prime support
 membership characterize the exact resulting support. -/
 theorem compute_mulTarget_support
-    (left right : Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) :
+    (left right : Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative) :
     let leftSignature := compute left
     let rightSignature := compute right
     let productSignature := compute (mulTarget left right)
@@ -890,12 +892,12 @@ theorem compute_mulTarget_support
     leftSignature.primes_prime rightSignature.primes_prime
     leftSignature.primes_nodup rightSignature.primes_nodup
   have displayedProductToTarget :=
-    Algebra.Field.SquareClass.Basic.SquareClassRepresentative.mul_respects_equivalent leftDisplayed
+    SquareClassRepresentative.mul_respects_equivalent leftDisplayed
       rightDisplayed
   have xorToProductSignature :=
-    Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_trans xorToDisplayedProduct
-      (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_trans displayedProductToTarget
-        (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_symm productDisplayed))
+    SquareClassRepresentative.equivalent_trans xorToDisplayedProduct
+      (SquareClassRepresentative.equivalent_trans displayedProductToTarget
+        (SquareClassRepresentative.equivalent_symm productDisplayed))
   have sameMembers := (primeSupportEquivalent_iff
     (xorSupport_prime leftSignature.primes_prime rightSignature.primes_prime)
     productSignature.primes_prime
@@ -916,7 +918,7 @@ Each cached signature represents its original target. Equal kernels therefore gi
 identifies their duplicate-free prime products. -/
 theorem equivalent_iff_kernel_eq
     {leftTarget rightTarget :
-      Rational.Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative}
+      Basic.TheoremSixtyTwo.PositiveSquareClassRepresentative}
     (left : Positive leftTarget) (right : Positive rightTarget) :
     leftTarget.representative.Equivalent rightTarget.representative ↔
       left.kernel = right.kernel := by
@@ -924,7 +926,7 @@ theorem equivalent_iff_kernel_eq
   · intro equivalent
     have forward := equivalent_kernel_membership left right equivalent
     have reverse := equivalent_kernel_membership right left
-      (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_symm equivalent)
+      (SquareClassRepresentative.equivalent_symm equivalent)
     have permutation : left.primes.Perm right.primes :=
       Permutation.of_nodup_mem_iff left.primes_nodup
         right.primes_nodup (fun prime =>
@@ -937,8 +939,8 @@ theorem equivalent_iff_kernel_eq
           positiveNaturalClass right.kernel right.kernel_positive := by
       apply Algebra.Field.SquareClass.Basic.SquareClassRepresentative.ext
       exact congrArg (fun value : Nat => (value : Scalar)) kernelsEqual
-    apply Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_trans
-      (Algebra.Field.SquareClass.Basic.SquareClassRepresentative.equivalent_symm left.equivalent)
+    apply SquareClassRepresentative.equivalent_trans
+      (SquareClassRepresentative.equivalent_symm left.equivalent)
     rw [representativesEqual]
     exact right.equivalent
 

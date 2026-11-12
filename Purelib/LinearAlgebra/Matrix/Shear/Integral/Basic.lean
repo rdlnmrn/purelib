@@ -52,70 +52,70 @@ variable {first last : Fin n}
 
 Each output coordinate adds its two stored integer coefficients times the unchanged pivot coordinates. -/
 def apply (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     Data.Vector Int n :=
   Data.Vector.Basic.vectorOfFn fun index => values index + shear.left index * values first + shear.right index * values
     last
 
 /-- Undo the retained two-pivot integral shear by subtracting its coordinate corrections. -/
 def unapply (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     Data.Vector Int n :=
   Data.Vector.Basic.vectorOfFn fun index => values index - shear.left index * values first - shear.right index * values
     last
 
 /-- The shear fixes its first pivot coordinate. -/
 theorem apply_first (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     shear.apply values first = values first := by
-  rw [SquareMatrix.Integral.Shear.apply, Data.Vector.Basic.vectorOfFn_apply, shear.left_first,
+  rw [apply, Data.Vector.Basic.vectorOfFn_apply, shear.left_first,
     shear.right_first, zero_mul, zero_mul, add_zero, add_zero]
 
 /-- The shear fixes its last pivot coordinate. -/
 theorem apply_last (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     shear.apply values last = values last := by
-  rw [SquareMatrix.Integral.Shear.apply, Data.Vector.Basic.vectorOfFn_apply, shear.left_last,
+  rw [apply, Data.Vector.Basic.vectorOfFn_apply, shear.left_last,
     shear.right_last, zero_mul, zero_mul, add_zero, add_zero]
 
 /-- The inverse shear fixes its first pivot coordinate. -/
 theorem unapply_first (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     shear.unapply values first = values first := by
-  rw [SquareMatrix.Integral.Shear.unapply, Data.Vector.Basic.vectorOfFn_apply, shear.left_first,
+  rw [unapply, Data.Vector.Basic.vectorOfFn_apply, shear.left_first,
     shear.right_first, zero_mul, zero_mul, Data.Int.Arithmetic.sub_zero, Data.Int.Arithmetic.sub_zero]
 
 /-- The inverse shear fixes its last pivot coordinate. -/
 theorem unapply_last (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     shear.unapply values last = values last := by
-  rw [SquareMatrix.Integral.Shear.unapply, Data.Vector.Basic.vectorOfFn_apply, shear.left_last,
+  rw [unapply, Data.Vector.Basic.vectorOfFn_apply, shear.left_last,
     shear.right_last, zero_mul, zero_mul, Data.Int.Arithmetic.sub_zero, Data.Int.Arithmetic.sub_zero]
 
 /-- Applying a retained shear and then its inverse restores the original vector. -/
 theorem unapply_apply (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     shear.unapply (shear.apply values) = values := by
   apply Data.Vector.Basic.vector_ext; intro index
-  rw [SquareMatrix.Integral.Shear.unapply, Data.Vector.Basic.vectorOfFn_apply, shear.apply_first,
-    shear.apply_last, SquareMatrix.Integral.Shear.apply, Data.Vector.Basic.vectorOfFn_apply]
+  rw [unapply, Data.Vector.Basic.vectorOfFn_apply, shear.apply_first,
+    shear.apply_last, apply, Data.Vector.Basic.vectorOfFn_apply]
   ring1
 
 /-- Applying the inverse shear and then the shear restores the original vector. -/
 theorem apply_unapply (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
+  Shear first last) (values : Data.Vector Int n) :
     shear.apply (shear.unapply values) = values := by
   apply Data.Vector.Basic.vector_ext; intro index
-  rw [SquareMatrix.Integral.Shear.apply, Data.Vector.Basic.vectorOfFn_apply, shear.unapply_first,
-    shear.unapply_last, SquareMatrix.Integral.Shear.unapply, Data.Vector.Basic.vectorOfFn_apply]
+  rw [apply, Data.Vector.Basic.vectorOfFn_apply, shear.unapply_first,
+    shear.unapply_last, unapply, Data.Vector.Basic.vectorOfFn_apply]
   ring1
 
 /-- Materialize the integral basis matrix for the retained shear.
 
 Each row is its coordinate unit plus the two cached pivot coefficients. -/
 def basis (shear :
-  SquareMatrix.Integral.Shear first last) : SquareMatrix.IntegralMatrix n :=
-  SquareMatrix.matrixOfFn fun row column => (if column = row then 1 else 0) +
+  Shear first last) : IntegralMatrix n :=
+  matrixOfFn fun row column => (if column = row then 1 else 0) +
     (if column = first then shear.left row else 0) + (if column = last then shear.right row else 0)
 
 /-- A coordinate-equality indicator selects the corresponding finite weighted term. -/
@@ -133,7 +133,7 @@ private theorem indicator_mul (target
 
 /-- The weighted sum of one shear-basis row is its explicit two-pivot update. -/
 theorem basis_sum (shear :
-  SquareMatrix.Integral.Shear first last) (row : Fin n) (values : Fin n → Int) :
+  Shear first last) (row : Fin n) (values : Fin n → Int) :
     FiniteSum.Fin.sumFin (fun index => shear.basis row index * values index) =
       values row + shear.left row * values first + shear.right row * values last := by
   calc
@@ -142,34 +142,34 @@ theorem basis_sum (shear :
         (if index = first then shear.left row else 0) * values index +
         (if index = last then shear.right row else 0) * values index) := by
       apply FiniteSum.Fin.sumFin_congr; intro index
-      rw [SquareMatrix.Integral.Shear.basis, SquareMatrix.matrixOfFn_apply, add_mul, add_mul]
+      rw [basis, matrixOfFn_apply, add_mul, add_mul]
     _ = _ := by
       rw [FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_add,
-        LinearAlgebra.Matrix.Integral.Shear.indicator_mul,
-        LinearAlgebra.Matrix.Integral.Shear.indicator_mul,
-        LinearAlgebra.Matrix.Integral.Shear.indicator_mul, one_mul]
+        indicator_mul,
+        indicator_mul,
+        indicator_mul, one_mul]
 
 /-- Multiplication by the retained basis matrix computes the shear action. -/
 theorem matrixVector_basis (shear :
-  SquareMatrix.Integral.Shear first last) (values : Data.Vector Int n) :
-    SquareMatrix.Multiplication.matrixVector shear.basis values = shear.apply values := by
+  Shear first last) (values : Data.Vector Int n) :
+    Multiplication.matrixVector shear.basis values = shear.apply values := by
   apply Data.Vector.Basic.vector_ext; intro row
-  rw [SquareMatrix.Multiplication.matrixVector_apply, shear.basis_sum, SquareMatrix.Integral.Shear.apply,
+  rw [Multiplication.matrixVector_apply, shear.basis_sum, apply,
     Data.Vector.Basic.vectorOfFn_apply]
 
 /-- Cached congruence entries; the double finite sum is a proof specification
 only, never the executable implementation of a reduction step. -/
 def transform (shear :
-  SquareMatrix.Integral.Shear first last) (matrix : SquareMatrix.IntegralMatrix n) :
-  SquareMatrix.IntegralMatrix n :=
-  SquareMatrix.matrixOfFn fun row column =>
+  Shear first last) (matrix : IntegralMatrix n) :
+  IntegralMatrix n :=
+  matrixOfFn fun row column =>
     matrix row column + shear.left row * matrix first column + shear.right row * matrix last column +
     shear.left column * (matrix row first + shear.left row * matrix first first + shear.right row * matrix last first) +
     shear.right column * (matrix row last + shear.left row * matrix first last + shear.right row * matrix last last)
 
 /-- Read a transformed matrix entry by the cached two-pivot congruence formula. -/
 theorem transform_apply (shear :
-  SquareMatrix.Integral.Shear first last) (matrix : SquareMatrix.IntegralMatrix n) (row column : Fin
+  Shear first last) (matrix : IntegralMatrix n) (row column : Fin
   n) :
     shear.transform matrix row column =
       matrix row column + shear.left row * matrix first column + shear.right row * matrix last column +
@@ -177,13 +177,13 @@ theorem transform_apply (shear :
         +
       shear.right column * (matrix row last + shear.left row * matrix first last + shear.right row * matrix last last)
         :=
-  SquareMatrix.matrixOfFn_apply _ row column
+  matrixOfFn_apply _ row column
 
 /-- The cached matrix transformation equals the double finite sum for basis congruence.
 
 Both factors use the same retained shear basis; the expanded formula certifies the cached entry computation. -/
 theorem transform_eq (shear :
-  SquareMatrix.Integral.Shear first last) (matrix : SquareMatrix.IntegralMatrix n) (row column : Fin
+  Shear first last) (matrix : IntegralMatrix n) (row column : Fin
   n) :
     shear.transform matrix row column =
       FiniteSum.Fin.sumFin (fun i => FiniteSum.Fin.sumFin (fun j => shear.basis row i * matrix i j * shear.basis column
@@ -197,8 +197,8 @@ theorem transform_eq (shear :
         rw [← FiniteSum.Fin.sumFin_mul_left]
         apply FiniteSum.Fin.sumFin_congr; intro j; ring1
       _ = _ := by rw [shear.basis_sum]
-  rw [FiniteSum.Fin.sumFin_congr inner, shear.basis_sum, SquareMatrix.Integral.Shear.transform,
-    SquareMatrix.matrixOfFn_apply]
+  rw [FiniteSum.Fin.sumFin_congr inner, shear.basis_sum, transform,
+    matrixOfFn_apply]
   ring1
 
 end Shear

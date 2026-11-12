@@ -20,7 +20,7 @@ The five dense multiplications retain their original left-associated
 order and all six coordinate polynomial factors. Nonzero evaluations
 at the supplied parameter certify their actual scalar components. -/
 @[expose] public def productEventGuard
-    (A B C D E H : Dense.Rational.Basic.CoordinatePolynomial) : (Dense.Basic.DensePolynomial Fraction.Rational) :=
+    (A B C D E H : Basic.CoordinatePolynomial) : (Basic.DensePolynomial Fraction.Rational) :=
   ((((A * B) * C) * D) * E) * H
 
 /-- The product guard is nonzero when all six coordinate polynomials are nonzero.
@@ -29,17 +29,17 @@ Each original coordinate has a false structural zero test. The
 retained dense multiplication nonzero certificate propagates those
 six conditions through the same five original product operations. -/
 public theorem productEventGuard_isZero_false
-    {A B C D E H : Dense.Rational.Basic.CoordinatePolynomial}
+    {A B C D E H : Basic.CoordinatePolynomial}
     (A_nonzero : A.isZero = false) (B_nonzero : B.isZero = false)
     (C_nonzero : C.isZero = false) (D_nonzero : D.isZero = false)
     (E_nonzero : E.isZero = false) (H_nonzero : H.isZero = false) :
     (productEventGuard A B C D E H).isZero = false := by
   unfold productEventGuard
-  exact Dense.Basic.DensePolynomial.isZero_mul_eq_false
-    (Dense.Basic.DensePolynomial.isZero_mul_eq_false
-      (Dense.Basic.DensePolynomial.isZero_mul_eq_false
-        (Dense.Basic.DensePolynomial.isZero_mul_eq_false
-          (Dense.Basic.DensePolynomial.isZero_mul_eq_false A_nonzero B_nonzero) C_nonzero)
+  exact Basic.DensePolynomial.isZero_mul_eq_false
+    (Basic.DensePolynomial.isZero_mul_eq_false
+      (Basic.DensePolynomial.isZero_mul_eq_false
+        (Basic.DensePolynomial.isZero_mul_eq_false
+          (Basic.DensePolynomial.isZero_mul_eq_false A_nonzero B_nonzero) C_nonzero)
         D_nonzero)
       E_nonzero)
     H_nonzero
@@ -50,7 +50,7 @@ Evaluation of the original left-associated dense product is the
 same scalar product. A zero value of any retained factor would make
 that exact product zero, contradicting the supplied guard condition. -/
 public theorem productEventGuard_eval_ne_zero_components
-    (A B C D E H : Dense.Rational.Basic.CoordinatePolynomial) (x : Fraction.Rational)
+    (A B C D E H : Basic.CoordinatePolynomial) (x : Fraction.Rational)
     (guardNonzero : (productEventGuard A B C D E H).eval x ≠ 0) :
     A.eval x ≠ 0 ∧ B.eval x ≠ 0 ∧
       C.eval x ≠ 0 ∧ D.eval x ≠ 0 ∧
@@ -58,9 +58,9 @@ public theorem productEventGuard_eval_ne_zero_components
   have evaluated : (productEventGuard A B C D E H).eval x =
       ((((A.eval x * B.eval x) * C.eval x) * D.eval x) * E.eval x) * H.eval x := by
     unfold productEventGuard
-    rw [Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Basic.DensePolynomial.eval_mul]
+    rw [Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_mul,
+      Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_mul,
+      Basic.DensePolynomial.eval_mul]
   have productNonzero :
       ((((A.eval x * B.eval x) * C.eval x) * D.eval x) * E.eval x) * H.eval x ≠ 0 := by
     intro zero

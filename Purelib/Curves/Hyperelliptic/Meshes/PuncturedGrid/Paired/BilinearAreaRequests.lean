@@ -71,6 +71,10 @@ import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Requested opposite-sheet comparison for the full two-differential source
@@ -121,11 +125,11 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
-  {edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
+  {edges : RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
     base.faces}
   {domains : FaceDomainBank frames
     base.faces.regulars}
@@ -141,7 +145,7 @@ The two bounded sheet indices must be different, so the retained zero and one
 source increments occur exactly once, in either displayed order. -/
 private theorem source_sum {start finish : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge base.bank.grid start
   finish}
-    (head : EdgeOccurrences mesh edge) (values : Fin mesh.triangles.length → PrimitiveSewing.PrimitiveValues 3)
+    (head : EdgeOccurrences mesh edge) (values : Fin mesh.triangles.length → PrimitiveValues 3)
     (left right : Fin 2) (different : left ≠ right) :
     (head.source left).increment values + (head.source right).increment values =
       head.zeroSource.increment values + head.oneSource.increment values := by
@@ -161,7 +165,7 @@ private theorem source_sum {start finish : Data.Gaussian.Basic.Canonical} {edge 
       · intro _
         change head.oneSource.increment values + head.zeroSource.increment values =
           head.zeroSource.increment values + head.oneSource.increment values
-        exact Data.Gaussian.Basic.Canonical.add_comm _ _
+        exact Gaussian.add_comm _ _
       · intro remaining
         refine Data.Fin.cases_induction ?_ ?_ remaining
         · intro different; exact (different rfl).elim
@@ -172,19 +176,19 @@ private theorem source_sum {start finish : Data.Gaussian.Basic.Canonical} {edge 
 
 The different sheets share the original request spine and sufficiently late
 sample stage. Each head bound and recursive tail keep their own source parents. -/
-theorem pair_errors {differential : Differentials.Basic.Differential genus} {error : Fraction.Rational} {stage : Nat}
-    {bank : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings bank mesh) :
+theorem pair_errors {differential : Differential genus} {error : Rational} {stage : Nat}
+    {bank : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings bank mesh) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk base.bank.grid start finish}
-      (paired : WalkOccurrences.PairedWalk mesh walk) (requests : PairedWalk.Requests domains differential error paired)
+      (paired : WalkOccurrences.PairedWalk mesh walk) (requests : Requests domains differential error paired)
       (left right : Fin 2), left ≠ right → requests.index ≤ stage →
       ∀ pair ∈ PairedSources.pairs (owner := SelectedOwner (mesh := mesh)) paired left right,
-        Data.Gaussian.Norm.Basic.normSq (pair.1.increment readings.values + pair.2.increment readings.values) ≤
+        Basic.normSq (pair.1.increment readings.values + pair.2.increment readings.values) ≤
           error
   | _, _, _, .nil _, .nil _, _, _, _, _, _, member => (List.not_mem_nil member).elim
   | _, _, _, .cons (edge := edge) head tail, .cons request remaining, left, right, different, later, pair, member => by
       rcases Membership.mem_cons.mp member with rfl | member
-      · change Data.Gaussian.Norm.Basic.normSq ((head.source left).increment readings.values +
+      · change Basic.normSq ((head.source left).increment readings.values +
           (head.source right).increment readings.values) ≤ error
         rw [source_sum head readings.values left right different]
         exact (head.accurate readings readings request
@@ -201,21 +205,21 @@ set_option genInjectivity false in
 /-- The complete original two-differential opposite-sheet area request.
 
 Each differential keeps its own magnitude reference and whole-edge request bank on the same retained paired walk. -/
-structure BilinearAreaRequest {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
+structure BilinearAreaRequest {leftDifferential rightDifferential : Differential genus}
     (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank domains rightDifferential)
     {start finish : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk base.bank.grid start finish} (paired :
       WalkOccurrences.PairedWalk mesh walk)
-    (error : Fraction.Rational) where
+    (error : Rational) where
   /-- The original requested full area-comparison tolerance is strictly positive. -/ positive : 0 < error
-  /-- The cached original fourth-power walk-count and joint magnitude weight. -/ weight : Fraction.Rational
+  /-- The cached original fourth-power walk-count and joint magnitude weight. -/ weight : Rational
   /-- The weight retains the exact original edge count and maximum of the two magnitude references. -/ weight_eq :
-    weight = 64 * (walk.edgeCount : Fraction.Rational)^4 * max leftFixed.bound rightFixed.bound
-  /-- The cached positive tolerance shared by the original whole-edge request banks. -/ perEdge : Fraction.Rational
+    weight = 64 * (walk.edgeCount : Rational)^4 * max leftFixed.bound rightFixed.bound
+  /-- The cached positive tolerance shared by the original whole-edge request banks. -/ perEdge : Rational
   /-- The edge tolerance is exactly the original weighted allowance of the target and retained weight. -/ perEdge_eq :
     perEdge = Weighted.allowance error weight
-  /-- The original whole-edge request bank for the first retained differential. -/ left : PairedWalk.Requests domains
+  /-- The original whole-edge request bank for the first retained differential. -/ left : Requests domains
     leftDifferential perEdge paired
-  /-- The original whole-edge request bank for the second retained differential. -/ right : PairedWalk.Requests domains
+  /-- The original whole-edge request bank for the second retained differential. -/ right : Requests domains
     rightDifferential perEdge paired
 
 constructive_injectivity BilinearAreaRequest
@@ -224,7 +228,7 @@ namespace BilinearAreaRequest
 
 variable {leftDifferential rightDifferential : Differential genus}
   {leftFixed : FaceMagnitudeBank domains leftDifferential} {rightFixed : FaceMagnitudeBank domains rightDifferential}
-  {start finish : Purelib.Data.Gaussian.Basic.Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+  {start finish : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk
     base.bank.grid start finish} {paired :
     PairedWalk mesh walk} {error :
     Rational}
@@ -235,18 +239,18 @@ The natural edge count has nonnegative fourth power. Its fixed positive factor
 and the retained nonnegative magnitude maximum preserve that bound. -/
 theorem weight_nonnegative (leftFixed : FaceMagnitudeBank domains leftDifferential)
     (rightFixed : FaceMagnitudeBank domains rightDifferential) (walk : Walks.Walk base.bank.grid start finish) :
-    0 ≤ 64 * (walk.edgeCount : Fraction.Rational)^4 * max leftFixed.bound rightFixed.bound :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
-    (leftFixed.nonnegative.trans (Fraction.Order.Basic.le_max_left _ _))
+    0 ≤ 64 * (walk.edgeCount : Rational)^4 * max leftFixed.bound rightFixed.bound :=
+  Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
+    (leftFixed.nonnegative.trans (Basic.le_max_left _ _))
 
 /-- Cache the original joint weight and positive edge allowance, then prepare both distinct differential requests on the
 same retained paired walk. -/
 @[expose] def build (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank domains
   rightDifferential)
-    (paired : WalkOccurrences.PairedWalk mesh walk) (error : Fraction.Rational) (positive : 0 < error) :
+    (paired : WalkOccurrences.PairedWalk mesh walk) (error : Rational) (positive : 0 < error) :
     BilinearAreaRequest leftFixed rightFixed paired error :=
-  let weight := 64 * (walk.edgeCount : Fraction.Rational)^4 * max leftFixed.bound rightFixed.bound
+  let weight := 64 * (walk.edgeCount : Rational)^4 * max leftFixed.bound rightFixed.bound
   let perEdge := Weighted.allowance error weight
   have perEdgePositive := Weighted.allowance_positive positive (weight_nonnegative leftFixed rightFixed walk)
   ⟨positive, weight, rfl, perEdge, rfl,
@@ -263,52 +267,52 @@ same retained paired walk. -/
     (owner := SelectedOwner (mesh := mesh)) paired left right
 
 /-- The original primitive bank for one retained differential at the supplied numerical stage. -/
-@[reducible, expose] def BankAt (differential : Differentials.Basic.Differential genus) (stage : Nat) :=
-  PrimitiveData.FacePrimitiveBank differential stage domains
+@[reducible, expose] def BankAt (differential : Differential genus) (stage : Nat) :=
+  FacePrimitiveBank differential stage domains
 
 /-- The original magnitude certificate on the exact retained triangle primitive values. -/
-@[reducible, expose] def RetainedMagnitude (values : Fin mesh.triangles.length → PrimitiveSewing.PrimitiveValues 3) :=
-  Readings.EdgeMagnitude
+@[reducible, expose] def RetainedMagnitude (values : Fin mesh.triangles.length → PrimitiveValues 3) :=
+  EdgeMagnitude
     (owner := SourceChartComparison.ownerFromMesh mesh) values
 
 /-- The actual original triangle reading parent on its retained primitive bank. -/
-@[reducible, expose] def ParentReadings {differential : Differentials.Basic.Differential genus} {stage : Nat}
-    (bank : PrimitiveData.FacePrimitiveBank differential stage domains) := TrianglePrimitiveReadings.TriangleReadings
+@[reducible, expose] def ParentReadings {differential : Differential genus} {stage : Nat}
+    (bank : FacePrimitiveBank differential stage domains) := TriangleReadings
       bank mesh
 
 /-- The original source increment pair in the selected direct or conjugate bilinear view. -/
-@[reducible, expose] def SourceValue (view : PairedAreaComparison.View)
-    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveSewing.PrimitiveValues 3)
-    (source : SewnPrimitiveContacts.SourceEdge mesh.triangles.length) :=
+@[reducible, expose] def SourceValue (view : View)
+    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveValues 3)
+    (source : SourceEdge mesh.triangles.length) :=
   PairedAreaComparison.point view
     (source.increment leftValues) (source.increment rightValues)
 
 /-- The actual selected source pairs with the second retained point negated for opposite-sheet comparison. -/
-@[reducible, expose] def PointPairs (view : PairedAreaComparison.View)
-    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveSewing.PrimitiveValues 3)
-    (entries : List (SewnPrimitiveContacts.SourceEdge mesh.triangles.length × SewnPrimitiveContacts.SourceEdge
+@[reducible, expose] def PointPairs (view : View)
+    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveValues 3)
+    (entries : List (SourceEdge mesh.triangles.length × SourceEdge
       mesh.triangles.length)) :=
   entries.map (fun pair =>
     (SourceValue view leftValues rightValues pair.1,
       PairedAreaComparison.negative (SourceValue view leftValues rightValues pair.2)))
 
 /-- The retained complete observation and summary of an original ordered source polygon. -/
-@[reducible, expose] def SourceObservation (view : PairedAreaComparison.View)
-    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveSewing.PrimitiveValues 3)
-    (sources : List (SewnPrimitiveContacts.SourceEdge mesh.triangles.length)) :=
-  PairedAreaComparison.Observation (sources.map (SourceValue view leftValues rightValues))
+@[reducible, expose] def SourceObservation (view : View)
+    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveValues 3)
+    (sources : List (SourceEdge mesh.triangles.length)) :=
+  Observation (sources.map (SourceValue view leftValues rightValues))
 
 /-- Four times the maximum of the two original retained magnitude bounds. -/
 @[reducible, expose] def NumericBound (leftFixed : FaceMagnitudeBank domains leftDifferential)
-    (rightFixed : FaceMagnitudeBank domains rightDifferential) : Fraction.Rational :=
-  (4 : Fraction.Rational) * max leftFixed.bound rightFixed.bound
+    (rightFixed : FaceMagnitudeBank domains rightDifferential) : Rational :=
+  (4 : Rational) * max leftFixed.bound rightFixed.bound
 
 /-- The actual cached paired-area comparison on the original source selection, view, allowance and magnitude bound. -/
-@[reducible, expose] def PairComparison (view : PairedAreaComparison.View)
+@[reducible, expose] def PairComparison (view : View)
     (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveSewing.PrimitiveValues 3)
+    (leftValues rightValues : Fin mesh.triangles.length → PrimitiveValues 3)
     {leftSheet rightSheet : Fin 2} (selection : SelectedSources paired leftSheet rightSheet) :=
-  PairedAreaComparison.Cached
+  Cached
     (PointPairs view leftValues rightValues selection.entries) request.perEdge (NumericBound leftFixed rightFixed)
 
 set_option genInjectivity false in
@@ -316,15 +320,15 @@ set_option genInjectivity false in
 
 The exact view, request, stage, primitive banks, magnitude references, source observations and numeric summaries remain
 linked by readback equalities. -/
-structure Realization (view : PairedAreaComparison.View)
+structure Realization (view : View)
     (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
     (leftReadings : ParentReadings leftBank) (rightReadings : ParentReadings rightBank)
     (later : request.index ≤ stage) (leftSheet rightSheet : Fin 2) (different : leftSheet ≠ rightSheet) where
   /-- The actual retained original paired source-occurrence selection. -/ selection : SelectedSources paired leftSheet
     rightSheet
-  /-- The retained original direct or conjugate comparison view. -/ viewParent : PairedAreaComparison.View
+  /-- The retained original direct or conjugate comparison view. -/ viewParent : View
   /-- The retained view is exactly the supplied original view. -/ viewParent_eq : viewParent = view
   /-- The actual original bilinear request consumed by this realization. -/ requestParent : BilinearAreaRequest
     leftFixed rightFixed paired error
@@ -381,7 +385,7 @@ constructive_injectivity Realization
 
 namespace Realization
 
-variable {view : Purelib.Integration.Path.PairedAreaComparison.View}
+variable {view : View}
   {request : BilinearAreaRequest leftFixed rightFixed paired error}
   {stage : Nat} {leftBank : FacePrimitiveBank
     leftDifferential stage domains}
@@ -397,7 +401,7 @@ variable {view : Purelib.Integration.Path.PairedAreaComparison.View}
 
 /-- The cached complete original quantitative area-comparison bound. -/
 @[expose] def areaBound (result : Realization view request leftReadings rightReadings later leftSheet rightSheet
-  different) : Fraction.Rational :=
+  different) : Rational :=
   result.numeric.areaBound
 
 /-- The retained residual is the difference of the two actual original source polygons in their selected view. -/
@@ -415,13 +419,13 @@ theorem residual_readback (result : Realization view request leftReadings rightR
 theorem budget_identity (result : Realization view request leftReadings rightReadings later leftSheet rightSheet
   different) :
     result.areaBound = request.weight * request.perEdge := by
-  rw [areaBound, result.numeric.bound_readback, PointPairs, Data.List.Map.length_map]
+  rw [areaBound, result.numeric.bound_readback, PointPairs, Map.length_map]
   have count : result.selection.entries.length = walk.edgeCount :=
     result.selection.entries_count.trans result.selection.count_eq
   exact (congrArg (fun count : Nat =>
-    PairedAreaComparison.BoundSpecification count request.perEdge
+    BoundSpecification count request.perEdge
       (NumericBound leftFixed rightFixed)) count).trans (by
-    change 16 * (walk.edgeCount : Fraction.Rational)^4 * request.perEdge *
+    change 16 * (walk.edgeCount : Rational)^4 * request.perEdge *
       (4 * max leftFixed.bound rightFixed.bound) = request.weight * request.perEdge
     rw [request.weight_eq]
     ring1)
@@ -435,14 +439,14 @@ theorem budget (result : Realization view request leftReadings rightReadings lat
 
 /-- The original requested tolerance bounds the squared norm of the actual cached area residual. -/
 theorem pay (result : Realization view request leftReadings rightReadings later leftSheet rightSheet different) :
-    Data.Gaussian.Norm.Basic.normSq result.residual ≤ error := result.numeric.pay result.budget
+    Basic.normSq result.residual ≤ error := result.numeric.pay result.budget
 
 end Realization
 
 /-- Reading the first values from the original mapped source pairs preserves their actual first-source order. -/
 private theorem mapped_first
-    (value : SewnPrimitiveContacts.SourceEdge mesh.triangles.length → PrimitivePoint)
-    (pairs : List (SewnPrimitiveContacts.SourceEdge mesh.triangles.length × SewnPrimitiveContacts.SourceEdge
+    (value : SourceEdge mesh.triangles.length → PrimitivePoint)
+    (pairs : List (SourceEdge mesh.triangles.length × SourceEdge
       mesh.triangles.length)) :
     (pairs.map (fun pair => (value pair.1, PairedAreaComparison.negative (value pair.2)))).map Prod.fst =
       (pairs.map Prod.fst).map value := by
@@ -453,8 +457,8 @@ private theorem mapped_first
 /-- Reading the second values from the original mapped source pairs preserves their actual negated second-source order.
 -/
 private theorem mapped_second
-    (value : SewnPrimitiveContacts.SourceEdge mesh.triangles.length → PrimitivePoint)
-    (pairs : List (SewnPrimitiveContacts.SourceEdge mesh.triangles.length × SewnPrimitiveContacts.SourceEdge
+    (value : SourceEdge mesh.triangles.length → PrimitivePoint)
+    (pairs : List (SourceEdge mesh.triangles.length × SourceEdge
       mesh.triangles.length)) :
     (pairs.map (fun pair => (value pair.1, PairedAreaComparison.negative (value pair.2)))).map Prod.snd =
       (pairs.map Prod.snd).map (fun source => PairedAreaComparison.negative (value source)) := by
@@ -467,19 +471,19 @@ private theorem mapped_second
 Both original magnitude references and primitive banks are preserved, and both complete source summaries reuse the
 actual numeric comparison caches. -/
 @[expose] def realizePairedWithSources (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (leftSheet rightSheet : Fin 2) (different : leftSheet ≠ rightSheet)
     (selection : SelectedSources paired leftSheet rightSheet) :
     Realization .paired request leftReadings rightReadings later leftSheet rightSheet different := by
   let value := SourceValue .paired leftReadings.values rightReadings.values
   have fixedLater := (Data.Nat.Order.le_max_left _ _).trans later
-  let retainedLeftMagnitude := Readings.EdgeMagnitude.ofBank
+  let retainedLeftMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh mesh) leftFixed ((Data.Nat.Order.le_max_left _ _).trans fixedLater)
       leftReadings
-  let retainedRightMagnitude := Readings.EdgeMagnitude.ofBank
+  let retainedRightMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh mesh) rightFixed ((Data.Nat.Order.le_max_right _ _).trans fixedLater)
       rightReadings
   have requestsLater := (Data.Nat.Order.le_max_right _ _).trans later
@@ -488,25 +492,25 @@ actual numeric comparison caches. -/
     rw [request.perEdge_eq]
     exact Weighted.allowance_positive request.positive weightNonnegative
   let bound := 4 * max leftFixed.bound rightFixed.bound
-  have boundNonnegative : 0 ≤ bound := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (leftFixed.nonnegative.trans (Fraction.Order.Basic.le_max_left _ _))
-  have bounded (source : SewnPrimitiveContacts.SourceEdge mesh.triangles.length) : PrimitivePoint.Bounded (value source)
+  have boundNonnegative : 0 ≤ bound := Arithmetic.mul_nonneg_direct (by decide)
+    (leftFixed.nonnegative.trans (Basic.le_max_left _ _))
+  have bounded (source : SourceEdge mesh.triangles.length) : PrimitivePoint.Bounded (value source)
     bound :=
     ⟨by
       have h := (retainedLeftMagnitude.source_bounded source).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Basic.le_max_left leftFixed.bound rightFixed.bound) (by decide))
-      change Fraction.Order.Basic.LessEqual _ _ at h
-      change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Basic.le_max_left leftFixed.bound rightFixed.bound) (by decide))
+      change Basic.LessEqual _ _ at h
+      change Basic.LessEqual _ _
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl,
      by
       have h := (retainedRightMagnitude.source_bounded source).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Basic.le_max_right leftFixed.bound rightFixed.bound) (by decide))
-      change Fraction.Order.Basic.LessEqual _ _ at h
-      change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Basic.le_max_right leftFixed.bound rightFixed.bound) (by decide))
+      change Basic.LessEqual _ _ at h
+      change Basic.LessEqual _ _
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl⟩
   let pairs := selection.entries
   let points := pairs.map (fun pair => (value pair.1, PairedAreaComparison.negative (value pair.2)))
@@ -520,22 +524,22 @@ actual numeric comparison caches. -/
     have second := pair_errors rightReadings paired request.right leftSheet rightSheet different
       ((Data.Nat.Order.le_max_right _ _).trans requestsLater) pair present
     constructor
-    · change Data.Gaussian.Basic.Canonical.normSq (pair.1.increment leftReadings.values - -pair.2.increment
+    · change Gaussian.normSq (pair.1.increment leftReadings.values - -pair.2.increment
         leftReadings.values) ≤ _
       have scalar : pair.1.increment leftReadings.values - -pair.2.increment leftReadings.values = pair.1.increment
         leftReadings.values + pair.2.increment leftReadings.values := by ring1
       rewrite [scalar]
-      change Fraction.Order.Basic.LessEqual _ _
-      change Fraction.Order.Basic.LessEqual _ _ at first
-      simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using first
-    · change Data.Gaussian.Basic.Canonical.normSq (pair.1.increment rightReadings.values - -pair.2.increment
+      change Basic.LessEqual _ _
+      change Basic.LessEqual _ _ at first
+      simpa only [Basic.normSq_eq_canonical] using first
+    · change Gaussian.normSq (pair.1.increment rightReadings.values - -pair.2.increment
         rightReadings.values) ≤ _
       have scalar : pair.1.increment rightReadings.values - -pair.2.increment rightReadings.values = pair.1.increment
         rightReadings.values + pair.2.increment rightReadings.values := by ring1
       rewrite [scalar]
-      change Fraction.Order.Basic.LessEqual _ _
-      change Fraction.Order.Basic.LessEqual _ _ at second
-      simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using second
+      change Basic.LessEqual _ _
+      change Basic.LessEqual _ _ at second
+      simpa only [Basic.normSq_eq_canonical] using second
   have firstBound : ∀ point ∈ points, PrimitivePoint.Bounded point.1 bound := by
     intro point member
     obtain ⟨pair, _, rfl⟩ := Map.mem_map.mp member
@@ -544,9 +548,9 @@ actual numeric comparison caches. -/
     intro point member
     obtain ⟨pair, _, rfl⟩ := Map.mem_map.mp member
     exact ⟨by simpa only [PairedAreaComparison.negative,
-        Data.Gaussian.Basic.Canonical.normSq_neg] using (bounded pair.2).1,
+        Gaussian.normSq_neg] using (bounded pair.2).1,
       by simpa only [PairedAreaComparison.negative,
-        Data.Gaussian.Basic.Canonical.normSq_neg] using (bounded pair.2).2⟩
+        Gaussian.normSq_neg] using (bounded pair.2).2⟩
   let numeric := Cached.realize points request.perEdge bound perEdgePositive.le boundNonnegative
     errors firstBound secondBound
   have firstEq : points.map Prod.fst = (paired.sources leftSheet).map value := by
@@ -611,19 +615,19 @@ actual numeric comparison caches. -/
 The original first component is conjugated, both differential parents remain distinct, and both source summaries reuse
 the actual numeric caches. -/
 @[expose] def realizeConjugateWithSources (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (leftSheet rightSheet : Fin 2) (different : leftSheet ≠ rightSheet)
     (selection : SelectedSources paired leftSheet rightSheet) :
     Realization .conjugate request leftReadings rightReadings later leftSheet rightSheet different := by
   let value := SourceValue .conjugate leftReadings.values rightReadings.values
   have fixedLater := (Data.Nat.Order.le_max_left _ _).trans later
-  let retainedLeftMagnitude := Readings.EdgeMagnitude.ofBank
+  let retainedLeftMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh mesh) leftFixed ((Data.Nat.Order.le_max_left _ _).trans fixedLater)
       leftReadings
-  let retainedRightMagnitude := Readings.EdgeMagnitude.ofBank
+  let retainedRightMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh mesh) rightFixed ((Data.Nat.Order.le_max_right _ _).trans fixedLater)
       rightReadings
   have requestsLater := (Data.Nat.Order.le_max_right _ _).trans later
@@ -632,26 +636,26 @@ the actual numeric caches. -/
     rw [request.perEdge_eq]
     exact Weighted.allowance_positive request.positive weightNonnegative
   let bound := 4 * max leftFixed.bound rightFixed.bound
-  have boundNonnegative : 0 ≤ bound := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (leftFixed.nonnegative.trans (Fraction.Order.Basic.le_max_left _ _))
-  have bounded (source : SewnPrimitiveContacts.SourceEdge mesh.triangles.length) : PrimitivePoint.Bounded (value source)
+  have boundNonnegative : 0 ≤ bound := Arithmetic.mul_nonneg_direct (by decide)
+    (leftFixed.nonnegative.trans (Basic.le_max_left _ _))
+  have bounded (source : SourceEdge mesh.triangles.length) : PrimitivePoint.Bounded (value source)
     bound :=
     ⟨by
-      have h := (Data.Gaussian.Norm.Basic.normSq_conj _).trans_le
+      have h := (Basic.normSq_conj _).trans_le
         ((retainedLeftMagnitude.source_bounded source).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-            (Fraction.Order.Basic.le_max_left leftFixed.bound rightFixed.bound) (by decide)))
-      change Fraction.Order.Basic.LessEqual _ _ at h
-      change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (Basic.le_max_left leftFixed.bound rightFixed.bound) (by decide)))
+      change Basic.LessEqual _ _ at h
+      change Basic.LessEqual _ _
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl,
      by
       have h := (retainedRightMagnitude.source_bounded source).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Basic.le_max_right leftFixed.bound rightFixed.bound) (by decide))
-      change Fraction.Order.Basic.LessEqual _ _ at h
-      change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Basic.le_max_right leftFixed.bound rightFixed.bound) (by decide))
+      change Basic.LessEqual _ _ at h
+      change Basic.LessEqual _ _
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl⟩
   let pairs := selection.entries
   let points := pairs.map (fun pair => (value pair.1, PairedAreaComparison.negative (value pair.2)))
@@ -665,7 +669,7 @@ the actual numeric caches. -/
     have second := pair_errors rightReadings paired request.right leftSheet rightSheet different
       ((Data.Nat.Order.le_max_right _ _).trans requestsLater) pair present
     constructor
-    · change Data.Gaussian.Basic.Canonical.normSq (Data.Gaussian.Basic.conj (pair.1.increment
+    · change Gaussian.normSq (Data.Gaussian.Basic.conj (pair.1.increment
         leftReadings.values) -
         -Data.Gaussian.Basic.conj (pair.2.increment leftReadings.values)) ≤ _
       have scalar : Data.Gaussian.Basic.conj (pair.1.increment leftReadings.values) -
@@ -673,18 +677,18 @@ the actual numeric caches. -/
           Data.Gaussian.Basic.conj (pair.1.increment leftReadings.values) +
             Data.Gaussian.Basic.conj (pair.2.increment leftReadings.values) := by ring1
       rewrite [scalar, ← Data.Gaussian.Basic.conj_add]
-      have h := (Data.Gaussian.Norm.Basic.normSq_conj _).trans_le first
-      change Fraction.Order.Basic.LessEqual _ _ at h
-      change Fraction.Order.Basic.LessEqual _ _
-      simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-    · change Data.Gaussian.Basic.Canonical.normSq (pair.1.increment rightReadings.values - -pair.2.increment
+      have h := (Basic.normSq_conj _).trans_le first
+      change Basic.LessEqual _ _ at h
+      change Basic.LessEqual _ _
+      simpa only [Basic.normSq_eq_canonical] using h
+    · change Gaussian.normSq (pair.1.increment rightReadings.values - -pair.2.increment
         rightReadings.values) ≤ _
       have scalar : pair.1.increment rightReadings.values - -pair.2.increment rightReadings.values = pair.1.increment
         rightReadings.values + pair.2.increment rightReadings.values := by ring1
       rewrite [scalar]
-      change Fraction.Order.Basic.LessEqual _ _
-      change Fraction.Order.Basic.LessEqual _ _ at second
-      simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using second
+      change Basic.LessEqual _ _
+      change Basic.LessEqual _ _ at second
+      simpa only [Basic.normSq_eq_canonical] using second
   have firstBound : ∀ point ∈ points, PrimitivePoint.Bounded point.1 bound := by
     intro point member
     obtain ⟨pair, _, rfl⟩ := Map.mem_map.mp member
@@ -693,9 +697,9 @@ the actual numeric caches. -/
     intro point member
     obtain ⟨pair, _, rfl⟩ := Map.mem_map.mp member
     exact ⟨by simpa only [PairedAreaComparison.negative,
-        Data.Gaussian.Basic.Canonical.normSq_neg] using (bounded pair.2).1,
+        Gaussian.normSq_neg] using (bounded pair.2).1,
       by simpa only [PairedAreaComparison.negative,
-        Data.Gaussian.Basic.Canonical.normSq_neg] using (bounded pair.2).2⟩
+        Gaussian.normSq_neg] using (bounded pair.2).2⟩
   let numeric := Cached.realize points request.perEdge bound perEdgePositive.le boundNonnegative
     errors firstBound secondBound
   have firstEq : points.map Prod.fst = (paired.sources leftSheet).map value := by
@@ -759,10 +763,10 @@ the actual numeric caches. -/
 /-- Select the actual original paired source occurrences once and acquire their direct bilinear comparison at the paid
 common stage. -/
 @[expose] def realize (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (leftSheet rightSheet : Fin 2) (different : leftSheet ≠ rightSheet) :
     Realization .paired request leftReadings rightReadings later leftSheet rightSheet different :=
   realizePairedWithSources request leftReadings rightReadings later leftSheet rightSheet different
@@ -771,10 +775,10 @@ common stage. -/
 /-- Select the actual original paired source occurrences once and acquire their conjugate bilinear comparison at the
 paid common stage. -/
 @[expose] def realizeConjugate (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (leftSheet rightSheet : Fin 2) (different : leftSheet ≠ rightSheet) :
     Realization .conjugate request leftReadings rightReadings later leftSheet rightSheet different :=
   realizeConjugateWithSources request leftReadings rightReadings later leftSheet rightSheet different
@@ -783,14 +787,14 @@ paid common stage. -/
 /-- The two actual source polygons agree to the requested tolerance. This is an area comparison, not a claim that either
 polygon has small area. -/
 theorem accurate (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (leftSheet rightSheet : Fin 2) (different : leftSheet ≠ rightSheet) :
-    let value := fun source : SewnPrimitiveContacts.SourceEdge mesh.triangles.length =>
+    let value := fun source : SourceEdge mesh.triangles.length =>
       (⟨source.increment leftReadings.values, source.increment rightReadings.values⟩ : PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((paired.sources leftSheet).map value) -
+    Basic.normSq (PairedIncrementArea.area ((paired.sources leftSheet).map value) -
       PairedIncrementArea.area ((paired.sources rightSheet).map value)) ≤ error := by
   intro value
   let result := realize request leftReadings rightReadings later leftSheet rightSheet different
@@ -801,15 +805,15 @@ theorem accurate (request : BilinearAreaRequest leftFixed rightFixed paired erro
 /-- Opposite-sheet conjugate polygons use the same retained whole-edge requests. Both components change sign, preserving
 their paired area. -/
 theorem conjugate_accurate (request : BilinearAreaRequest leftFixed rightFixed paired error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (leftSheet rightSheet : Fin 2) (different : leftSheet ≠ rightSheet) :
-    let value := fun source : SewnPrimitiveContacts.SourceEdge mesh.triangles.length =>
+    let value := fun source : SourceEdge mesh.triangles.length =>
       (⟨Data.Gaussian.Basic.conj (source.increment leftReadings.values), source.increment rightReadings.values⟩
         : PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((paired.sources leftSheet).map value) -
+    Basic.normSq (PairedIncrementArea.area ((paired.sources leftSheet).map value) -
       PairedIncrementArea.area ((paired.sources rightSheet).map value)) ≤ error := by
   intro value
   let result := realizeConjugate request leftReadings rightReadings later leftSheet rightSheet different

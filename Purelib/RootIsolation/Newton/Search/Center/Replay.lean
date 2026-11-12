@@ -52,7 +52,7 @@ the original clearance constructors. No alternative owner is substituted.
 
 namespace Purelib.RootIsolation.Newton.Search.Center.Replay
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound
   : Nat}
   (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
   (current : State.Raw.RawWindingState p ambient) (epsilon : Fraction.Rational)
@@ -107,7 +107,7 @@ Rejection retains the original checker equation; a pending value retains the exa
 inductive Preparation where
   /-- A typed geometric rejection with the original checker's exact none result. -/ | rejected (reason :
     Rejection elimination current epsilon center)
-      (equation : Newton.Search.Center.Basic.checkCenter elimination current epsilon center clearances = none)
+      (equation : Basic.checkCenter elimination current epsilon center clearances = none)
   /-- The retained geometric candidate awaiting its winding check. -/ | pending (value :
     Pending elimination current epsilon center)
 
@@ -119,10 +119,10 @@ no claim about a pole, the total extractor or later proposals. -/
 inductive Outcome where
   /-- The exact accepted refinement, identified with the original checker result. -/ | accepted (value :
     Refinement current epsilon)
-      (equation : some value = Newton.Search.Center.Basic.checkCenter elimination current epsilon center clearances)
+      (equation : some value = Basic.checkCenter elimination current epsilon center clearances)
   /-- A typed rejection, identified with the original checker's none result. -/ | rejected (reason :
     Rejection elimination current epsilon center)
-      (equation : none = Newton.Search.Center.Basic.checkCenter elimination current epsilon center clearances)
+      (equation : none = Basic.checkCenter elimination current epsilon center clearances)
 
 constructive_injectivity Outcome
 
@@ -138,18 +138,18 @@ def prepare : Preparation
         .pending ⟨positive, band, rfl, strict, accurate⟩
       else .rejected (.accuracy positive band rfl strict accurate) (by
         dsimp only [band, Box.Budget.Center.radius] at strict accurate
-        unfold Newton.Search.Center.Basic.checkCenter
+        unfold Basic.checkCenter
         change (if h : 0 < Box.Budget.Center.radius current.box epsilon center then _ else _) = _
         rewrite [dif_pos positive, dif_pos strict, dif_neg accurate]
         exact Eq.refl _)
     else .rejected (.containment positive band rfl strict) (by
       dsimp only [band, Box.Budget.Center.radius] at strict
-      unfold Newton.Search.Center.Basic.checkCenter
+      unfold Basic.checkCenter
       change (if h : 0 < Box.Budget.Center.radius current.box epsilon center then _ else _) = _
       rewrite [dif_pos positive, dif_neg strict]
       exact Eq.refl _)
   else .rejected (.nonpositive positive) (by
-    unfold Newton.Search.Center.Basic.checkCenter
+    unfold Basic.checkCenter
     change (if h : 0 < Box.Budget.Center.radius current.box epsilon center then _ else _) = _
     exact dif_neg positive)
 
@@ -194,7 +194,7 @@ def Pending.finish (pending :
     Outcome elimination current epsilon center clearances :=
   if four : index.val = 4 then
     let lines := restore four
-    let nested := (Geometry.Rational.Box.Refinement.StrictInterior.refines pending.strict).trans current.refinesAmbient
+    let nested := (Box.Refinement.StrictInterior.refines pending.strict).trans current.refinesAmbient
     let left := lines.left
     let right := lines.right
     let bottom := lines.bottom
@@ -216,7 +216,7 @@ def Pending.finish (pending :
     .accepted result (by
       have bandEq := pending.band_eq
       dsimp only [Box.Budget.Center.radius] at bandEq
-      unfold Newton.Search.Center.Basic.checkCenter
+      unfold Basic.checkCenter
       change _ = (if h : 0 < Box.Budget.Center.radius current.box epsilon center then _ else _)
       rw [dif_pos pending.positive]
       simp only [← bandEq, dif_pos pending.strict, dif_pos pending.accurate,
@@ -231,7 +231,7 @@ def Pending.finish (pending :
     dsimp only [Box.Budget.Center.radius] at bandEq
     have failed : Winding.Box.Basic.quadrupledBoxWinding p pending.band.box ≠ 4 := by
       rw [← index.property]; exact four
-    unfold Newton.Search.Center.Basic.checkCenter
+    unfold Basic.checkCenter
     change _ = (if h : 0 < Box.Budget.Center.radius current.box epsilon center then _ else _)
     rw [dif_pos pending.positive]
     conv_rhs => simp only [← bandEq, dif_pos pending.strict, dif_pos pending.accurate, dif_neg failed])

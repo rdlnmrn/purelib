@@ -69,6 +69,14 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison
+
+open Purelib.Riemann.Paths.PreparedPathDecomposition
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh
+
 public section
 
 open Purelib.Curves
@@ -100,14 +108,14 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison (NewtonReference)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
     {ambient : Rational.Box}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
+  {differential : Differentials.Basic.Differential genus} {parentSheet : Fin 2}
   {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
   {profile : RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
   {fixed : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile differential.exponent}
@@ -116,18 +124,18 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 /-- The original Newton-controlled reference for each retained segment occurrence and comparison owner. -/
 @[expose] def NewtonReferences (band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target)
   (tolerance : Fraction.Rational) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces),
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
+        AssignedSegments.Comparisons differential
         parentSheet assigned → Type 2
   | _, _, _, _, _, _, .nil _ _, _ => PUnit
   | _, _, _, _, _, _, .cons _ remaining, compared =>
-      Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared.1 band tolerance ×
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences band tolerance remaining
+      NewtonReference compared.1 band tolerance ×
+        NewtonReferences band tolerance remaining
         compared.2
 
 namespace NewtonReferences
@@ -137,65 +145,65 @@ variable {band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest 
 /-- Prepare the original references recursively from the retained same-side boundary geometry. -/
 @[expose] def build (band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target) (positive : 0 <
   tolerance) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+        AssignedSegments.Comparisons differential
         parentSheet assigned),
       Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary band.sample.output.box path →
-        Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences band tolerance assigned compared
+        NewtonReferences band tolerance assigned compared
   | _, _, _, _, _, _, .nil _ _, _, _ => ⟨⟩
   | _, _, _, _, _, _, .cons _ remaining, compared, geometry =>
       ⟨NewtonReference.build compared.1 band positive geometry.1 geometry.2.1 geometry.2.2.1,
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.build band positive
+        NewtonReferences.build band positive
           remaining compared.2 geometry.2.2.2⟩
 
 /-- Take the common sufficient stage of all original retained segment-reference budgets. -/
-@[expose] def index : ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial
+@[expose] def index : ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial
   ambient start finish}
     {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
       Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-      Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-    (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+      PreparedPath.CoveredSegments prepared}
+    (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+      AssignedSegments.Comparisons differential
       parentSheet assigned),
-    Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences band tolerance assigned compared → Nat
+    NewtonReferences band tolerance assigned compared → Nat
   | _, _, _, _, _, _, .nil _ _, _, _ => 0
   | _, _, _, _, _, _, .cons _ remaining, compared, references =>
       max references.1.reference.budget.grid.index
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.index remaining
+        (NewtonReferences.index remaining
         compared.2 references.2)
 
 /-- Every original corner increment satisfies the retained three-tolerance plus four-target Newton bound. -/
-theorem corner_bound {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+theorem corner_bound {domains : Face.DomainBanks.FaceDomainBank frames
   faces.regulars} {stage : Nat}
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+        AssignedSegments.Comparisons differential
         parentSheet assigned)
       (_aligned :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains
+        AssignedSegments.Comparisons.UsesDomains
         domains differential parentSheet assigned compared)
-      (references : Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences band tolerance assigned
+      (references : NewtonReferences band tolerance assigned
         compared),
-      Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.index assigned compared references ≤
+      NewtonReferences.index assigned compared references ≤
         stage →
-      ∀ value ∈ Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned,
-        Data.Gaussian.Norm.Basic.normSq value ≤ 3 * tolerance + 4 * target
+      ∀ value ∈ Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned,
+        Gaussian.Norm.Basic.normSq value ≤ 3 * tolerance + 4 * target
   | _, _, _, _, _, _, .nil _ _, _, _, _, _, _, member => (List.not_mem_nil member).elim
   | _, _, _, _, _, _, .cons _ remaining, compared, aligned, references, later, value, member => by
       rcases Purelib.Data.List.Membership.mem_cons.mp member with rfl | member
-      · exact references.1.corner_bound aligned.1 ((Purelib.Data.Nat.Order.le_max_left _ _).trans later) shared
-      · exact Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.corner_bound
-          shared remaining compared.2 aligned.2 references.2 ((Data.Nat.Order.le_max_right _ _).trans later) value
+      · exact references.1.corner_bound aligned.1 ((Nat.Order.le_max_left _ _).trans later) shared
+      · exact NewtonReferences.corner_bound
+          shared remaining compared.2 aligned.2 references.2 ((Nat.Order.le_max_right _ _).trans later) value
           member
 
 end NewtonReferences
@@ -205,132 +213,132 @@ set_option genInjectivity false in
 the original parent polynomials and their Newton-controlled resamplings. -/
 structure NewtonReferenceBank (band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target)
   (tolerance : Fraction.Rational)
-    {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+    {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
     {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
       Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-      Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-    (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+      PreparedPath.CoveredSegments prepared}
+    (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+      AssignedSegments.Comparisons differential
       parentSheet assigned) where
   /-- The original reference-comparison tolerance is strictly positive. -/ positive : 0 < tolerance
   /-- The original segment references aligned with the exact retained path and comparison spine. -/ references :
-    Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences band tolerance assigned compared
+    NewtonReferences band tolerance assigned compared
   /-- The cached sufficient numerical stage for all original segment references. -/ index : Nat
   /-- The cached stage equals the exact original reference-bank maximum. -/ index_eq : index =
-    Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.index assigned compared references
+    NewtonReferences.index assigned compared references
 
 constructive_injectivity NewtonReferenceBank
 
 namespace NewtonReferenceBank
 
 variable {band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target}
-  {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+  {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start finish}
   {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
     Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-    Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-  {assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces} {compared :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+    PreparedPath.CoveredSegments prepared}
+  {assigned : PreparedFaceSegments.AssignedSegments mesh pieces} {compared :
+    AssignedSegments.Comparisons differential
     parentSheet assigned}
 
 /-- Cache the complete original Newton reference bank and its exact maximum comparison stage. -/
 @[expose] def build (band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target) (positive : 0 <
   tolerance)
-    (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+    (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+      AssignedSegments.Comparisons differential
       parentSheet assigned)
     (geometry : Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary band.sample.output.box path) :
-      Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferenceBank band tolerance assigned compared :=
-  let references := Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.build band positive
+      NewtonReferenceBank band tolerance assigned compared :=
+  let references := NewtonReferences.build band positive
     assigned compared geometry
-  ⟨positive, references, Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.index assigned
+  ⟨positive, references, NewtonReferences.index assigned
     compared references, rfl⟩
 
 /-- The original common Newton increment allowance is nonnegative. -/
-theorem bound_nonnegative (reference : Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferenceBank band
+theorem bound_nonnegative (reference : NewtonReferenceBank band
   tolerance assigned compared) :
     0 ≤ 3 * tolerance + 4 * target := by
-  have paid : 0 ≤ target := (Fraction.Order.Arithmetic.mul_nonneg_direct
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) fixed.rate_nonnegative)
+  have paid : 0 ≤ target := (Arithmetic.mul_nonneg_direct
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) fixed.rate_nonnegative)
       (by decide +kernel)) band.sample.output.radiusPositive.le).trans band.paid
-  exact add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) reference.positive.le)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) paid)
+  exact add_nonneg (Arithmetic.mul_nonneg_direct (by decide) reference.positive.le)
+    (Arithmetic.mul_nonneg_direct (by decide) paid)
 
 /-- Every actual retained triangle-source increment satisfies the original common Newton bound. -/
-theorem source_bound (reference : Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferenceBank band
+theorem source_bound (reference : NewtonReferenceBank band
   tolerance assigned compared)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
+      AssignedSegments.Comparisons.UsesDomains domains
       differential parentSheet assigned compared)
     {stage : Nat} (later : reference.index ≤ stage) {shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
-    ∀ value ∈ (Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned).map (fun
+      Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    ∀ value ∈ (AssignedSegments.sourceEdges assigned).map (fun
       source => source.increment readings.values),
-      Data.Gaussian.Norm.Basic.normSq value ≤ 3 * tolerance + 4 * target := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges_increments readings
+      Gaussian.Norm.Basic.normSq value ≤ 3 * tolerance + 4 * target := by
+  rw [AssignedSegments.sourceEdges_increments readings
     assigned]
-  exact Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferences.corner_bound shared assigned compared
+  exact NewtonReferences.corner_bound shared assigned compared
     aligned reference.references (reference.index_eq ▸ later)
 
 /-- The retained source-increment list has exactly the original assigned indexed word length. -/
-theorem source_count {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+theorem source_count {domains : Face.DomainBanks.FaceDomainBank frames
   faces.regulars} {stage : Nat}
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-      (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned).map (fun source
+    {shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+      (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    ((AssignedSegments.sourceEdges assigned).map (fun source
       => source.increment readings.values)).length = assigned.indexed.length := by
   have count := congrArg List.length
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges_project assigned)
-  rw [Purelib.Data.List.Map.length_map] at count ⊢
+    (AssignedSegments.sourceEdges_project assigned)
+  rw [List.Map.length_map] at count ⊢
   exact count
 
 /-- All coarse grid occurrences are paid, but later face refinement counts
 do not enter the bound. This is the full cumulative polygon, not its total. -/
-theorem source_area_bound (reference : Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferenceBank band
+theorem source_area_bound (reference : NewtonReferenceBank band
   tolerance assigned compared)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
+      AssignedSegments.Comparisons.UsesDomains domains
       differential parentSheet assigned compared)
     {stage : Nat} (later : reference.index ≤ stage) {shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea
-      ((Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned).map (fun source
+      Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea
+      ((AssignedSegments.sourceEdges assigned).map (fun source
       => source.increment readings.values))) ≤
       4 * ((assigned.indexed.length : Fraction.Rational) ^ 2 * (3 * tolerance + 4 * target)) ^ 2 := by
   have bounded := Path.IncrementArea.pathArea_bound _ reference.bound_nonnegative (reference.source_bound aligned later
     readings)
-  rw [Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferenceBank.source_count readings] at bounded
+  rw [NewtonReferenceBank.source_count readings] at bounded
   exact bounded
 
 /-- Coordinate/root closure of the projected word does not erase this
 anchor term: source increments on distinct faces need not telescope. -/
-theorem source_trace_bound (reference : Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferenceBank band
+theorem source_trace_bound (reference : NewtonReferenceBank band
   tolerance assigned compared) (anchor : Gaussian.Basic.Canonical)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
+      AssignedSegments.Comparisons.UsesDomains domains
       differential parentSheet assigned compared)
     {stage : Nat} (later : reference.index ≤ stage) {shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea anchor
-      ((Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned).map (fun source
+      Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea anchor
+      ((AssignedSegments.sourceEdges assigned).map (fun source
       => source.increment readings.values))) ≤
       8 * ((assigned.indexed.length : Fraction.Rational) ^ 2 * (3 * tolerance + 4 * target)) ^ 2 +
-        8 * Data.Gaussian.Norm.Basic.normSq anchor * ((assigned.indexed.length : Fraction.Rational) ^ 2 * (3 *
+        8 * Gaussian.Norm.Basic.normSq anchor * ((assigned.indexed.length : Fraction.Rational) ^ 2 * (3 *
           tolerance + 4 * target)) := by
-  let values := (Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned).map
+  let values := (AssignedSegments.sourceEdges assigned).map
     (fun source => source.increment readings.values)
   have total := Path.IncrementArea.sum_bound_of_length reference.bound_nonnegative
     (reference.source_bound aligned later readings) (count := assigned.indexed.length)
-      (Hyperelliptic.Meshes.PuncturedGrid.NewtonPathComparison.NewtonReferenceBank.source_count readings).le
-  have endpoint := (Path.BoundaryRibbon.area_bound anchor (Data.Gaussian.Norm.Sum.Basic.gaussianSum values)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct total
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Gaussian.Norm.Basic.normSq_nonneg anchor)))
+      (NewtonReferenceBank.source_count readings).le
+  have endpoint := (Path.BoundaryRibbon.area_bound anchor (Gaussian.Norm.Sum.Basic.gaussianSum values)).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct total
+      (Arithmetic.mul_nonneg_direct (by decide) (Gaussian.Norm.Basic.normSq_nonneg anchor)))
   rw [Path.IncrementArea.traceArea_eq]
   exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add (reference.source_area_bound aligned later readings) endpoint) (by decide)).trans_eq (by ring1))
 
 end NewtonReferenceBank

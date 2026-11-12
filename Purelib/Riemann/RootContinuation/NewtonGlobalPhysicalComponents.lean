@@ -30,6 +30,10 @@ import Purelib.Data.Vector.Dependent
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces
+
 public section
 
 /-! The surviving complete-surface physical term is split by its actual
@@ -60,18 +64,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.Bra
   (physicalValue)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational} {grid : NewtonGrid
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
     preparation target radius}
   {observations : ProtectedObservations original} {frames : RootIsolation.SquareRoot.Grid.RootFrames
     grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {partitions : SurfacePartitions observations grid}
   {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
-  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Purelib.Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Rational}
   {stage : Nat} {cache : Numerics domains stage} {coefficients :
     LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -88,15 +92,15 @@ open Purelib.Data.Gaussian in
 Selects the exterior or one hole using the retained neighbor bank, with right minus left minus top plus bottom
 orientation. -/
 @[expose] def componentSum (neighbors : PuncturedFaces.NeighborBank grid.faces) (component :
-  Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces)
+  PhysicalComponent grid.faces)
     (values : GridSide → Fin grid.faces.regulars.length → Basic.Canonical) : Gaussian :=
-  FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
+  sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
     ((neighbors.entries.get p).right) component (values .right p)) -
-    FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
+    sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
       ((neighbors.entries.get p).left) component (values .left p)) -
-    (FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
+    (sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
       ((neighbors.entries.get p).top) component (values .top p)) -
-      FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
+      sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
         ((neighbors.entries.get p).bottom) component (values .bottom p)))
 
 section
@@ -105,21 +109,21 @@ open Purelib.Curves.Hyperelliptic
 
 Applies the component sum to the retained centered perimeter samples. -/
 @[expose] def componentCentered (neighbors : PuncturedFaces.NeighborBank grid.faces) (component :
-  Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces) : Gaussian :=
+  PhysicalComponent grid.faces) : Gaussian :=
   componentSum neighbors component (centeredSideSum samples)
 
 /-- Endpoint correction of a selected physical component.
 
 Applies the component sum to the retained endpoint side corrections. -/
 @[expose] def componentEndpoints (neighbors : PuncturedFaces.NeighborBank grid.faces) (component :
-  Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces) : Gaussian :=
+  PhysicalComponent grid.faces) : Gaussian :=
   componentSum neighbors component (endpointSideSum samples)
 
 /-- Full boundary contribution of a selected physical component.
 
 Applies the component sum to the original side samples without altering the neighbor classification. -/
 @[expose] def componentBoundary (neighbors : PuncturedFaces.NeighborBank grid.faces) (component :
-  Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces) : Gaussian :=
+  PhysicalComponent grid.faces) : Gaussian :=
   componentSum neighbors component (sideSum samples)
 
 end
@@ -131,30 +135,30 @@ open Purelib.Data.Gaussian in
 Checks exterior, regular-neighbor and hole-neighbor cases using the actual retained component identity. -/
 private theorem component_add {face : RegularFace grid.shrunk.prepared.toBranchCellBank} {side : GridSide}
     (neighbor : PuncturedFaces.SideNeighbor grid.faces face side) (component :
-      Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces)
-    (first last : Basic.Canonical) : Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor
+      PhysicalComponent grid.faces)
+    (first last : Basic.Canonical) : PhysicalComponentValues.SideNeighbor.componentValue neighbor
       component (first + last) =
-      Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor component first +
-        Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor component last := by
+      PhysicalComponentValues.SideNeighbor.componentValue neighbor component first +
+        PhysicalComponentValues.SideNeighbor.componentValue neighbor component last := by
   cases neighbor with
   | exterior equal =>
-    cases component <;> (simp only [Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue, add_zero,
+    cases component <;> (simp only [PhysicalComponentValues.SideNeighbor.componentValue, add_zero,
       -eq_self, -iff_self]; rfl)
   | neighbor cell member matching location =>
       cases location with
       | regular found equal =>
-        cases component <;> (simp only [Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue,
+        cases component <;> (simp only [PhysicalComponentValues.SideNeighbor.componentValue,
           add_zero, -eq_self, -iff_self]; rfl)
       | hole found equal =>
         cases component with
         | exterior =>
-          simp only [Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue, add_zero, -eq_self,
+          simp only [PhysicalComponentValues.SideNeighbor.componentValue, add_zero, -eq_self,
             -iff_self]; rfl
         | hole selected =>
           by_cases same : selected = found
-          · simp only [Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue, if_pos same, -eq_self,
+          · simp only [PhysicalComponentValues.SideNeighbor.componentValue, if_pos same, -eq_self,
               -iff_self]; rfl
-          · simp only [Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue, if_neg same, add_zero,
+          · simp only [PhysicalComponentValues.SideNeighbor.componentValue, if_neg same, add_zero,
               -eq_self, -iff_self]; rfl
 
 open Purelib.Algebra in
@@ -163,28 +167,28 @@ open Purelib.Curves.Hyperelliptic in
 
 Transports the side decomposition pointwise through component selection and the four oriented finite sums. -/
 theorem componentBoundary_split (neighbors : PuncturedFaces.NeighborBank grid.faces) (component :
-  Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces) :
+  PhysicalComponent grid.faces) :
     componentBoundary samples neighbors component =
       componentCentered samples neighbors component + componentEndpoints samples neighbors component := by
   have split (side : GridSide) :
-      FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) side) component (sideSum samples side p)) =
-      FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) side) component (centeredSideSum samples side p)) +
-      FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) side) component (endpointSideSum samples side p)) := by
-    rw [← FiniteSum.Fin.sumFin_add]
-    apply FiniteSum.Fin.sumFin_congr
+    rw [← sumFin_add]
+    apply sumFin_congr
     intro p
     rw [side_decomposition samples side p, component_add]
   have bottom := split .bottom
   have right := split .right
   have top := split .top
   have left := split .left
-  dsimp only [Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at]
+  dsimp only [FaceNeighbors.at]
     at bottom right top left
   unfold componentBoundary componentCentered componentEndpoints componentSum
   rw [bottom, right, top, left]
@@ -198,21 +202,21 @@ open Purelib.Data.Gaussian in
 Uses the retained neighbor classification and swaps the finite face and hole sums without changing their witnesses. -/
 private theorem side_components (neighbors : PuncturedFaces.NeighborBank grid.faces) (side : GridSide)
     (values : Fin grid.faces.regulars.length → Basic.Canonical) :
-    FiniteSum.Fin.sumFin (fun p =>
-      Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
-      (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at (neighbors.entries.get
+    sumFin (fun p =>
+      physicalValue
+      (FaceNeighbors.at (neighbors.entries.get
       p) side) (values p)) =
-      FiniteSum.Fin.sumFin (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      sumFin (fun p => PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) side) .exterior (values p)) +
-      FiniteSum.Fin.sumFin (fun hole => FiniteSum.Fin.sumFin (fun p =>
-        Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      sumFin (fun hole => sumFin (fun p =>
+        PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) side) (.hole hole) (values p))) := by
-  rw [FiniteSum.Fin.sumFin_congr (fun p => Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.physical_components
-    (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at (neighbors.entries.get p)
+  rw [sumFin_congr (fun p => PhysicalComponentValues.SideNeighbor.physical_components
+    (FaceNeighbors.at (neighbors.entries.get p)
     side) (values p)),
-    FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_swap]
+    sumFin_add, FiniteSum.Fin.sumFin_swap]
 
 open Purelib.Algebra in
 open Purelib.Curves.Hyperelliptic in
@@ -221,16 +225,16 @@ open Purelib.Curves.Hyperelliptic in
 Applies the component decomposition separately to all four oriented sides. -/
 theorem physicalCentered_components (neighbors : PuncturedFaces.NeighborBank grid.faces) :
     physicalCentered samples neighbors = componentCentered samples neighbors .exterior +
-      FiniteSum.Fin.sumFin (fun hole => componentCentered samples neighbors (.hole hole)) := by
+      sumFin (fun hole => componentCentered samples neighbors (.hole hole)) := by
   have bottom := side_components neighbors .bottom (centeredSideSum samples .bottom)
   have right := side_components neighbors .right (centeredSideSum samples .right)
   have top := side_components neighbors .top (centeredSideSum samples .top)
   have left := side_components neighbors .left (centeredSideSum samples .left)
-  dsimp only [Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at]
+  dsimp only [FaceNeighbors.at]
     at bottom right top left
   unfold physicalCentered
   rw [bottom, right, top, left]
-  simp only [componentCentered, componentSum, FiniteSum.Fin.sumFin_sub]
+  simp only [componentCentered, componentSum, sumFin_sub]
   ring1
 
 open Purelib.Algebra in
@@ -241,14 +245,14 @@ each boundary. -/
 theorem physicalCentered_boundaries (neighbors : PuncturedFaces.NeighborBank grid.faces) :
     physicalCentered samples neighbors =
       (componentBoundary samples neighbors .exterior - componentEndpoints samples neighbors .exterior) +
-      FiniteSum.Fin.sumFin (fun hole => componentBoundary samples neighbors (.hole hole) - componentEndpoints samples
+      sumFin (fun hole => componentBoundary samples neighbors (.hole hole) - componentEndpoints samples
         neighbors (.hole hole)) := by
   have readback (component) : componentCentered samples neighbors component =
       componentBoundary samples neighbors component - componentEndpoints samples neighbors component := by
     rw [componentBoundary_split samples neighbors component]
     ring1
   rw [physicalCentered_components samples neighbors, readback .exterior]
-  exact congrArg (_ + ·) (FiniteSum.Fin.sumFin_congr fun hole => readback (.hole hole))
+  exact congrArg (_ + ·) (sumFin_congr fun hole => readback (.hole hole))
 
 end SynchronizedSurfaceRequests.PerimeterSamples
 end Purelib.Riemann.RootContinuation.NewtonGlobalPhysicalComponents

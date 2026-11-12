@@ -35,8 +35,8 @@ namespace Purelib.Polynomial.Clearance.Box.Line.Basic
 /-- Restrict the retained line-clearance certificate to a refined box without recomputing its bound. -/
 def VerticalLineClearance.restrict
     {p : CoefficientPolynomial} {ambient small : Box} {x : Fraction.Rational}
-    (clearance : Clearance.Box.Line.Basic.VerticalLineClearance p ambient x)
-    (refines : small.Refines ambient) : Clearance.Box.Line.Basic.VerticalLineClearance p small x where
+    (clearance : VerticalLineClearance p ambient x)
+    (refines : small.Refines ambient) : VerticalLineClearance p small x where
   bound := clearance.bound
   positive := clearance.positive
   lower := fun y lower upper => clearance.lower y
@@ -45,15 +45,15 @@ def VerticalLineClearance.restrict
 /-- Restriction retains the original line-clearance bound exactly. -/
 @[simp] theorem VerticalLineClearance.restrict_bound
     {p : CoefficientPolynomial} {ambient small : Box} {x : Fraction.Rational}
-    (clearance : Clearance.Box.Line.Basic.VerticalLineClearance p ambient x)
+    (clearance : VerticalLineClearance p ambient x)
     (refines : small.Refines ambient) :
     (clearance.restrict refines).bound = clearance.bound := rfl
 
 /-- Restrict the retained line-clearance certificate to a refined box without recomputing its bound. -/
 def HorizontalLineClearance.restrict
     {p : CoefficientPolynomial} {ambient small : Box} {y : Fraction.Rational}
-    (clearance : Clearance.Box.Line.Basic.HorizontalLineClearance p ambient y)
-    (refines : small.Refines ambient) : Clearance.Box.Line.Basic.HorizontalLineClearance p small y where
+    (clearance : HorizontalLineClearance p ambient y)
+    (refines : small.Refines ambient) : HorizontalLineClearance p small y where
   bound := clearance.bound
   positive := clearance.positive
   lower := fun x lower upper => clearance.lower x
@@ -62,7 +62,7 @@ def HorizontalLineClearance.restrict
 /-- Restriction retains the original line-clearance bound exactly. -/
 @[simp] theorem HorizontalLineClearance.restrict_bound
     {p : CoefficientPolynomial} {ambient small : Box} {y : Fraction.Rational}
-    (clearance : Clearance.Box.Line.Basic.HorizontalLineClearance p ambient y)
+    (clearance : HorizontalLineClearance p ambient y)
     (refines : small.Refines ambient) :
     (clearance.restrict refines).bound = clearance.bound := rfl
 end Purelib.Polynomial.Clearance.Box.Line.Basic

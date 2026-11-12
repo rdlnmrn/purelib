@@ -48,6 +48,18 @@ public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOr
 public import Purelib.Integration.Path.CenteredPathIncrements
 import Purelib.Tactic.Ring
 
+open Purelib.Riemann.Readings
+
+open Purelib.Integration.Path.Dyadic
+
+open Purelib.Integration.Path.CenteredPathIncrements
+
+open Purelib.Approximation.Rational.Geometric
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 public section
@@ -83,9 +95,9 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas (Sourc
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest (sourceValues)
 variable {genus count otherCount depth : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch (recastCenteredEdge other parent)}
   {data : Data patch count} {otherData :
@@ -94,7 +106,7 @@ variable {genus count otherCount depth : Nat} {curve : HyperellipticCurve genus}
     Cover otherData}
   {interval : CommonInterval cover
     otherCover}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {regular : RegularBounds.Data cap}
   {geometry : ChartGeometry (cap := cap) interval
     depth}
   {target : Coordinate} {floor : Nat}
@@ -109,26 +121,26 @@ set_option genInjectivity false in
 
 The original sample owners, ribbon and chart requests are retained together. The chosen stage also pays the endpoint
 drift needed to restore the source increment exactly. -/
-structure SourceComparisonRequest (prepared : Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest
+structure SourceComparisonRequest (prepared : SourceChartRequest
   regular geometry target floor) (requested : Coordinate) where
-  /-- The original first source sample data. -/ first : Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular
+  /-- The original first source sample data. -/ first : ArcSamples.Data regular
     interval.first.cell
-  /-- The original second source sample data. -/ second : Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular
+  /-- The original second source sample data. -/ second : ArcSamples.Data regular
     interval.second.cell
   /-- The paired source-to-pullback ribbon request at the allocated ribbon target. -/ ribbon :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedPullbackRibbon.PairedPullbackRequest first second (sourceRibbonTarget
+    PairedPullbackRequest first second (sourceRibbonTarget
     requested) floor
   /-- The retained prepared chart request at one quarter of the requested target. -/ chart :
-    Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceAreaRequest prepared (requested / 4)
+    SourceAreaRequest prepared (requested / 4)
   /-- The cached sum of the two source sample scales. -/ driftScale : Coordinate
   /-- The drift scale is exactly the sum of the original sample scales. -/ driftScale_eq : driftScale = first.scale +
     second.scale
   /-- The retained first permitted index paying the endpoint drift. -/ driftIndex : Nat
   /-- The drift index is the explicit quarter-radius search from the retained floor. -/ driftIndex_eq : driftIndex =
-    Rational.Geometric.Search.firstQuarterBelow driftScale floor (sourceRibbonTarget requested)
+    Search.firstQuarterBelow driftScale floor (sourceRibbonTarget requested)
   /-- The cached quarter-radius error at the drift index. -/ driftError : Coordinate
   /-- The cached drift error is the quarter radius of the retained scale and index. -/ driftError_eq : driftError =
-    Rational.Geometric.Basic.quarterRadius driftScale driftIndex
+    Basic.quarterRadius driftScale driftIndex
   /-- The chosen drift error is strictly below the source ribbon target. -/ drift_accurate : driftError <
     sourceRibbonTarget requested
   /-- The common stage floor for ribbon, chart and endpoint drift. -/ index : Nat
@@ -146,44 +158,44 @@ open Purelib.Data in
 
 For a positive target, the maximum of their retained indices pays all three requests while preserving the supplied
 prepared chart and both original sample owners. -/
-@[expose] def build (prepared : Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest regular
+@[expose] def build (prepared : SourceChartRequest regular
   geometry target floor)
-    (first : Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.first.cell)
-    (second : Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.second.cell)
+    (first : ArcSamples.Data regular interval.first.cell)
+    (second : ArcSamples.Data regular interval.second.cell)
     (requested : Coordinate) (positive : 0 < requested) : SourceComparisonRequest prepared requested :=
-  let ribbon := Hyperelliptic.Charts.Reciprocal.Disk.PairedPullbackRibbon.PairedPullbackRequest.build first second
+  let ribbon := PairedPullbackRequest.build first second
     (sourceRibbonTarget requested)
-    (Rat.Fraction.Order.Field.div_pos_direct (Rat.Fraction.Order.Field.div_pos_direct
-      (Rat.Fraction.Order.Field.div_pos_direct positive (by decide)) (by decide)) (by decide)) floor
-  let chart := Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceAreaRequest.build prepared (requested / 4)
-    (Rat.Fraction.Order.Field.div_pos_direct positive (by decide))
+    (Field.div_pos_direct (Field.div_pos_direct
+      (Field.div_pos_direct positive (by decide)) (by decide)) (by decide)) floor
+  let chart := SourceAreaRequest.build prepared (requested / 4)
+    (Field.div_pos_direct positive (by decide))
   let driftScale := first.scale + second.scale
-  let driftIndex := Rational.Geometric.Search.firstQuarterBelow driftScale floor (sourceRibbonTarget requested)
-  let driftError := Rational.Geometric.Basic.quarterRadius driftScale driftIndex
+  let driftIndex := Search.firstQuarterBelow driftScale floor (sourceRibbonTarget requested)
+  let driftError := Basic.quarterRadius driftScale driftIndex
   ⟨first, second, ribbon, chart, driftScale, rfl, driftIndex, rfl, driftError, rfl,
-    Rational.Geometric.Search.firstQuarterBelow_accurate driftScale (add_nonneg first.scale_nonnegative
+    Search.firstQuarterBelow_accurate driftScale (add_nonneg first.scale_nonnegative
       second.scale_nonnegative)
       floor (sourceRibbonTarget requested)
-      (Rat.Fraction.Order.Field.div_pos_direct (Rat.Fraction.Order.Field.div_pos_direct
-        (Rat.Fraction.Order.Field.div_pos_direct positive (by decide)) (by decide)) (by decide)),
+      (Field.div_pos_direct (Field.div_pos_direct
+        (Field.div_pos_direct positive (by decide)) (by decide)) (by decide)),
     max (max ribbon.index chart.refined.index) driftIndex, rfl⟩
 
 variable {prepared : SourceChartRequest regular
   geometry target floor} {requested : Coordinate}
-  {index : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
+  {index : Nat} {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box}
+  {otherSample : Cap.Primitives.Sample cap other index otherBox}
   (request : SourceComparisonRequest prepared requested)
   (source : SourcePrimitive data index)
     (otherSource : SourcePrimitive otherData
     index)
-  (first : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample request.first sample)
-  (second : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample request.second otherSample)
+  (first : ArcSamples.Sample request.first sample)
+  (second : ArcSamples.Sample request.second otherSample)
 
 open Purelib.Curves in
 /-- The retained paired ribbon evaluation on the actual common interval at a supplied trace depth. -/
 @[expose] def RibbonAt (traceDepth : Nat) :=
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedPullbackRibbon.PairedPullbackRequest.Evaluation request.ribbon source
+  PairedPullbackRequest.Evaluation request.ribbon source
   otherSource first second
   interval.edge.left.parameter interval.edge.right.parameter traceDepth
 
@@ -192,7 +204,7 @@ open Purelib.Curves in
 
 open Purelib.Curves in
 /-- The retained chart request evaluated at the supplied polynomial stage. -/
-@[expose] def ChartEvaluation := Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceAreaRequest.Evaluation
+@[expose] def ChartEvaluation := SourceAreaRequest.Evaluation
   request.chart first second
 
 /-- Pair the two source primitive values at their respective original cell origins. -/
@@ -207,60 +219,60 @@ section
 open Purelib.Curves
 /-- The paired area contribution of a source origin against the actual source endpoint increment. -/
 @[expose] def SourceOriginTerm (origin : PrimitivePoint) : Gaussian :=
-  edgeArea origin ((Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source
+  edgeArea origin ((sourceValues source
     otherSource interval.edge.right.parameter).sub
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource
+    (sourceValues source otherSource
       interval.edge.left.parameter))
 
 /-- The paired area contribution of a pullback origin against the actual polynomial endpoint increment. -/
 @[expose] def CapOriginTerm (origin : PrimitivePoint) : Gaussian :=
-  edgeArea origin ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues
+  edgeArea origin ((CommonChartAreas.SourceChartRequest.pullbackPolynomialValues
     first second interval.edge.right.parameter).sub
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
+    (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
       interval.edge.left.parameter))
 
 /-- Restore the unanchored dyadic source area by adding its exact origin contribution. -/
 theorem source_unanchored {traceDepth : Nat} (ribbon : RibbonAt request source otherSource first second traceDepth) :
     ribbon.sourceArea + SourceOriginTerm (interval := interval) source otherSource
       (sourceOrigin (interval := interval) source otherSource) =
-      dyadicArea (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source
+      dyadicArea (sourceValues source
         otherSource) traceDepth interval.edge.left.parameter interval.edge.right.parameter := by
   rw [ribbon.sourceArea_eq]
   change dyadicArea (fun parameter =>
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource
+    (sourceValues source otherSource
     parameter).sub
     (sourceOrigin (interval := interval) source otherSource)) traceDepth _ _ + _ = _
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOrigins.Bilinear.dyadicArea_sub_origin]
+  rw [dyadicArea_sub_origin]
   dsimp only [SourceOriginTerm, -eq_self, -iff_self]
   ring1
 
 /-- Restore the unanchored dyadic pullback area by adding its exact origin contribution. -/
 theorem cap_unanchored {traceDepth : Nat} (ribbon : RibbonAt request source otherSource first second traceDepth) :
     ribbon.capArea + CapOriginTerm request first second (capOrigin request first second) =
-      dyadicArea (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues
+      dyadicArea (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues
         first second)
         traceDepth interval.edge.left.parameter interval.edge.right.parameter := by
   rw [ribbon.capArea_eq]
   change dyadicArea (fun parameter =>
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
+    (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
     parameter).sub
     (capOrigin request first second)) traceDepth _ _ + _ = _
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOrigins.Bilinear.dyadicArea_sub_origin]
+  rw [dyadicArea_sub_origin]
   dsimp only [CapOriginTerm, -eq_self, -iff_self]
   ring1
 
 /-- The dyadic paired source area centered at the actual common interval's left endpoint. -/
 @[expose] def SourceCenteredValue : Gaussian := dyadicArea
-  (fun parameter => (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source
-    otherSource parameter).sub (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues
+  (fun parameter => (sourceValues source
+    otherSource parameter).sub (sourceValues
     source otherSource interval.edge.left.parameter))
   depth interval.edge.left.parameter interval.edge.right.parameter
 
 /-- The dyadic paired pullback area centered at the actual common interval's left endpoint. -/
 @[expose] def CapCenteredValue : Gaussian := dyadicArea
-  (fun parameter => (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues
+  (fun parameter => (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues
     first second parameter).sub
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
+    (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
       interval.edge.left.parameter))
   depth interval.edge.left.parameter interval.edge.right.parameter
 
@@ -273,7 +285,7 @@ open Purelib.Curves
 private theorem centered_area (values : Coordinate → PrimitivePoint) (depth : Nat) (lower upper : Coordinate) :
     dyadicArea (fun parameter => (values parameter).sub (values lower)) depth lower upper =
       dyadicArea values depth lower upper - dyadicArea values 0 lower upper := by
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOrigins.Bilinear.dyadicArea_sub_origin,
+  rw [dyadicArea_sub_origin,
     Periods.DyadicBilinearBoundaryRibbon.dyadicArea_zero]
   simp only [edgeArea, PrimitivePoint.sub, -eq_self, -iff_self]
   ring1
@@ -282,7 +294,7 @@ private theorem centered_area (values : Coordinate → PrimitivePoint) (depth : 
 theorem centered_area_for_evaluate (values : Coordinate → PrimitivePoint) (depth : Nat) (lower upper : Coordinate) :
     dyadicArea (fun parameter => (values parameter).sub (values lower)) depth lower upper =
       dyadicArea values depth lower upper - dyadicArea values 0 lower upper := by
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOrigins.Bilinear.dyadicArea_sub_origin,
+  rw [dyadicArea_sub_origin,
     Periods.DyadicBilinearBoundaryRibbon.dyadicArea_zero]
   simp only [edgeArea, PrimitivePoint.sub, -eq_self, -iff_self]
   ring1
@@ -295,7 +307,7 @@ open Purelib.Data in
 Subtracting the one-edge chord from the fine path removes the starting-value contributions for each path without an
 equality between their original anchors. -/
 theorem centered_ribbon (ribbon : RibbonEvaluation request source otherSource first second) :
-    Data.Gaussian.Norm.Basic.normSq (SourceCenteredValue (interval := interval) (depth := depth) source otherSource
+    normSq (SourceCenteredValue (interval := interval) (depth := depth) source otherSource
       -
       CapCenteredValue request first second) < 16 * sourceRibbonTarget requested := by
   let coarse := request.ribbon.evaluate source otherSource first second ribbon.later
@@ -315,8 +327,8 @@ theorem centered_ribbon (ribbon : RibbonEvaluation request source otherSource fi
   rw [sourceEq, capEq, show (ribbon.sourceArea - coarse.sourceArea) - (ribbon.capArea - coarse.capArea) =
     (ribbon.sourceArea - ribbon.capArea) - (coarse.sourceArea - coarse.capArea) by ring1]
   exact (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans_lt
-    ((Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
-      (Rat.Fraction.Order.Arithmetic.add_lt_add_direct ribbon.full_accurate coarse.full_accurate)).trans_eq (by ring1))
+    ((Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
+      (Arithmetic.add_lt_add_direct ribbon.full_accurate coarse.full_accurate)).trans_eq (by ring1))
 
 open Purelib.Curves in
 open Purelib.Data in
@@ -344,20 +356,20 @@ structure Evaluation where
     CapOriginTerm request first second capAnchor
   /-- The cached unanchored dyadic source area. -/ sourceArea : Gaussian
   /-- The cached source area is the actual dyadic reading on the common interval. -/ sourceArea_eq : sourceArea =
-    dyadicArea (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source
+    dyadicArea (sourceValues source
     otherSource)
     depth interval.edge.left.parameter interval.edge.right.parameter
   /-- The cached difference between source and pullback origin contributions. -/ correction : Gaussian
   /-- The correction is exactly the source contribution minus the pullback contribution. -/ correction_eq : correction =
     sourceOriginTerm - capOriginTerm
   /-- The origin-corrected source and original chart areas differ by less than the requested squared-error target. -/
-    bounded : Data.Gaussian.Norm.Basic.normSq (sourceArea - chart.retained.area.evaluated.chart.originalArea -
+    bounded : normSq (sourceArea - chart.retained.area.evaluated.chart.originalArea -
     correction) < requested
   /-- The cached source area centered at the common interval's left endpoint. -/ sourceCenteredArea : Gaussian
   /-- The cached centered area equals the actual centered source reading. -/ sourceCenteredArea_eq : sourceCenteredArea
     = SourceCenteredValue (interval := interval) (depth := depth) source otherSource
   /-- The centered source and chart areas differ by less than the requested squared-error target. -/ centered_bounded :
-    Data.Gaussian.Norm.Basic.normSq (sourceCenteredArea - chart.retained.area.evaluated.chart.centeredArea) <
+    normSq (sourceCenteredArea - chart.retained.area.evaluated.chart.centeredArea) <
     requested
 
 constructive_injectivity Evaluation
@@ -367,7 +379,7 @@ open Purelib.Curves in
 theorem Evaluation.source_centered_decomposition
     (evaluated : Evaluation request source otherSource first second) :
     evaluated.sourceCenteredArea = evaluated.sourceArea - dyadicArea
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource)
+      (sourceValues source otherSource)
       0 interval.edge.left.parameter interval.edge.right.parameter := by
   rw [evaluated.sourceCenteredArea_eq, evaluated.sourceArea_eq]
   exact centered_area _ _ _ _
@@ -394,7 +406,7 @@ floor and later-stage evidence are sufficient. -/
   let correction := sourceOriginTerm - capOriginTerm
   have capEq : ribbon.capArea + capOriginTerm = chart.pullback.originalArea :=
     (cap_unanchored request source otherSource first second ribbon).trans
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.Evaluation.pullback_area_eq
+      (CommonChartAreas.SourceChartRequest.Evaluation.pullback_area_eq
         chart.retained chart.pullback).symm
   have identity : sourceArea - chart.retained.area.evaluated.chart.originalArea - correction =
       (ribbon.sourceArea - ribbon.capArea) + (chart.pullback.originalArea -
@@ -405,42 +417,42 @@ floor and later-stage evidence are sufficient. -/
   have ribbonPaid : 16 * sourceRibbonTarget requested = requested / 4 := by
     change 16 * (((requested / 4) / 4) / 4) = _
     rw [show 16 * (((requested / 4) / 4) / 4) = ((((requested / 4) / 4) / 4) * 4) * 4 by ring1,
-      Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide), Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
+      Fraction.Field.div_mul_cancel_of_ne _ _ (by decide), Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
   have ribbonPositive : 0 < sourceRibbonTarget requested :=
-    Rat.Fraction.Order.Field.div_pos_direct (Rat.Fraction.Order.Field.div_pos_direct request.chart.positive (by decide))
+    Field.div_pos_direct (Field.div_pos_direct request.chart.positive (by decide))
       (by decide)
   have sourceFull := ribbon.full_accurate.trans_le
-    ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel : (4 : Coordinate) ≤ 16)
+    ((Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel : (4 : Coordinate) ≤ 16)
       ribbonPositive.le).trans_eq ribbonPaid)
   have close := (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
-      (Rat.Fraction.Order.Arithmetic.add_lt_add_direct sourceFull chart.bounded))
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
+      (Arithmetic.add_lt_add_direct sourceFull chart.bounded))
   have paid : 2 * (requested / 4 + requested / 4) = requested :=
     (by ring1 : 2 * (requested / 4 + requested / 4) = requested / 4 * 4).trans
-      (Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
+      (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
   let sourceCenteredArea := sourceArea - edgeArea
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource
+    (sourceValues source otherSource
     interval.edge.left.parameter)
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource
+    (sourceValues source otherSource
       interval.edge.right.parameter)
   have sourceCenteredEq : sourceCenteredArea = SourceCenteredValue (interval := interval) (depth := depth) source
     otherSource := by
     dsimp only [sourceCenteredArea, sourceArea, SourceCenteredValue, -eq_self, -iff_self]
     rw [source_unanchored request source otherSource first second ribbon, centered_area_for_evaluate,
       Periods.DyadicBilinearBoundaryRibbon.dyadicArea_zero]
-  have centeredSource : Data.Gaussian.Norm.Basic.normSq (sourceCenteredArea - chart.pullback.centeredArea) <
+  have centeredSource : normSq (sourceCenteredArea - chart.pullback.centeredArea) <
     requested / 4 := by
     rw [sourceCenteredEq,
-      Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.Evaluation.pullback_centered_eq
+      CommonChartAreas.SourceChartRequest.Evaluation.pullback_centered_eq
       chart.retained chart.pullback]
     exact (centered_ribbon request source otherSource first second ribbon).trans_eq ribbonPaid
   have centeredClose := (Gaussian.Norm.Bounds.normSq_sub_le_via sourceCenteredArea chart.pullback.centeredArea
     chart.retained.area.evaluated.chart.centeredArea).trans_lt
-      (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
-        (Rat.Fraction.Order.Arithmetic.add_lt_add_direct centeredSource chart.centered_bounded))
+      (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
+        (Arithmetic.add_lt_add_direct centeredSource chart.centered_bounded))
   exact ⟨later, ribbon, chart, sourceAnchor, rfl, capAnchor, rfl, sourceOriginTerm, rfl, capOriginTerm, rfl,
     sourceArea, source_unanchored request source otherSource first second ribbon, correction, rfl,
-    (congrArg Data.Gaussian.Norm.Basic.normSq identity).trans_lt (close.trans_eq paid), sourceCenteredArea,
+    (congrArg normSq identity).trans_lt (close.trans_eq paid), sourceCenteredArea,
       sourceCenteredEq, centeredClose.trans_eq paid⟩
 
 open Purelib.Curves in
@@ -455,9 +467,9 @@ structure Evaluation.RestoredChart (evaluated : Evaluation request source otherS
   /-- The retained evaluated chart increments and their endpoint connector. -/ increments : evaluated.chart.Increments
   /-- The actual chart increment list with its endpoint-restoring edge. -/ path : List PrimitivePoint
   /-- The path is exactly the cached centered chart vector followed by its connector. -/ path_eq : path =
-    (Path.CenteredPathIncrements.Sample.increments evaluated.chart.retained.area.evaluated.chart) ++
+    (Sample.increments evaluated.chart.retained.area.evaluated.chart) ++
     [increments.connector]
-  /-- The cached total and cumulative-area summary of this actual path. -/ summary : Path.PairedIncrementArea.Summary
+  /-- The cached total and cumulative-area summary of this actual path. -/ summary : Summary
     path
   /-- The summary total is the retained pullback increment. -/ total_eq : summary.totalValue = increments.pullback
   /-- The summary area is the centered chart area plus the connector contribution. -/ area_eq : summary.areaValue =
@@ -465,10 +477,10 @@ structure Evaluation.RestoredChart (evaluated : Evaluation request source otherS
   /-- The retained squared-error bound against the centered source area. -/ bound : Coordinate
   /-- The bound is the explicit sum of requested area error and paid connector error, multiplied by two. -/ bound_eq :
     bound = 2 * (requested +
-    4 * (8 * (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude request.chart.refined +
+    4 * (8 * (CommonChartAreas.SourceChartRequest.magnitude request.chart.refined +
       1)) * (40 * (((requested / 4) / 4) / 2)))
   /-- The centered source area and retained summary area satisfy the cached bound. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤ bound
+    normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤ bound
 
 constructive_injectivity Evaluation.RestoredChart
 
@@ -483,12 +495,12 @@ vector without new root readings. -/
   evaluated.RestoredChart := by
   let increments := evaluated.chart.increments
   let chart := evaluated.chart.retained.area.evaluated.chart
-  have totalEq : increments.chart = Path.PairedIncrementArea.total (Path.CenteredPathIncrements.Sample.increments chart)
+  have totalEq : increments.chart = Path.PairedIncrementArea.total (Sample.increments chart)
     := by
-    rw [increments.chart_eq, Path.CenteredPathIncrements.Sample.increments_total chart, chart.centered_eq]
-  let chartSummary : Path.PairedIncrementArea.Summary (Path.CenteredPathIncrements.Sample.increments chart) :=
-    ⟨increments.chart, totalEq, chart.centeredArea, (Path.CenteredPathIncrements.Sample.increments_area chart).symm⟩
-  let connector := Path.PairedIncrementArea.Summary.build [increments.connector]
+    rw [increments.chart_eq, Sample.increments_total chart, chart.centered_eq]
+  let chartSummary : Summary (Sample.increments chart) :=
+    ⟨increments.chart, totalEq, chart.centeredArea, (Sample.increments_area chart).symm⟩
+  let connector := Summary.build [increments.connector]
   let summary := Path.PairedAreaBlocks.Summary.append chartSummary connector
   have connectorTotal : connector.totalValue = increments.connector := by
     apply congrArg₂ PrimitivePoint.mk <;> change _ + 0 = _ <;> exact add_zero _
@@ -503,26 +515,26 @@ vector without new root readings. -/
   have area : summary.areaValue = chart.centeredArea + increments.connectorArea := by
     change chart.centeredArea + connector.areaValue + edgeArea increments.chart connector.totalValue = _
     rw [connectorArea, connectorTotal, add_zero]
-    unfold Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceAreaRequest.Evaluation.Increments.connectorArea
-      Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceAreaRequest.Evaluation.Increments.connector
+    unfold SourceAreaRequest.Evaluation.Increments.connectorArea
+      SourceAreaRequest.Evaluation.Increments.connector
     simp only [edgeArea, PrimitivePoint.sub, -eq_self, -iff_self]
     ring1
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_two
     (evaluated.sourceCenteredArea - chart.centeredArea) increments.connectorArea).trans
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
         evaluated.centered_bounded.le
 
-          (CommonChartAreas.SourceAreaRequest.Evaluation.Increments.connectorArea_prepared
+          (SourceAreaRequest.Evaluation.Increments.connectorArea_prepared
           evaluated.chart increments)) (by decide))
-  have bounded : Data.Gaussian.Norm.Basic.normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤
-      2 * (requested + 4 * (8 * (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude
+  have bounded : normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤
+      2 * (requested + 4 * (8 * (CommonChartAreas.SourceChartRequest.magnitude
         request.chart.refined + 1)) * (40 * (((requested / 4) / 4) / 2))) := by
     rw [area, show evaluated.sourceCenteredArea - (chart.centeredArea + increments.connectorArea) =
       (evaluated.sourceCenteredArea - chart.centeredArea) - increments.connectorArea by ring1]
     exact estimate
-  exact ⟨increments, (Path.CenteredPathIncrements.Sample.increments chart) ++ [increments.connector], rfl, summary,
+  exact ⟨increments, (Sample.increments chart) ++ [increments.connector], rfl, summary,
     total, area,
-    2 * (requested + 4 * (8 * (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude
+    2 * (requested + 4 * (8 * (CommonChartAreas.SourceChartRequest.magnitude
       request.chart.refined + 1)) * (40 * (((requested / 4) / 4) / 2))), rfl, bounded⟩
 
 open Purelib.Riemann in
@@ -532,12 +544,12 @@ open Purelib.Data in
 /-- The actual dyadic source increment area satisfies the restored chart's retained comparison bound. -/
 theorem Evaluation.RestoredChart.source_bounded
     (evaluated : Evaluation request source otherSource first second) (restored : evaluated.RestoredChart) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
-      (Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource)
+    normSq (Path.PairedIncrementArea.area
+      (DyadicPairedPrimitivePaths.increments
+      (sourceValues source otherSource)
         depth interval.edge.left.parameter interval.edge.right.parameter) -
       restored.summary.areaValue) ≤ restored.bound := by
-  rw [Path.Dyadic.DyadicPairedPrimitivePaths.increments_area,
+  rw [DyadicPairedPrimitivePaths.increments_area,
     ← Periods.DyadicBilinearBoundaryRibbon.dyadicArea_zero, ← evaluated.sourceArea_eq,
     ← evaluated.source_centered_decomposition]
   exact restored.bounded
@@ -547,27 +559,27 @@ open Purelib.Integration in
 /-- The restored chart total equals the actual dyadic pullback increment total. -/
 theorem Evaluation.RestoredChart.pullback_total
     (evaluated : Evaluation request source otherSource first second) (restored : evaluated.RestoredChart) :
-    restored.summary.totalValue = Path.PairedIncrementArea.total (Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second)
+    restored.summary.totalValue = Path.PairedIncrementArea.total (DyadicPairedPrimitivePaths.increments
+      (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second)
         depth
       interval.edge.left.parameter interval.edge.right.parameter) := by
-  rw [restored.total_eq, Path.Dyadic.DyadicPairedPrimitivePaths.increments_total]
-  exact Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceAreaRequest.Evaluation.Increments.pullback_readback
+  rw [restored.total_eq, DyadicPairedPrimitivePaths.increments_total]
+  exact SourceAreaRequest.Evaluation.Increments.pullback_readback
     evaluated.chart restored.increments
 
 open Purelib.Curves in
 /-- Pair the two source endpoint differences on the actual common interval. -/
 @[expose] def sourceIncrement : PrimitivePoint :=
-  (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource
+  (sourceValues source otherSource
     interval.edge.right.parameter).sub
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource
+    (sourceValues source otherSource
       interval.edge.left.parameter)
 
 open Purelib.Approximation in
 /-- Bound endpoint drift by the sum of the two quarter radii times the actual interval width squared. -/
 @[expose] def incrementError : Coordinate :=
-  (Rational.Geometric.Basic.quarterRadius request.first.scale index +
-    Rational.Geometric.Basic.quarterRadius request.second.scale index) *
+  (Basic.quarterRadius request.first.scale index +
+    Basic.quarterRadius request.second.scale index) *
       (interval.edge.right.parameter - interval.edge.left.parameter)^2
 
 open Purelib.Approximation in
@@ -583,21 +595,21 @@ theorem incrementError_paid (later : request.index ≤ index) :
   have drift := (quarterRadius_antitone nonnegative after).trans_lt
     (request.driftError_eq.symm.trans_lt request.drift_accurate)
   have width : (interval.edge.right.parameter - interval.edge.left.parameter)^2 ≤ 1 := by
-    have upper := Rat.Fraction.Order.Arithmetic.sub_le_sub_direct interval.edge.right.inside.2
+    have upper := Arithmetic.sub_le_sub_direct interval.edge.right.inside.2
       interval.edge.left.inside.1
     rw [(show ∀ x : Fraction.Rational, x - 0 = x by intro x; ring1)] at upper
-    exact (Rat.Fraction.Order.Arithmetic.pow_le_pow_direct (Rat.Fraction.Order.Arithmetic.sub_nonneg_direct
+    exact (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct
       interval.ordered) upper 2).trans_eq (by decide)
-  have scaleEq : Rational.Geometric.Basic.quarterRadius request.first.scale index +
-      Rational.Geometric.Basic.quarterRadius request.second.scale index = Rational.Geometric.Basic.quarterRadius
+  have scaleEq : Basic.quarterRadius request.first.scale index +
+      Basic.quarterRadius request.second.scale index = Basic.quarterRadius
         request.driftScale index := by
     rw [request.driftScale_eq]
-    simp only [Rational.Geometric.Basic.quarterRadius_eq_mul_pow, -eq_self, -iff_self]
+    simp only [Basic.quarterRadius_eq_mul_pow, -eq_self, -iff_self]
     ring1
   unfold incrementError
   rw [scaleEq]
-  exact ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct width
-    (Rational.Geometric.Basic.quarterRadius_nonneg nonnegative index)).trans_eq (mul_one _)).trans_lt drift
+  exact ((Arithmetic.mul_le_mul_of_nonneg_left_direct width
+    (Basic.quarterRadius_nonneg nonnegative index)).trans_eq (mul_one _)).trans_lt drift
 
 open Purelib.Riemann in
 open Purelib.Curves in
@@ -609,42 +621,42 @@ The original primitive origins cancel in endpoint differences; the estimate reta
 both sample scales. -/
 theorem Evaluation.source_increment_error
     (evaluated : Evaluation request source otherSource first second) (increments : evaluated.chart.Increments) :
-    Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (((sourceIncrement (interval := interval) source
+    PrimitiveAreaBounds.PrimitivePoint.Bounded (((sourceIncrement (interval := interval) source
       otherSource).sub increments.pullback))
       (incrementError (index := index) request) := by
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceAreaRequest.Evaluation.Increments.pullback_readback
+  rw [SourceAreaRequest.Evaluation.Increments.pullback_readback
     evaluated.chart increments]
-  have left := Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.drift_bound source first
+  have left := ArcArea.Sample.drift_bound source first
     ⟨interval.first.lower, interval.ordered.trans interval.first.upper⟩
     ⟨interval.first.lower.trans interval.ordered, interval.first.upper⟩
-  have right := Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.drift_bound otherSource second
+  have right := ArcArea.Sample.drift_bound otherSource second
     ⟨interval.second.lower, interval.ordered.trans interval.second.upper⟩
     ⟨interval.second.lower.trans interval.ordered, interval.second.upper⟩
-  have firstNonnegative := Rational.Geometric.Basic.quarterRadius_nonneg request.first.scale_nonnegative index
-  have secondNonnegative := Rational.Geometric.Basic.quarterRadius_nonneg request.second.scale_nonnegative index
-  have leftPaid := left.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (le_add_of_nonneg_right secondNonnegative) (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _))
-  have rightPaid := right.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (le_add_of_nonneg_left firstNonnegative) (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  have firstNonnegative := Basic.quarterRadius_nonneg request.first.scale_nonnegative index
+  have secondNonnegative := Basic.quarterRadius_nonneg request.second.scale_nonnegative index
+  have leftPaid := left.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (le_add_of_nonneg_right secondNonnegative) (Arithmetic.sq_nonneg_direct _))
+  have rightPaid := right.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (le_add_of_nonneg_left firstNonnegative) (Arithmetic.sq_nonneg_direct _))
   rw [Gaussian.Norm.Basic.normSq_eq_canonical] at leftPaid rightPaid
   constructor
   · have equal : ((sourceIncrement (interval := interval) source otherSource).sub
-        ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
+        ((CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
           interval.edge.right.parameter).sub
-          (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first
+          (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first
             second interval.edge.left.parameter))).left =
-        (Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.CellPrimitive.sourceValue source
+        (UniformReciprocalPrimitives.CellPrimitive.sourceValue source
           interval.first.owner interval.edge.right.parameter -
-          Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.capValue first interval.edge.right.parameter) -
-          (Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.CellPrimitive.sourceValue source
+          ArcArea.Sample.capValue first interval.edge.right.parameter) -
+          (UniformReciprocalPrimitives.CellPrimitive.sourceValue source
             interval.first.owner interval.edge.left.parameter -
-            Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.capValue first interval.edge.left.parameter) := by
+            ArcArea.Sample.capValue first interval.edge.left.parameter) := by
       dsimp only [sourceIncrement,
-        Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues,
-        Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues,
+        sourceValues,
+        CommonChartAreas.SourceChartRequest.pullbackPolynomialValues,
         PrimitivePoint.sub,
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.CellPrimitive.sourceValue,
-          Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.capValue, recastCenteredEdge,
+        UniformReciprocalPrimitives.CellPrimitive.sourceValue,
+          ArcArea.Sample.capValue, recastCenteredEdge,
         Integration.PreparedConstantModels.PreparedEdge.point,
           Integration.PreparedConstantModels.PreparedEdge.localSegment,
         Integration.PreparedEdgeRecasting.recastPreparedEdge, -eq_self, -iff_self]
@@ -652,22 +664,22 @@ theorem Evaluation.source_increment_error
     rw [equal]
     exact leftPaid
   · have equal : ((sourceIncrement (interval := interval) source otherSource).sub
-        ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
+        ((CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first second
           interval.edge.right.parameter).sub
-          (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first
+          (CommonChartAreas.SourceChartRequest.pullbackPolynomialValues first
             second interval.edge.left.parameter))).right =
-        (Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.CellPrimitive.sourceValue otherSource
+        (UniformReciprocalPrimitives.CellPrimitive.sourceValue otherSource
           interval.second.owner interval.edge.right.parameter -
-          Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.capValue second interval.edge.right.parameter) -
-          (Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.CellPrimitive.sourceValue otherSource
+          ArcArea.Sample.capValue second interval.edge.right.parameter) -
+          (UniformReciprocalPrimitives.CellPrimitive.sourceValue otherSource
             interval.second.owner interval.edge.left.parameter -
-            Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.capValue second interval.edge.left.parameter) := by
+            ArcArea.Sample.capValue second interval.edge.left.parameter) := by
       dsimp only [sourceIncrement,
-        Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues,
-        Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.pullbackPolynomialValues,
+        sourceValues,
+        CommonChartAreas.SourceChartRequest.pullbackPolynomialValues,
         PrimitivePoint.sub,
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.CellPrimitive.sourceValue,
-          Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.capValue, recastCenteredEdge,
+        UniformReciprocalPrimitives.CellPrimitive.sourceValue,
+          ArcArea.Sample.capValue, recastCenteredEdge,
         Integration.PreparedConstantModels.PreparedEdge.point,
           Integration.PreparedConstantModels.PreparedEdge.localSegment,
         Integration.PreparedEdgeRecasting.recastPreparedEdge, -eq_self, -iff_self]
@@ -683,34 +695,34 @@ section
 open Purelib.Data
 /-- The sum of the source increment's component squared norms is bounded by the two source slopes. -/
 theorem sourceIncrement_magnitude :
-    Data.Gaussian.Norm.Basic.normSq (sourceIncrement (interval := interval) source otherSource).left +
-      Data.Gaussian.Norm.Basic.normSq (sourceIncrement (interval := interval) source otherSource).right ≤
+    normSq (sourceIncrement (interval := interval) source otherSource).left +
+      normSq (sourceIncrement (interval := interval) source otherSource).right ≤
         data.sourceSlope + otherData.sourceSlope := by
   have width : (interval.edge.right.parameter - interval.edge.left.parameter)^2 ≤ 1 := by
-    have upper := Rat.Fraction.Order.Arithmetic.sub_le_sub_direct interval.edge.right.inside.2
+    have upper := Arithmetic.sub_le_sub_direct interval.edge.right.inside.2
       interval.edge.left.inside.1
     rw [(show ∀ x : Fraction.Rational, x - 0 = x by intro x; ring1)] at upper
-    exact (Rat.Fraction.Order.Arithmetic.pow_le_pow_direct (Rat.Fraction.Order.Arithmetic.sub_nonneg_direct
+    exact (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct
       interval.ordered) upper 2).trans_eq (by decide)
   have left := (source.increment_bound interval.edge.left.inside interval.edge.right.inside).trans
-    ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct width data.sourceSlope_nonnegative).trans_eq
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct width data.sourceSlope_nonnegative).trans_eq
       (mul_one _))
   have right := (otherSource.increment_bound interval.edge.left.inside interval.edge.right.inside).trans
-    ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct width otherData.sourceSlope_nonnegative).trans_eq
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct width otherData.sourceSlope_nonnegative).trans_eq
       (mul_one _))
-  exact Rat.Fraction.Order.Arithmetic.add_le_add_direct left right
+  exact Arithmetic.add_le_add_direct left right
 
 /-- The restored pullback total satisfies the preparation-only component magnitude bound. -/
 theorem Evaluation.RestoredChart.total_magnitude
     (evaluated : Evaluation request source otherSource first second) (restored : evaluated.RestoredChart) :
-    Data.Gaussian.Norm.Basic.normSq restored.summary.totalValue.left + Data.Gaussian.Norm.Basic.normSq
+    normSq restored.summary.totalValue.left + normSq
       restored.summary.totalValue.right ≤
       sourceTotalMagnitude (data := data) (otherData := otherData) (requested := requested) := by
   have error := Evaluation.source_increment_error request source otherSource first second evaluated restored.increments
   rw [← restored.total_eq] at error
   have paid := incrementError_paid request evaluated.later
-  have scalar (a b : Gaussian) : Data.Gaussian.Norm.Basic.normSq b ≤ 2 * (Data.Gaussian.Norm.Basic.normSq a +
-    Data.Gaussian.Norm.Basic.normSq (a - b)) := by
+  have scalar (a b : Gaussian) : normSq b ≤ 2 * (normSq a +
+    normSq (a - b)) := by
     have estimate := Gaussian.Norm.Bounds.normSq_sub_le_two a (a - b)
     rw [show a - (a - b) = b by ring1] at estimate
     exact estimate
@@ -719,24 +731,24 @@ theorem Evaluation.RestoredChart.total_magnitude
   rw [← Gaussian.Norm.Basic.normSq_eq_canonical] at firstError secondError
   have first := (scalar (sourceIncrement (interval := interval) source otherSource).left
     restored.summary.totalValue.left).trans
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       le_rfl (firstError.trans paid.le)) (by decide))
   have second := (scalar (sourceIncrement (interval := interval) source otherSource).right
     restored.summary.totalValue.right).trans
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       le_rfl (secondError.trans paid.le)) (by decide))
-  have sum := Rat.Fraction.Order.Arithmetic.add_le_add_direct first second
-  have scale := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Rat.Fraction.Order.Arithmetic.add_le_add_direct (sourceIncrement_magnitude (interval := interval) source
+  have sum := Arithmetic.add_le_add_direct first second
+  have scale := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (sourceIncrement_magnitude (interval := interval) source
       otherSource) (le_refl (2 * sourceRibbonTarget requested)))
     (by decide : (0 : Coordinate) ≤ 2)
   exact sum.trans ((by ring1 :
-    2 * (Data.Gaussian.Norm.Basic.normSq (sourceIncrement (interval := interval) source otherSource).left +
+    2 * (normSq (sourceIncrement (interval := interval) source otherSource).left +
       sourceRibbonTarget requested) +
-      2 * (Data.Gaussian.Norm.Basic.normSq (sourceIncrement (interval := interval) source otherSource).right +
+      2 * (normSq (sourceIncrement (interval := interval) source otherSource).right +
         sourceRibbonTarget requested) =
-    2 * (Data.Gaussian.Norm.Basic.normSq (sourceIncrement (interval := interval) source otherSource).left +
-      Data.Gaussian.Norm.Basic.normSq (sourceIncrement (interval := interval) source otherSource).right + 2 *
+    2 * (normSq (sourceIncrement (interval := interval) source otherSource).left +
+      normSq (sourceIncrement (interval := interval) source otherSource).right + 2 *
         sourceRibbonTarget requested)).trans_le scale)
 
 end
@@ -763,12 +775,12 @@ structure Evaluation.SourceRestoredChart (evaluated : Evaluation request source 
   /-- The endpoint drift is strictly below the source ribbon target. -/ error_paid : error < sourceRibbonTarget
     requested
   /-- Each connector component has squared norm at most the cached drift error. -/ connector_bounded :
-    Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (connector) error
+    PrimitiveAreaBounds.PrimitivePoint.Bounded (connector) error
   /-- The actual twice-restored chart increment list. -/ path : List PrimitivePoint
   /-- The path is the first restored path followed by the source connector. -/ path_eq : path = retained.path ++
     [connector]
   /-- The cached total and cumulative-area summary of the twice-restored path. -/ summary :
-    Path.PairedIncrementArea.Summary path
+    Summary path
   /-- The summary total is exactly the cached source total. -/ total_eq : summary.totalValue = sourceTotal
   /-- The cached area contribution of the source-restoring edge. -/ connectorArea : Gaussian
   /-- The connector area is the edge area from the retained pullback total to the source total. -/ connectorArea_eq :
@@ -780,7 +792,7 @@ structure Evaluation.SourceRestoredChart (evaluated : Evaluation request source 
     bound = 2 * (retained.bound + 4 *
     sourceTotalMagnitude (data := data) (otherData := otherData) (requested := requested) * error)
   /-- The centered source area and twice-restored summary area satisfy the retained bound. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤ bound
+    normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤ bound
 
 constructive_injectivity Evaluation.SourceRestoredChart
 
@@ -797,12 +809,12 @@ enlarged area-error bound. -/
   let sourceTotal := sourceIncrement (interval := interval) source otherSource
   let connector := sourceTotal.sub retained.summary.totalValue
   let error := incrementError (index := index) request
-  have connectorBound : Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (connector) error := by
-    change Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (((sourceIncrement (interval := interval) source
+  have connectorBound : PrimitiveAreaBounds.PrimitivePoint.Bounded (connector) error := by
+    change PrimitiveAreaBounds.PrimitivePoint.Bounded (((sourceIncrement (interval := interval) source
       otherSource).sub retained.summary.totalValue)) _
     rw [retained.total_eq]
     exact Evaluation.source_increment_error request source otherSource first second evaluated retained.increments
-  let connectorSummary := Path.PairedIncrementArea.Summary.build [connector]
+  let connectorSummary := Summary.build [connector]
   let summary := Path.PairedAreaBlocks.Summary.append retained.summary connectorSummary
   have connectorTotal : connectorSummary.totalValue = connector := by
     apply congrArg₂ PrimitivePoint.mk <;> change _ + 0 = _ <;> exact add_zero _
@@ -826,17 +838,17 @@ enlarged area-error bound. -/
   have magnitudeBound := Evaluation.RestoredChart.total_magnitude request source otherSource first second evaluated
     retained
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at magnitudeBound
-  have magnitude : Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (retained.summary.totalValue)
+  have magnitude : PrimitiveAreaBounds.PrimitivePoint.Bounded (retained.summary.totalValue)
       (sourceTotalMagnitude (data := data) (otherData := otherData) (requested := requested)) :=
     ⟨(le_add_of_nonneg_right (Gaussian.Basic.Canonical.normSq_nonneg _)).trans magnitudeBound,
       (le_add_of_nonneg_left (Gaussian.Basic.Canonical.normSq_nonneg _)).trans magnitudeBound⟩
-  have connectorPaid := Readings.PrimitiveAreaBounds.PrimitivePoint.area_bound magnitude connectorBound
+  have connectorPaid := PrimitiveAreaBounds.PrimitivePoint.area_bound magnitude connectorBound
   rw [← connectorAreaEq, ← Gaussian.Norm.Basic.normSq_eq_canonical] at connectorPaid
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_two
     (evaluated.sourceCenteredArea - retained.summary.areaValue) connectorArea).trans
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
         retained.bounded connectorPaid) (by decide))
-  have bounded : Data.Gaussian.Norm.Basic.normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤
+  have bounded : normSq (evaluated.sourceCenteredArea - summary.areaValue) ≤
       2 * (retained.bound + 4 * sourceTotalMagnitude (data := data) (otherData := otherData) (requested := requested) *
         error) := by
     rw [area, show evaluated.sourceCenteredArea - (retained.summary.areaValue + connectorArea) =
@@ -853,10 +865,10 @@ open Purelib.Integration in
 /-- The twice-restored chart total equals the actual dyadic source increment total. -/
 theorem Evaluation.SourceRestoredChart.source_total
     (evaluated : Evaluation request source otherSource first second) (restored : evaluated.SourceRestoredChart) :
-    restored.summary.totalValue = Path.PairedIncrementArea.total (Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource)
+    restored.summary.totalValue = Path.PairedIncrementArea.total (DyadicPairedPrimitivePaths.increments
+      (sourceValues source otherSource)
         depth interval.edge.left.parameter interval.edge.right.parameter) := by
-  rw [restored.total_eq, restored.sourceTotal_eq, Path.Dyadic.DyadicPairedPrimitivePaths.increments_total]
+  rw [restored.total_eq, restored.sourceTotal_eq, DyadicPairedPrimitivePaths.increments_total]
   rfl
 
 open Purelib.Data in
@@ -867,18 +879,18 @@ theorem Evaluation.SourceRestoredChart.bound_prepared
       sourceTotalMagnitude (data := data) (otherData := otherData) (requested := requested) * sourceRibbonTarget
         requested) := by
   have driftPositive : 0 < sourceRibbonTarget requested :=
-    Rat.Fraction.Order.Field.div_pos_direct (Rat.Fraction.Order.Field.div_pos_direct request.chart.positive (by decide))
+    Field.div_pos_direct (Field.div_pos_direct request.chart.positive (by decide))
       (by decide)
   have magnitudeNonnegative : 0 ≤ sourceTotalMagnitude (data := data) (otherData := otherData) (requested := requested)
     :=
-    Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (add_nonneg data.sourceSlope_nonnegative
+    Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (add_nonneg data.sourceSlope_nonnegative
       otherData.sourceSlope_nonnegative)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) driftPositive.le))
+      (Arithmetic.mul_nonneg_direct (by decide) driftPositive.le))
   rw [restored.bound_eq]
-  exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Rat.Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct restored.error_paid.le
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative))) (by decide)
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct le_rfl
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct restored.error_paid.le
+      (Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative))) (by decide)
 
 open Purelib.Riemann in
 open Purelib.Curves in
@@ -887,21 +899,21 @@ open Purelib.Data in
 /-- The actual source increment area satisfies the twice-restored chart's cached bound. -/
 theorem Evaluation.SourceRestoredChart.source_bounded
     (evaluated : Evaluation request source otherSource first second) (restored : evaluated.SourceRestoredChart) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
-      (Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource)
+    normSq (Path.PairedIncrementArea.area
+      (DyadicPairedPrimitivePaths.increments
+      (sourceValues source otherSource)
         depth interval.edge.left.parameter interval.edge.right.parameter) -
       restored.summary.areaValue) ≤ restored.bound := by
-  rw [Path.Dyadic.DyadicPairedPrimitivePaths.increments_area,
+  rw [DyadicPairedPrimitivePaths.increments_area,
     ← Periods.DyadicBilinearBoundaryRibbon.dyadicArea_zero, ← evaluated.sourceArea_eq,
     ← evaluated.source_centered_decomposition]
   exact restored.bounded
 
 open Purelib.Curves in
 /-- The preparation-only coefficient paying both endpoint corrections linearly in the requested target. -/
-@[expose] def restorationRate (prepared : Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest
+@[expose] def restorationRate (prepared : SourceChartRequest
   regular geometry target floor) : Coordinate :=
-  4 + 4 * (4 * (8 * ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude prepared) + 1))
+  4 + 4 * (4 * (8 * ((CommonChartAreas.SourceChartRequest.magnitude prepared) + 1))
     * 40) +
     16 * (data.sourceSlope + otherData.sourceSlope + 2)
 
@@ -909,21 +921,21 @@ open Purelib.Curves in
 open Purelib.Data in
 /-- The prepared restoration coefficient is nonnegative. -/
 theorem restorationRate_nonnegative (prepared :
-  Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest regular geometry target floor) :
+  SourceChartRequest regular geometry target floor) :
     0 ≤ restorationRate prepared := by
-  exact add_nonneg (add_nonneg (by decide) (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (add_nonneg (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude_nonnegative
+  exact add_nonneg (add_nonneg (by decide) (Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
+      (add_nonneg (CommonChartAreas.SourceChartRequest.magnitude_nonnegative
         prepared) (by decide)))) (by decide +kernel))))
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.mul_nonneg_direct (by decide +kernel)
       (add_nonneg (add_nonneg data.sourceSlope_nonnegative otherData.sourceSlope_nonnegative) (by decide)))
 
 open Purelib.Data in
 /-- Dividing a nonnegative rational by a divisor at least one cannot increase it. -/
 private theorem divide_le_self {value divisor : Coordinate} (nonnegative : 0 ≤ value) (oneLe : 1 ≤ divisor) :
     value / divisor ≤ value := by
-  have bound := Rat.Fraction.Order.Field.div_le_div_of_nonneg_left_direct nonnegative (by decide : (0 : Coordinate) < 1)
+  have bound := Field.div_le_div_of_nonneg_left_direct nonnegative (by decide : (0 : Coordinate) < 1)
     oneLe
   exact bound.trans_eq (by change value * 1 = value; exact mul_one _)
 
@@ -937,58 +949,58 @@ theorem Evaluation.SourceRestoredChart.bound_linear
     (evaluated : Evaluation request source otherSource first second) (restored : evaluated.SourceRestoredChart)
     (positive : 0 < requested) (small : requested ≤ 1) :
     restored.bound ≤ restorationRate prepared * requested := by
-  have quarterPositive := Rat.Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Coordinate) < 4)
-  have sixteenthPositive := Rat.Fraction.Order.Field.div_pos_direct quarterPositive (by decide : (0 : Coordinate) < 4)
+  have quarterPositive := Field.div_pos_direct positive (by decide : (0 : Coordinate) < 4)
+  have sixteenthPositive := Field.div_pos_direct quarterPositive (by decide : (0 : Coordinate) < 4)
   have firstLe := divide_le_self positive.le (by decide : (1 : Coordinate) ≤ 4)
   have secondLe := (divide_le_self quarterPositive.le (by decide : (1 : Coordinate) ≤ 4)).trans firstLe
   have sourceLe : sourceRibbonTarget requested ≤ requested :=
     (divide_le_self sixteenthPositive.le (by decide : (1 : Coordinate) ≤ 4)).trans secondLe
   have chartLe := (divide_le_self sixteenthPositive.le (by decide : (1 : Coordinate) ≤ 2)).trans secondLe
-  have sourceNonnegative : 0 ≤ sourceRibbonTarget requested := (Rat.Fraction.Order.Field.div_pos_direct
+  have sourceNonnegative : 0 ≤ sourceRibbonTarget requested := (Field.div_pos_direct
     sixteenthPositive (by decide)).le
-  have magnitudeEq : Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude
-    request.chart.refined = (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude
+  have magnitudeEq : CommonChartAreas.SourceChartRequest.magnitude
+    request.chart.refined = (CommonChartAreas.SourceChartRequest.magnitude
     prepared) := by
-    rw [show request.chart.refined = Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.withTarget
+    rw [show request.chart.refined = CommonChartAreas.SourceChartRequest.withTarget
       prepared request.chart.budget.tolerance request.chart.budget.positive
       from request.chart.refined_eq]
-    exact Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.withTarget_magnitude prepared _ _
+    exact CommonChartAreas.SourceChartRequest.withTarget_magnitude prepared _ _
   have coefficientNonnegative : 0 ≤ 4 * (8 *
-    ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude prepared) + 1)) * 40 :=
-    Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (add_nonneg (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude_nonnegative
+    ((CommonChartAreas.SourceChartRequest.magnitude prepared) + 1)) * 40 :=
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
+      (add_nonneg (CommonChartAreas.SourceChartRequest.magnitude_nonnegative
         prepared) (by decide)))) (by decide +kernel)
   have retained : restored.retained.bound ≤
-      2 * (requested + (4 * (8 * ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude
+      2 * (requested + (4 * (8 * ((CommonChartAreas.SourceChartRequest.magnitude
         prepared) + 1)) * 40) * requested) := by
     rw [restored.retained.bound_eq, magnitudeEq,
-      show 4 * (8 * ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude prepared) + 1))
+      show 4 * (8 * ((CommonChartAreas.SourceChartRequest.magnitude prepared) + 1))
         * (40 * (((requested / 4) / 4) / 2)) =
-        (4 * (8 * ((Hyperelliptic.Charts.Reciprocal.Disk.CommonChartAreas.SourceChartRequest.magnitude prepared) + 1)) *
+        (4 * (8 * ((CommonChartAreas.SourceChartRequest.magnitude prepared) + 1)) *
           40) * (((requested / 4) / 4) / 2) by ring1]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Rat.Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-        (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct chartLe coefficientNonnegative)) (by decide)
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct le_rfl
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct chartLe coefficientNonnegative)) (by decide)
   have magnitudeLe : sourceTotalMagnitude (data := data) (otherData := otherData) (requested := requested) ≤
       2 * (data.sourceSlope + otherData.sourceSlope + 2) := by
     unfold sourceTotalMagnitude
-    have inner := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (sourceLe.trans small) (by
+    have inner := Arithmetic.mul_le_mul_of_nonneg_left_direct (sourceLe.trans small) (by
         decide : (0 : Coordinate) ≤ 2)
     rw [mul_one] at inner
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Rat.Fraction.Order.Arithmetic.add_le_add_direct le_rfl inner) (by decide)
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct le_rfl inner) (by decide)
   have sourceCoefficient : 0 ≤ 4 * (2 * (data.sourceSlope + otherData.sourceSlope + 2)) :=
-    Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by
+    Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.mul_nonneg_direct (by
       decide)
       (add_nonneg (add_nonneg data.sourceSlope_nonnegative otherData.sourceSlope_nonnegative) (by decide)))
-  have sourceCost := (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct magnitudeLe (by decide : (0 : Coordinate) ≤ 4))
+  have sourceCost := (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct magnitudeLe (by decide : (0 : Coordinate) ≤ 4))
       sourceNonnegative).trans
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe sourceCoefficient)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe sourceCoefficient)
   have bound := (Evaluation.SourceRestoredChart.bound_prepared request source otherSource first second evaluated
     restored).trans
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       retained sourceCost) (by decide : (0 : Coordinate) ≤ 2))
   exact bound.trans_eq (by unfold restorationRate; ring1)
 
@@ -1000,13 +1012,13 @@ set_option genInjectivity false in
 Both paths have cached summaries, and the retained bound compares their complete cumulative areas, including all
 internal cross terms. -/
 structure PathReplacement (original : List PrimitivePoint) where
-  /-- The cached summary of the original increment list. -/ source : Path.PairedIncrementArea.Summary original
+  /-- The cached summary of the original increment list. -/ source : Summary original
   /-- The actual replacement increment list. -/ path : List PrimitivePoint
-  /-- The cached summary of the replacement increment list. -/ chart : Path.PairedIncrementArea.Summary path
+  /-- The cached summary of the replacement increment list. -/ chart : Summary path
   /-- The replacement and original cached summaries have exactly the same total. -/ total_eq : chart.totalValue =
     source.totalValue
   /-- The retained squared-error bound on complete cumulative areas. -/ bound : Coordinate
-  /-- The two cached areas satisfy the retained squared-error bound. -/ bounded : Data.Gaussian.Norm.Basic.normSq
+  /-- The two cached areas satisfy the retained squared-error bound. -/ bounded : normSq
     (source.areaValue - chart.areaValue) ≤ bound
 
 constructive_injectivity PathReplacement
@@ -1031,10 +1043,10 @@ the sum of the component bounds. -/
     rw [first.total_eq, second.total_eq]
     ring1
   have bounded := (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       first.bounded second.bounded) (by decide))
   exact ⟨source, first.path ++ second.path, chart, total, 2 * (first.bound + second.bound),
-    (congrArg Data.Gaussian.Norm.Basic.normSq area).trans_le bounded⟩
+    (congrArg normSq area).trans_le bounded⟩
 
 open Purelib.Integration in
 /-- Transport the original path along an exact list equality while retaining the replacement and its summary. -/
@@ -1052,8 +1064,8 @@ The empty bank gives the empty path; each successor preserves occurrence order a
 as append. -/
 @[expose] def PathReplacement.join : {n : Nat} → (paths : Fin n → List PrimitivePoint) →
     ((i : Fin n) → PathReplacement (paths i)) → PathReplacement (List.ofFn paths).flatten
-  | 0, _, _ => ⟨Path.PairedIncrementArea.Summary.build [], [], Path.PairedIncrementArea.Summary.build [],
-      rfl, 0, by change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ 0; decide⟩
+  | 0, _, _ => ⟨Summary.build [], [], Summary.build [],
+      rfl, 0, by change normSq (0 - 0) ≤ 0; decide⟩
   | n + 1, paths, entries => by
     exact PathReplacement.readback (by rw [List.OfFn.Basic.ofFn_succ, List.flatten_cons])
       ((entries 0).append (join (fun i : Fin n => paths i.succ) (fun i => entries i.succ)))
@@ -1070,7 +1082,7 @@ open Purelib.Data
 theorem PathReplacement.joinRate_nonnegative (n : Nat) : 0 ≤ joinRate n := by
   induction n with
   | zero => exact le_rfl
-  | succ n ih => exact Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (by decide) ih)
+  | succ n ih => exact Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (by decide) ih)
 
 /-- A common allowance bounds the joined replacement error by the concatenation coefficient times that allowance. -/
 theorem PathReplacement.join_bound {n : Nat} (paths : Fin n → List PrimitivePoint)
@@ -1081,8 +1093,8 @@ theorem PathReplacement.join_bound {n : Nat} (paths : Fin n → List PrimitivePo
   | zero => change 0 ≤ 0 * allowance; rw [zero_mul]
   | succ n ih =>
     change 2 * ((entries 0).bound + (join (fun i : Fin n => paths i.succ) (fun i => entries i.succ)).bound) ≤ _
-    exact (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Rat.Fraction.Order.Arithmetic.add_le_add_direct (bounded 0)
+    exact (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (bounded 0)
       (ih _ _ (fun i => bounded i.succ))) (by decide)).trans_eq (by
         change 2 * (allowance + joinRate n * allowance) = 2 * (1 + joinRate n) * allowance
         ring1)
@@ -1119,25 +1131,25 @@ The construction takes the minimum of explicit count and weighted allowances and
   count target := by
   let rate := joinRate count
   have nonnegative := joinRate_nonnegative count
-  have halfPositive := Rat.Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Coordinate) < 2)
+  have halfPositive := Field.div_pos_direct positive (by decide : (0 : Coordinate) < 2)
   let allowance := min (Rational.Budget.Aggregate.perTerm target count) (Rational.Budget.Weighted.allowance (target / 2)
     rate)
-  have countNonnegative : (0 : Coordinate) ≤ (count : Coordinate) := Rat.Fraction.Cast.Order.natCast_le_direct
+  have countNonnegative : (0 : Coordinate) ≤ (count : Coordinate) := Fraction.Cast.Order.natCast_le_direct
     (Nat.zero_le count)
-  have countPaid := (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_left
+  have countPaid := (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_left
       (Rational.Budget.Aggregate.perTerm target count)
       (Rational.Budget.Weighted.allowance (target / 2) rate)) countNonnegative) countNonnegative).trans_lt
       (Rational.Budget.Aggregate.count_mul_perTerm_lt positive count)
   have halfEq : target / 2 + target / 2 = target :=
-    (by ring1 : target / 2 + target / 2 = target / 2 * 2).trans (Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by
+    (by ring1 : target / 2 + target / 2 = target / 2 * 2).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by
       decide))
-  have halfLess := (Fraction.Field.zero_add _ ▸ Fraction.Order.Arithmetic.add_lt_add_right_direct halfPositive
+  have halfLess := (Fraction.Field.zero_add _ ▸ Arithmetic.add_lt_add_right_direct halfPositive
     _).trans_eq halfEq
   exact ⟨rate, rfl, allowance, rfl,
-    Fraction.Order.Basic.lt_min (Rational.Budget.Aggregate.perTerm_positive positive count)
+    Basic.lt_min (Rational.Budget.Aggregate.perTerm_positive positive count)
       (Rational.Budget.Weighted.allowance_positive halfPositive nonnegative),
-    countPaid, ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_right _ _)
+    countPaid, ((Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_right _ _)
       nonnegative).trans
       (Rational.Budget.Weighted.mul_allowance_le halfPositive.le nonnegative)).trans_lt halfLess⟩
 
@@ -1149,17 +1161,17 @@ open Purelib.Integration in
 The cached centered source area and exact source total supply the original summary, and the restored chart is
 constructed once and reused. -/
 @[expose] def Evaluation.sourceReplacement (evaluated : Evaluation request source otherSource first second) :
-    PathReplacement (Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource)
+    PathReplacement (DyadicPairedPrimitivePaths.increments
+      (sourceValues source otherSource)
       depth interval.edge.left.parameter interval.edge.right.parameter) := by
   let restored := evaluated.restoreSourceChart
-  let sourceSummary : Path.PairedIncrementArea.Summary (Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource)
+  let sourceSummary : Summary (DyadicPairedPrimitivePaths.increments
+      (sourceValues source otherSource)
         depth interval.edge.left.parameter interval.edge.right.parameter) :=
     ⟨restored.sourceTotal, restored.total_eq.symm.trans
       (Evaluation.SourceRestoredChart.source_total request source otherSource first second evaluated restored),
       evaluated.sourceCenteredArea, by
-        rw [Path.Dyadic.DyadicPairedPrimitivePaths.increments_area, ←
+        rw [DyadicPairedPrimitivePaths.increments_area, ←
           Periods.DyadicBilinearBoundaryRibbon.dyadicArea_zero,
           ← evaluated.sourceArea_eq, ← evaluated.source_centered_decomposition]⟩
   exact ⟨sourceSummary, restored.path, restored.summary, restored.total_eq, restored.bound, restored.bounded⟩

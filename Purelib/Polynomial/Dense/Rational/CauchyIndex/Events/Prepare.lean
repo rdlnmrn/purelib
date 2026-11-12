@@ -36,16 +36,16 @@ The first branch retains a strict denominator sign and neutral full chain.
 Otherwise the procedure retains a strict numerator sign and neutral remainder
 tail, or returns none when neither finite certificate pair is available. -/
 @[expose] public def cauchyEventSigns?
-    (R S : Dense.Rational.Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
-    Option (Dense.Rational.CauchyIndex.Events.Signs.CauchyEventSigns R S interval) :=
-  match Dense.Rational.Sign.Interval.Prepare.certificate? S interval,
-      Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
-        (Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain S R) with
+    (R S : Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
+    Option (Signs.CauchyEventSigns R S interval) :=
+  match Sign.Interval.Prepare.certificate? S interval,
+      SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
+        (SignedRemainder.Basic.Sturm.signedRemainderChain S R) with
   | some denominator, some chain => some (.ofNeutral denominator chain)
   | _, _ =>
-      match Dense.Rational.Sign.Interval.Prepare.certificate? R interval,
-          Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
-            (Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain R (-((Dense.Basic.DensePolynomial.divMod S
+      match Sign.Interval.Prepare.certificate? R interval,
+          SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
+            (SignedRemainder.Basic.Sturm.signedRemainderChain R (-((Basic.DensePolynomial.divMod S
               R).remainder))) with
       | some numerator, some tail =>
           some (.ofResolvedNumerator numerator tail)
@@ -58,16 +58,16 @@ The scanner retains the exact successful strict-sign and neutral-chain
 certificates. It tests the denominator branch before the numerator branch and
 returns none if both finite attempts remain unresolved. -/
 @[expose] public def cauchyEventResolution?
-    (R S : Dense.Rational.Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
-    Option (Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution R S interval) :=
-  match Dense.Rational.Sign.Interval.Prepare.certificate? S interval,
-      Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
-        (Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain S R) with
+    (R S : Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
+    Option (Resolution.Basic.CauchyEventResolution R S interval) :=
+  match Sign.Interval.Prepare.certificate? S interval,
+      SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
+        (SignedRemainder.Basic.Sturm.signedRemainderChain S R) with
   | some denominator, some chain => some (.neutral denominator chain)
   | _, _ =>
-      match Dense.Rational.Sign.Interval.Prepare.certificate? R interval,
-          Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
-            (Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain R (-((Dense.Basic.DensePolynomial.divMod S
+      match Sign.Interval.Prepare.certificate? R interval,
+          SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval
+            (SignedRemainder.Basic.Sturm.signedRemainderChain R (-((Basic.DensePolynomial.divMod S
               R).remainder))) with
       | some numerator, some tail => some (.numerator numerator tail)
       | _, _ => none
@@ -76,12 +76,12 @@ returns none if both finite attempts remain unresolved. -/
 
 Both procedures follow the same neutral-chain and resolved-numerator branch order. -/
 public theorem cauchyEventResolution?_map_signs
-    (R S : Dense.Rational.Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
-    (Dense.Rational.CauchyIndex.Events.Prepare.cauchyEventResolution? R S interval).map
-        Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution.signs =
-      Dense.Rational.CauchyIndex.Events.Prepare.cauchyEventSigns? R S interval := by
-  unfold Dense.Rational.CauchyIndex.Events.Prepare.cauchyEventResolution?
-    Dense.Rational.CauchyIndex.Events.Prepare.cauchyEventSigns?
+    (R S : Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
+    (cauchyEventResolution? R S interval).map
+        Resolution.Basic.CauchyEventResolution.signs =
+      cauchyEventSigns? R S interval := by
+  unfold cauchyEventResolution?
+    cauchyEventSigns?
   split
   · rfl
   · split <;> rfl

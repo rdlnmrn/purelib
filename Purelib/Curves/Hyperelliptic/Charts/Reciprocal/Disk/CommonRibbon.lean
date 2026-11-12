@@ -45,36 +45,36 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment (Regular
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon (PairedRibbonRequest)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.PairedRibbonRequest (Evaluation)
 open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility (PreparedPatch)
-variable {genus count otherCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential other : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {firstCover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {secondCover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {index : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
+variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
+  {differential other : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : CenteredEdge curve differential} {patch :
+    PreparedPatch parent}
+  {otherPatch : PreparedPatch
+    (recastCenteredEdge other parent)}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {firstCover : Cover data} {secondCover :
+    Cover otherData}
+  {regular : RegularBounds.Data cap}
+  {index : Nat} {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box}
+  {otherSample : Cap.Primitives.Sample cap other index otherBox}
 
 /-- No caller-supplied intersection, endpoint order or interval-ownership proof remains: the executable common cover
 supplies the geometric obligations. -/
-@[expose] def evaluateCommon (interval : UniformReciprocalCommonCover.CommonInterval firstCover secondCover)
-    {comparison : ArcSamples.Data regular interval.first.cell} {otherComparison : ArcSamples.Data regular
+@[expose] def evaluateCommon (interval : CommonInterval firstCover secondCover)
+    {comparison : Data regular interval.first.cell} {otherComparison : Data regular
       interval.second.cell}
-    {retained : ArcSamples.Sample comparison sample} {otherRetained : ArcSamples.Sample otherComparison otherSample}
-    {target : InverseRootPolynomial.Coordinate} {minimum : Nat}
-    (request : PairedRibbon.PairedRibbonRequest comparison otherComparison target minimum)
-    (source : UniformReciprocalPrimitives.SourcePrimitive data index) (otherSource :
-      UniformReciprocalPrimitives.SourcePrimitive otherData index)
-    (left : SheetAlignment.RegularAlignment retained) (right : SheetAlignment.RegularAlignment otherRetained)
+    {retained : Sample comparison sample} {otherRetained : Sample otherComparison otherSample}
+    {target : Coordinate} {minimum : Nat}
+    (request : PairedRibbonRequest comparison otherComparison target minimum)
+    (source : SourcePrimitive data index) (otherSource :
+      SourcePrimitive otherData index)
+    (left : RegularAlignment retained) (right : RegularAlignment otherRetained)
     (later : request.index ≤ index) (depth : Nat) :
-    PairedRibbonRequest.Evaluation request source otherSource left right interval.edge.left.parameter
+    Evaluation request source otherSource left right interval.edge.left.parameter
       interval.edge.right.parameter depth :=
   request.evaluate source otherSource left right later interval.edge.left.parameter interval.edge.right.parameter
     interval.first.lower interval.first.upper interval.second.lower interval.second.upper interval.ordered depth

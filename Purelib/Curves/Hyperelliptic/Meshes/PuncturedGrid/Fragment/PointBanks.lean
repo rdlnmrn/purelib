@@ -98,6 +98,26 @@ def points : ∀ {intervals : List PreparedAxisPartitions.Interval}
     points
     rest
 
+/-- Every point of an actual indexed fragment belongs to the original whole parent point bank.
+
+The proof follows the same retained sheet-entry spine as the indexed
+reader. It preserves repeated coordinates and performs no selection,
+root query, numerical evaluation or fragment reconstruction.
+-/
+theorem at_points_mem : ∀ {intervals : List PreparedAxisPartitions.Interval}
+    {fragments : RegularFaces.RegularPrimitiveFragments axes parent partition intervals}
+    (entries : FragmentSheets domains request fragments) (position : Fin intervals.length)
+    (point : Data.Gaussian.Basic.Canonical),
+    point ∈ (entries.at position).2.split.points → point ∈ points entries
+  | _, _, .nil, position, _, _ => Fin.elim0 position
+  | _, _, .cons first _remaining, ⟨0, _bound⟩, point, member => by
+      change point ∈ first.split.points at member
+      exact List.mem_append_left _ member
+  | _, _, .cons first remaining, ⟨position + 1, bound⟩, point, member => by
+      change point ∈ (remaining.at ⟨position, Nat.lt_of_succ_lt_succ bound⟩).2.split.points at member
+      exact List.mem_append_right first.split.points
+        (at_points_mem remaining ⟨position, Nat.lt_of_succ_lt_succ bound⟩ point member)
+
 end RegularPrimitiveFragments.SheetEntries
 
 namespace RegularPrimitiveSplits.SheetEntries

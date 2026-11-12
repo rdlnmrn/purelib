@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -53,18 +55,18 @@ theorem Log.coefficient_nonneg {index : Nat} (positive : 1 ≤ index) :
   have oneLeIndex : (1 : Fraction.Rational) ≤ (index : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_le_direct positive
   have indexLeTwice : (index : Fraction.Rational) ≤ 2 * (index : Fraction.Rational) := by
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_right_direct
       (by decide : (1 : Fraction.Rational) ≤ 2) indexNonnegative
     simpa only [Fraction.Field.one_mul] using scaled
   have numeratorNonnegative :
       0 ≤ 2 * (index : Fraction.Rational) - 1 :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct (oneLeIndex.trans indexLeTwice)
+    Arithmetic.sub_nonneg_direct (oneLeIndex.trans indexLeTwice)
   have denominatorNonnegative :
       0 ≤ 2 * (index : Fraction.Rational) + 1 :=
-    Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) indexNonnegative)
+    Arithmetic.add_le_add_direct
+      (Arithmetic.mul_nonneg_direct (by decide) indexNonnegative)
       (show (0 : Fraction.Rational) ≤ 1 by decide)
-  exact Fraction.Order.Field.div_nonneg_direct numeratorNonnegative
+  exact Field.div_nonneg_direct numeratorNonnegative
     denominatorNonnegative
 
 /-- Every logarithm Horner coefficient is at most one.
@@ -77,13 +79,13 @@ theorem Log.coefficient_le_one (index : Nat) :
     Fraction.Cast.Order.natCast_le_direct (Nat.zero_le index)
   have denominatorPositive :
       0 < 2 * (index : Fraction.Rational) + 1 :=
-    Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) indexNonnegative)
+    Arithmetic.add_pos_of_nonneg_of_pos_direct
+      (Arithmetic.mul_nonneg_direct (by decide) indexNonnegative)
       (by decide)
-  apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).mpr
+  apply (Field.div_le_iff_pos denominatorPositive).mpr
   rw [Fraction.Field.one_mul]
   have constants : (-1 : Fraction.Rational) ≤ 1 := by decide
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct constants
+  have shifted := Arithmetic.add_le_add_right_direct constants
     (2 * (index : Fraction.Rational))
   calc
     2 * (index : Fraction.Rational) - 1 = -1 + 2 * (index : Fraction.Rational) := by ring1
@@ -105,10 +107,10 @@ theorem step_eq (w : Fraction.Rational) (index : Nat) (tail : Fraction.Rational)
 
 The zero-depth value is one; each further step advances the coefficient index and consumes the recursively computed
 tail. -/
-@[expose] def horner (w : Purelib.Data.Rat.Fraction.Rational) : Nat → Nat → Purelib.Data.Rat.Fraction.Rational
+@[expose] def horner (w : Fraction.Rational) : Nat → Nat → Fraction.Rational
   | _, 0 => 1
-  | index, depth + 1 => Purelib.Approximation.Rat.Logarithm.Horner.Basic.step w index
-    (Purelib.Approximation.Rat.Logarithm.Horner.Basic.horner w (index + 1) depth)
+  | index, depth + 1 => step w index
+    (Basic.horner w (index + 1) depth)
 
 /-- The zero-depth rational logarithm Horner value is one. -/
 @[simp] theorem horner_zero (w : Fraction.Rational) (index : Nat) :
@@ -146,11 +148,11 @@ namespace Purelib.Approximation.Rat.Logarithm.Horner.Basic.ComplexLog
 
 /-- At a positive natural index, the logarithm Horner coefficient is nonnegative. -/
 theorem coefficient_nonneg {index : Nat} (positive : 1 ≤ index) :
-    0 ≤ ComplexLog.coefficient index :=
+    0 ≤ coefficient index :=
   Log.coefficient_nonneg positive
 
 /-- Every logarithm Horner coefficient is at most one. -/
-theorem coefficient_le_one (index : Nat) : ComplexLog.coefficient index ≤ 1 :=
+theorem coefficient_le_one (index : Nat) : coefficient index ≤ 1 :=
   Log.coefficient_le_one index
 end Purelib.Approximation.Rat.Logarithm.Horner.Basic.ComplexLog
 

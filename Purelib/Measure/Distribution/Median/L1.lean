@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -47,7 +49,7 @@ private theorem lowerMedianSlope_le_difference
   by_cases below : value < median
   · have triangle := Distance.rationalSeparation_triangle value candidate median
     rw [Distance.rationalSeparation_eq_right_sub_of_le candidateLe] at triangle
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct triangle
+    have shifted := Arithmetic.add_le_add_right_direct triangle
       (-Distance.rationalSeparation value median - (median - candidate))
     simp only [-eq_self, -iff_self, indicator, strictlyBelowEvent, decide_eq_true below]
     calc
@@ -62,7 +64,7 @@ private theorem lowerMedianSlope_le_difference
       _ = Distance.rationalSeparation value candidate -
           Distance.rationalSeparation value median := by ring1
   · have medianLeValue : median ≤ value :=
-      Fraction.Order.Arithmetic.le_of_not_gt_direct below
+      Arithmetic.le_of_not_gt_direct below
     have candidateLeValue := candidateLe.trans medianLeValue
     simp only [-eq_self, -iff_self, indicator, strictlyBelowEvent, decide_eq_false below,
       Distance.rationalSeparation_eq_left_sub_of_le candidateLeValue,
@@ -87,7 +89,7 @@ private theorem upperMedianSlope_le_difference
     ring1
   · have triangle := Distance.rationalSeparation_triangle value candidate median
     rw [Distance.rationalSeparation_eq_left_sub_of_le medianLe] at triangle
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct triangle
+    have shifted := Arithmetic.add_le_add_right_direct triangle
       (-Distance.rationalSeparation value median - (candidate - median))
     simp only [-eq_self, -iff_self, indicator, atMostEvent, decide_eq_false atMost]
     calc
@@ -119,7 +121,7 @@ theorem absoluteDeviation_le_of_quantileCertificate
     have doubledLess :
         2 * distribution.probability event < 1 := by
       have scaled :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        Arithmetic.mul_lt_mul_of_pos_left_direct
           (by decide : (0 : Fraction.Rational) < 2)
           certificate.probability_strictlyBelow_lt
       have twoHalves : (2 : Fraction.Rational) * (1 / 2) = 1 := by decide
@@ -127,9 +129,9 @@ theorem absoluteDeviation_le_of_quantileCertificate
       exact scaled
     have slopePositive :
         0 < 1 - 2 * distribution.probability event :=
-      Fraction.Order.Arithmetic.sub_pos_direct doubledLess
+      Arithmetic.sub_pos_direct doubledLess
     have deltaNonnegative : 0 ≤ delta :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct candidateLe
+      Arithmetic.sub_nonneg_direct candidateLe
     have lowerExpectation :
         distribution.expectation (fun value =>
             delta * (1 - 2 * indicator event value)) =
@@ -141,8 +143,8 @@ theorem absoluteDeviation_le_of_quantileCertificate
         distribution.expectation (fun value =>
           delta * (1 - 2 * indicator event value)) := by
       rw [lowerExpectation]
-      exact Fraction.Order.Arithmetic.mul_nonneg_direct deltaNonnegative
-        (Fraction.Order.Arithmetic.le_of_lt_direct slopePositive)
+      exact Arithmetic.mul_nonneg_direct deltaNonnegative
+        (Arithmetic.le_of_lt_direct slopePositive)
     have averaged := distribution.expectation_mono
       (fun value => delta * (1 - 2 * indicator event value))
       (fun value => Distance.rationalSeparation value candidate -
@@ -150,23 +152,23 @@ theorem absoluteDeviation_le_of_quantileCertificate
       (fun atom member => lowerMedianSlope_le_difference candidateLe)
     have differenceNonnegative := lowerNonnegative.trans averaged
     rw [distribution.expectation_sub] at differenceNonnegative
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    exact Arithmetic.le_of_sub_nonneg_direct
       differenceNonnegative
   · let delta := candidate - certificate.threshold
     let event := atMostEvent certificate.threshold
     have doubledAtLeast :
         1 ≤ 2 * distribution.probability event := by
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           certificate.level_le_cumulative (by decide : (0 : Fraction.Rational) ≤ 2)
       have twoHalves : (2 : Fraction.Rational) * (1 / 2) = 1 := by decide
       rw [twoHalves] at scaled
       exact scaled
     have slopeNonnegative :
         0 ≤ 2 * distribution.probability event - 1 :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct doubledAtLeast
+      Arithmetic.sub_nonneg_direct doubledAtLeast
     have deltaNonnegative : 0 ≤ delta :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct medianLe
+      Arithmetic.sub_nonneg_direct medianLe
     have lowerExpectation :
         distribution.expectation (fun value =>
             delta * (2 * indicator event value - 1)) =
@@ -178,7 +180,7 @@ theorem absoluteDeviation_le_of_quantileCertificate
         distribution.expectation (fun value =>
           delta * (2 * indicator event value - 1)) := by
       rw [lowerExpectation]
-      exact Fraction.Order.Arithmetic.mul_nonneg_direct deltaNonnegative
+      exact Arithmetic.mul_nonneg_direct deltaNonnegative
         slopeNonnegative
     have averaged := distribution.expectation_mono
       (fun value => delta * (2 * indicator event value - 1))
@@ -187,7 +189,7 @@ theorem absoluteDeviation_le_of_quantileCertificate
       (fun atom member => upperMedianSlope_le_difference medianLe)
     have differenceNonnegative := lowerNonnegative.trans averaged
     rw [distribution.expectation_sub] at differenceNonnegative
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    exact Arithmetic.le_of_sub_nonneg_direct
       differenceNonnegative
 
 /-- The computed median certificate retains exactly the original law's computed lower median. -/

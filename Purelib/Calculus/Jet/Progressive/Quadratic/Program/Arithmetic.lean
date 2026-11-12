@@ -53,7 +53,7 @@ open Purelib.Data in
 def scale (scalar :
   Canonical) {increment : Nat → Canonical}
     (calculation : Calculation increment) : Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Arithmetic.scaleAutomatic
+  ⟨Arithmetic.scaleAutomatic
       scalar calculation.trace,
     Program.scale scalar calculation.program⟩
 
@@ -92,7 +92,7 @@ open Purelib.Data
 def mul {increment : Nat →
   Canonical}
     (left right : Calculation increment) : Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Arithmetic.mulAutomatic
+  ⟨Arithmetic.mulAutomatic
       left.trace right.trace,
     Program.mul left.program right.program⟩
 
@@ -110,7 +110,7 @@ def reciprocal {increment : Nat →
     (outputApart : ∀ index,
       outputLower ≤ Gaussian.Norm.Basic.normSq (calculation.trace.certificate index).output) :
     Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Reciprocal.reciprocalAutomatic
+  ⟨Reciprocal.reciprocalAutomatic
       calculation.trace baseLower outputLower basePositive outputPositive
         baseApart outputApart,
     Program.reciprocal calculation.program baseLower outputLower basePositive
@@ -131,7 +131,7 @@ def div {increment : Nat →
     (outputApart : ∀ index,
       outputLower ≤ Gaussian.Norm.Basic.normSq (denominator.trace.certificate index).output) :
     Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Reciprocal.divAutomatic
+  ⟨Reciprocal.divAutomatic
       numerator.trace denominator.trace baseLower outputLower basePositive
         outputPositive baseApart outputApart,
     Program.div numerator.program denominator.program baseLower outputLower
@@ -154,7 +154,7 @@ def compose {increment : Nat →
         (inner.trace.certificate index).base))
     (incrementUnit : ∀ index, Gaussian.Norm.Basic.normSq (increment index) ≤ 1) :
     Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Arithmetic.composeAutomatic
+  ⟨Arithmetic.composeAutomatic
       inner.trace outer.trace (fun index => by
           simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
             using incrementUnit index),
@@ -175,7 +175,7 @@ def exponential {increment : Nat →
         (inner.trace.certificate index).base) ≤ 1)
     (incrementUnit : ∀ index, Gaussian.Norm.Basic.normSq (increment index) ≤ 1) :
     Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Exponential.exponentialAutomatic
+  ⟨Exponential.exponentialAutomatic
       inner.trace (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using baseUnit index) (fun index
         => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using movementUnit index) (fun index => by
             simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -200,7 +200,7 @@ def reducedLog {increment : Nat →
         (inner.trace.certificate index).base) ≤ 1 / 9)
     (incrementUnit : ∀ index, Gaussian.Norm.Basic.normSq (increment index) ≤ 1) :
     Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.ReducedLog.reducedLogAutomatic
+  ⟨ReducedLog.reducedLogAutomatic
       inner.trace movementDisk incrementUnit,
     Program.reducedLog inner.program (fun index => by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -216,17 +216,17 @@ def sine {increment : Nat →
   Canonical} (inner : Calculation increment)
     (rotatedBaseUnit : ∀ index,
       Gaussian.Norm.Basic.normSq
-        ((Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.rotateAutomatic
+        ((Trigonometric.rotateAutomatic
           inner.trace).certificate index).base ≤ 1)
     (rotatedMovementUnit : ∀ index,
       Gaussian.Norm.Basic.normSq
-        (((Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.rotateAutomatic
+        (((Trigonometric.rotateAutomatic
             inner.trace).certificate index).output -
-          ((Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.rotateAutomatic
+          ((Trigonometric.rotateAutomatic
             inner.trace).certificate index).base) ≤ 1)
     (incrementUnit : ∀ index, Gaussian.Norm.Basic.normSq (increment index) ≤ 1) :
     Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.sineAutomatic
+  ⟨Trigonometric.sineAutomatic
       inner.trace (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using rotatedBaseUnit index)
         (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using rotatedMovementUnit index) (fun
         index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using incrementUnit index),
@@ -245,17 +245,17 @@ def cosine {increment : Nat →
   Canonical} (inner : Calculation increment)
     (rotatedBaseUnit : ∀ index,
       Gaussian.Norm.Basic.normSq
-        ((Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.rotateAutomatic
+        ((Trigonometric.rotateAutomatic
           inner.trace).certificate index).base ≤ 1)
     (rotatedMovementUnit : ∀ index,
       Gaussian.Norm.Basic.normSq
-        (((Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.rotateAutomatic
+        (((Trigonometric.rotateAutomatic
             inner.trace).certificate index).output -
-          ((Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.rotateAutomatic
+          ((Trigonometric.rotateAutomatic
             inner.trace).certificate index).base) ≤ 1)
     (incrementUnit : ∀ index, Gaussian.Norm.Basic.normSq (increment index) ≤ 1) :
     Calculation increment :=
-  ⟨Calculus.Jet.Progressive.Quadratic.Trace.Automatic.Trigonometric.cosineAutomatic
+  ⟨Trigonometric.cosineAutomatic
       inner.trace (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using rotatedBaseUnit index)
         (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using rotatedMovementUnit index) (fun
         index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using incrementUnit index),

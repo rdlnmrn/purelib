@@ -46,7 +46,7 @@ structure Factor where
   /-- The retained factor is nonzero. -/ nonzero : polynomial.isZero = false
   /-- This occurrence has strictly positive degree. -/ degreePositive : 0 < polynomial.natDegree
   /-- The executable squarefree certificate for this exact factor. -/ squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate polynomial
+    Basic.SquarefreeCertificate polynomial
 
 constructive_injectivity Factor
 
@@ -63,30 +63,30 @@ end Decomposition.Basic.Factor.mk
 namespace Decomposition.Basic
 
 /-- Finite product of the displayed squarefree occurrences. -/
-@[expose] def factorProduct : List Dense.Gaussian.Squarefree.Decomposition.Basic.Factor →
+@[expose] def factorProduct : List Factor →
   Basic.CanonicalCoefficients.CoefficientPolynomial
-  | [] => Dense.Basic.DensePolynomial.constant 1
+  | [] => Basic.DensePolynomial.constant 1
   | factor :: factors => factor.polynomial *
-    Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct factors
+    Basic.factorProduct factors
 
 end Decomposition.Basic
 
 namespace Decomposition.Basic
 
 /-- Evaluating the product of two appended occurrence lists equals the product of their separate evaluations. -/
-theorem factorProduct_append_eval (left right : List Dense.Gaussian.Squarefree.Decomposition.Basic.Factor) (point :
+theorem factorProduct_append_eval (left right : List Factor) (point :
   Gaussian.Basic.Canonical) :
-    (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct (left ++ right)).eval point =
-      (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct left).eval point *
-        (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct right).eval point := by
+    (factorProduct (left ++ right)).eval point =
+      (factorProduct left).eval point *
+        (factorProduct right).eval point := by
   induction left with
   | nil =>
-      simp only [List.nil_append, Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct,
-        Dense.Basic.DensePolynomial.eval_constant, one_mul, -eq_self]
+      simp only [List.nil_append, factorProduct,
+        Basic.DensePolynomial.eval_constant, one_mul, -eq_self]
       rfl
   | cons factor factors inductionHypothesis =>
-      simp only [List.cons_append, Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct,
-        Dense.Basic.DensePolynomial.eval_mul,
+      simp only [List.cons_append, factorProduct,
+        Basic.DensePolynomial.eval_mul,
         inductionHypothesis, -eq_self]
       rw [Gaussian.Basic.mul_assoc]
 
@@ -97,11 +97,11 @@ set_option genInjectivity false in
 degree polynomial. -/
 structure Decomposition (p : Basic.CanonicalCoefficients.CoefficientPolynomial) where
   /-- The finite ordered list of squarefree occurrences, retaining repetitions. -/ factors : List
-    Dense.Gaussian.Squarefree.Decomposition.Basic.Factor
+    Decomposition.Basic.Factor
   /-- The positive-degree decomposition has at least one occurrence. -/ factorsNonempty : factors ≠ []
   /-- The original polynomial evaluation equals the finite product of its retained factor occurrences at every displayed
     point. -/ evalIdentity : ∀ point : Gaussian.Basic.Canonical,
-    p.eval point = (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct factors).eval point
+    p.eval point = (Decomposition.Basic.factorProduct factors).eval point
   /-- The sum of the original occurrence degrees equals the source polynomial degree. -/ degreeSum : (factors.map fun
     factor => factor.polynomial.natDegree).sum =
     p.natDegree

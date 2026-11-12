@@ -53,16 +53,16 @@ open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_mul_left)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+  {coefficients : GaussianVector genus}
 
 /-- Decrease the density of the original checked surface cell by a factor between zero and one.
 
 The face, box and denominator certificate remain the original retained data, and both density inequalities are
 transported by the displayed factor. -/
-@[expose] def SurfaceCell.scaleDensity (cell : PreparedEnergy.SurfaceCell curve coefficients)
-    (factor : Fraction.Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) :
-    PreparedEnergy.SurfaceCell curve coefficients :=
+@[expose] def SurfaceCell.scaleDensity (cell : SurfaceCell curve coefficients)
+    (factor : Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) :
+    SurfaceCell curve coefficients :=
   let below : factor * cell.densityLower ≤ cell.densityLower := by
     have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct bounded cell.densityLower_nonnegative
     rwa [_root_.one_mul] at bound
@@ -77,75 +77,75 @@ transported by the displayed factor. -/
 
 /-- Scale every retained cell density by the same nonnegative factor at most one, preserving the original vector order.
 -/
-@[expose] def scaleSurfaceCells {count : Nat} (cells : Data.Vector (PreparedEnergy.SurfaceCell curve
+@[expose] def scaleSurfaceCells {count : Nat} (cells : Data.Vector (SurfaceCell curve
   coefficients) count)
-    (factor : Fraction.Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) :
-    Data.Vector (PreparedEnergy.SurfaceCell curve coefficients) count :=
-  Data.Vector.Basic.vectorOfFn fun index =>
-    Curves.Hyperelliptic.Integration.Observation.RawCoercivityCells.SurfaceCell.scaleDensity (cells index) factor
+    (factor : Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) :
+    Data.Vector (SurfaceCell curve coefficients) count :=
+  vectorOfFn fun index =>
+    SurfaceCell.scaleDensity (cells index) factor
     nonnegative bounded
 
 /-- Density scaling retains each original surface-cell box exactly. -/
-theorem scaleSurfaceCells_box {count : Nat} (cells : Data.Vector (PreparedEnergy.SurfaceCell curve
+theorem scaleSurfaceCells_box {count : Nat} (cells : Data.Vector (SurfaceCell curve
   coefficients) count)
-    (factor : Fraction.Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) (index : Fin count) :
+    (factor : Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) (index : Fin count) :
     (scaleSurfaceCells cells factor nonnegative bounded
       index).box = (cells index).box := by
   rw [scaleSurfaceCells,
-    Data.Vector.Basic.vectorOfFn_apply]
+    vectorOfFn_apply]
   rfl
 
 /-- Scaling all retained densities scales their exact finite surface energy by the same factor. -/
-theorem scaleSurfaceCells_energy {count : Nat} (cells : Data.Vector (PreparedEnergy.SurfaceCell curve
+theorem scaleSurfaceCells_energy {count : Nat} (cells : Data.Vector (SurfaceCell curve
   coefficients) count)
-    (factor : Fraction.Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) :
-    Prepared.surfaceEnergy (fun index =>
+    (factor : Rational) (nonnegative : 0 ≤ factor) (bounded : factor ≤ 1) :
+    surfaceEnergy (fun index =>
       scaleSurfaceCells cells factor nonnegative bounded
       index) =
-      factor * Prepared.surfaceEnergy (fun index => cells index) := by
-  change FiniteSum.Fin.sumFin (fun index =>
+      factor * surfaceEnergy (fun index => cells index) := by
+  change sumFin (fun index =>
     Content.boxContent (scaleSurfaceCells cells factor
       nonnegative bounded index).box *
       (scaleSurfaceCells cells factor nonnegative
         bounded index).densityLower) = _
   calc
-    _ = FiniteSum.Fin.sumFin (fun index => factor * (Content.boxContent (cells index).box *
-        (cells index).densityLower)) := FiniteSum.Fin.sumFin_congr fun index => by
+    _ = sumFin (fun index => factor * (Content.boxContent (cells index).box *
+        (cells index).densityLower)) := sumFin_congr fun index => by
       rw [scaleSurfaceCells,
-        Data.Vector.Basic.vectorOfFn_apply]
+        vectorOfFn_apply]
       change Content.boxContent (cells index).box *
         (factor * (cells index).densityLower) = _
       ring1
-    _ = _ := FiniteSum.Fin.sumFin_mul_left _ _
+    _ = _ := sumFin_mul_left _ _
 
 /-- Clip the target-to-energy ratio at one. -/
-@[expose] def capFactor (energy target : Fraction.Rational) : Fraction.Rational := min 1 (target / energy)
+@[expose] def capFactor (energy target : Rational) : Rational := min 1 (target / energy)
 
 /-- Positive original energy and target give a positive clipping factor. -/
-theorem capFactor_positive {energy target : Fraction.Rational} (energyPositive : 0 < energy)
+theorem capFactor_positive {energy target : Rational} (energyPositive : 0 < energy)
     (targetPositive : 0 < target) : 0 < capFactor energy
       target :=
-  Purelib.Data.Rat.Fraction.Order.Basic.lt_min (by decide) (Fraction.Order.Field.div_pos_direct targetPositive
+  Fraction.Order.Basic.lt_min (by decide) (Fraction.Order.Field.div_pos_direct targetPositive
     energyPositive)
 
 /-- The energy clipping factor is at most one. -/
-theorem capFactor_le_one (energy target : Fraction.Rational) :
+theorem capFactor_le_one (energy target : Rational) :
   capFactor energy target ≤ 1 :=
-  Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _
+  Fraction.Order.Basic.min_le_left _ _
 
 /-- For positive original energy, the clipped energy is exactly the minimum of that energy and the target. -/
-theorem capFactor_energy {energy : Fraction.Rational} (positive : 0 < energy) (target : Fraction.Rational) :
+theorem capFactor_energy {energy : Rational} (positive : 0 < energy) (target : Rational) :
     capFactor energy target * energy = min
       energy target := by
   unfold capFactor
   by_cases below : energy ≤ target
   · have divided : 1 ≤ target / energy := (Fraction.Order.Field.le_div_iff_pos positive).2 (by rwa [_root_.one_mul])
-    rw [Purelib.Data.Rat.Fraction.Order.Basic.min_eq_left divided, Purelib.Data.Rat.Fraction.Order.Basic.min_eq_left
+    rw [Fraction.Order.Basic.min_eq_left divided, Fraction.Order.Basic.min_eq_left
       below, _root_.one_mul]
   · have divided : target / energy ≤ 1 := (Fraction.Order.Field.div_le_iff_pos positive).2 (by
       rw [_root_.one_mul]
       exact (le_of_not_ge below))
-    rw [Purelib.Data.Rat.Fraction.Order.Basic.min_eq_right divided, Purelib.Data.Rat.Fraction.Order.Basic.min_eq_right
+    rw [Fraction.Order.Basic.min_eq_right divided, Fraction.Order.Basic.min_eq_right
       (le_of_not_ge below)]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ positive.ne'
 

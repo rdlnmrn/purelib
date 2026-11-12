@@ -66,6 +66,8 @@ import Purelib.Riemann.Normalization.OwnerSeededInverseRoot
 import Purelib.Tactic.Ring
 import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PrimitiveSamples
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 
 open Purelib
@@ -138,70 +140,70 @@ open Purelib.Geometry.Rational.Affine (line)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {comparison :
+  {regular : RegularBounds.Data cap} {comparison :
     Data regular cell}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index : Nat} {box : Rational.Box} {capSample :
+    Primitives.Sample cap differential index box}
 
 /-- The chord between two original reciprocal-disk points stays in that disk throughout the rational unit interval. -/
-private theorem disk_line {first last : InverseRootPolynomial.Gaussian}
-    (firstInside : Purelib.Polynomial.Dense.Gaussian.Reciprocal.Bounds.InDisk curve.polynomial first)
-    (lastInside : Purelib.Polynomial.Dense.Gaussian.Reciprocal.Bounds.InDisk curve.polynomial last)
-    {parameter : InverseRootPolynomial.Coordinate} (unit : 0 ≤ parameter ∧ parameter ≤ 1) :
-    Purelib.Polynomial.Dense.Gaussian.Reciprocal.Bounds.InDisk curve.polynomial (Affine.line first (last - first)
+private theorem disk_line {first last : Gaussian}
+    (firstInside : Reciprocal.Bounds.InDisk curve.polynomial first)
+    (lastInside : Reciprocal.Bounds.InDisk curve.polynomial last)
+    {parameter : Coordinate} (unit : 0 ≤ parameter ∧ parameter ≤ 1) :
+    Reciprocal.Bounds.InDisk curve.polynomial (line first (last - first)
       parameter) := by
-  have complement : 0 ≤ 1 - parameter := Fraction.Order.Arithmetic.sub_nonneg_direct unit.2
-  have normBound : Data.Gaussian.Norm.Basic.normSq (Affine.line first (last - first) parameter) ≤
-      (1 - parameter) * Data.Gaussian.Norm.Basic.normSq first + parameter *
-        Data.Gaussian.Norm.Basic.normSq last := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
-    have positive := Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct unit.1 complement) (Data.Gaussian.Norm.Basic.normSq_nonneg (last -
+  have complement : 0 ≤ 1 - parameter := Arithmetic.sub_nonneg_direct unit.2
+  have normBound : Norm.Basic.normSq (line first (last - first) parameter) ≤
+      (1 - parameter) * Norm.Basic.normSq first + parameter *
+        Norm.Basic.normSq last := by
+    apply Arithmetic.le_of_sub_nonneg_direct
+    have positive := Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct unit.1 complement) (Norm.Basic.normSq_nonneg (last -
         first))
     apply positive.trans_eq
-    simp only [Affine.line, Cast.ofCoordinate_re, Cast.ofCoordinate_im,
-      Data.Gaussian.Norm.Basic.normSq, Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im, Basic.mul_re,
+    simp only [line, Cast.ofCoordinate_re, Cast.ofCoordinate_im,
+      Norm.Basic.normSq, Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im, Basic.mul_re,
         Basic.mul_im]
     ring1
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct normBound
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (RootRadius.denseLargeSquareRadius curve.polynomial))
-  have endpoints := Fraction.Order.Arithmetic.add_le_add_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct firstInside complement)
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lastInside unit.1)
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct normBound
+    (Arithmetic.sq_nonneg_direct (RootRadius.denseLargeSquareRadius curve.polynomial))
+  have endpoints := Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct firstInside complement)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct lastInside unit.1)
   unfold Reciprocal.Bounds.InDisk at endpoints ⊢
   exact scaled.trans ((by ring1 : RootRadius.denseLargeSquareRadius curve.polynomial ^ 2 *
-    ((1 - parameter) * Data.Gaussian.Norm.Basic.normSq first + parameter *
-      Data.Gaussian.Norm.Basic.normSq last) =
+    ((1 - parameter) * Norm.Basic.normSq first + parameter *
+      Norm.Basic.normSq last) =
       (1 - parameter) * (RootRadius.denseLargeSquareRadius curve.polynomial ^ 2 *
-        Data.Gaussian.Norm.Basic.normSq first) +
-        parameter * (RootRadius.denseLargeSquareRadius curve.polynomial ^ 2 * Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq first) +
+        parameter * (RootRadius.denseLargeSquareRadius curve.polynomial ^ 2 * Norm.Basic.normSq
           last)).trans_le
           (endpoints.trans_eq (by ring1)))
 
 /-- The shared regular cap inverse satisfies the retained quarter-radius residual bound for the reciprocal curve
 polynomial. -/
 private theorem regular_residual
-    (regularChart : HyperellipticReciprocal.originOrder curve = 0) {point : InverseRootPolynomial.Gaussian}
+    (regularChart : HyperellipticReciprocal.originOrder curve = 0) {point : Gaussian}
     (inside : Reciprocal.Bounds.InDisk curve.polynomial point) :
-    Data.Gaussian.Norm.Basic.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval point *
+    Norm.Basic.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval point *
       (capSample.inverse.value.eval point) ^ 2) ≤
-      Geometric.Basic.quarterRadius (1 / 256) index := by
+      quarterRadius (1 / 256) index := by
   have same : (HyperellipticReciprocal.polynomial curve).eval point = cap.polynomial.eval point := by
-    rw [HyperellipticReciprocal.polynomial_eval, regularChart, pow_zero, Data.Gaussian.Basic.mul_one, cap.polynomial_eq]
+    rw [HyperellipticReciprocal.polynomial_eval, regularChart, pow_zero, Basic.mul_one, cap.polynomial_eq]
   rw [same, ← capSample.inverse.residual_eq]
   exact capSample.disk_residual_bound inside
 
 /-- The retained regular cap residual is at most one sixteenth at every stage. -/
-private theorem regular_small : Geometric.Basic.quarterRadius (1 / 256) index ≤ (1 / 16 :
-  InverseRootPolynomial.Coordinate) :=
-  (Geometric.Basic.quarterRadius_le_scale (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 1 / 256)
+private theorem regular_small : quarterRadius (1 / 256) index ≤ (1 / 16 :
+  Coordinate) :=
+  (quarterRadius_le_scale (by decide +kernel : (0 : Coordinate) ≤ 1 / 256)
     index).trans
     (by decide +kernel)
 
@@ -209,66 +211,66 @@ private theorem regular_small : Geometric.Basic.quarterRadius (1 / 256) index �
 
 Their residual certificates hold along the retained convex segment. A positive
 squared-dot lower bound keeps the comparison bit equal at its two endpoints. -/
-theorem flip_eq_points (sample : ArcSamples.Sample comparison capSample)
-    (regularChart : HyperellipticReciprocal.originOrder curve = 0) {first last : InverseRootPolynomial.Gaussian}
+theorem flip_eq_points (sample : Sample comparison capSample)
+    (regularChart : HyperellipticReciprocal.originOrder curve = 0) {first last : Gaussian}
     (firstLocal : (data.box edge.left.parameter).Contains first)
     (lastLocal : (data.box edge.left.parameter).Contains last)
     (firstDisk : Reciprocal.Bounds.InDisk curve.polynomial first)
     (lastDisk : Reciprocal.Bounds.InDisk curve.polynomial last) :
     (SignAlignment.build (sample.retained.inverse.value.eval first) (capSample.inverse.value.eval first)).flip =
       (SignAlignment.build (sample.retained.inverse.value.eval last) (capSample.inverse.value.eval last)).flip := by
-  let interval : Data.Rat.Interval.Bounds := ⟨0, 1, by decide⟩
-  have localInside (parameter : InverseRootPolynomial.Coordinate) (inside : interval.Contains parameter) :
-      (data.box edge.left.parameter).Contains (Affine.line first (last - first) parameter) :=
-    Rational.Box.contains_line firstLocal lastLocal inside
-  have leftResidual (parameter : InverseRootPolynomial.Coordinate) (inside : interval.Contains parameter) :
-      Data.Gaussian.Basic.Canonical.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval (Affine.line first (last
+  let interval : Interval.Bounds := ⟨0, 1, by decide⟩
+  have localInside (parameter : Coordinate) (inside : interval.Contains parameter) :
+      (data.box edge.left.parameter).Contains (line first (last - first) parameter) :=
+    Box.contains_line firstLocal lastLocal inside
+  have leftResidual (parameter : Coordinate) (inside : interval.Contains parameter) :
+      normSq (1 - (HyperellipticReciprocal.polynomial curve).eval (line first (last
         - first) parameter) *
-        (sample.retained.inverse.value.eval (Affine.line first (last - first) parameter)) ^ 2) ≤
+        (sample.retained.inverse.value.eval (line first (last - first) parameter)) ^ 2) ≤
           sample.retained.inverse.bound := by
     rw [← sample.retained.inverse.residual_eq]
     exact sample.retained.inverse.residualBound _ (localInside parameter inside)
-  have rightResidual (parameter : InverseRootPolynomial.Coordinate) (inside : interval.Contains parameter) :
-      Data.Gaussian.Basic.Canonical.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval (Affine.line first (last
+  have rightResidual (parameter : Coordinate) (inside : interval.Contains parameter) :
+      normSq (1 - (HyperellipticReciprocal.polynomial curve).eval (line first (last
         - first) parameter) *
-        (capSample.inverse.value.eval (Affine.line first (last - first) parameter)) ^ 2) ≤
-          Geometric.Basic.quarterRadius (1 / 256) index := by
+        (capSample.inverse.value.eval (line first (last - first) parameter)) ^ 2) ≤
+          quarterRadius (1 / 256) index := by
     have scalar := regular_residual (capSample := capSample)
       regularChart (disk_line firstDisk lastDisk inside)
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+    rw [Norm.Basic.normSq_eq_canonical] at scalar
     exact scalar
-  let majorant := Dense.Gaussian.Bounds.Box.denseEvalNormMajorant (HyperellipticReciprocal.polynomial curve) (data.box
+  let majorant := Box.denseEvalNormMajorant (HyperellipticReciprocal.polynomial curve) (data.box
     edge.left.parameter)
-  have majorantPositive : 0 < majorant := Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos _ _
-  have gapPositive : (0 : InverseRootPolynomial.Coordinate) < 1 / (768 * majorant) :=
-    Fraction.Order.Field.div_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide +kernel) majorantPositive)
-  have gap (parameter : InverseRootPolynomial.Coordinate) (inside : interval.Contains parameter) :
-      1 / (768 * majorant) ≤ (InverseModelEdgeOverlap.overlapPolynomial sample.retained.inverse.value
+  have majorantPositive : 0 < majorant := Box.denseEvalNormMajorant_pos _ _
+  have gapPositive : (0 : Coordinate) < 1 / (768 * majorant) :=
+    Field.div_pos_direct (by decide)
+      (Arithmetic.mul_pos_direct (by decide +kernel) majorantPositive)
+  have gap (parameter : Coordinate) (inside : interval.Contains parameter) :
+      1 / (768 * majorant) ≤ (overlapPolynomial sample.retained.inverse.value
         capSample.inverse.value
         first (last - first)).eval parameter ^ 2 := by
-    rw [InverseModelEdgeOverlap.eval_overlapPolynomial]
+    rw [eval_overlapPolynomial]
     exact SignAlignment.dot_squared_lower (SignAlignment.build _ _)
       (leftResidual parameter inside) (rightResidual parameter inside)
       sample.retained.inverse.bound_small regular_small
         majorantPositive
       (by
-        have scalar := Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant
+        have scalar := Box.normSq_eval_le_denseEvalNormMajorant
           (HyperellipticReciprocal.polynomial curve) (localInside parameter inside)
-        rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+        rw [Norm.Basic.normSq_eq_canonical] at scalar
         exact scalar)
   have zeroInside : interval.Contains 0 := ⟨le_rfl, by decide⟩
   have oneInside : interval.Contains 1 := ⟨by decide, le_rfl⟩
   have signs := Uniform.sign_eq_of_squared_lower
-    (InverseModelEdgeOverlap.overlapPolynomial sample.retained.inverse.value capSample.inverse.value first (last -
+    (overlapPolynomial sample.retained.inverse.value capSample.inverse.value first (last -
       first))
     interval gapPositive gap zeroInside oneInside
-  rw [InverseModelEdgeOverlap.eval_overlapPolynomial, InverseModelEdgeOverlap.eval_overlapPolynomial] at signs
+  rw [eval_overlapPolynomial, eval_overlapPolynomial] at signs
   have equal :
-      (SignAlignment.build (sample.retained.inverse.value.eval (Affine.line first (last - first) 0))
-        (capSample.inverse.value.eval (Affine.line first (last - first) 0))).flip =
-      (SignAlignment.build (sample.retained.inverse.value.eval (Affine.line first (last - first) 1))
-        (capSample.inverse.value.eval (Affine.line first (last - first) 1))).flip := by
+      (SignAlignment.build (sample.retained.inverse.value.eval (line first (last - first) 0))
+        (capSample.inverse.value.eval (line first (last - first) 0))).flip =
+      (SignAlignment.build (sample.retained.inverse.value.eval (line first (last - first) 1))
+        (capSample.inverse.value.eval (line first (last - first) 1))).flip := by
     rw [SignAlignment.flip_eq_dot_sign (SignAlignment.build _ _)
       (leftResidual 0 zeroInside) (rightResidual 0 zeroInside)
       sample.retained.inverse.bound_small regular_small,
@@ -276,11 +278,11 @@ theorem flip_eq_points (sample : ArcSamples.Sample comparison capSample)
       (leftResidual 1 oneInside) (rightResidual 1 oneInside)
       sample.retained.inverse.bound_small regular_small,
         signs]
-  have atZero : Affine.line first (last - first) 0 = first := by
-    apply Data.Gaussian.Basic.ext <;> simp only [Affine.line, Cast.ofCoordinate_re, Cast.ofCoordinate_im,
+  have atZero : line first (last - first) 0 = first := by
+    apply Basic.ext <;> simp only [line, Cast.ofCoordinate_re, Cast.ofCoordinate_im,
       Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im, Basic.sub_re, Basic.sub_im] <;> ring1
-  have atOne : Affine.line first (last - first) 1 = last := by
-    apply Data.Gaussian.Basic.ext <;> simp only [Affine.line, Cast.ofCoordinate_re, Cast.ofCoordinate_im,
+  have atOne : line first (last - first) 1 = last := by
+    apply Basic.ext <;> simp only [line, Cast.ofCoordinate_re, Cast.ofCoordinate_im,
       Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im, Basic.sub_re, Basic.sub_im] <;> ring1
   rw [atZero, atOne] at equal
   exact equal
@@ -290,13 +292,13 @@ set_option genInjectivity false in
 
 The initial comparison bit applies at every point of the covered arc. The
 cached primitive uses that same bit and retains the local polynomial owners. -/
-structure RegularAlignment (sample : ArcSamples.Sample comparison capSample) where
+structure RegularAlignment (sample : Sample comparison capSample) where
   /-- The original reciprocal curve has a regular, unramified origin chart. -/ regular_chart :
     HyperellipticReciprocal.originOrder curve = 0
-  /-- The retained sign comparison at the original left endpoint. -/ first : InverseModelOverlap.SignAlignment
+  /-- The retained sign comparison at the original left endpoint. -/ first : SignAlignment
     (sample.retained.inverse.value.eval (parent.edge.point edge.left.parameter)⁻¹)
     (capSample.inverse.value.eval (parent.edge.point edge.left.parameter)⁻¹)
-  /-- The cached shared cap primitive with the retained original sign. -/ primitive : InverseRootPolynomial.Polynomial
+  /-- The cached shared cap primitive with the retained original sign. -/ primitive : Polynomial
   /-- The cached primitive is exactly the shared cap polynomial, negated precisely when the retained bit is flipped. -/
     primitive_eq : primitive = if first.flip then -capSample.primitive.value else capSample.primitive.value
   /-- The retained initial sign is the exact comparison bit at every point of the original covered arc. -/ same_flip : ∀
@@ -310,9 +312,9 @@ namespace RegularAlignment
 
 /-- Multiply both compared inverse values by the same original factor while retaining the exact sign bit and
 nearest-value certificate. -/
-private def scaledAlignment {reference candidate : InverseRootPolynomial.Gaussian} (factor :
-  InverseRootPolynomial.Gaussian)
-    (alignment : InverseModelOverlap.SignAlignment reference candidate) : InverseModelOverlap.SignAlignment (factor *
+private def scaledAlignment {reference candidate : Gaussian} (factor :
+  Gaussian)
+    (alignment : SignAlignment reference candidate) : SignAlignment (factor *
       reference) (factor * candidate) where
   flip := alignment.flip
   value := factor * alignment.value
@@ -323,26 +325,26 @@ private def scaledAlignment {reference candidate : InverseRootPolynomial.Gaussia
     · change factor * (-candidate) = -(factor * candidate)
       ring1
   nearest := by
-    rw [← mul_sub, ← mul_add, Data.Gaussian.Basic.Canonical.normSq_mul, Data.Gaussian.Basic.Canonical.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct alignment.nearest
-      (Data.Gaussian.Basic.Canonical.normSq_nonneg factor)
+    rw [← mul_sub, ← mul_add, normSq_mul, normSq_mul]
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct alignment.nearest
+      (normSq_nonneg factor)
 
 /-- Two original geometric refinement stages reduce the inverse residual to at most one two-hundred-fifty-sixth. -/
-private theorem later_small {polynomial : InverseRootPolynomial.Polynomial} {localBox : Rational.Box}
-    (model : InverseRootPolynomial.Model polynomial localBox) (later : 2 ≤ index) :
+private theorem later_small {polynomial : Polynomial} {localBox : Rational.Box}
+    (model : Model polynomial localBox) (later : 2 ≤ index) :
     (model.refine index).bound ≤ 1 / 256 := by
   rw [Model.refine_bound]
   apply (quarterRadius_antitone model.bound_nonnegative later).trans
-  rw [Geometric.Basic.quarterRadius_eq_mul_pow]
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
-    (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ (1 / 4) ^ 2)
-  exact scaled.trans_eq (by decide +kernel : (1 / 16 : InverseRootPolynomial.Coordinate) * (1 / 4) ^ 2 = 1 / 256)
+  rw [quarterRadius_eq_mul_pow]
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
+    (by decide +kernel : (0 : Coordinate) ≤ (1 / 4) ^ 2)
+  exact scaled.trans_eq (by decide +kernel : (1 / 16 : Coordinate) * (1 / 4) ^ 2 = 1 / 256)
 
 /-- Retain the initial local-to-shared sign and its signed primitive, with sign constancy over the original reciprocal
 arc. -/
-@[expose] def build (sample : ArcSamples.Sample comparison capSample) (regularChart :
+@[expose] def build (sample : Sample comparison capSample) (regularChart :
   HyperellipticReciprocal.originOrder curve = 0) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment sample := by
+    RegularAlignment sample := by
   let first := SignAlignment.build (sample.retained.inverse.value.eval (parent.edge.point edge.left.parameter)⁻¹)
     (capSample.inverse.value.eval (parent.edge.point edge.left.parameter)⁻¹)
   let primitive := if first.flip then -capSample.primitive.value else capSample.primitive.value
@@ -357,10 +359,10 @@ arc. -/
 variable {sample : Sample comparison capSample}
 
 /-- Later fine points consume the retained bit, without another sign search. -/
-@[expose] def atPoint (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment sample)
-  (parameter : InverseRootPolynomial.Coordinate)
+@[expose] def atPoint (alignment : RegularAlignment sample)
+  (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-    InverseModelOverlap.SignAlignment (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹)
+    SignAlignment (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹)
       (capSample.inverse.value.eval (parent.edge.point parameter)⁻¹) where
   flip := alignment.first.flip
   value := if alignment.first.flip then -capSample.inverse.value.eval (parent.edge.point parameter)⁻¹
@@ -374,34 +376,34 @@ variable {sample : Sample comparison capSample}
 
 /-- The retained signed shared inverse differs from the actual local inverse by their residual bounds and original local
 inverse norm. -/
-theorem distance_le (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment sample)
-  (parameter : InverseRootPolynomial.Coordinate)
+theorem distance_le (alignment : RegularAlignment sample)
+  (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹ -
+    Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹ -
       (alignment.atPoint parameter between).value) ≤
-      6 * (sample.retained.inverse.bound + Geometric.Basic.quarterRadius (1 / 256) index) *
-        Data.Gaussian.Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹) :=
+      6 * (sample.retained.inverse.bound + quarterRadius (1 / 256) index) *
+        Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹) :=
           by
-  have leftResidual : Data.Gaussian.Norm.Basic.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval
+  have leftResidual : Norm.Basic.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval
     (parent.edge.point parameter)⁻¹ *
       (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹) ^ 2) ≤ sample.retained.inverse.bound := by
-    rw [← sample.retained.inverse.residual_eq, Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [← sample.retained.inverse.residual_eq, Norm.Basic.normSq_eq_canonical]
     exact sample.retained.inverse.residualBound _ (cell.contains parameter between)
-  have rightResidual := Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.regular_residual (capSample :=
+  have rightResidual := regular_residual (capSample :=
     capSample) alignment.regular_chart (ReciprocalExteriorCollar.inverse_inDisk curve
     (data.boundary.point ⟨edge.left.inside.1.trans between.1, between.2.trans edge.right.inside.2⟩))
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at leftResidual rightResidual
+  rw [Norm.Basic.normSq_eq_canonical] at leftResidual rightResidual
   have scalar := (alignment.atPoint parameter between).distance_le leftResidual rightResidual
     sample.retained.inverse.bound_small
-  simp only [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+  simp only [← Norm.Basic.normSq_eq_canonical] at scalar
   exact scalar
 
 /-- The cached signed primitive differentiates to the signed shared inverse.
 
 The reciprocal differential supplies the retained monomial factor. The same
 initial comparison bit negates both the primitive and inverse in the flipped branch. -/
-theorem primitive_derivative (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment
-  sample) (point : InverseRootPolynomial.Gaussian) :
+theorem primitive_derivative (alignment : RegularAlignment
+  sample) (point : Gaussian) :
     (Derivative.derivative alignment.primitive).eval point =
       -(point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent) *
         (if alignment.first.flip then -capSample.inverse.value.eval point else capSample.inverse.value.eval point) := by
@@ -423,24 +425,24 @@ theorem primitive_derivative (alignment : Curves.Hyperelliptic.Charts.Reciprocal
 
 /-- This consumes the original cap-comparison coefficient, including its reciprocal orientation. The signed primitive
 comes from the shared bank. -/
-theorem coefficient_distance_le (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment
-  sample) (parameter : InverseRootPolynomial.Coordinate)
+theorem coefficient_distance_le (alignment : RegularAlignment
+  sample) (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq (sample.pullback.coefficient.eval (parent.edge.point parameter)⁻¹ -
+    Norm.Basic.normSq (sample.pullback.coefficient.eval (parent.edge.point parameter)⁻¹ -
       (Derivative.derivative alignment.primitive).eval (parent.edge.point parameter)⁻¹) ≤
-      6 * (sample.retained.inverse.bound + Geometric.Basic.quarterRadius (1 / 256) index) *
-        Data.Gaussian.Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹) :=
+      6 * (sample.retained.inverse.bound + quarterRadius (1 / 256) index) *
+        Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹) :=
           by
   have inside := ReciprocalExteriorCollar.inverse_inDisk curve
     (data.boundary.point ⟨edge.left.inside.1.trans between.1, between.2.trans edge.right.inside.2⟩)
-  have power : Data.Gaussian.Norm.Basic.normSq ((parent.edge.point parameter)⁻¹ ^
+  have power : Norm.Basic.normSq ((parent.edge.point parameter)⁻¹ ^
     (HyperellipticReciprocal.reversedDifferential differential).exponent) ≤ 1 := by
     rw [Power.normSq_pow]
-    exact (Fraction.Order.Arithmetic.pow_le_pow_direct (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    exact (Arithmetic.pow_le_pow_direct (Norm.Basic.normSq_nonneg _)
       (Reciprocal.Bounds.disk_unit_bound inside) _).trans_eq
       (_root_.one_pow _)
   rw [sample.pullback.coefficient_eq, sample.inverse_eq, alignment.primitive_derivative]
-  change Data.Gaussian.Norm.Basic.normSq (-((parent.edge.point parameter)⁻¹ ^
+  change Norm.Basic.normSq (-((parent.edge.point parameter)⁻¹ ^
     (HyperellipticReciprocal.reversedDifferential differential).exponent *
       sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹) -
       -((parent.edge.point parameter)⁻¹ ^ (HyperellipticReciprocal.reversedDifferential differential).exponent) *
@@ -452,65 +454,65 @@ theorem coefficient_distance_le (alignment : Curves.Hyperelliptic.Charts.Recipro
       -((parent.edge.point parameter)⁻¹ ^ (HyperellipticReciprocal.reversedDifferential differential).exponent) *
         (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹ - (alignment.atPoint parameter
           between).value) by ring1,
-    Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_neg]
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct power (Data.Gaussian.Norm.Basic.normSq_nonneg
+    Norm.Basic.normSq_mul, Norm.Basic.normSq_neg]
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct power (Norm.Basic.normSq_nonneg
     _)).trans
     ((Fraction.Field.one_mul _).trans_le (alignment.distance_le parameter between))
 
 /-- The retained local cap polynomial and the signed shared primitive have a paid derivative discrepancy on the full
 actual inverse arc. -/
-theorem derivative_distance_le (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment
-  sample) (parameter : InverseRootPolynomial.Coordinate)
+theorem derivative_distance_le (alignment : RegularAlignment
+  sample) (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq ((Derivative.derivative sample.pullback.value).eval (parent.edge.point
+    Norm.Basic.normSq ((Derivative.derivative sample.pullback.value).eval (parent.edge.point
       parameter)⁻¹ -
       (Derivative.derivative alignment.primitive).eval (parent.edge.point parameter)⁻¹) ≤
-      2 * (Geometric.Basic.quarterRadius comparison.disk.scale index +
-        6 * (sample.retained.inverse.bound + Geometric.Basic.quarterRadius (1 / 256) index) *
-          Data.Gaussian.Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹))
+      2 * (quarterRadius comparison.disk.scale index +
+        6 * (sample.retained.inverse.bound + quarterRadius (1 / 256) index) *
+          Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point parameter)⁻¹))
             :=
-  (Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _).trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (sample.derivative_error parameter between)
+  (Norm.Bounds.normSq_sub_le_via _ _ _).trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (sample.derivative_error parameter between)
       (alignment.coefficient_distance_le parameter between)) (by decide))
 
 /-- All constants are from the retained geometric preparation. The signed shared primitive therefore admits the same
 geometric request schedule as the original local cap comparison, independently of the fine subdivision. -/
-theorem derivative_error (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment
-  sample) (parameter : InverseRootPolynomial.Coordinate)
+theorem derivative_error (alignment : RegularAlignment
+  sample) (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq ((Derivative.derivative sample.pullback.value).eval (parent.edge.point
+    Norm.Basic.normSq ((Derivative.derivative sample.pullback.value).eval (parent.edge.point
       parameter)⁻¹ -
       (Derivative.derivative alignment.primitive).eval (parent.edge.point parameter)⁻¹) ≤
-      Geometric.Basic.quarterRadius
+      quarterRadius
         (2 * (comparison.disk.scale + 6 * (cell.model.bound + 1 / 256) * comparison.disk.inverseUpper)) index := by
   have boundary := data.boundary.point ⟨edge.left.inside.1.trans between.1, between.2.trans edge.right.inside.2⟩
-  have lower := (collar.point_clearance boundary (show (0 : InverseRootPolynomial.Coordinate) ≤ 0 ∧ 0 ≤ 1 from ⟨le_rfl,
+  have lower := (collar.point_clearance boundary (show (0 : Coordinate) ≤ 0 ∧ 0 ≤ 1 from ⟨le_rfl,
     by decide⟩)).2
   rw [collar.point_eq, ReciprocalExteriorCollar.deform_zero] at lower
-  have inverseBound : Data.Gaussian.Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point
+  have inverseBound : Norm.Basic.normSq (sample.retained.inverse.value.eval (parent.edge.point
     parameter)⁻¹) ≤ comparison.disk.inverseUpper := by
     rw [comparison.disk.inverseUpper_eq]
     exact RegularBounds.inverse_le sample.retained.inverse (cell.contains parameter between)
       collar.radicandBound_positive lower
-  have factorNonnegative : 0 ≤ 6 * (sample.retained.inverse.bound + Geometric.Basic.quarterRadius (1 / 256) index) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  have factorNonnegative : 0 ≤ 6 * (sample.retained.inverse.bound + quarterRadius (1 / 256) index) :=
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg sample.retained.inverse.bound_nonnegative
-        (Geometric.Basic.quarterRadius_nonneg (by decide +kernel) index))
-  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inverseBound factorNonnegative
+        (quarterRadius_nonneg (by decide +kernel) index))
+  have paid := Arithmetic.mul_le_mul_of_nonneg_left_direct inverseBound factorNonnegative
   have bounded := (alignment.derivative_distance_le parameter between).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct le_rfl
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct le_rfl
       paid) (by decide))
-  have boundEq : sample.retained.inverse.bound = Geometric.Basic.quarterRadius cell.model.bound index := by
+  have boundEq : sample.retained.inverse.bound = quarterRadius cell.model.bound index := by
     rw [sample.retained.inverse_eq, sample.cell_eq, Model.refine_bound]
   apply bounded.trans_eq
   rw [boundEq]
-  simp only [Geometric.Basic.quarterRadius_eq_mul_pow]
+  simp only [quarterRadius_eq_mul_pow]
   ring1
 
 /-- The cell's sign relative to the shared regular model is determined by its retained parent source polynomial. Two
 ordinary preparation stages suffice for the finite sign-composition law. -/
-theorem source_flip (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment sample)
-  (parameter : InverseRootPolynomial.Coordinate)
+theorem source_flip (alignment : RegularAlignment sample)
+  (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) (later : 2 ≤ index) :
     (SignAlignment.build ((data.source.refine index).value.eval (parent.edge.point parameter))
       (ReciprocalRootNames.factor genus (parent.edge.point parameter) *
@@ -524,18 +526,18 @@ theorem source_flip (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.She
   let shared := factor * capSample.inverse.value.eval (parent.edge.point parameter)⁻¹
   have modelEq : sample.retained.inverse = cell.model.refine index := by
     rw [sample.retained.inverse_eq, sample.cell_eq]
-  have sourceResidual : Data.Gaussian.Norm.Basic.normSq (1 - curve.polynomial.eval (parent.edge.point
+  have sourceResidual : Norm.Basic.normSq (1 - curve.polynomial.eval (parent.edge.point
     parameter) * source ^ 2) ≤
       (data.source.refine index).bound := by
-    rw [← (data.source.refine index).residual_eq, Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [← (data.source.refine index).residual_eq, Norm.Basic.normSq_eq_canonical]
     exact (data.source.refine index).residualBound _ (data.source_inside inside)
-  have localResidual : Data.Gaussian.Norm.Basic.normSq (1 - curve.polynomial.eval (parent.edge.point parameter)
+  have localResidual : Norm.Basic.normSq (1 - curve.polynomial.eval (parent.edge.point parameter)
     * transported ^ 2) ≤
       sample.retained.inverse.bound :=
     ReciprocalInverseModelOverlap.residual sample.retained.inverse nonzero (cell.contains parameter between)
-  have sharedResidual : Data.Gaussian.Norm.Basic.normSq (1 - curve.polynomial.eval (parent.edge.point
+  have sharedResidual : Norm.Basic.normSq (1 - curve.polynomial.eval (parent.edge.point
     parameter) * shared ^ 2) ≤
-      Geometric.Basic.quarterRadius (1 / 256) index := by
+      quarterRadius (1 / 256) index := by
     have identity : 1 - curve.polynomial.eval (parent.edge.point parameter) * shared ^ 2 =
         1 - (HyperellipticReciprocal.polynomial curve).eval (parent.edge.point parameter)⁻¹ *
           (capSample.inverse.value.eval (parent.edge.point parameter)⁻¹) ^ 2 := by
@@ -543,18 +545,18 @@ theorem source_flip (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.She
       dsimp only [shared, factor]
       ring1
     rw [identity]
-    exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.regular_residual alignment.regular_chart
+    exact regular_residual alignment.regular_chart
       (ReciprocalExteriorCollar.inverse_inDisk curve (data.boundary.point inside))
   have localSmall : sample.retained.inverse.bound ≤ 1 / 256 := by
     rw [modelEq]
     exact later_small cell.model later
-  have sharedSmall : Geometric.Basic.quarterRadius (1 / 256) index ≤ (1 / 256 : InverseRootPolynomial.Coordinate) :=
-    Geometric.Basic.quarterRadius_le_scale (by decide +kernel) index
+  have sharedSmall : quarterRadius (1 / 256) index ≤ (1 / 256 : Coordinate) :=
+    quarterRadius_le_scale (by decide +kernel) index
   have sourceLocal : (SignAlignment.build source transported).flip = false := by
     dsimp only [source, transported, factor]
     rw [modelEq]
     exact cell.flip_false index parameter between
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at sourceResidual localResidual sharedResidual
+  rw [Norm.Basic.normSq_eq_canonical] at sourceResidual localResidual sharedResidual
   have composed := SignAlignment.cocycle (SignAlignment.build source transported)
     (scaledAlignment factor
       (alignment.atPoint parameter between)) (SignAlignment.build source shared)
@@ -566,12 +568,12 @@ theorem source_flip (alignment : Curves.Hyperelliptic.Charts.Reciprocal.Disk.She
 
 /-- Every adjacent cell of this same prepared parent uses one common sign for the shared cap primitive, including
 nonuniform later sample cuts. -/
-theorem same_parent {otherEdge : ClearSheetContinuation.Subdivision.ParameterEdge}
-    {otherCell : UniformReciprocalCover.Cell data otherEdge} {otherComparison : ArcSamples.Data regular otherCell}
-    {otherSample : ArcSamples.Sample otherComparison capSample}
-    (first : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment sample) (last :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.SheetAlignment.RegularAlignment otherSample) (parameter :
-      InverseRootPolynomial.Coordinate)
+theorem same_parent {otherEdge : ParameterEdge}
+    {otherCell : Cell data otherEdge} {otherComparison : Data regular otherCell}
+    {otherSample : Sample otherComparison capSample}
+    (first : RegularAlignment sample) (last :
+      RegularAlignment otherSample) (parameter :
+      Coordinate)
     (firstInside : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter)
     (lastInside : otherEdge.left.parameter ≤ parameter ∧ parameter ≤ otherEdge.right.parameter) (later : 2 ≤ index) :
     first.first.flip = last.first.flip :=

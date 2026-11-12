@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -45,58 +47,58 @@ namespace Purelib.Geometry.Projective.Chordal.Probe
 /-- Exact rational squared chordal distance to the projective point at infinity. -/
 def chordalOmegaProbe (point : GaussianLine) :
   Fraction.Rational :=
-  Chordal.Basic.chordalSq point (Proj.omega : GaussianLine)
+  Basic.chordalSq point (Proj.omega : GaussianLine)
 
 /-- Squared chordal quadrance from the terminal point is nonnegative. -/
 theorem chordalOmegaProbe_nonnegative (point :
   GaussianLine) :
-    0 ≤ Geometry.Projective.Chordal.Probe.chordalOmegaProbe point :=
-  Chordal.Basic.chordalSq_nonneg point (Proj.omega : GaussianLine)
+    0 ≤ chordalOmegaProbe point :=
+  Basic.chordalSq_nonneg point (Proj.omega : GaussianLine)
 
 /-- A valid homogeneous point has terminal-point probe at most one. -/
 theorem chordalOmegaProbe_le_one {point :
   GaussianLine}
     (valid : Proj.HasNonzeroCoordinate point) :
-    Geometry.Projective.Chordal.Probe.chordalOmegaProbe point ≤ 1 :=
-  Chordal.Basic.chordalSq_le_one valid
+    chordalOmegaProbe point ≤ 1 :=
+  Basic.chordalSq_le_one valid
     Proj.omega_hasNonzeroCoordinate
 
 /-- The terminal-point probe is denominator squared norm divided by homogeneous weight. -/
 public theorem chordalSq_omega_eq_weight (point :
   GaussianLine) :
-    Chordal.Probe.chordalOmegaProbe point =
-      Data.Gaussian.Norm.Basic.normSq point.q / Proj.weight point := by
-  unfold Chordal.Probe.chordalOmegaProbe
-  rw [Chordal.Basic.chordalSq_eq_cross]
+    chordalOmegaProbe point =
+      Basic.normSq point.q / Proj.weight point := by
+  unfold chordalOmegaProbe
+  rw [Basic.chordalSq_eq_cross]
   simp only [Proj.cross, Proj.omega,
     Data.Gaussian.Basic.mul_zero,
     Data.Gaussian.Basic.one_mul,
     Data.Gaussian.Basic.zero_sub,
-    Data.Gaussian.Norm.Basic.normSq_neg, Proj.weight, Data.Gaussian.Norm.Basic.normSq_one,
-      Data.Gaussian.Norm.Basic.normSq_zero]
+    Basic.normSq_neg, Proj.weight, Basic.normSq_one,
+      Basic.normSq_zero]
   congr 1
   ring1
 
 /-- The two mixed coordinate-product squared norms are bounded by the weight product. -/
 public theorem crossProductNorms_le_weightProduct (left right :
   GaussianLine) :
-    Data.Gaussian.Norm.Basic.normSq (left.q * right.p) + Data.Gaussian.Norm.Basic.normSq (right.q *
+    Basic.normSq (left.q * right.p) + Basic.normSq (right.q *
       left.p) ≤
       Proj.weight left * Proj.weight right := by
-  rw [Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul]
+  rw [Basic.normSq_mul, Basic.normSq_mul]
   apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
   calc
-    0 ≤ Data.Gaussian.Norm.Basic.normSq left.p * Data.Gaussian.Norm.Basic.normSq right.p +
-        Data.Gaussian.Norm.Basic.normSq left.q * Data.Gaussian.Norm.Basic.normSq right.q :=
+    0 ≤ Basic.normSq left.p * Basic.normSq right.p +
+        Basic.normSq left.q * Basic.normSq right.q :=
       add_nonneg
         (Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Data.Gaussian.Norm.Basic.normSq_nonneg left.p) (Data.Gaussian.Norm.Basic.normSq_nonneg right.p))
+          (Basic.normSq_nonneg left.p) (Basic.normSq_nonneg right.p))
         (Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Data.Gaussian.Norm.Basic.normSq_nonneg left.q) (Data.Gaussian.Norm.Basic.normSq_nonneg right.q))
+          (Basic.normSq_nonneg left.q) (Basic.normSq_nonneg right.q))
     _ = Proj.weight left *
           Proj.weight right -
-        (Data.Gaussian.Norm.Basic.normSq left.q * Data.Gaussian.Norm.Basic.normSq right.p +
-          Data.Gaussian.Norm.Basic.normSq right.q * Data.Gaussian.Norm.Basic.normSq left.p) := by
+        (Basic.normSq left.q * Basic.normSq right.p +
+          Basic.normSq right.q * Basic.normSq left.p) := by
       dsimp only [Proj.weight]
       ring1
 

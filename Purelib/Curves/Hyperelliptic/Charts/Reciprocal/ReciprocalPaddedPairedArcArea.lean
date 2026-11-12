@@ -34,6 +34,10 @@ import Purelib.Polynomial.Dense.Gaussian.Primitive.Certificate
 import Purelib.Tactic.Ring
 import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedArcArea
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic
@@ -66,65 +70,65 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedDisk (Data)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse (UniformBounds)
 open Purelib.Riemann.RootContinuation
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedDisk.Data cap} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {index otherIndex : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {data : Data cap} {differential other :
+    Differential genus}
+  {index otherIndex : Nat} {box otherBox : Rational.Box}
 
 /-- Bound the finite dyadic paired primitive area by the retained coefficient ceilings and fourth-order endpoint
 separation.
 
 Both original differential samples are evaluated on the same reciprocal chord, whose squared endpoints lie in the
 original padded disk. -/
-theorem paired_arc_refinement (bounds : ReciprocalPaddedInverse.UniformBounds data)
+theorem paired_arc_refinement (bounds : UniformBounds data)
     (sample : Primitives.Sample cap differential index box)
     (otherSample : Primitives.Sample cap other otherIndex otherBox)
-    (branch : HyperellipticReciprocal.originOrder curve = 1) {first last : InverseRootPolynomial.Gaussian}
+    (branch : HyperellipticReciprocal.originOrder curve = 1) {first last : Gaussian}
     (firstInside : data.Contains (first * first)) (lastInside : data.Contains (last * last)) (depth : Nat) :
     let values := fun point => (⟨sample.primitive.value.eval point, otherSample.primitive.value.eval point⟩ :
-      Stokes.PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (Bilinear.arcArea values depth first last - Stokes.edgeArea (values first)
+      PrimitivePoint)
+    Norm.Basic.normSq (Bilinear.arcArea values depth first last - edgeArea (values first)
       (values last)) ≤
       16 * (max (bounds.coefficientUpper differential) (bounds.coefficientUpper other))^2 *
-        Data.Gaussian.Norm.Basic.normSq (last - first)^2 := by
+        Norm.Basic.normSq (last - first)^2 := by
   intro values
   let coefficient := max (bounds.coefficientUpper differential) (bounds.coefficientUpper other)
-  let slope := 2 * coefficient * Data.Gaussian.Norm.Basic.normSq (last - first)
-  have nonnegative : 0 ≤ slope := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) ((bounds.coefficientUpper_nonnegative differential).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ _)))
-    (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-  have increment {d : Differentials.Basic.Differential genus} {n : Nat} {b : Rational.Box}
+  let slope := 2 * coefficient * Norm.Basic.normSq (last - first)
+  have nonnegative : 0 ≤ slope := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) ((bounds.coefficientUpper_nonnegative differential).trans
+      (Basic.le_max_left _ _)))
+    (Norm.Basic.normSq_nonneg _)
+  have increment {d : Differential genus} {n : Nat} {b : Rational.Box}
       (s : Primitives.Sample cap d n b) (ceiling : bounds.coefficientUpper d ≤ coefficient)
-      {a b : InverseRootPolynomial.Coordinate} (aUnit : 0 ≤ a ∧ a ≤ 1) (bUnit : 0 ≤ b ∧ b ≤ 1) :
-      Data.Gaussian.Norm.Basic.normSq (s.primitive.value.eval (RootRadialGeometry.chord first last b) -
+      {a b : Coordinate} (aUnit : 0 ≤ a ∧ a ≤ 1) (bUnit : 0 ≤ b ∧ b ≤ 1) :
+      Norm.Basic.normSq (s.primitive.value.eval (RootRadialGeometry.chord first last b) -
         s.primitive.value.eval (RootRadialGeometry.chord first last a)) ≤ slope * (b - a)^2 :=
     (bounds.chord_increment s branch firstInside lastInside aUnit bUnit).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ceiling (by decide))
-            (Data.Gaussian.Norm.Basic.normSq_nonneg _)) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct ceiling (by decide))
+            (Norm.Basic.normSq_nonneg _)) (Arithmetic.sq_nonneg_direct _))
   have estimate := DyadicPairedAreaRefinement.dyadicArea_chord_bound
     (fun parameter => values (RootRadialGeometry.chord first last parameter)) nonnegative
     (fun _ _ aUnit bUnit => by
-      have firstScalar := increment sample (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ _) aUnit bUnit
-      have secondScalar := increment otherSample (Purelib.Data.Rat.Fraction.Order.Basic.le_max_right _ _) aUnit bUnit
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstScalar secondScalar
+      have firstScalar := increment sample (Basic.le_max_left _ _) aUnit bUnit
+      have secondScalar := increment otherSample (Basic.le_max_right _ _) aUnit bUnit
+      rw [Norm.Basic.normSq_eq_canonical] at firstScalar secondScalar
       exact ⟨firstScalar, secondScalar⟩)
     depth (first := 0) (last := 1) (by decide) (by decide) (by decide)
   have atZero : RootRadialGeometry.chord first last 0 = first := by
-    apply Data.Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, RootRadialGeometry.chord,
-      Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, Data.Gaussian.Scale.scale_re,
-      Data.Gaussian.Scale.scale_im] <;> ring1
+    apply Basic.ext <;> simp only [-eq_self, -iff_self, RootRadialGeometry.chord,
+      Basic.add_re, Basic.add_im, Scale.scale_re,
+      Scale.scale_im] <;> ring1
   have atOne : RootRadialGeometry.chord first last 1 = last := by
-    apply Data.Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, RootRadialGeometry.chord,
-      Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, Data.Gaussian.Scale.scale_re,
-      Data.Gaussian.Scale.scale_im] <;> ring1
+    apply Basic.ext <;> simp only [-eq_self, -iff_self, RootRadialGeometry.chord,
+      Basic.add_re, Basic.add_im, Scale.scale_re,
+      Scale.scale_im] <;> ring1
   rw [atZero, atOne] at estimate
   exact estimate.trans_eq (by
-    rw [show ((1 : InverseRootPolynomial.Coordinate) - 0)^4 = 1 by decide]
+    rw [show ((1 : Coordinate) - 0)^4 = 1 by decide]
     dsimp only [-eq_self, -iff_self, slope, coefficient]
     ring1)
 

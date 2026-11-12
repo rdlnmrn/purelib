@@ -126,13 +126,12 @@ open Purelib.Integration.Program.Gaussian in
 open Purelib.Approximation.Rational in
 open Purelib.Data.Gaussian in
 open Purelib in
-/-- Build a cached integration program from a polynomial source and partition policy.
+/-- Build a cached integration program from one retained stage-compilation function.
 
 Every stage retains its compiled model and exact source sample, with zero allowance. Coherence follows from equality of
 those samples, and the squared norm of the source sample supplies the center bound. -/
-@[expose] def polynomialProgram (source : Partition.Source.PolynomialPath) (policy : PartitionPolicy source) :
-  Cached.Basic.CachedProgram :=
-  let compiled := compilePolicy policy
+@[expose] def polynomialProgramOf (source : Partition.Source.PolynomialPath)
+    (compiled : Nat → Partition.Compiled.CompiledPartition source) : Cached.Basic.CachedProgram :=
   let integral := Partition.Source.sourceSample source
   { stage := fun index => CachedModel.ofPartition (compiled index)
     errorScale := 0
@@ -154,6 +153,49 @@ those samples, and the squared norm of the source sample supplies the center bou
       intro index
       change Norm.Basic.normSq (compiled index).sample ≤ normSq integral
       rw [Norm.Basic.normSq_eq_canonical, (compiled index).sample_source] }
+
+
+open Purelib.Integration.Polynomial.Gaussian
+open Purelib.Integration.Program.Gaussian
+
+/-- Build the original cached integration program from a polynomial source and partition policy.
+
+The original policy compilation is retained outside the stage function. -/
+@[expose] def polynomialProgram (source : Partition.Source.PolynomialPath) (policy : PartitionPolicy source) :
+    Cached.Basic.CachedProgram := polynomialProgramOf source (compilePolicy policy)
+
+set_option genInjectivity false in
+/-- An original polynomial partition policy and its shared compiled-stage function. -/
+structure Retained (source : Partition.Source.PolynomialPath) (policy : PartitionPolicy source) where
+  /-- The actual stage compilation shared with the retained program. -/
+  compiled : Nat → Partition.Compiled.CompiledPartition source
+  /-- The retained compilation is the original policy compiler. -/
+  compiled_eq : compiled = compilePolicy policy
+
+namespace Retained
+
+/-- Retain the original policy compilation once. -/
+@[expose] def canonical (source : Partition.Source.PolynomialPath) (policy : PartitionPolicy source) :
+    Retained source policy := ⟨compilePolicy policy, rfl⟩
+
+/-- Build the original program from the retained compiled-stage function. -/
+@[expose] def program {source : Partition.Source.PolynomialPath} {policy : PartitionPolicy source}
+    (retained : Retained source policy) : Cached.Basic.CachedProgram := polynomialProgramOf source retained.compiled
+
+/-- The shared-cache program is the original policy program. -/
+theorem program_eq {source : Partition.Source.PolynomialPath} {policy : PartitionPolicy source}
+    (retained : Retained source policy) : retained.program = polynomialProgram source policy := by
+  cases retained with
+  | mk compiled compiled_eq =>
+    cases compiled_eq
+    rfl
+
+/-- Its stage cache is built from the same returned compiled partition. -/
+theorem stage_eq {source : Partition.Source.PolynomialPath} {policy : PartitionPolicy source}
+    (retained : Retained source policy) (index : Nat) :
+    retained.program.stage index = CachedModel.ofPartition (retained.compiled index) := rfl
+
+end Retained
 
 open Purelib.Integration.Polynomial.Gaussian in
 /-- Every stage of a polynomial program returns the source's exact integral sample.
@@ -191,7 +233,7 @@ all their samples supplying the equivalence. -/
     Equivalence.NamedEquivalent (polynomialProgram source policy).output.name
       (Integration.Program.Gaussian.Basic.RefinementProgram.exactPolynomial 0 1
         (Ascending.Gaussian.Basic.constant (Partition.Source.sourceSample source))).output.name := by
-  apply Equivalence.Equivalent.toNamed
+  apply Equivalence.Equivalent.toNamed (inspect := false)
   apply Equivalence.Equivalent.of_constant_samples _ _ (Partition.Source.sourceSample source)
   · exact polynomialProgram_sample source policy
   · intro index

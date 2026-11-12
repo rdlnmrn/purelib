@@ -30,7 +30,7 @@ open Purelib.Geometry.Plane.Point
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 public section
@@ -47,7 +47,7 @@ calculation even when the foot coincides with a diameter endpoint.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Altitude
 
@@ -63,7 +63,7 @@ theorem pointVectorDot_eq_zero_of_line_altitude
   have sideEquation :
       line.a * (sidePoint.x - foot.x) +
         line.b * (sidePoint.y - foot.y) = 0 := by
-    unfold Line.Contains at sideOnLine footOnLine
+    unfold Contains at sideOnLine footOnLine
     calc
       line.a * (sidePoint.x - foot.x) +
           line.b * (sidePoint.y - foot.y) =
@@ -73,7 +73,7 @@ theorem pointVectorDot_eq_zero_of_line_altitude
   have altitudeEquation :
       -line.b * (altitudePoint.x - foot.x) +
         line.a * (altitudePoint.y - foot.y) = 0 := by
-    unfold Construction.altitudeThrough Line.Contains at altitudeOnLine footOnAltitude
+    unfold Construction.altitudeThrough Contains at altitudeOnLine footOnAltitude
     calc
       -line.b * (altitudePoint.x - foot.x) +
           line.a * (altitudePoint.y - foot.y) =
@@ -117,7 +117,7 @@ construction remains executable and choice-free.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 section
 
@@ -125,11 +125,11 @@ namespace Purelib.Curves.Plane.Conic
 
 /-- The altitude to a non-null line is itself non-null. -/
 theorem altitudeThrough_nonNull
-    (point : Geometry.Plane.Point K) (line : Line K) (lineNonNull : ¬ line.IsNull) :
+    (point : Point K) (line : Line K) (lineNonNull : ¬ line.IsNull) :
     ¬ (Construction.altitudeThrough point line).IsNull := by
   intro altitudeNull
   apply lineNonNull
-  unfold Line.IsNull at altitudeNull ⊢
+  unfold IsNull at altitudeNull ⊢
   unfold Construction.altitudeThrough at altitudeNull
   calc
     line.a ^ 2 + line.b ^ 2 =
@@ -157,7 +157,7 @@ hypothesis is exposed as the precise executable cancellation certificate.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Altitude
 
@@ -167,18 +167,18 @@ The coordinates divide the explicit projection numerators by the line's nonzero 
 @[expose] def altitudeFoot (point : Point K) (line : Line K)
     (_nonNull : ¬ line.IsNull) : Point K :=
   { x := (line.b ^ 2 * point.x - line.a * line.b * point.y -
-      line.a * line.c) / Line.Basic.lineNorm line
+      line.a * line.c) / Basic.lineNorm line
     y := (-line.a * line.b * point.x + line.a ^ 2 * point.y -
-      line.b * line.c) / Line.Basic.lineNorm line }
+      line.b * line.c) / Basic.lineNorm line }
 
 /-- The foot given by Theorem 8 lies on the target line. -/
 theorem altitudeFoot_on_line (point : Point K) (line : Line K)
     (nonNull : ¬ line.IsNull) :
-    line.Contains (Altitude.altitudeFoot point line nonNull) := by
-  have normNonzero : Basic.lineNorm line ≠ 0 := Purelib.Geometry.Plane.Line.Basic.lineNorm_ne_zero nonNull
+    line.Contains (altitudeFoot point line nonNull) := by
+  have normNonzero : Basic.lineNorm line ≠ 0 := Basic.lineNorm_ne_zero nonNull
   have normCancel : Basic.lineNorm line * (Basic.lineNorm line)⁻¹ = (1 : K) :=
     Algebra.Field.ExplicitField.mul_inv_cancel _ normNonzero
-  unfold Line.Contains Altitude.altitudeFoot
+  unfold Contains altitudeFoot
   simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
   calc
     line.a *
@@ -195,11 +195,11 @@ theorem altitudeFoot_on_line (point : Point K) (line : Line K)
 /-- The foot given by Theorem 8 also lies on the altitude through the point. -/
 theorem altitudeFoot_on_altitude (point : Point K) (line : Line K)
     (nonNull : ¬ line.IsNull) :
-    (Construction.altitudeThrough point line).Contains (Altitude.altitudeFoot point line nonNull) := by
-  have normNonzero : Basic.lineNorm line ≠ 0 := Purelib.Geometry.Plane.Line.Basic.lineNorm_ne_zero nonNull
+    (Construction.altitudeThrough point line).Contains (altitudeFoot point line nonNull) := by
+  have normNonzero : Basic.lineNorm line ≠ 0 := Basic.lineNorm_ne_zero nonNull
   have normCancel : Basic.lineNorm line * (Basic.lineNorm line)⁻¹ = (1 : K) :=
     Algebra.Field.ExplicitField.mul_inv_cancel _ normNonzero
-  unfold Line.Contains Construction.altitudeThrough Altitude.altitudeFoot
+  unfold Contains Construction.altitudeThrough altitudeFoot
   simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
   calc
     -line.b *
@@ -222,8 +222,8 @@ theorem altitude_not_parallel (point : Point K) (line : Line K)
     ¬ (Construction.altitudeThrough point line).Parallel line := by
   intro parallel
   apply nonNull
-  unfold Line.Parallel Construction.altitudeThrough at parallel
-  unfold Line.IsNull
+  unfold Parallel Construction.altitudeThrough at parallel
+  unfold IsNull
   calc
     line.a ^ 2 + line.b ^ 2 =
         -((-line.b) * line.b - line.a * line.a) := by ring1
@@ -235,16 +235,16 @@ theorem altitudeFoot_unique (point : Point K) (line : Line K)
     (nonNull : ¬ line.IsNull) (candidate : Point K)
     (onLine : line.Contains candidate)
     (onAltitude : (Construction.altitudeThrough point line).Contains candidate) :
-    candidate = Geometry.Plane.Line.Altitude.altitudeFoot point line nonNull := by
-  let nonparallel := Geometry.Plane.Line.Altitude.altitude_not_parallel point line nonNull
+    candidate = altitudeFoot point line nonNull := by
+  let nonparallel := altitude_not_parallel point line nonNull
   have candidateIntersection :=
     Intersection.lineIntersection_unique (Construction.altitudeThrough point line) line nonparallel
       candidate onAltitude onLine
   have footIntersection :=
     Intersection.lineIntersection_unique (Construction.altitudeThrough point line) line nonparallel
-      (Geometry.Plane.Line.Altitude.altitudeFoot point line nonNull)
-      (Geometry.Plane.Line.Altitude.altitudeFoot_on_altitude point line nonNull)
-      (Geometry.Plane.Line.Altitude.altitudeFoot_on_line point line nonNull)
+      (altitudeFoot point line nonNull)
+      (altitudeFoot_on_altitude point line nonNull)
+      (altitudeFoot_on_line point line nonNull)
   exact candidateIntersection.trans footIntersection.symm
 
 end Purelib.Geometry.Plane.Line.Altitude
@@ -268,7 +268,7 @@ nonzero scale; no slope quotient or projective representative is selected.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Altitude
 
@@ -276,7 +276,7 @@ namespace Purelib.Geometry.Plane.Line.Altitude
 theorem exercise_3_10 [DecidableEq K]
     (point first second : Point K) (distinct : first ≠ second)
     (nonNull : ¬ (Incidence.lineThrough first second distinct).IsNull) :
-    Geometry.Plane.Line.Altitude.altitudeFoot point (Incidence.lineThrough first second distinct) nonNull =
+    altitudeFoot point (Incidence.lineThrough first second distinct) nonNull =
       { x :=
           ((second.x - first.x) ^ 2 * point.x -
             (first.y - second.y) * (second.x - first.x) * point.y -
@@ -344,7 +344,7 @@ the intervening mirrors `l₂ₖ₊₁`.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Altitude
 
@@ -354,7 +354,7 @@ theorem altitudeThrough_nonNull
     ¬ (Construction.altitudeThrough point line).IsNull := by
   intro altitudeNull
   apply lineNonNull
-  unfold Line.IsNull at altitudeNull ⊢
+  unfold IsNull at altitudeNull ⊢
   change (-line.b) ^ 2 + line.a ^ 2 = 0 at altitudeNull
   calc
     line.a ^ 2 + line.b ^ 2 = (-line.b) ^ 2 + line.a ^ 2 := by ring1

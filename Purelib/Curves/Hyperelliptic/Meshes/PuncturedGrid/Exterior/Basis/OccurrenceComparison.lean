@@ -85,6 +85,12 @@ import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SelectedRuns.CommonBasisRequest
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OrderedRunComparison.CommonBasisRequest
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -106,111 +112,111 @@ open Purelib.Data.Rat
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace Sampled
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
   (outer : Fin prepared.occurrences.length)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest in
 /-- The local source polygon uses the already selected acquisitions in retained
 parent order. Its joining area is included in this scalar path area. -/
-@[expose] def occurrenceSourcePath : List Normalization.InverseRootPolynomial.Gaussian :=
+@[expose] def occurrenceSourcePath : List InverseRootPolynomial.Gaussian :=
   (List.ofFn (fun position :
-    Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
+      (Sampled.parentPrepared sample
         comparisons outer position).weighted.values.map Prod.fst)).flatten
 
 /-- Read the area of the complete retained source polygon, including all wedges joining its original parent paths. -/
-@[expose] def occurrenceSourceArea : Normalization.InverseRootPolynomial.Gaussian :=
+@[expose] def occurrenceSourceArea : InverseRootPolynomial.Gaussian :=
   Path.IncrementArea.pathArea (sample.occurrenceSourcePath comparisons outer)
 
 /-- Total displacement of the retained local polygon, used by the joins
 between occurrences. It need not vanish. -/
-@[expose] def occurrenceSourceTotal : Normalization.InverseRootPolynomial.Gaussian :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (sample.occurrenceSourcePath comparisons outer)
+@[expose] def occurrenceSourceTotal : InverseRootPolynomial.Gaussian :=
+  Gaussian.Norm.Sum.Basic.gaussianSum (sample.occurrenceSourcePath comparisons outer)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest in
 /-- Assemble the physical/source comparisons on the retained parent order.
 The endpoint hypotheses pay all cross-parent wedges in the complete polygon. -/
 theorem occurrence_physical_source_area_bound
-    (physical : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (physical : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length → List Topology.Polygon.Stokes.PrimitivePoint)
-    {areaError totalError bound : Normalization.InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
+    {areaError totalError bound : InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
       0 ≤ bound)
-    (areas : ∀ position, Data.Gaussian.Norm.Basic.normSq
+    (areas : ∀ position, Gaussian.Norm.Basic.normSq
       (Path.PairedIncrementArea.area (physical position) -
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+        (Sampled.parentPrepared
           sample comparisons outer position).weighted.source.area) ≤ areaError)
     (errors : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (physical
       position)).sub
       (Path.ConjugatePathReadback.conjugateDiagonal
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+        (Sampled.parentPrepared
           sample comparisons outer position).weighted.source.total)) totalError)
     (leftBound : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total
       (physical position)) bound)
     (rightBound : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
       (Path.ConjugatePathReadback.conjugateDiagonal
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
+      (Sampled.parentPrepared sample
         comparisons outer position).weighted.source.total) bound) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
       (Path.PairedIncrementArea.area (List.ofFn physical).flatten -
         sample.occurrenceSourceArea comparisons outer) ≤
-      2 * (((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-        outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 * areaError +
-        16 * ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-          outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^4 * totalError
+      2 * (((ParentIndices.occurrenceAt prepared.occurrences
+        outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^2 * areaError +
+        16 * ((ParentIndices.occurrenceAt prepared.occurrences
+          outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^4 * totalError
           * bound) := by
   have estimate := Path.ConjugateBlockComparison.conjugate_blocks_area_difference_bound
     (List.ofFn (fun position => (physical position,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
+      (Sampled.parentPrepared sample
         comparisons outer position).weighted.values.map Prod.fst))) totalNN boundNN
     (by
       intro pair member
       obtain ⟨position, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      rw [← (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+      rw [← (Sampled.parentPrepared
         sample comparisons outer position).weighted.source.area_eq]
       exact areas position)
     (by
       intro pair member
       obtain ⟨position, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      rw [← (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+      rw [← (Sampled.parentPrepared
         sample comparisons outer position).weighted.source.total_eq]
       exact errors position)
     (by
@@ -220,130 +226,130 @@ theorem occurrence_physical_source_area_bound
     (by
       intro pair member
       obtain ⟨position, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      rw [← (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+      rw [← (Sampled.parentPrepared
         sample comparisons outer position).weighted.source.total_eq]
       exact rightBound position)
-  rw [Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.length_ofFn] at estimate
+  rw [List.OfFn.Basic.map_ofFn, List.OfFn.Basic.map_ofFn, List.OfFn.Basic.length_ofFn] at estimate
   exact estimate
 
 variable {faceIndex : Nat}
-  (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
-  (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns retained inputs outer
+  (data : FragmentQueries.RowData
+    (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
+  (ordered : SourceOrderedRuns.ParentOrderedRuns retained inputs outer
     data coefficients)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest
 /-- Uniform paid run budgets control the complete forward occurrence polygon. -/
 theorem ordered_forward_source_area_bound
-    (chains : ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain
+    (chains : ∀ run ∈ ordered.runs, SourceChains.SourceChain
       run.fragments 0 1)
-    {areaError totalError bound : Normalization.InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
+    {areaError totalError bound : InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
       0 ≤ bound)
     (areaPaid : ∀ position,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SelectedRuns.CommonBasisRequest.Sampled.selectedRun sample
+      (Sampled.selectedRun sample
       comparisons outer data (ordered.runAt position)
       (chains _ (ordered.runAt_mem position))).error * (Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients) ^ 2 ≤ areaError)
     (totalPaid : ∀ position,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SelectedRuns.CommonBasisRequest.Sampled.selectedRun sample
+      (Sampled.selectedRun sample
       comparisons outer data (ordered.runAt position)
       (chains _ (ordered.runAt_mem position))).totalError * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients ≤ totalError)
     (physicalPaid : ∀ position, 2 *
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SelectedRuns.CommonBasisRequest.Sampled.selectedRun sample
+      ((Sampled.selectedRun sample
       comparisons outer data (ordered.runAt position)
       (chains _ (ordered.runAt_mem position))).totalError +
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained inputs outer
+        Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
+          (ParentInputs.parentInput retained inputs outer
           position).sources) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤ bound)
     (sourcePaid : ∀ position,
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained inputs outer
+      Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
+      (ParentInputs.parentInput retained inputs outer
       position).sources *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn ordered.physical).flatten -
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn ordered.physical).flatten -
       sample.occurrenceSourceArea comparisons outer) ≤
-      2 * (((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-        outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 * areaError +
-        16 * ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-          outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^4 *
+      2 * (((ParentIndices.occurrenceAt prepared.occurrences
+        outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^2 * areaError +
+        16 * ((ParentIndices.occurrenceAt prepared.occurrences
+          outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^4 *
           totalError * bound) := by
   apply sample.occurrence_physical_source_area_bound comparisons outer ordered.physical totalNN boundNN
   · intro position
     exact
-      (OrderedRunComparison.CommonBasisRequest.Sampled.ordered_forward_area
+      (Sampled.ordered_forward_area
       sample comparisons outer data ordered position chains).trans (areaPaid position)
   · intro position
     have estimate :=
-      OrderedRunComparison.CommonBasisRequest.Sampled.ordered_forward_total
+      Sampled.ordered_forward_total
       sample comparisons outer data ordered position chains
     exact ⟨estimate.1.trans (totalPaid position), estimate.2.trans (totalPaid position)⟩
   · intro position
     have estimate :=
-      OrderedRunComparison.CommonBasisRequest.Sampled.ordered_forward_bounded
+      Sampled.ordered_forward_bounded
       sample comparisons outer data ordered position chains
     exact ⟨estimate.1.trans (physicalPaid position), estimate.2.trans (physicalPaid position)⟩
   · intro position
     have estimate :=
-      OrderedRunComparison.CommonBasisRequest.Sampled.ordered_source_bounded
+      Sampled.ordered_source_bounded
       sample comparisons outer position
     exact ⟨estimate.1.trans (sourcePaid position), estimate.2.trans (sourcePaid position)⟩
 
 /-- Uniform paid run budgets control the complete reverse occurrence polygon. -/
 theorem ordered_reverse_source_area_bound
     (chains : ∀ run ∈ ordered.runs,
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains.ReverseSourceChain run.fragments 1 0)
-    {areaError totalError bound : Normalization.InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
+      ReverseSourceChains.ReverseSourceChain run.fragments 1 0)
+    {areaError totalError bound : InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
       0 ≤ bound)
     (areaPaid : ∀ position,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SelectedRuns.CommonBasisRequest.Sampled.selectedReverseRun
+      (Sampled.selectedReverseRun
       sample comparisons outer data (ordered.runAt position)
       (chains _ (ordered.runAt_mem position))).error * (Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients) ^ 2 ≤ areaError)
     (totalPaid : ∀ position,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SelectedRuns.CommonBasisRequest.Sampled.selectedReverseRun
+      (Sampled.selectedReverseRun
       sample comparisons outer data (ordered.runAt position)
       (chains _ (ordered.runAt_mem position))).totalError * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients ≤ totalError)
     (physicalPaid : ∀ position, 2 *
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SelectedRuns.CommonBasisRequest.Sampled.selectedReverseRun
+      ((Sampled.selectedReverseRun
       sample comparisons outer data (ordered.runAt position)
       (chains _ (ordered.runAt_mem position))).totalError +
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained inputs outer
+        Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
+          (ParentInputs.parentInput retained inputs outer
           position).sources) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤ bound)
     (sourcePaid : ∀ position,
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained inputs outer
+      Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
+      (ParentInputs.parentInput retained inputs outer
       position).sources *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn (fun position =>
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn (fun position =>
       Path.PairedAreaReversal.reverseIncrements (ordered.physical position))).flatten -
       sample.occurrenceSourceArea comparisons outer) ≤
-      2 * (((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-        outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 * areaError +
-        16 * ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-          outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^4 *
+      2 * (((ParentIndices.occurrenceAt prepared.occurrences
+        outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^2 * areaError +
+        16 * ((ParentIndices.occurrenceAt prepared.occurrences
+          outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^4 *
           totalError * bound) := by
   apply sample.occurrence_physical_source_area_bound comparisons outer (fun position =>
     Path.PairedAreaReversal.reverseIncrements (ordered.physical position)) totalNN boundNN
   · intro position
     exact
-      (OrderedRunComparison.CommonBasisRequest.Sampled.ordered_reverse_area
+      (Sampled.ordered_reverse_area
       sample comparisons outer data ordered position chains).trans (areaPaid position)
   · intro position
     have estimate :=
-      OrderedRunComparison.CommonBasisRequest.Sampled.ordered_reverse_total
+      Sampled.ordered_reverse_total
       sample comparisons outer data ordered position chains
     exact ⟨estimate.1.trans (totalPaid position), estimate.2.trans (totalPaid position)⟩
   · intro position
     have estimate :=
-      OrderedRunComparison.CommonBasisRequest.Sampled.ordered_reverse_bounded
+      Sampled.ordered_reverse_bounded
       sample comparisons outer data ordered position chains
     exact ⟨estimate.1.trans (physicalPaid position), estimate.2.trans (physicalPaid position)⟩
   · intro position
     have estimate :=
-      OrderedRunComparison.CommonBasisRequest.Sampled.ordered_source_bounded
+      Sampled.ordered_source_bounded
       sample comparisons outer position
     exact ⟨estimate.1.trans (sourcePaid position), estimate.2.trans (sourcePaid position)⟩
 

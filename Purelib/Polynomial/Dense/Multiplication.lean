@@ -1,6 +1,7 @@
 module
 import Purelib.Algebra.Field.ExplicitField
-public import Purelib.Polynomial.Dense.Arithmetic
+public import Purelib.Polynomial.Dense.Multiplication.Basic
+import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
@@ -67,17 +68,6 @@ private theorem coeffs_length_mulFold_le (q : Basic.DensePolynomial K) :
       have hrecursive := Purelib.Polynomial.Dense.Basic.DensePolynomial.coeffs_length_mulFold_le q remaining
         (Basic.DensePolynomial.shift 1 acc + Basic.DensePolynomial.scale a q) (bound + 1) (by omega) hnext
       omega
-
-/-- Polynomial multiplication as a finite Horner fold over the left factor.
-
-Each original coefficient shifts the retained accumulator once and adds its
-scaled right factor. The fold scans the unchanged left coefficient list from
-the original empty polynomial accumulator. -/
-@[expose] def mulPolynomial (p q : Basic.DensePolynomial K) : Basic.DensePolynomial K :=
-  p.coeffs.foldl (fun acc a => Basic.DensePolynomial.shift 1 acc + Basic.DensePolynomial.scale a q) 0
-
-/-- The multiplication instance uses the finite polynomial Horner fold. -/
-instance : Mul (Basic.DensePolynomial K) := ⟨Basic.DensePolynomial.mulPolynomial⟩
 
 omit [DecidableEq K] in
 /-- Pairwise addition of a matching zero list on the left preserves the coefficient list. -/
@@ -662,30 +652,6 @@ theorem leadingCoeff_mul {p q : Basic.DensePolynomial K}
       (p.leadingCoeff * q.leadingCoeff) out (decide_eq_false hleading)]
   rfl
 
-/-- Dense Horner multiplication returns an already normalized polynomial.
-
-A zero-factor branch returns the original empty representation. Otherwise
-the exact product coefficient shape has a nonzero head, so the existing
-leading-zero scan retains that entire multiplication result. -/
-theorem normalize_mul (p q : Basic.DensePolynomial K) :
-    (p * q).normalize = p * q := by
-  by_cases hp : p.isZero = true
-  · rw [Basic.DensePolynomial.mul_eq_zero_of_isZero_left hp]
-    rfl
-  · have hpFalse : p.isZero = false := Purelib.Data.Bool.Decide.bool_eq_false_of_not_eq_true p.isZero hp
-    by_cases hq : q.isZero = true
-    · rw [Basic.DensePolynomial.mul_eq_zero_of_isZero_right hq]
-      rfl
-    · have hqFalse : q.isZero = false := Purelib.Data.Bool.Decide.bool_eq_false_of_not_eq_true q.isZero hq
-      obtain ⟨out, hcoeffs, _⟩ := Basic.DensePolynomial.mul_coeffs_shape hpFalse hqFalse
-      have hleading : p.leadingCoeff * q.leadingCoeff ≠ 0 :=
-        Basic.DensePolynomial.mul_ne_zero_direct (Basic.DensePolynomial.leadingCoeff_ne_zero hpFalse)
-          (Basic.DensePolynomial.leadingCoeff_ne_zero hqFalse)
-      apply Basic.DensePolynomial.ext
-      change (p * q).coeffs.dropWhile (· = 0) = (p * q).coeffs
-      rw [hcoeffs, DropWhile.cons_of_false (fun value : K => decide (value = 0))
-      (p.leadingCoeff * q.leadingCoeff) out (decide_eq_false hleading)]
-
 /-- The finite dense Horner product of two nonzero polynomials is nonzero.
 This proof tracks its leading coefficient directly and does not pass through
 Mathlib's sparse-polynomial finite-support representation.
@@ -745,41 +711,6 @@ theorem isZero_mul_eq_false {p q : Basic.DensePolynomial K}
   rw [hmul]
   exact Basic.DensePolynomial.isZero_false_of_coeffs_cons hcoeffs ha
 
-/-- Evaluating a polynomial multiplication fold yields its scalar Horner recurrence.
-
-Each coefficient contribution is multiplied by the fixed right factor's value, and the initial scalar state is the
-accumulator polynomial's value. -/
-private theorem eval_foldl_mulPolynomial (x : K) (q : Basic.DensePolynomial K)
-    (cs : List K) (acc : Basic.DensePolynomial K) :
-    (cs.foldl (fun value a => Basic.DensePolynomial.shift 1 value + Basic.DensePolynomial.scale a q) acc).eval x =
-      cs.foldl (fun value a => value * x + a * q.eval x) (acc.eval x) := by
-  induction cs generalizing acc with
-  | nil => rfl
-  | cons a as ih =>
-      simp only [List.foldl_cons]
-      rw [ih, Basic.DensePolynomial.eval_add, Basic.DensePolynomial.eval_shift, Basic.DensePolynomial.eval_scale]
-      rewrite [pow_one]
-      exact Eq.refl _
-
-omit [DecidableEq K] in
-/-- Scaling each Horner contribution and the initial accumulator scales the final value. -/
-private theorem foldl_scaled_horner (x c : K) (cs : List K) (acc : K) :
-    cs.foldl (fun value a => value * x + a * c) (acc * c) =
-      cs.foldl (fun value a => value * x + a) acc * c := by
-  induction cs generalizing acc with
-  | nil => rfl
-  | cons a as ih =>
-      simp only [List.foldl_cons]
-      rw [show acc * c * x + a * c = (acc * x + a) * c by ring1, ih]
-
-/-- Evaluation of dense multiplication is multiplication of the two values. -/
-@[simp] theorem eval_mul (p q : Basic.DensePolynomial K) (x : K) :
-    (p * q).eval x = p.eval x * q.eval x := by
-  rw [show p * q = Basic.DensePolynomial.mulPolynomial p q from rfl, Basic.DensePolynomial.mulPolynomial,
-    Basic.DensePolynomial.eval_foldl_mulPolynomial]
-  rw [Basic.DensePolynomial.eval_zero]
-  simpa only [zero_mul, Basic.DensePolynomial.eval, Basic.DensePolynomial.evalCoeffs] using
-    Basic.DensePolynomial.foldl_scaled_horner x (q.eval x) p.coeffs 0
 end Purelib.Polynomial.Dense.Basic.DensePolynomial
 
 end

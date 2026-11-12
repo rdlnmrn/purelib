@@ -25,6 +25,8 @@ public import Purelib.Riemann.Paths.RectangularSegmentSplitting
 public import Purelib.Geometry.Rectangle.Partition.RectangularMeshRefinement
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Rectangle.Partition
+
 open Purelib.Riemann
 
 public section
@@ -92,7 +94,7 @@ The partition includes every retained grid-axis cut, preventing the rectangle fr
 sides. -/
 theorem rectangle_refines
     (cuts : GridCuts geometry) {box small : Box} {points : List Gaussian}
-    (partition : Geometry.Rectangle.CutPartition box points)
+    (partition : Rectangle.CutPartition box points)
     (includes : ∀ point, point ∈ cuts.rectanglePoints box → point ∈ points) (member : small ∈ partition.boxes)
     (column : Fin (columns + 1)) (row : Fin (rows + 1)) {point : Gaussian}
     (inside : small.StrictContains point) (contains : (geometry.box column row).Contains point) :
@@ -148,7 +150,7 @@ open Purelib.Geometry in
 The partition includes every grid cut and lies under the model geometry; locating each box center yields a box-wide
 refinement certificate. -/
 @[expose] def build (cuts : GridCuts geometry) {box : Box} {points : List Gaussian}
-    (partition : Geometry.Rectangle.CutPartition box points)
+    (partition : Rectangle.CutPartition box points)
     (includes : ∀ point, point ∈ cuts.rectanglePoints box → point ∈ points)
     (covers : ∀ point, box.Contains point → Paths.RectangularSegmentSplitting.Geometry.Covers geometry point) :
     (boxes : List Box) → (∀ small, small ∈ boxes → small ∈ partition.boxes) → ObservationPieces geometry boxes
@@ -159,9 +161,9 @@ refinement certificate. -/
       let center := Geometry.Grid.Rectangle.Cuts.center first
       let inside := covers center ((partition.refines present).contains (Geometry.Grid.Rectangle.Cuts.center_inside
         proper))
-      let horizontal := Rectangle.Partition.RectangularUniformGeometry.Axis.locate geometry.x center.re inside.1
+      let horizontal := RectangularUniformGeometry.Axis.locate geometry.x center.re inside.1
         inside.2.1
-      let vertical := Rectangle.Partition.RectangularUniformGeometry.Axis.locate geometry.y center.im inside.2.2.1
+      let vertical := RectangularUniformGeometry.Axis.locate geometry.y center.im inside.2.2.1
         inside.2.2.2
       .cons horizontal.index vertical.index
         (cuts.rectangle_refines partition includes present horizontal.index vertical.index
@@ -178,22 +180,22 @@ The head fiber precedes the recursively constructed tail fiber. -/
   geometry)
   | _, .nil => []
   | box :: _, .cons column row refines tail =>
-      Rectangle.Partition.RectangularMeshRefinement.ModelTriangle.fromBoxes geometry column row
-        (Rectangle.Partition.PreparedBoxPartitions.cells depth box)
-        (fun _ member => (Rectangle.Partition.PreparedBoxPartitions.cells_refine depth box member).trans refines) ++
+      RectangularMeshRefinement.ModelTriangle.fromBoxes geometry column row
+        (cells depth box)
+        (fun _ member => (PreparedBoxPartitions.cells_refine depth box member).trans refines) ++
           tail.triangles depth
 
 /-- Triangulating a concatenated box list concatenates the two triangle lists.
 
 The original box spine contributes two triangles at each head. Constructor
 congruence preserves those heads while comparing the retained tail lists. -/
-private theorem boxTriangles_append (first last : List Box) : Rectangle.Partition.PreparedBoxTriangulation.boxTriangles
-  (first ++ last) = Rectangle.Partition.PreparedBoxTriangulation.boxTriangles first ++
-  Rectangle.Partition.PreparedBoxTriangulation.boxTriangles last := by
+private theorem boxTriangles_append (first last : List Box) : boxTriangles
+  (first ++ last) = boxTriangles first ++
+  boxTriangles last := by
   induction first with
   | nil => rfl
   | cons box rest ih =>
-      change _ :: _ :: Rectangle.Partition.PreparedBoxTriangulation.boxTriangles (rest ++ last) = _
+      change _ :: _ :: boxTriangles (rest ++ last) = _
       exact congrArg (List.cons _) (congrArg (List.cons _) ih)
 
 /-- Forgetting model owners yields the exact box triangulation of the refined piece list.
@@ -201,13 +203,13 @@ private theorem boxTriangles_append (first last : List Box) : Rectangle.Partitio
 Each retained box contributes its original ordered triangle pair. Concatenating
 the mapped head fiber with the unchanged tail preserves that same list. -/
 theorem coordinates {boxes : List Box} (pieces : ObservationPieces geometry boxes) (depth : Nat) :
-    (pieces.triangles depth).map ModelTriangle.triangle = Rectangle.Partition.PreparedBoxTriangulation.boxTriangles
-      (boxes.flatMap (Rectangle.Partition.PreparedBoxPartitions.cells depth)) := by
+    (pieces.triangles depth).map ModelTriangle.triangle = boxTriangles
+      (boxes.flatMap (cells depth)) := by
   induction pieces with
   | nil => rfl
   | cons column row refines tail ih =>
       rewrite [triangles, Map.map_append,
-        Rectangle.Partition.RectangularMeshRefinement.ModelTriangle.fromBoxes_coordinates,
+        RectangularMeshRefinement.ModelTriangle.fromBoxes_coordinates,
         Flatten.flatMap_cons, boxTriangles_append, ih]
       exact Eq.refl _
 
@@ -228,13 +230,13 @@ structure ObservationMesh (cuts : GridCuts geometry) (box : Box) where
   /-- Every retained grid-axis cut is included among the partition points. -/ includes : ∀ point, point ∈
     cuts.rectanglePoints box → point ∈ points
   /-- The certified partition of the observation rectangle. -/ partition :
-    Geometry.Rectangle.CutPartition box points
+    Rectangle.CutPartition box points
   /-- The retained original model owner for each exact partition box. -/ pieces : ObservationPieces geometry
     partition.boxes
   /-- The uniform spatial refinement depth within each retained piece. -/ depth : Nat
   /-- The cached ordered list of refined boxes. -/ boxes : List Box
   /-- The box cache is exactly the concatenation of the depth-refined partition boxes. -/ boxes_eq : boxes =
-    partition.boxes.flatMap (Rectangle.Partition.PreparedBoxPartitions.cells depth)
+    partition.boxes.flatMap (cells depth)
   /-- The cached triangles with their retained model owners. -/ triangles : List (ModelTriangle geometry)
   /-- The triangle cache is exactly the retained pieces' triangulation at the chosen depth. -/ triangles_eq : triangles
     = pieces.triangles depth
@@ -259,11 +261,11 @@ The rectangle is proper and covered by the model geometry; the supplied points i
     (covers : ∀ point, box.Contains point → Paths.RectangularSegmentSplitting.Geometry.Covers geometry point)
     (points : List Gaussian) (includes : ∀ point, point ∈ cuts.rectanglePoints box → point ∈ points)
     (depth : Nat) : ObservationMesh cuts box :=
-  let partition := Geometry.Rectangle.CutPartition.build box proper points
+  let partition := Rectangle.CutPartition.build box proper points
   let pieces :=
-    Meshes.RectangularObservationMesh.ObservationPieces.build cuts partition includes covers partition.boxes
+    ObservationPieces.build cuts partition includes covers partition.boxes
       (fun _ member => member)
-  let boxes := partition.boxes.flatMap (Rectangle.Partition.PreparedBoxPartitions.cells depth)
+  let boxes := partition.boxes.flatMap (cells depth)
   let triangles := pieces.triangles depth
   ⟨points, includes, partition, pieces, depth, boxes, rfl, triangles, rfl, OwnedTriangulation.build triangles⟩
 
@@ -279,14 +281,14 @@ namespace Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
 Reuse the original partition, cut points and model owners without repeating grid location or constructing new analytic
 models. -/
 @[expose] def atDepth (mesh : ObservationMesh cuts box) (depth : Nat) : ObservationMesh cuts box :=
-  let boxes := mesh.partition.boxes.flatMap (Rectangle.Partition.PreparedBoxPartitions.cells depth)
+  let boxes := mesh.partition.boxes.flatMap (cells depth)
   let triangles := mesh.pieces.triangles depth
   ⟨mesh.points, mesh.includes, mesh.partition, mesh.pieces, depth, boxes, rfl, triangles, rfl, OwnedTriangulation.build
     triangles⟩
 
 /-- Read the cached owned triangles as the exact triangulation of the cached boxes. -/
 theorem coordinates (mesh : ObservationMesh cuts box) : mesh.triangles.map ModelTriangle.triangle =
-  Rectangle.Partition.PreparedBoxTriangulation.boxTriangles mesh.boxes := by
+  boxTriangles mesh.boxes := by
   rw [mesh.triangles_eq, mesh.pieces.coordinates, mesh.boxes_eq]
 
 end Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
@@ -304,14 +306,14 @@ theorem box_refines (mesh : ObservationMesh cuts box) {small : Box} (member : sm
   by
   rw [mesh.boxes_eq] at member
   obtain ⟨parent, present, member⟩ := List.Flatten.mem_flatMap.mp member
-  exact (Rectangle.Partition.PreparedBoxPartitions.cells_refine mesh.depth parent member).trans (mesh.partition.refines
+  exact (PreparedBoxPartitions.cells_refine mesh.depth parent member).trans (mesh.partition.refines
     present)
 
 /-- Every cached refined box has positive width and height. -/
 theorem box_proper (mesh : ObservationMesh cuts box) {small : Box} (member : small ∈ mesh.boxes) : small.Proper := by
   rw [mesh.boxes_eq] at member
   obtain ⟨parent, present, member⟩ := List.Flatten.mem_flatMap.mp member
-  exact Rectangle.Partition.PreparedBoxPartitions.cells_proper mesh.depth (mesh.partition.proper present) member
+  exact PreparedBoxPartitions.cells_proper mesh.depth (mesh.partition.proper present) member
 
 end Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
 
@@ -327,21 +329,21 @@ namespace Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
 The head fiber has the same area as its original box, and concatenation adds
 that area to the structurally retained tail contribution. -/
 private theorem refined_content (boxes : List Box) (depth : Nat) :
-    Rectangle.Partition.PreparedBoxPartitions.sumCells Rational.Box.Content.boxContent (boxes.flatMap
-      (Rectangle.Partition.PreparedBoxPartitions.cells depth)) =
-      Rectangle.Partition.PreparedBoxPartitions.sumCells Rational.Box.Content.boxContent boxes := by
+    PreparedBoxPartitions.sumCells Rational.Box.Content.boxContent (boxes.flatMap
+      (cells depth)) =
+      PreparedBoxPartitions.sumCells Rational.Box.Content.boxContent boxes := by
   induction boxes with
   | nil => rfl
   | cons box rest ih =>
-      rewrite [Flatten.flatMap_cons, Rectangle.Partition.PreparedBoxPartitions.sumCells_append,
-        Rectangle.Partition.PreparedBoxPartitions.cells_content, ih]
+      rewrite [Flatten.flatMap_cons, PreparedBoxPartitions.sumCells_append,
+        PreparedBoxPartitions.cells_content, ih]
       exact Eq.refl _
 
 /-- The sum of the retained triangles' coordinate areas is exactly the observation rectangle's area. -/
 theorem area_eq (mesh : ObservationMesh cuts box) :
-    Rectangle.Partition.PreparedBoxTriangulation.sumTriangleAreas (mesh.triangles.map ModelTriangle.triangle) =
+    PreparedBoxTriangulation.sumTriangleAreas (mesh.triangles.map ModelTriangle.triangle) =
       Rational.Box.Content.boxContent box := by
-  rw [mesh.coordinates, Rectangle.Partition.PreparedBoxTriangulation.boxTriangles_areaSum, mesh.boxes_eq,
+  rw [mesh.coordinates, PreparedBoxTriangulation.boxTriangles_areaSum, mesh.boxes_eq,
     refined_content, mesh.partition.area_eq]
 
 end Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
@@ -355,11 +357,11 @@ open Purelib.Geometry
 namespace Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
 
 /-- Every retained coordinate triangle has strictly positive area. -/
-theorem positive (mesh : ObservationMesh cuts box) {triangle : Mesh.CoordinateTriangulation.CoordinateTriangle}
+theorem positive (mesh : ObservationMesh cuts box) {triangle : CoordinateTriangle}
     (member : triangle ∈ mesh.triangles.map ModelTriangle.triangle) : 0 <
-      Rectangle.Partition.PreparedBoxTriangulation.coordinateArea triangle := by
+      PreparedBoxTriangulation.coordinateArea triangle := by
   rw [mesh.coordinates] at member
-  exact Rectangle.Partition.PreparedBoxTriangulation.boxTriangles_positive _ (fun _ member => mesh.box_proper member)
+  exact PreparedBoxTriangulation.boxTriangles_positive _ (fun _ member => mesh.box_proper member)
     member
 
 /-- Triangulated boxes refining a parent have all three vertices inside that parent.
@@ -369,8 +371,8 @@ The original refinement certificate places that occurrence's three corners in
 the same parent box. -/
 private theorem boxTriangles_inside (parent : Box) (boxes : List Box)
     (refines : ∀ small, small ∈ boxes → small.Refines parent) {triangle :
-      Mesh.CoordinateTriangulation.CoordinateTriangle}
-    (member : triangle ∈ Rectangle.Partition.PreparedBoxTriangulation.boxTriangles boxes) :
+      CoordinateTriangle}
+    (member : triangle ∈ boxTriangles boxes) :
     parent.Contains triangle.first ∧ parent.Contains triangle.second ∧ parent.Contains triangle.third := by
   induction boxes with
   | nil => cases member
@@ -417,18 +419,18 @@ namespace Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
 Each original box contributes one fiber with that exact length. Structural
 concatenation adds the fiber lengths without changing the retained order. -/
 private theorem refined_length (boxes : List Box) (depth : Nat) :
-    (boxes.flatMap (Rectangle.Partition.PreparedBoxPartitions.cells depth)).length = boxes.length * 4 ^ depth := by
+    (boxes.flatMap (cells depth)).length = boxes.length * 4 ^ depth := by
   induction boxes with
   | nil => exact (Nat.zero_mul _).symm
   | cons box rest ih =>
-      rewrite [Flatten.flatMap_cons, Append.length_append, Rectangle.Partition.PreparedBoxPartitions.cells_length, ih,
+      rewrite [Flatten.flatMap_cons, Append.length_append, PreparedBoxPartitions.cells_length, ih,
         List.length_cons]
       ring1
 
 /-- The retained mesh has twice four to its depth triangles per coarse partition box. -/
 theorem face_count (mesh : ObservationMesh cuts box) :
     (mesh.triangles.map ModelTriangle.triangle).length = mesh.partition.boxes.length * (2 * 4 ^ mesh.depth) := by
-  rw [mesh.coordinates, Rectangle.Partition.PreparedBoxTriangulation.boxTriangles_length, mesh.boxes_eq, refined_length]
+  rw [mesh.coordinates, PreparedBoxTriangulation.boxTriangles_length, mesh.boxes_eq, refined_length]
   ring1
 
 end Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
@@ -445,7 +447,7 @@ theorem box_diagonal_le (mesh : ObservationMesh cuts box) {small : Box} (member 
     small.diagonalSq ≤ Rational.Geometric.Basic.quarterRadius box.diagonalSq mesh.depth := by
   rw [mesh.boxes_eq] at member
   obtain ⟨parent, present, member⟩ := List.Flatten.mem_flatMap.mp member
-  rw [Rectangle.Partition.PreparedBoxPartitions.cells_diagonalSq mesh.depth parent member,
+  rw [PreparedBoxPartitions.cells_diagonalSq mesh.depth parent member,
     Rational.Geometric.Basic.quarterRadius_eq_mul_pow, Rational.Geometric.Basic.quarterRadius_eq_mul_pow]
   exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     (Rational.Box.diagonalSq_le_of_refines (mesh.partition.refines present))
@@ -460,19 +462,19 @@ The displayed triangle occurrence retains its original box membership. Its
 corner containment and that box's diagonal estimate bound both displacements. -/
 private theorem boxTriangles_movement (boxes : List Box) (distance : Coordinate)
     (bounded : ∀ small, small ∈ boxes → small.diagonalSq ≤ distance)
-    {triangle : Mesh.CoordinateTriangulation.CoordinateTriangle} (member : triangle ∈
-      Rectangle.Partition.PreparedBoxTriangulation.boxTriangles boxes) :
+    {triangle : CoordinateTriangle} (member : triangle ∈
+      boxTriangles boxes) :
     Gaussian.Norm.Basic.normSq (triangle.second - triangle.first) ≤ distance ∧
       Gaussian.Norm.Basic.normSq (triangle.third - triangle.first) ≤ distance := by
   induction boxes with
   | nil => cases member
   | cons box rest ih =>
-      have within (triangle : Mesh.CoordinateTriangulation.CoordinateTriangle) (present : triangle ∈
-        Rectangle.Partition.PreparedBoxTriangulation.boxTriangles [box]) :=
+      have within (triangle : CoordinateTriangle) (present : triangle ∈
+        boxTriangles [box]) :=
         boxTriangles_inside box [box]
           (fun _ member => (Membership.mem_singleton.mp member) ▸ Rational.Box.refines_refl box) present
-      have estimate (triangle : Mesh.CoordinateTriangulation.CoordinateTriangle) (present : triangle ∈
-        Rectangle.Partition.PreparedBoxTriangulation.boxTriangles [box]) :=
+      have estimate (triangle : CoordinateTriangle) (present : triangle ∈
+        boxTriangles [box]) :=
         let inside := within triangle present
         (⟨(Rational.Box.normSq_sub_le_diagonalSq inside.2.1 inside.1).trans (bounded box
           List.mem_cons_self),

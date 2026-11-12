@@ -108,35 +108,35 @@ open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh (SegmentFace)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh (SegmentComparison)
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Riemann.Meshes.GridLiftedMesh.LiftedMesh
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {mesh : Riemann.Meshes.GridLiftedMesh.LiftedMesh
     vertices edges faces}
-  {start finish : Data.Gaussian.Basic.Canonical} {segment : Polynomial.Geometry.ClearPath.ClearSegment curve.polynomial
-    (Curves.Hyperelliptic.Branches.Cuts.Ambient curve) start finish}
-  {owner : Riemann.Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {piece :
-    Riemann.Paths.PreparedPathDecomposition.CoveredSegment segment owner}
-  {placement : Riemann.Meshes.GridLiftedMesh.LiftedMesh.SegmentFace mesh segment} {differential :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {compared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
+  {start finish : Gaussian} {segment : ClearSegment curve.polynomial
+    (Ambient curve) start finish}
+  {owner : Owner (curve.polynomial.eval start)} {piece :
+    CoveredSegment segment owner}
+  {placement : SegmentFace mesh segment} {differential :
+    Differential genus} {parentSheet : Fin 2}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap}
+  {compared : SegmentComparison placement piece
     differential parentSheet}
 
 namespace RegularCapRequest
 
 variable {prepared :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapPreparation regular
-  compared} {target areaTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
-  {request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.RegularCapRequest
+  CapPreparation regular
+  compared} {target areaTarget : Coordinate} {floor : Nat}
+  {request : RegularCapRequest
     prepared target areaTarget floor}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {sample :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index : Nat} {box : Geometry.Rational.Box} {sample :
+    Primitives.Sample cap differential index box}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.RegularCapRequest
   in
@@ -144,10 +144,10 @@ set_option genInjectivity false in
 /-- The retained uniform inverse-arc request attached to the original regular cap comparison.
 
 Its minimum polynomial depth pays the original segment mesh and both uniform preparation refinements. -/
-structure ArcRequest (request : SegmentComparison.RegularCapRequest prepared target areaTarget floor)
-    (sample : Primitives.Sample cap differential index box) (arcTarget : InverseRootPolynomial.Coordinate) where
+structure ArcRequest (request : RegularCapRequest prepared target areaTarget floor)
+    (sample : Primitives.Sample cap differential index box) (arcTarget : Coordinate) where
   /-- The original uniform area request on the retained prepared cap path and exact supplied cap sample. -/ uniform :
-    Path.UniformAreaRequest prepared.path sample arcTarget 0
+    UniformAreaRequest prepared.path sample arcTarget 0
   /-- The cached complete polynomial arc depth required by the original segment and uniform request. -/ minimumDepth :
     Nat
   /-- The minimum depth is exactly the original segment mesh depth plus the retained uniform coarse and fine depths. -/
@@ -157,15 +157,15 @@ constructive_injectivity ArcRequest
 
 namespace ArcRequest
 
-variable {arcTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {arcTarget : Coordinate}
 
 /-- Prepare the inverse-arc comparison from the existing cap polynomial bounds and cache its complete original minimum
 depth. -/
-@[expose] def build (request : SegmentComparison.RegularCapRequest prepared target areaTarget floor)
-    (bounds : Charts.Reciprocal.Cap.EnergyBounds sample) (arcTarget : InverseRootPolynomial.Coordinate) (positive : 0 <
+@[expose] def build (request : RegularCapRequest prepared target areaTarget floor)
+    (bounds : EnergyBounds sample) (arcTarget : Coordinate) (positive : 0 <
       arcTarget) :
 
-      RegularCapRequest.ArcRequest
+      ArcRequest
       request sample arcTarget :=
   let uniform := UniformAreaRequest.build prepared.path bounds arcTarget positive 0
   ⟨uniform, piece.mesh.depth + uniform.coarseDepth + uniform.depth, rfl⟩
@@ -173,7 +173,7 @@ depth. -/
 /-- Raise the original cached minimum by only the additional shared fine subdivision. The caller may synchronize this
 value across all occurrences. -/
 @[expose] def minimumAt (arc :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.RegularCapRequest.ArcRequest
+  ArcRequest
   request sample arcTarget) (fine : Nat) : Nat :=
   arc.minimumDepth + (fine - arc.uniform.depth)
 
@@ -181,7 +181,7 @@ set_option genInjectivity false in
 /-- The original cap evaluation is an input, so surface aggregation keeps its exact source, root readings, and area
 cache. -/
 structure Evaluation (arc :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.RegularCapRequest.ArcRequest
+  ArcRequest
   request sample arcTarget) {fine readingIndex : Nat}
     (original : RegularCapRequest.Evaluation request sample fine readingIndex) (energyDepth : Nat) where
   /-- The original acquired cap subdivision pays the retained uniform fine-depth request. -/ fine_later :
@@ -191,7 +191,7 @@ structure Evaluation (arc :
   /-- The actual uniform comparison consuming the original cap cache at the retained shifted energy depth. -/ uniform :
     UniformAreaRequest.Evaluation arc.uniform original.cap (energyDepth - piece.mesh.depth)
   /-- The cached actual full inverse-arc value on the original physical segment. -/ value :
-    Data.Gaussian.Basic.Canonical
+    Gaussian
   /-- The arc cache equals the original cap polynomial's complete inverse-arc area at the retained energy depth. -/
     value_eq : value = ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth start finish
   /-- The full original arc minus its signed endpoint term is strictly close to the actual retained cap area. -/
@@ -203,7 +203,7 @@ constructive_injectivity Evaluation
 /-- Evaluate the retained uniform request against the supplied original cap cache at the paid common energy depth, then
 retain its full inverse-arc readback. -/
 @[expose] def evaluate (arc :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.RegularCapRequest.ArcRequest
+  ArcRequest
   request sample arcTarget) {fine readingIndex : Nat}
     (original : RegularCapRequest.Evaluation request sample fine readingIndex) (energyDepth : Nat)
     (fineLater : arc.uniform.depth ≤ fine) (depthLater : arc.minimumAt fine ≤ energyDepth) :
@@ -232,7 +232,7 @@ retain its full inverse-arc readback. -/
 /-- The opposite arc is the orientation used by the existing energy fan. Both the open endpoint term and the actual
 cached cap area retain their signs. -/
 theorem Evaluation.opposite_close {arc :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.RegularCapRequest.ArcRequest
+  ArcRequest
   request sample arcTarget} {energyDepth fine readingIndex : Nat}
     {original : RegularCapRequest.Evaluation request sample fine readingIndex}
     (evaluated :

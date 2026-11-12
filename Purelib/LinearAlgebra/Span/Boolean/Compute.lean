@@ -7,6 +7,8 @@ import Purelib.Data.Vector.Boolean.Basic
 import Purelib.LinearAlgebra.Span.Boolean.Basic
 public import Purelib.LinearAlgebra.Span.Boolean.Search
 
+open Purelib.Data.Vector.Boolean
+
 public section
 
 /-!
@@ -26,16 +28,16 @@ open Purelib.LinearAlgebra.Span
 
 /-- A retained entry remains a member after prepending false to every generator word. -/
 private theorem falseMap_mem {width : Nat} {generator : Data.Vector.Boolean width}
-    {generators : List (Data.Vector.Boolean width)} {entry : Boolean.Basic.Entry generators}
-    {entries : List (Boolean.Basic.Entry generators)} (member : entry ∈ entries) :
-    Boolean.Basic.prependFalse generator entry ∈ entries.map (Boolean.Basic.prependFalse generator) :=
+    {generators : List (Data.Vector.Boolean width)} {entry : Basic.Entry generators}
+    {entries : List (Basic.Entry generators)} (member : entry ∈ entries) :
+    Basic.prependFalse generator entry ∈ entries.map (Basic.prependFalse generator) :=
   Data.List.Map.mem_map.mpr ⟨entry, member, rfl⟩
 
 /-- A retained entry remains a member after prepending true to every generator word. -/
 private theorem trueMap_mem {width : Nat} {generator : Data.Vector.Boolean width}
-    {generators : List (Data.Vector.Boolean width)} {entry : Boolean.Basic.Entry generators}
-    {entries : List (Boolean.Basic.Entry generators)} (member : entry ∈ entries) :
-    Boolean.Basic.prependTrue generator entry ∈ entries.map (Boolean.Basic.prependTrue generator) :=
+    {generators : List (Data.Vector.Boolean width)} {entry : Basic.Entry generators}
+    {entries : List (Basic.Entry generators)} (member : entry ∈ entries) :
+    Basic.prependTrue generator entry ∈ entries.map (Basic.prependTrue generator) :=
   Data.List.Map.mem_map.mpr ⟨entry, member, rfl⟩
 
 /-- Incrementally compute the distinct XOR image and one Boolean word for
@@ -44,10 +46,10 @@ every image.
 A dependent generator leaves the rank unchanged; an independent
 generator produces a certified disjoint doubling. -/
 @[expose] def compute {width : Nat} :
-    (generators : List (Data.Vector.Boolean width)) → Boolean.Basic.Result generators
+    (generators : List (Data.Vector.Boolean width)) → Basic.Result generators
   | [] =>
-      let identity : Boolean.Basic.Entry ([] : List (Data.Vector.Boolean width)) :=
-        { vector := Data.Vector.Boolean.Basic.zero width
+      let identity : Basic.Entry ([] : List (Data.Vector.Boolean width)) :=
+        { vector := Basic.zero width
           choices := []
           choices_length := rfl
           evaluates := rfl }
@@ -68,17 +70,17 @@ generator produces a certified disjoint doubling. -/
           have rightEqual := Data.List.Membership.mem_singleton.mp rightMember
           subst left
           subst right
-          exact ⟨identity, List.mem_cons_self, Data.Vector.Boolean.Basic.xor_self (Data.Vector.Boolean.Basic.zero
+          exact ⟨identity, List.mem_cons_self, Basic.xor_self (Basic.zero
             width)⟩ }
   | generator :: generators =>
-      let previous := Purelib.LinearAlgebra.Span.Boolean.Compute.compute generators
-      let falseEntries := previous.entries.map (Boolean.Basic.prependFalse generator)
-      match found : Boolean.Search.search generator previous.entries with
+      let previous := Compute.compute generators
+      let falseEntries := previous.entries.map (Basic.prependFalse generator)
+      match found : Search.search generator previous.entries with
       | Search.found generatorEntry generatorMember generatorVector =>
           { rank := previous.rank
             entries := falseEntries
             vectors_nodup := by
-              rw [Boolean.Basic.falseVectors]
+              rw [Basic.falseVectors]
               exact previous.vectors_nodup
             length_eq := by
               rw [Data.List.Map.length_map]
@@ -94,18 +96,18 @@ generator produces a certified disjoint doubling. -/
                     ⟨tailEntry, tailMember, tailEvaluation⟩
                   cases selected with
                   | false =>
-                      exact ⟨Boolean.Basic.prependFalse generator tailEntry,
-                        Purelib.LinearAlgebra.Span.Boolean.Compute.falseMap_mem tailMember, tailEvaluation⟩
+                      exact ⟨Basic.prependFalse generator tailEntry,
+                        falseMap_mem tailMember, tailEvaluation⟩
                   | true =>
                       rcases previous.closed tailEntry tailMember
                         generatorEntry generatorMember with
                         ⟨output, outputMember, outputEquation⟩
-                      refine ⟨Boolean.Basic.prependFalse generator output,
-                        Purelib.LinearAlgebra.Span.Boolean.Compute.falseMap_mem outputMember, ?_⟩
-                      change Data.Vector.Boolean.Basic.xor generator (Boolean.Basic.evaluate tailChoices generators) =
+                      refine ⟨Basic.prependFalse generator output,
+                        falseMap_mem outputMember, ?_⟩
+                      change Basic.xor generator (Basic.evaluate tailChoices generators) =
                         output.vector
                       rw [tailEvaluation, ← generatorVector]
-                      exact (Data.Vector.Boolean.Basic.xor_comm generatorEntry.vector
+                      exact (Basic.xor_comm generatorEntry.vector
                         tailEntry.vector).trans outputEquation
             closed := by
               intro left leftMember right rightMember
@@ -118,17 +120,17 @@ generator produces a certified disjoint doubling. -/
               rcases previous.closed leftSource leftSourceMember
                 rightSource rightSourceMember with
                 ⟨output, outputMember, outputEquation⟩
-              exact ⟨Boolean.Basic.prependFalse generator output,
-                Purelib.LinearAlgebra.Span.Boolean.Compute.falseMap_mem outputMember, outputEquation⟩ }
+              exact ⟨Basic.prependFalse generator output,
+                falseMap_mem outputMember, outputEquation⟩ }
       | Search.absent generatorAbsent =>
-          let trueEntries := previous.entries.map (Boolean.Basic.prependTrue generator)
+          let trueEntries := previous.entries.map (Basic.prependTrue generator)
           { rank := previous.rank + 1
             entries := falseEntries ++ trueEntries
             vectors_nodup := by
-              rw [Data.List.Map.map_append, Boolean.Basic.falseVectors, Boolean.Basic.trueVectors]
+              rw [Data.List.Map.map_append, Basic.falseVectors, Basic.trueVectors]
               apply Data.List.Nodup.nodup_append previous.vectors_nodup
                 (Data.List.Nodup.nodup_map_of_injective
-                  (Data.Vector.Boolean.Basic.xor_left_injective generator) previous.vectors_nodup)
+                  (Basic.xor_left_injective generator) previous.vectors_nodup)
               intro leftVector leftVectorMember rightVector rightVectorMember
                 equal
               rcases Data.List.Map.mem_map.mp leftVectorMember with
@@ -139,18 +141,18 @@ generator produces a certified disjoint doubling. -/
               rcases Data.List.Map.mem_map.mp rightSourceVectorMember with
                 ⟨rightEntry, rightEntryMember, rightEntryEqual⟩
               have collision : leftEntry.vector =
-                  Data.Vector.Boolean.Basic.xor generator rightEntry.vector := by
+                  Basic.xor generator rightEntry.vector := by
                 calc
                   leftEntry.vector = leftVector := leftEntryEqual
                   _ = rightVector := equal
-                  _ = Data.Vector.Boolean.Basic.xor generator rightSourceVector := rightSourceEqual.symm
-                  _ = Data.Vector.Boolean.Basic.xor generator rightEntry.vector := by
+                  _ = Basic.xor generator rightSourceVector := rightSourceEqual.symm
+                  _ = Basic.xor generator rightEntry.vector := by
                     rw [rightEntryEqual]
               rcases previous.closed leftEntry leftEntryMember
                 rightEntry rightEntryMember with
                 ⟨output, outputMember, outputEquation⟩
               apply generatorAbsent output outputMember
-              exact ((Data.Vector.Boolean.Basic.generator_eq_xor_of_eq_xor collision).trans
+              exact ((Basic.generator_eq_xor_of_eq_xor collision).trans
                 outputEquation).symm
             length_eq := by
               rw [Data.List.Append.length_append, Data.List.Map.length_map, Data.List.Map.length_map,
@@ -166,14 +168,14 @@ generator produces a certified disjoint doubling. -/
                     ⟨tailEntry, tailMember, tailEvaluation⟩
                   cases selected with
                   | false =>
-                      exact ⟨Boolean.Basic.prependFalse generator tailEntry,
-                        List.mem_append_left _ (Purelib.LinearAlgebra.Span.Boolean.Compute.falseMap_mem tailMember),
+                      exact ⟨Basic.prependFalse generator tailEntry,
+                        List.mem_append_left _ (falseMap_mem tailMember),
                         tailEvaluation⟩
                   | true =>
-                      refine ⟨Boolean.Basic.prependTrue generator tailEntry,
-                        List.mem_append_right _ (Purelib.LinearAlgebra.Span.Boolean.Compute.trueMap_mem tailMember), ?_⟩
-                      change Data.Vector.Boolean.Basic.xor generator (Boolean.Basic.evaluate tailChoices generators) =
-                        Data.Vector.Boolean.Basic.xor generator tailEntry.vector
+                      refine ⟨Basic.prependTrue generator tailEntry,
+                        List.mem_append_right _ (trueMap_mem tailMember), ?_⟩
+                      change Basic.xor generator (Basic.evaluate tailChoices generators) =
+                        Basic.xor generator tailEntry.vector
                       rw [tailEvaluation]
             closed := by
               intro left leftMember right rightMember
@@ -190,8 +192,8 @@ generator produces a certified disjoint doubling. -/
                   rcases previous.closed leftSource leftSourceMember
                     rightSource rightSourceMember with
                     ⟨output, outputMember, outputEquation⟩
-                  exact ⟨Boolean.Basic.prependFalse generator output,
-                    List.mem_append_left _ (Purelib.LinearAlgebra.Span.Boolean.Compute.falseMap_mem outputMember),
+                  exact ⟨Basic.prependFalse generator output,
+                    List.mem_append_left _ (falseMap_mem outputMember),
                     outputEquation⟩
                 · rcases Data.List.Map.mem_map.mp rightTrue with
                     ⟨rightSource, rightSourceMember, rightEqual⟩
@@ -199,13 +201,13 @@ generator produces a certified disjoint doubling. -/
                   rcases previous.closed leftSource leftSourceMember
                     rightSource rightSourceMember with
                     ⟨output, outputMember, outputEquation⟩
-                  refine ⟨Boolean.Basic.prependTrue generator output,
-                    List.mem_append_right _ (Purelib.LinearAlgebra.Span.Boolean.Compute.trueMap_mem outputMember), ?_⟩
-                  change Data.Vector.Boolean.Basic.xor leftSource.vector
-                    (Data.Vector.Boolean.Basic.xor generator rightSource.vector) =
-                      Data.Vector.Boolean.Basic.xor generator output.vector
-                  rw [← outputEquation, ← Data.Vector.Boolean.Basic.xor_assoc,
-                    Data.Vector.Boolean.Basic.xor_comm leftSource.vector generator, Data.Vector.Boolean.Basic.xor_assoc]
+                  refine ⟨Basic.prependTrue generator output,
+                    List.mem_append_right _ (trueMap_mem outputMember), ?_⟩
+                  change Basic.xor leftSource.vector
+                    (Basic.xor generator rightSource.vector) =
+                      Basic.xor generator output.vector
+                  rw [← outputEquation, ← Basic.xor_assoc,
+                    Basic.xor_comm leftSource.vector generator, Basic.xor_assoc]
               · rcases Data.List.Map.mem_map.mp leftTrue with
                   ⟨leftSource, leftSourceMember, leftEqual⟩
                 subst left
@@ -216,44 +218,44 @@ generator produces a certified disjoint doubling. -/
                   rcases previous.closed leftSource leftSourceMember
                     rightSource rightSourceMember with
                     ⟨output, outputMember, outputEquation⟩
-                  refine ⟨Boolean.Basic.prependTrue generator output,
-                    List.mem_append_right _ (Purelib.LinearAlgebra.Span.Boolean.Compute.trueMap_mem outputMember), ?_⟩
-                  change Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor generator leftSource.vector)
-                    rightSource.vector = Data.Vector.Boolean.Basic.xor generator output.vector
-                  rw [← outputEquation, Data.Vector.Boolean.Basic.xor_assoc]
+                  refine ⟨Basic.prependTrue generator output,
+                    List.mem_append_right _ (trueMap_mem outputMember), ?_⟩
+                  change Basic.xor (Basic.xor generator leftSource.vector)
+                    rightSource.vector = Basic.xor generator output.vector
+                  rw [← outputEquation, Basic.xor_assoc]
                 · rcases Data.List.Map.mem_map.mp rightTrue with
                     ⟨rightSource, rightSourceMember, rightEqual⟩
                   subst right
                   rcases previous.closed leftSource leftSourceMember
                     rightSource rightSourceMember with
                     ⟨output, outputMember, outputEquation⟩
-                  refine ⟨Boolean.Basic.prependFalse generator output,
-                    List.mem_append_left _ (Purelib.LinearAlgebra.Span.Boolean.Compute.falseMap_mem outputMember), ?_⟩
-                  change Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor generator leftSource.vector)
-                    (Data.Vector.Boolean.Basic.xor generator rightSource.vector) = output.vector
+                  refine ⟨Basic.prependFalse generator output,
+                    List.mem_append_left _ (falseMap_mem outputMember), ?_⟩
+                  change Basic.xor (Basic.xor generator leftSource.vector)
+                    (Basic.xor generator rightSource.vector) = output.vector
                   rw [← outputEquation]
                   calc
-                    Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor generator leftSource.vector)
-                        (Data.Vector.Boolean.Basic.xor generator rightSource.vector) =
-                      Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor
+                    Basic.xor (Basic.xor generator leftSource.vector)
+                        (Basic.xor generator rightSource.vector) =
+                      Basic.xor (Basic.xor (Basic.xor
                         generator leftSource.vector) generator)
                         rightSource.vector :=
-                          (Data.Vector.Boolean.Basic.xor_assoc (Data.Vector.Boolean.Basic.xor generator
+                          (Basic.xor_assoc (Basic.xor generator
                             leftSource.vector)
                             generator rightSource.vector).symm
-                    _ = Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor generator
-                        (Data.Vector.Boolean.Basic.xor generator leftSource.vector))
+                    _ = Basic.xor (Basic.xor generator
+                        (Basic.xor generator leftSource.vector))
                           rightSource.vector := by
-                            rw [Data.Vector.Boolean.Basic.xor_comm
-                              (Data.Vector.Boolean.Basic.xor generator leftSource.vector) generator]
-                    _ = Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor (Data.Vector.Boolean.Basic.xor
+                            rw [Basic.xor_comm
+                              (Basic.xor generator leftSource.vector) generator]
+                    _ = Basic.xor (Basic.xor (Basic.xor
                       generator generator)
                         leftSource.vector) rightSource.vector :=
                       congrArg (fun vector : Data.Vector.Boolean width =>
-                        Data.Vector.Boolean.Basic.xor vector rightSource.vector)
-                        (Data.Vector.Boolean.Basic.xor_assoc generator generator
+                        Basic.xor vector rightSource.vector)
+                        (Basic.xor_assoc generator generator
                           leftSource.vector).symm
-                    _ = Data.Vector.Boolean.Basic.xor leftSource.vector rightSource.vector := by
-                      rw [Data.Vector.Boolean.Basic.xor_self, Data.Vector.Boolean.Basic.zero_xor] }
+                    _ = Basic.xor leftSource.vector rightSource.vector := by
+                      rw [Basic.xor_self, Basic.zero_xor] }
 
 end Purelib.LinearAlgebra.Span.Boolean.Compute

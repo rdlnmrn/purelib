@@ -54,21 +54,21 @@ public section
 compose the complete path summary from the retained block summaries. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectedPaths
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    UniformReciprocalRootChannels.RootModel cell}
   {parameter target sourceTarget : Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor : Nat}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : SourceLocations.BasisSourceCovers parent}
 
-variable {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : UniformReciprocalCover.Cover data}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Data.Gaussian.Basic.Canonical
@@ -76,15 +76,15 @@ open Purelib.Data.Gaussian.Basic.Canonical
 variable {depth : Nat} {allowance : Normalization.InverseRootPolynomial.Coordinate}
 
 variable {index minimum stage : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace BasisCommonChartRequests.Plans
 
-variable {anchorBank : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index
+variable {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index
   cover.mesh.edges}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {bank : SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {originals : CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace Paths
@@ -93,16 +93,16 @@ variable {joinTarget : Normalization.InverseRootPolynomial.Coordinate} {radialDe
 
 /-- Insert each actual cached incoming connector before its original interval chart block, retaining interval order. -/
 @[expose] def joinedBlocks (incoming : Normalization.InverseRootPolynomial.Gaussian) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans} →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
       coefficients requests plans readings →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectorBank.Connectors coefficients radialDepth joinTarget
+    CommonConnectorBank.Connectors coefficients radialDepth joinTarget
       requests plans readings → List (Normalization.InverseRootPolynomial.Gaussian × List
       Normalization.InverseRootPolynomial.Gaussian)
   | _, .nil, _, _, _, _ => []
@@ -116,16 +116,16 @@ variable {joinTarget : Normalization.InverseRootPolynomial.Coordinate} {radialDe
 
 Each connector is prepended to its retained block and the full polygon of block totals is preserved. -/
 @[expose] def joinedSummary (incoming : Normalization.InverseRootPolynomial.Gaussian) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
       coefficients requests plans readings) →
-    (connectors : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectorBank.Connectors coefficients radialDepth
+    (connectors : CommonConnectorBank.Connectors coefficients radialDepth
       joinTarget requests plans readings) →
     Path.IncrementArea.Summary
       ((joinedBlocks
@@ -140,18 +140,18 @@ Each connector is prepended to its retained block and the full polygon of block 
 
 /-- Removing the incoming connectors recovers exactly the original retained chart blocks. -/
 theorem joinedBlocks_original (incoming : Normalization.InverseRootPolynomial.Gaussian) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
       coefficients requests plans readings) →
-    (connectors : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectorBank.Connectors coefficients radialDepth
+    (connectors : CommonConnectorBank.Connectors coefficients radialDepth
       joinTarget requests plans readings) →
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks
+    (joinedBlocks
       incoming paths connectors).map Prod.snd = paths.pairs.map Prod.snd
   | _, .nil, _, _, _, _ => rfl
   | _, .cons _ .nil, _, _, _, _ => rfl
@@ -162,23 +162,23 @@ theorem joinedBlocks_original (incoming : Normalization.InverseRootPolynomial.Ga
 
 /-- There is one connected block for each original common interval. -/
 theorem joinedBlocks_count (incoming : Normalization.InverseRootPolynomial.Gaussian)
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)}
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)}
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals}
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans}
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
       coefficients requests plans readings)
-    (connectors : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectorBank.Connectors coefficients radialDepth
+    (connectors : CommonConnectorBank.Connectors coefficients radialDepth
       joinTarget requests plans readings) :
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks
+    (joinedBlocks
       incoming paths connectors).length = intervals.length := by
   have same := congrArg List.length
     (joinedBlocks_original
     incoming paths connectors)
-  rw [Purelib.Data.List.Map.length_map, Purelib.Data.List.Map.length_map, paths.count_eq] at same
+  rw [Data.List.Map.length_map, Data.List.Map.length_map, paths.count_eq] at same
   exact same
 
 end Paths

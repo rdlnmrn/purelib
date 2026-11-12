@@ -47,11 +47,11 @@ namespace Purelib.Geometry.CCL.Sector.Formula.Description
 
 /-- Boundary descriptions for one complete sector row after pullback. -/
 @[expose] def pulledSector
-    (sector : Data.ComplexContinuedFraction.Encoding.Sector) (outer inner : GaussianMatrix)
+    (sector : Sector) (outer inner : GaussianMatrix)
     (outerNonzero : Matrix2.determinant outer ≠ 0)
     (innerNonzero : Matrix2.determinant inner ≠ 0)
     (outerLowerRow : outer.c = 0 ∧ outer.d = 1) :
-    Formula.Descriptions inner ((Sector.sectorFormula sector outer).pullback inner) := by
+    Descriptions inner ((sectorFormula sector outer).pullback inner) := by
   let realBoundary :=
     Boundary.pulledRealComparison outer inner
       outerNonzero innerNonzero outerLowerRow
@@ -60,58 +60,58 @@ namespace Purelib.Geometry.CCL.Sector.Formula.Description
       outerNonzero innerNonzero outerLowerRow
   cases sector with
   | east =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (1 / 2)))
         (Descriptions.and
           (Descriptions.atom _ (imaginaryBoundary (-1 / 2)))
           (Descriptions.atom _ (imaginaryBoundary (1 / 2))))
   | northEast =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (1 / 2)))
         (Descriptions.atom _ (imaginaryBoundary (1 / 2)))
   | north =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (-1 / 2)))
         (Descriptions.and
           (Descriptions.atom _ (realBoundary (1 / 2)))
           (Descriptions.atom _ (imaginaryBoundary (1 / 2))))
   | northWest =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (-1 / 2)))
         (Descriptions.atom _ (imaginaryBoundary (1 / 2)))
   | west =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (-1 / 2)))
         (Descriptions.and
           (Descriptions.atom _ (imaginaryBoundary (-1 / 2)))
           (Descriptions.atom _ (imaginaryBoundary (1 / 2))))
   | southWest =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (-1 / 2)))
         (Descriptions.atom _ (imaginaryBoundary (-1 / 2)))
   | south =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (-1 / 2)))
         (Descriptions.and
           (Descriptions.atom _ (realBoundary (1 / 2)))
           (Descriptions.atom _ (imaginaryBoundary (-1 / 2))))
   | southEast =>
-      simp only [Sector.sectorFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [sectorFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _ (realBoundary (1 / 2)))
         (Descriptions.atom _ (imaginaryBoundary (-1 / 2)))
@@ -121,13 +121,13 @@ namespace Purelib.Geometry.CCL.Sector.Formula.Description
 Preserve list order and the original outer and inner homographies, using their determinant and denominator-row
 certificates. -/
 private def pulledSectorList
-    (sectors : List Data.ComplexContinuedFraction.Encoding.Sector) (outer inner : GaussianMatrix)
+    (sectors : List Sector) (outer inner : GaussianMatrix)
     (outerNonzero : Matrix2.determinant outer ≠ 0)
     (innerNonzero : Matrix2.determinant inner ≠ 0)
     (outerLowerRow : outer.c = 0 ∧ outer.d = 1) :
-    Formula.Descriptions inner
+    Descriptions inner
       ((BoundaryFormula.any (sectors.map fun sector =>
-        Sector.sectorFormula sector outer)).pullback inner) := by
+        sectorFormula sector outer)).pullback inner) := by
   induction sectors with
   | nil =>
       simp only [List.map, BoundaryFormula.any, BoundaryFormula.pullback, -eq_self, -iff_self]
@@ -141,13 +141,13 @@ private def pulledSectorList
 
 /-- Build the finite sector alternatives in their original formula order. -/
 @[expose] def pulledSectorAlternatives
-    (sectors : List Data.ComplexContinuedFraction.Encoding.Sector) (outer inner : GaussianMatrix)
+    (sectors : List Sector) (outer inner : GaussianMatrix)
     (outerNonzero : Matrix2.determinant outer ≠ 0)
     (innerNonzero : Matrix2.determinant inner ≠ 0)
     (outerLowerRow : outer.c = 0 ∧ outer.d = 1) :
-    Formula.Descriptions inner
+    Descriptions inner
       ((BoundaryFormula.any (sectors.map fun sector =>
-        Sector.sectorFormula sector outer)).pullback inner) := by
+        sectorFormula sector outer)).pullback inner) := by
   induction sectors with
   | nil =>
       simp only [List.map, BoundaryFormula.any,

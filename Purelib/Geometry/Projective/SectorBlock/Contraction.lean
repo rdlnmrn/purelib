@@ -28,6 +28,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.ComplexContinuedFraction.Encoding
@@ -56,69 +58,69 @@ namespace Purelib.Geometry.Projective.SectorBlock
 namespace Tail.CompatibleTail
 
 /-- Exact output weight of a compatible affine tail. -/
-theorem act_weight {sector : Data.ComplexContinuedFraction.Encoding.Sector} {tail value scale :
-  Data.Gaussian.Basic.Canonical}
-    (compatible : Tail.CompatibleTail sector tail value) :
-    Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine tail)) =
-      2 * Data.Gaussian.Norm.Basic.normSq tail * (1 + Data.Gaussian.Norm.Basic.normSq scale *
-        Data.Gaussian.Norm.Basic.normSq value) := by
+theorem act_weight {sector : Sector} {tail value scale :
+  Basic.Canonical}
+    (compatible : CompatibleTail sector tail value) :
+    Proj.weight (Line.Matrix.act (Basic.block scale sector) (Proj.affine tail)) =
+      2 * Norm.Basic.normSq tail * (1 + Norm.Basic.normSq scale *
+        Norm.Basic.normSq value) := by
   have firstCoordinate :
-      scale * Data.Gaussian.Basic.Canonical.gamma * sector.rep * tail + scale =
-        scale * (Data.Gaussian.Basic.Canonical.gamma * tail * value) := by
+      scale * Basic.Canonical.gamma * sector.rep * tail + scale =
+        scale * (Basic.Canonical.gamma * tail * value) := by
     rw [compatible.equation]
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
       simp only [Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im, Basic.one_re, Basic.one_im] <;>
         ring1
-  simp only [Proj.weight, Line.Matrix.act, Proj.affine, SectorBlock.Basic.block,
-    Data.Gaussian.Basic.mul_one,
-    Data.Gaussian.Basic.add_zero]
-  rw [firstCoordinate, Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul,
-    Data.Gaussian.Norm.Basic.normSq_mul, Constants.normSq_gamma]
+  simp only [Proj.weight, Line.Matrix.act, Proj.affine, Basic.block,
+    Basic.mul_one,
+    Basic.add_zero]
+  rw [firstCoordinate, Norm.Basic.normSq_mul, Norm.Basic.normSq_mul,
+    Norm.Basic.normSq_mul, Constants.normSq_gamma]
   ring1
 
 /-- One compatible output weight strictly dominates the factor needed for the relative chordal estimate. -/
-theorem factor_weight_lt {sector : Data.ComplexContinuedFraction.Encoding.Sector} {tail value scale :
-  Data.Gaussian.Basic.Canonical}
+theorem factor_weight_lt {sector : Sector} {tail value scale :
+  Basic.Canonical}
     (scaleNonzero : scale ≠ 0)
-    (compatible : Tail.CompatibleTail sector tail value) :
-    (1 + Data.Gaussian.Norm.Basic.normSq scale) * (1 + Data.Gaussian.Norm.Basic.normSq tail) <
-      Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector)
+    (compatible : CompatibleTail sector tail value) :
+    (1 + Norm.Basic.normSq scale) * (1 + Norm.Basic.normSq tail) <
+      Proj.weight (Line.Matrix.act (Basic.block scale sector)
         (Proj.affine tail)) := by
   have tailGreater := compatible.tail_norm_gt_one
   have tailPositive := (by decide : (0 : Fraction.Rational) < 1).trans tailGreater
-  have scaleNormNonnegative := Data.Gaussian.Norm.Basic.normSq_nonneg scale
-  have scaleNormPositive := Data.Gaussian.Norm.Basic.normSq_pos scaleNonzero
+  have scaleNormNonnegative := Norm.Basic.normSq_nonneg scale
+  have scaleNormPositive := Norm.Basic.normSq_pos scaleNonzero
   have valueNormLower := compatible.band.1
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical value] at valueNormLower
+  rw [← Norm.Basic.normSq_eq_canonical value] at valueNormLower
   have onePlusTailLt :
-      1 + Data.Gaussian.Norm.Basic.normSq tail < 2 * Data.Gaussian.Norm.Basic.normSq tail := by
+      1 + Norm.Basic.normSq tail < 2 * Norm.Basic.normSq tail := by
     calc
-      1 + Data.Gaussian.Norm.Basic.normSq tail < Data.Gaussian.Norm.Basic.normSq tail +
-        Data.Gaussian.Norm.Basic.normSq tail :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct tailGreater
-          (Data.Gaussian.Norm.Basic.normSq tail)
-      _ = 2 * Data.Gaussian.Norm.Basic.normSq tail := by ring1
+      1 + Norm.Basic.normSq tail < Norm.Basic.normSq tail +
+        Norm.Basic.normSq tail :=
+        Arithmetic.add_lt_add_right_direct tailGreater
+          (Norm.Basic.normSq tail)
+      _ = 2 * Norm.Basic.normSq tail := by ring1
   have scalePartLe :
-      1 + Data.Gaussian.Norm.Basic.normSq scale ≤ 1 + Data.Gaussian.Norm.Basic.normSq scale *
-        Data.Gaussian.Norm.Basic.normSq value := by
+      1 + Norm.Basic.normSq scale ≤ 1 + Norm.Basic.normSq scale *
+        Norm.Basic.normSq value := by
     apply add_le_add le_rfl
     calc
-      Data.Gaussian.Norm.Basic.normSq scale = Data.Gaussian.Norm.Basic.normSq scale * 1 := by ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq value :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Norm.Basic.normSq scale = Norm.Basic.normSq scale * 1 := by ring1
+      _ ≤ Norm.Basic.normSq scale * Norm.Basic.normSq value :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           valueNormLower scaleNormNonnegative
   calc
-    (1 + Data.Gaussian.Norm.Basic.normSq scale) * (1 + Data.Gaussian.Norm.Basic.normSq tail) <
-        (1 + Data.Gaussian.Norm.Basic.normSq scale) * (2 * Data.Gaussian.Norm.Basic.normSq tail) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    (1 + Norm.Basic.normSq scale) * (1 + Norm.Basic.normSq tail) <
+        (1 + Norm.Basic.normSq scale) * (2 * Norm.Basic.normSq tail) :=
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by exact add_pos_of_pos_of_nonneg (by decide) scaleNormNonnegative)
         onePlusTailLt
-    _ ≤ (1 + Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq value) * (2 *
-      Data.Gaussian.Norm.Basic.normSq tail) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct scalePartLe
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    _ ≤ (1 + Norm.Basic.normSq scale * Norm.Basic.normSq value) * (2 *
+      Norm.Basic.normSq tail) :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct scalePartLe
+        (Arithmetic.mul_nonneg_direct (by decide)
           tailPositive.le)
-    _ = Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector)
+    _ = Proj.weight (Line.Matrix.act (Basic.block scale sector)
         (Proj.affine tail)) := by
       rw [compatible.act_weight]
       ring1
@@ -128,34 +130,34 @@ end Tail.CompatibleTail
 namespace Contraction
 
 /-- The completed sector-block determinant is minus the scale times the canonical Gaussian factor. -/
-theorem block_det (scale : Data.Gaussian.Basic.Canonical) (sector : Data.ComplexContinuedFraction.Encoding.Sector) :
-    Matrix2.determinant (SectorBlock.Basic.block scale sector) =
-      -(scale * Data.Gaussian.Basic.Canonical.gamma) := by
-  apply Data.Gaussian.Basic.ext <;>
-    simp only [Matrix2.determinant, SectorBlock.Basic.block, Basic.sub_re, Basic.sub_im,
+theorem block_det (scale : Basic.Canonical) (sector : Sector) :
+    Matrix2.determinant (Basic.block scale sector) =
+      -(scale * Basic.Canonical.gamma) := by
+  apply Basic.ext <;>
+    simp only [Matrix2.determinant, Basic.block, Basic.sub_re, Basic.sub_im,
       Basic.mul_re, Basic.mul_im, Basic.neg_re, Basic.neg_im, Basic.zero_re, Basic.zero_im,
-        Data.Gaussian.Basic.Canonical.gamma] <;>
+        Basic.Canonical.gamma] <;>
     ring1
 
 /-- A completed compatible block contracts affine two-tail squared chordal quadrance by `q(N(λ))`. -/
-theorem affine_contraction {sector : Data.ComplexContinuedFraction.Encoding.Sector}
-    {leftTail rightTail leftValue rightValue scale : Data.Gaussian.Basic.Canonical}
+theorem affine_contraction {sector : Sector}
+    {leftTail rightTail leftValue rightValue scale : Basic.Canonical}
     (scaleNonzero : scale ≠ 0)
     (leftCompatible : Tail.CompatibleTail sector leftTail leftValue)
     (rightCompatible : Tail.CompatibleTail sector rightTail rightValue) :
-    Chordal.Basic.chordalSq
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine leftTail))
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine rightTail)) ≤
+    Basic.chordalSq
+        (Line.Matrix.act (Basic.block scale sector) (Proj.affine leftTail))
+        (Line.Matrix.act (Basic.block scale sector) (Proj.affine rightTail)) ≤
       BalancedRatio.factor scale *
-        Chordal.Basic.chordalSq (Proj.affine leftTail) (Proj.affine rightTail) := by
-  let length := Data.Gaussian.Norm.Basic.normSq scale
-  let leftNorm := Data.Gaussian.Norm.Basic.normSq leftTail
-  let rightNorm := Data.Gaussian.Norm.Basic.normSq rightTail
-  let numerator := 2 * length * Data.Gaussian.Norm.Basic.normSq (leftTail - rightTail)
+        Basic.chordalSq (Proj.affine leftTail) (Proj.affine rightTail) := by
+  let length := Norm.Basic.normSq scale
+  let leftNorm := Norm.Basic.normSq leftTail
+  let rightNorm := Norm.Basic.normSq rightTail
+  let numerator := 2 * length * Norm.Basic.normSq (leftTail - rightTail)
   let outputDenominator :=
-    Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector)
+    Proj.weight (Line.Matrix.act (Basic.block scale sector)
       (Proj.affine leftTail)) *
-    Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector)
+    Proj.weight (Line.Matrix.act (Basic.block scale sector)
       (Proj.affine rightTail))
   let comparisonDenominator :=
     (1 + length) ^ 2 * ((1 + leftNorm) * (1 + rightNorm))
@@ -163,14 +165,14 @@ theorem affine_contraction {sector : Data.ComplexContinuedFraction.Encoding.Sect
   have rightWeightLower := rightCompatible.factor_weight_lt scaleNonzero
   have leftFactorPositive :
       0 < (1 + length) * (1 + leftNorm) :=
-    Fraction.Order.Arithmetic.mul_pos_direct
-      (add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg scale))
-      (add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg leftTail))
+    Arithmetic.mul_pos_direct
+      (add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg scale))
+      (add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg leftTail))
   have rightFactorPositive :
       0 < (1 + length) * (1 + rightNorm) :=
-    Fraction.Order.Arithmetic.mul_pos_direct
-      (add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg scale))
-      (add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg rightTail))
+    Arithmetic.mul_pos_direct
+      (add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg scale))
+      (add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg rightTail))
   have leftWeightPositive := leftFactorPositive.trans leftWeightLower
   have denominatorOrder : comparisonDenominator ≤ outputDenominator := by
     have strictProduct :
@@ -179,13 +181,13 @@ theorem affine_contraction {sector : Data.ComplexContinuedFraction.Encoding.Sect
       calc
         ((1 + length) * (1 + leftNorm)) *
             ((1 + length) * (1 + rightNorm)) <
-            Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector)
+            Proj.weight (Line.Matrix.act (Basic.block scale sector)
               (Proj.affine leftTail)) *
               ((1 + length) * (1 + rightNorm)) :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+          Arithmetic.mul_lt_mul_of_pos_right_direct
             leftWeightLower rightFactorPositive
         _ < outputDenominator :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+          Arithmetic.mul_lt_mul_of_pos_left_direct
             leftWeightPositive rightWeightLower
     exact (by
       calc
@@ -197,156 +199,156 @@ theorem affine_contraction {sector : Data.ComplexContinuedFraction.Encoding.Sect
         _ ≤ outputDenominator := strictProduct.le)
   have comparisonPositive : 0 < comparisonDenominator := by
     dsimp only [comparisonDenominator]
-    exact Fraction.Order.Arithmetic.mul_pos_direct
-      (Fraction.Order.Arithmetic.pow_pos_direct
-        (add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg scale)) 2)
-      (Fraction.Order.Arithmetic.mul_pos_direct
-        (add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg leftTail))
-        (add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg rightTail)))
+    exact Arithmetic.mul_pos_direct
+      (Arithmetic.pow_pos_direct
+        (add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg scale)) 2)
+      (Arithmetic.mul_pos_direct
+        (add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg leftTail))
+        (add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg rightTail)))
   have numeratorNonnegative : 0 ≤ numerator := by
     dsimp only [numerator, length]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg scale))
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    exact Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide)
+        (Norm.Basic.normSq_nonneg scale))
+      (Norm.Basic.normSq_nonneg _)
   rw [Mat2.chordalSq_act_affine,
-    Contraction.block_det, Data.Gaussian.Norm.Basic.normSq_neg, Data.Gaussian.Norm.Basic.normSq_mul,
+    block_det, Norm.Basic.normSq_neg, Norm.Basic.normSq_mul,
       Constants.normSq_gamma,
     Affine.chordalSq_affine, BalancedRatio.factor]
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical scale]
-  rw [show Data.Gaussian.Norm.Basic.normSq scale * 2 = 2 * Data.Gaussian.Norm.Basic.normSq scale by
+  rw [← Norm.Basic.normSq_eq_canonical scale]
+  rw [show Norm.Basic.normSq scale * 2 = 2 * Norm.Basic.normSq scale by
     ring1]
   change numerator / outputDenominator ≤
     (2 * length / (1 + length) ^ 2) *
-      (Data.Gaussian.Norm.Basic.normSq (leftTail - rightTail) /
+      (Norm.Basic.normSq (leftTail - rightTail) /
         ((1 + leftNorm) * (1 + rightNorm)))
   calc
     numerator / outputDenominator ≤ numerator / comparisonDenominator :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+      Field.div_le_div_of_nonneg_left_direct
         numeratorNonnegative comparisonPositive denominatorOrder
     _ = (2 * length / (1 + length) ^ 2) *
-        (Data.Gaussian.Norm.Basic.normSq (leftTail - rightTail) /
+        (Norm.Basic.normSq (leftTail - rightTail) /
           ((1 + leftNorm) * (1 + rightNorm))) :=
       (Fraction.Field.div_mul_div_direct
         (2 * length) ((1 + length) ^ 2)
-        (Data.Gaussian.Norm.Basic.normSq (leftTail - rightTail))
+        (Norm.Basic.normSq (leftTail - rightTail))
         ((1 + leftNorm) * (1 + rightNorm))).symm
 
 /-- Uniform half-contraction corollary. -/
-theorem affine_contraction_half {sector : Data.ComplexContinuedFraction.Encoding.Sector}
-    {leftTail rightTail leftValue rightValue scale : Data.Gaussian.Basic.Canonical}
+theorem affine_contraction_half {sector : Sector}
+    {leftTail rightTail leftValue rightValue scale : Basic.Canonical}
     (scaleNonzero : scale ≠ 0)
     (leftCompatible : Tail.CompatibleTail sector leftTail leftValue)
     (rightCompatible : Tail.CompatibleTail sector rightTail rightValue) :
-    Chordal.Basic.chordalSq
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine leftTail))
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine rightTail)) ≤
+    Basic.chordalSq
+        (Line.Matrix.act (Basic.block scale sector) (Proj.affine leftTail))
+        (Line.Matrix.act (Basic.block scale sector) (Proj.affine rightTail)) ≤
       (1 / 2 : Fraction.Rational) *
-        Chordal.Basic.chordalSq (Proj.affine leftTail) (Proj.affine rightTail) := by
+        Basic.chordalSq (Proj.affine leftTail) (Proj.affine rightTail) := by
   calc
-    Chordal.Basic.chordalSq
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine leftTail))
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine rightTail)) ≤
-        BalancedRatio.factor scale * Chordal.Basic.chordalSq (Proj.affine leftTail)
+    Basic.chordalSq
+        (Line.Matrix.act (Basic.block scale sector) (Proj.affine leftTail))
+        (Line.Matrix.act (Basic.block scale sector) (Proj.affine rightTail)) ≤
+        BalancedRatio.factor scale * Basic.chordalSq (Proj.affine leftTail)
           (Proj.affine rightTail) :=
-      Contraction.affine_contraction scaleNonzero leftCompatible rightCompatible
+      affine_contraction scaleNonzero leftCompatible rightCompatible
     _ ≤ (1 / 2 : Fraction.Rational) *
-        Chordal.Basic.chordalSq (Proj.affine leftTail) (Proj.affine rightTail) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Basic.chordalSq (Proj.affine leftTail) (Proj.affine rightTail) :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         (BalancedRatio.factor_le_half scale)
-        (Chordal.Basic.chordalSq_nonneg _ _)
+        (Basic.chordalSq_nonneg _ _)
 
 /-- Exact weight of the image of the formal projective tail `ω`. -/
-theorem act_omega_weight (scale : Data.Gaussian.Basic.Canonical) (sector :
-  Data.ComplexContinuedFraction.Encoding.Sector) :
-    Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) =
-      2 * (1 + Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq sector.rep) :=
+theorem act_omega_weight (scale : Basic.Canonical) (sector :
+  Sector) :
+    Proj.weight (Line.Matrix.act (Basic.block scale sector) Proj.omega) =
+      2 * (1 + Norm.Basic.normSq scale * Norm.Basic.normSq sector.rep) :=
         by
-  simp only [Proj.weight, Line.Matrix.act, Proj.omega, SectorBlock.Basic.block,
-    Data.Gaussian.Basic.mul_one,
-    Data.Gaussian.Basic.mul_zero,
-    Data.Gaussian.Basic.add_zero, Data.Gaussian.Norm.Basic.normSq_mul, Constants.normSq_gamma]
+  simp only [Proj.weight, Line.Matrix.act, Proj.omega, Basic.block,
+    Basic.mul_one,
+    Basic.mul_zero,
+    Basic.add_zero, Norm.Basic.normSq_mul, Constants.normSq_gamma]
   ring1
 
 /-- The terminal image weight is at least one plus the scale quadrance. -/
-theorem scale_factor_le_omega_weight (scale : Data.Gaussian.Basic.Canonical) (sector :
-  Data.ComplexContinuedFraction.Encoding.Sector) :
-    1 + Data.Gaussian.Norm.Basic.normSq scale ≤
-      Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) := by
-  have scaleNonnegative := Data.Gaussian.Norm.Basic.normSq_nonneg scale
+theorem scale_factor_le_omega_weight (scale : Basic.Canonical) (sector :
+  Sector) :
+    1 + Norm.Basic.normSq scale ≤
+      Proj.weight (Line.Matrix.act (Basic.block scale sector) Proj.omega) := by
+  have scaleNonnegative := Norm.Basic.normSq_nonneg scale
   have representativeNormLower := Sector.Basic.rep_norm_lower sector
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical sector.rep] at representativeNormLower
-  have productOrder : Data.Gaussian.Norm.Basic.normSq scale ≤ Data.Gaussian.Norm.Basic.normSq scale *
-    Data.Gaussian.Norm.Basic.normSq sector.rep := by
+  rw [← Norm.Basic.normSq_eq_canonical sector.rep] at representativeNormLower
+  have productOrder : Norm.Basic.normSq scale ≤ Norm.Basic.normSq scale *
+    Norm.Basic.normSq sector.rep := by
     calc
-      Data.Gaussian.Norm.Basic.normSq scale = Data.Gaussian.Norm.Basic.normSq scale * 1 := by ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq sector.rep :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Norm.Basic.normSq scale = Norm.Basic.normSq scale * 1 := by ring1
+      _ ≤ Norm.Basic.normSq scale * Norm.Basic.normSq sector.rep :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           representativeNormLower scaleNonnegative
   have sumNonnegative :
-      0 ≤ 1 + Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq sector.rep :=
+      0 ≤ 1 + Norm.Basic.normSq scale * Norm.Basic.normSq sector.rep :=
     add_nonneg (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct scaleNonnegative
-        (Data.Gaussian.Norm.Basic.normSq_nonneg sector.rep))
+      (Arithmetic.mul_nonneg_direct scaleNonnegative
+        (Norm.Basic.normSq_nonneg sector.rep))
   calc
-    1 + Data.Gaussian.Norm.Basic.normSq scale ≤ 1 + Data.Gaussian.Norm.Basic.normSq scale *
-      Data.Gaussian.Norm.Basic.normSq sector.rep :=
+    1 + Norm.Basic.normSq scale ≤ 1 + Norm.Basic.normSq scale *
+      Norm.Basic.normSq sector.rep :=
       add_le_add le_rfl productOrder
-    _ ≤ 2 * (1 + Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq sector.rep)
+    _ ≤ 2 * (1 + Norm.Basic.normSq scale * Norm.Basic.normSq sector.rep)
       := by
       calc
-        1 + Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq sector.rep =
-            1 * (1 + Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq
+        1 + Norm.Basic.normSq scale * Norm.Basic.normSq sector.rep =
+            1 * (1 + Norm.Basic.normSq scale * Norm.Basic.normSq
               sector.rep) := by ring1
-        _ ≤ 2 * (1 + Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq
+        _ ≤ 2 * (1 + Norm.Basic.normSq scale * Norm.Basic.normSq
           sector.rep) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (by decide) sumNonnegative
-    _ = Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) :=
-      (Contraction.act_omega_weight scale sector).symm
+    _ = Proj.weight (Line.Matrix.act (Basic.block scale sector) Proj.omega) :=
+      (act_omega_weight scale sector).symm
 
 /-- Completed-block contraction between one compatible affine tail and the formal terminal tail `ω`.
 
 The retained completed-sector matrix acts on both original tails. Its exact determinant and weight equations bound their
 squared chordal quadrance by the original balanced scale factor. -/
-theorem affine_omega_contraction {sector : Data.ComplexContinuedFraction.Encoding.Sector} {tail value scale :
-  Data.Gaussian.Basic.Canonical}
+theorem affine_omega_contraction {sector : Sector} {tail value scale :
+  Basic.Canonical}
     (scaleNonzero : scale ≠ 0)
     (compatible : Tail.CompatibleTail sector tail value) :
-    Chordal.Basic.chordalSq
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine tail))
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) ≤
-      BalancedRatio.factor scale * Chordal.Basic.chordalSq (Proj.affine tail) Proj.omega := by
-  let length := Data.Gaussian.Norm.Basic.normSq scale
-  let tailNorm := Data.Gaussian.Norm.Basic.normSq tail
+    Basic.chordalSq
+        (Line.Matrix.act (Basic.block scale sector) (Proj.affine tail))
+        (Line.Matrix.act (Basic.block scale sector) Proj.omega) ≤
+      BalancedRatio.factor scale * Basic.chordalSq (Proj.affine tail) Proj.omega := by
+  let length := Norm.Basic.normSq scale
+  let tailNorm := Norm.Basic.normSq tail
   let numerator := 2 * length
   let outputDenominator :=
-    Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) *
-    Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine tail))
+    Proj.weight (Line.Matrix.act (Basic.block scale sector) Proj.omega) *
+    Proj.weight (Line.Matrix.act (Basic.block scale sector) (Proj.affine tail))
   let comparisonDenominator := (1 + length) ^ 2 * (1 + tailNorm)
   have truncationDenominator :
-      (Data.Gaussian.Norm.Basic.normSq (SectorBlock.Basic.block scale sector).a +
-        Data.Gaussian.Norm.Basic.normSq (SectorBlock.Basic.block scale sector).c) *
-          (Data.Gaussian.Norm.Basic.normSq ((SectorBlock.Basic.block scale sector).a * tail +
-            (SectorBlock.Basic.block scale sector).b) +
-            Data.Gaussian.Norm.Basic.normSq ((SectorBlock.Basic.block scale sector).c * tail +
-              (SectorBlock.Basic.block scale sector).d)) =
+      (Norm.Basic.normSq (Basic.block scale sector).a +
+        Norm.Basic.normSq (Basic.block scale sector).c) *
+          (Norm.Basic.normSq ((Basic.block scale sector).a * tail +
+            (Basic.block scale sector).b) +
+            Norm.Basic.normSq ((Basic.block scale sector).c * tail +
+              (Basic.block scale sector).d)) =
         outputDenominator := by
     dsimp only [outputDenominator, Proj.weight, Line.Matrix.act,
       Proj.omega, Proj.affine]
-    rewrite [Data.Gaussian.Basic.mul_one, Data.Gaussian.Basic.mul_one,
-      Data.Gaussian.Basic.mul_one, Data.Gaussian.Basic.mul_one,
-      Data.Gaussian.Basic.mul_zero, Data.Gaussian.Basic.mul_zero,
-      Data.Gaussian.Basic.add_zero, Data.Gaussian.Basic.add_zero]
+    rewrite [Basic.mul_one, Basic.mul_one,
+      Basic.mul_one, Basic.mul_one,
+      Basic.mul_zero, Basic.mul_zero,
+      Basic.add_zero, Basic.add_zero]
     rfl
   have affineLower := compatible.factor_weight_lt scaleNonzero
-  have omegaLower := Contraction.scale_factor_le_omega_weight scale sector
+  have omegaLower := scale_factor_le_omega_weight scale sector
   have scaleFactorPositive : 0 < 1 + length :=
-    add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg scale)
+    add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg scale)
   have tailFactorPositive : 0 < 1 + tailNorm :=
-    add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg tail)
+    add_pos_of_pos_of_nonneg (by decide) (Norm.Basic.normSq_nonneg tail)
   have omegaWeightPositive :
-      0 < Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) :=
+      0 < Proj.weight (Line.Matrix.act (Basic.block scale sector) Proj.omega) :=
     scaleFactorPositive.trans_le omegaLower
   have denominatorOrder : comparisonDenominator ≤ outputDenominator := by
     calc
@@ -354,36 +356,36 @@ theorem affine_omega_contraction {sector : Data.ComplexContinuedFraction.Encodin
           (1 + length) * ((1 + length) * (1 + tailNorm)) := by
         dsimp only [comparisonDenominator]
         ring1
-      _ ≤ Proj.weight (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) *
+      _ ≤ Proj.weight (Line.Matrix.act (Basic.block scale sector) Proj.omega) *
           ((1 + length) * (1 + tailNorm)) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct omegaLower
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct omegaLower
+          (Arithmetic.mul_nonneg_direct
             scaleFactorPositive.le tailFactorPositive.le)
       _ ≤ outputDenominator :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           affineLower.le omegaWeightPositive.le
   have comparisonPositive : 0 < comparisonDenominator := by
     dsimp only [comparisonDenominator]
-    exact Fraction.Order.Arithmetic.mul_pos_direct
-      (Fraction.Order.Arithmetic.pow_pos_direct scaleFactorPositive 2)
+    exact Arithmetic.mul_pos_direct
+      (Arithmetic.pow_pos_direct scaleFactorPositive 2)
       tailFactorPositive
   have numeratorNonnegative : 0 ≤ numerator := by
     dsimp only [numerator, length]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg scale)
+    exact Arithmetic.mul_nonneg_direct (by decide)
+      (Norm.Basic.normSq_nonneg scale)
   rw [Mat2.chordalSq_truncation,
-    Contraction.block_det, Data.Gaussian.Norm.Basic.normSq_neg, Data.Gaussian.Norm.Basic.normSq_mul,
+    block_det, Norm.Basic.normSq_neg, Norm.Basic.normSq_mul,
       Constants.normSq_gamma,
     Affine.chordalSq_omega, BalancedRatio.factor]
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical scale]
-  rw [show Data.Gaussian.Norm.Basic.normSq scale * 2 = 2 * Data.Gaussian.Norm.Basic.normSq scale by
+  rw [← Norm.Basic.normSq_eq_canonical scale]
+  rw [show Norm.Basic.normSq scale * 2 = 2 * Norm.Basic.normSq scale by
     ring1]
   rw [truncationDenominator]
   change numerator / outputDenominator ≤
     (2 * length / (1 + length) ^ 2) * (1 / (1 + tailNorm))
   calc
     numerator / outputDenominator ≤ numerator / comparisonDenominator :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+      Field.div_le_div_of_nonneg_left_direct
         numeratorNonnegative comparisonPositive denominatorOrder
     _ = ((2 * length) * 1) /
         ((1 + length) ^ 2 * (1 + tailNorm)) := by
@@ -397,61 +399,61 @@ end Contraction
 namespace Tail
 
 /-- Full completed-block contraction, including affine/terminal pairs. -/
-theorem contraction {sector : Data.ComplexContinuedFraction.Encoding.Sector} (scale : Data.Gaussian.Basic.Canonical)
+theorem contraction {sector : Sector} (scale : Basic.Canonical)
   (scaleNonzero : scale ≠ 0)
     (left right : Tail sector) :
-    Chordal.Basic.chordalSq (Line.Matrix.act (SectorBlock.Basic.block scale sector) left.point)
-        (Line.Matrix.act (SectorBlock.Basic.block scale sector) right.point) ≤
-      BalancedRatio.factor scale * Chordal.Basic.chordalSq left.point right.point := by
+    Basic.chordalSq (Line.Matrix.act (Basic.block scale sector) left.point)
+        (Line.Matrix.act (Basic.block scale sector) right.point) ≤
+      BalancedRatio.factor scale * Basic.chordalSq left.point right.point := by
   cases left with
   | omega =>
       cases right with
       | omega =>
-          change Chordal.Basic.chordalSq
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.omega :
+          change Basic.chordalSq
+              (Line.Matrix.act (Basic.block scale sector) (Proj.omega :
                 GaussianLine))
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) ≤
-            BalancedRatio.factor scale * Chordal.Basic.chordalSq (Proj.omega :
+              (Line.Matrix.act (Basic.block scale sector) Proj.omega) ≤
+            BalancedRatio.factor scale * Basic.chordalSq (Proj.omega :
               GaussianLine) Proj.omega
-          have outputZero : Chordal.Basic.chordalSq
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.omega :
+          have outputZero : Basic.chordalSq
+              (Line.Matrix.act (Basic.block scale sector) (Proj.omega :
                 GaussianLine))
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) Proj.omega) = 0 :=
-            Chordal.Basic.chordalSq_eq_zero_of_equivalent rfl
-          have inputZero : Chordal.Basic.chordalSq (Proj.omega : GaussianLine) Proj.omega =
+              (Line.Matrix.act (Basic.block scale sector) Proj.omega) = 0 :=
+            Basic.chordalSq_eq_zero_of_equivalent rfl
+          have inputZero : Basic.chordalSq (Proj.omega : GaussianLine) Proj.omega =
             0 :=
-            Chordal.Basic.chordalSq_eq_zero_of_equivalent rfl
+            Basic.chordalSq_eq_zero_of_equivalent rfl
           rw [outputZero, inputZero]
           rw [Fraction.Field.mul_zero_direct]
       | affine tail value compatible =>
-          change Chordal.Basic.chordalSq
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.omega :
+          change Basic.chordalSq
+              (Line.Matrix.act (Basic.block scale sector) (Proj.omega :
                 GaussianLine))
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine tail)) ≤
-            BalancedRatio.factor scale * Chordal.Basic.chordalSq (Proj.omega :
+              (Line.Matrix.act (Basic.block scale sector) (Proj.affine tail)) ≤
+            BalancedRatio.factor scale * Basic.chordalSq (Proj.omega :
               GaussianLine)
               (Proj.affine tail)
-          rw [Chordal.Basic.chordalSq_comm
-            (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.omega :
+          rw [Basic.chordalSq_comm
+            (Line.Matrix.act (Basic.block scale sector) (Proj.omega :
               GaussianLine))
-            (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine tail)),
-            Chordal.Basic.chordalSq_comm (Proj.omega : GaussianLine) (Proj.affine tail)]
+            (Line.Matrix.act (Basic.block scale sector) (Proj.affine tail)),
+            Basic.chordalSq_comm (Proj.omega : GaussianLine) (Proj.affine tail)]
           exact Contraction.affine_omega_contraction scaleNonzero compatible
   | affine leftTail leftValue leftCompatible =>
       cases right with
       | omega =>
-          change Chordal.Basic.chordalSq
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine leftTail))
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.omega :
+          change Basic.chordalSq
+              (Line.Matrix.act (Basic.block scale sector) (Proj.affine leftTail))
+              (Line.Matrix.act (Basic.block scale sector) (Proj.omega :
                 GaussianLine)) ≤
-            BalancedRatio.factor scale * Chordal.Basic.chordalSq (Proj.affine leftTail)
+            BalancedRatio.factor scale * Basic.chordalSq (Proj.affine leftTail)
               (Proj.omega : GaussianLine)
           exact Contraction.affine_omega_contraction scaleNonzero leftCompatible
       | affine rightTail rightValue rightCompatible =>
-          change Chordal.Basic.chordalSq
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine leftTail))
-              (Line.Matrix.act (SectorBlock.Basic.block scale sector) (Proj.affine rightTail)) ≤
-            BalancedRatio.factor scale * Chordal.Basic.chordalSq (Proj.affine leftTail)
+          change Basic.chordalSq
+              (Line.Matrix.act (Basic.block scale sector) (Proj.affine leftTail))
+              (Line.Matrix.act (Basic.block scale sector) (Proj.affine rightTail)) ≤
+            BalancedRatio.factor scale * Basic.chordalSq (Proj.affine leftTail)
               (Proj.affine rightTail)
           exact Contraction.affine_contraction scaleNonzero leftCompatible rightCompatible
 

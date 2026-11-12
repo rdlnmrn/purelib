@@ -46,11 +46,11 @@ chart replacements, all using the same cap sample and reading stage.
 
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget :
     Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
 
@@ -58,29 +58,29 @@ set_option genInjectivity false in
 /-- Chart replacement requests indexed by the exact original side-request spine. -/
 inductive ChartRequests (target : Normalization.InverseRootPolynomial.Coordinate) :
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} →
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} →
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared → Type 2
   /-- The empty original chart-request spine. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target .nil
+    SideChartRequests.ChartRequests target .nil
   /-- One original chart request followed by its dependent retained tail. -/ | cons {parent :
     Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {parents : List
     (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
       {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch genus}
-      {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-      {head : Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover} {tail :
-        Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-      {request : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest head sourceTarget reciprocalTarget
+        UniformReciprocalModels.Data patch genus}
+      {cover : UniformReciprocalCover.Cover data} {covers :
+        UniformReciprocalCover.ParentCovers parents}
+      {head : ParentComparison.Preparation regular cover} {tail :
+        ParentJoins.SideBank regular covers}
+      {request : SideRequests.StageRequest head sourceTarget reciprocalTarget
         coefficientTarget totalTarget areaTarget minimum}
-      {remaining : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      {remaining : SideRequests.SideBank.Requests sourceTarget reciprocalTarget
         coefficientTarget totalTarget areaTarget minimum tail}
       (replacement : ChartReplacementRequest head target
-        minimum) (rest : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target
+        minimum) (rest : SideChartRequests.ChartRequests target
         remaining) :
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target (.cons request
+      SideChartRequests.ChartRequests target (.cons request
         remaining)
 
 constructive_injectivity ChartRequests
@@ -90,36 +90,36 @@ namespace ChartRequests
 /-- Prepare one original chart replacement request for each retained side request. -/
 @[expose] def build (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) :
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → (requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → (requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared) →
-    Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target requests
+    ChartRequests target requests
   | _, _, _, .nil => .nil
   | _, _, _, .cons _ rest => .cons
     (ChartReplacementRequest.build _ target positive
-    minimum) (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests.build target positive
+    minimum) (ChartRequests.build target positive
     rest)
 
 variable {target : Normalization.InverseRootPolynomial.Coordinate}
 
 /-- Take the maximum model stage of the original requests and the supplied floor. -/
 @[expose] def maximum : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-  {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+  {covers : UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target requests → Nat
+    ChartRequests target requests → Nat
   | _, _, _, _, .nil => minimum
   | _, _, _, _, .cons head tail => max head.charts.maximum tail.maximum
 
 /-- Take the maximum subdivision depth of the original requests, with zero for an empty spine. -/
 @[expose] def depthMaximum : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  → {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+  → {covers : UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target requests → Nat
+    ChartRequests target requests → Nat
   | _, _, _, _, .nil => 0
   | _, _, _, _, .cons head tail => max head.charts.depthMaximum tail.depthMaximum
 
@@ -127,37 +127,37 @@ end ChartRequests
 
 variable {target : Normalization.InverseRootPolynomial.Coordinate} {index depth readingIndex : Nat} {box :
   Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {sample : Cap.Primitives.Sample cap differential index box}
 
 set_option genInjectivity false in
 /-- Chart plans on one shared cap sample, indexed by the retained original requests. -/
-inductive ChartPlans (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) :
+inductive ChartPlans (sample : Cap.Primitives.Sample cap differential index box) :
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target requests → Type 2
+    ChartRequests target requests → Type 2
   /-- The empty original chart-plan spine. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans sample .nil
+    SideChartRequests.ChartPlans sample .nil
   /-- One original chart plan followed by its dependent retained tail. -/ | cons {parent :
     Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {parents : List
     (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
       {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch genus}
-      {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-      {head : Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover} {tail :
-        Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-      {request : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest head sourceTarget reciprocalTarget
+        UniformReciprocalModels.Data patch genus}
+      {cover : UniformReciprocalCover.Cover data} {covers :
+        UniformReciprocalCover.ParentCovers parents}
+      {head : ParentComparison.Preparation regular cover} {tail :
+        ParentJoins.SideBank regular covers}
+      {request : SideRequests.StageRequest head sourceTarget reciprocalTarget
         coefficientTarget totalTarget areaTarget minimum}
-      {remaining : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      {remaining : SideRequests.SideBank.Requests sourceTarget reciprocalTarget
         coefficientTarget totalTarget areaTarget minimum tail}
       {replacement : ChartReplacementRequest head target
-        minimum} {rest : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target remaining}
-      (plan : Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement.ChartPlan request replacement sample) (plans :
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans sample rest) :
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans sample (.cons (request :=
+        minimum} {rest : ChartRequests target remaining}
+      (plan : StageChartReplacement.ChartPlan request replacement sample) (plans :
+        SideChartRequests.ChartPlans sample rest) :
+        SideChartRequests.ChartPlans sample (.cons (request :=
         request) replacement rest)
 
 constructive_injectivity ChartPlans
@@ -166,34 +166,34 @@ set_option genInjectivity false in
 /-- Actual chart replacements indexed by the original side evaluations at the common stage. -/
 inductive ChartReplacements (target : Normalization.InverseRootPolynomial.Coordinate) :
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample depth readingIndex requests → Type 2
+    SideRequests.SideBank.Evaluations sample depth readingIndex requests → Type 2
   /-- The empty original evaluated replacement spine. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target .nil
+    SideChartRequests.ChartReplacements target .nil
   /-- One actual original replacement followed by the exact dependent tail. -/ | cons {parent :
     Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {parents : List
     (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
       {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch genus}
-      {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-        Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-      {head : Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover} {tail :
-        Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-      {request : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest head sourceTarget reciprocalTarget
+        UniformReciprocalModels.Data patch genus}
+      {cover : UniformReciprocalCover.Cover data} {covers :
+        UniformReciprocalCover.ParentCovers parents}
+      {head : ParentComparison.Preparation regular cover} {tail :
+        ParentJoins.SideBank regular covers}
+      {request : SideRequests.StageRequest head sourceTarget reciprocalTarget
         coefficientTarget totalTarget areaTarget minimum}
-      {remaining : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      {remaining : SideRequests.SideBank.Requests sourceTarget reciprocalTarget
         coefficientTarget totalTarget areaTarget minimum tail}
-      {evaluated : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest.Evaluation request sample depth
-        readingIndex} {rest : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample depth
+      {evaluated : SideRequests.StageRequest.Evaluation request sample depth
+        readingIndex} {rest : SideRequests.SideBank.Evaluations sample depth
         readingIndex remaining}
       (replacement : ChartReplacementRequest head target
-        minimum) (chart : Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement.ChartReplacement replacement
+        minimum) (chart : StageChartReplacement.ChartReplacement replacement
         evaluated)
-      (charts : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target rest) :
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target (.cons evaluated
+      (charts : SideChartRequests.ChartReplacements target rest) :
+        SideChartRequests.ChartReplacements target (.cons evaluated
         rest)
 
 constructive_injectivity ChartReplacements
@@ -201,48 +201,48 @@ constructive_injectivity ChartReplacements
 namespace ChartPlans
 
 /-- Build each original chart plan on the same supplied cap sample. -/
-@[expose] def build (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) :
+@[expose] def build (sample : Cap.Primitives.Sample cap differential index box) :
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target requests) →
-      Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans sample charts
+    (charts : ChartRequests target requests) →
+      ChartPlans sample charts
   | _, _, _, _, .nil => .nil
-  | _, _, _, _, .cons head tail => .cons (Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement.ChartPlan.build _
-    head sample) (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans.build sample tail)
+  | _, _, _, _, .cons head tail => .cons (StageChartReplacement.ChartPlan.build _
+    head sample) (ChartPlans.build sample tail)
 
 /-- Take the maximum reading stage of the original plans and the supplied floor. -/
 @[expose] def maximum : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-  {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+  {covers : UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    {charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target requests} →
-      Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans sample charts → Nat
+    {charts : ChartRequests target requests} →
+      ChartPlans sample charts → Nat
   | _, _, _, _, _, .nil => minimum
   | _, _, _, _, _, .cons head tail => max head.stage tail.maximum
 
 /-- Evaluate the original proper parents once at the common stage and return their exact dependent chart replacements.
 -/
 @[expose] def evaluate : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-  {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+  {covers : UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    {charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartRequests target requests} → (plans :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans sample charts) →
+    {charts : ChartRequests target requests} → (plans :
+      ChartPlans sample charts) →
       Integration.PreparedDyadicRefinements.AllParentsProper parents →
     requests.maximum ≤ index → charts.maximum ≤ index → charts.depthMaximum ≤ depth → plans.maximum ≤ readingIndex →
-    Σ evaluated : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample depth readingIndex
-      requests, Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target evaluated
+    Σ evaluated : SideRequests.SideBank.Evaluations sample depth readingIndex
+      requests, ChartReplacements target evaluated
   | _, _, _, _, _, .nil, _, _, _, _, _ => ⟨.nil, .nil⟩
   | _, _, _, _, _, .cons head tail, proper, later, chartLater, fineLater, readingLater =>
-      let first := Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement.ChartPlan.evaluate head proper.1
+      let first := StageChartReplacement.ChartPlan.evaluate head proper.1
         ((Data.Nat.Order.le_max_left _ _).trans later) ((Data.Nat.Order.le_max_left _ _).trans chartLater)
         ((Data.Nat.Order.le_max_left _ _).trans fineLater) ((Data.Nat.Order.le_max_left _ _).trans readingLater)
-      let rest := Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartPlans.evaluate tail
+      let rest := ChartPlans.evaluate tail
         proper.2 ((Data.Nat.Order.le_max_right _ _).trans later) ((Data.Nat.Order.le_max_right _ _).trans chartLater)
         ((Data.Nat.Order.le_max_right _ _).trans fineLater) ((Data.Nat.Order.le_max_right _ _).trans readingLater)
       ⟨.cons first.1 rest.1, .cons _ first.2 rest.2⟩

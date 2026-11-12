@@ -52,8 +52,8 @@ open Purelib.Polynomial in
 /-- Appending a coefficient multiplies the previous polynomial evaluation by the point and adds that coefficient. -/
 private theorem evalCoeffs_append_singleton (point : Gaussian)
     (coefficients : List Gaussian) (last : Gaussian) :
-    Dense.Basic.DensePolynomial.evalCoeffs point (coefficients ++ [last]) =
-      Dense.Basic.DensePolynomial.evalCoeffs point coefficients * point + last :=
+    evalCoeffs point (coefficients ++ [last]) =
+      evalCoeffs point coefficients * point + last :=
   horner_append_singleton point last coefficients 0
 
 open Purelib.Algebra in
@@ -64,7 +64,7 @@ open Purelib.Polynomial in
 The reversal identifies the standard numerator basis ordering with the dense polynomial's Horner convention. -/
 theorem eval_reverse_ofFn {count : Nat}
     (coefficients : Fin count -> Gaussian) (point : Gaussian) :
-    Dense.Basic.DensePolynomial.evalCoeffs point (List.ofFn coefficients).reverse =
+    evalCoeffs point (List.ofFn coefficients).reverse =
       FiniteSum.Fin.sumFin (fun row => coefficients row * point ^ row.val) := by
   induction count with
   | zero => rfl
@@ -94,7 +94,7 @@ open Purelib.Riemann in
 /-- An evaluation-matrix entry is its retained observation raised to the row index. -/
 @[simp] theorem evaluationMatrix_apply (bank : ObservationBank polynomial count)
     (row column : Fin count) :
-    (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank) row column = bank.pointAt column ^
+    (evaluationMatrix bank) row column = bank.pointAt column ^
       row.val :=
   Matrix.matrixOfFn_apply _ _ _
 
@@ -103,10 +103,10 @@ open Purelib.Riemann in
 open Purelib.Polynomial in
 /-- Multiplying the coefficient vector by the retained matrix computes its actual dense polynomial evaluations. -/
 theorem vectorMatrix_evaluationMatrix (bank : ObservationBank polynomial count)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+    (coefficients : Gaussian.Energy.GaussianVector count)
     (column : Fin count) :
     Matrix.Multiplication.vectorMatrix coefficients
-      (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank) column =
+      (evaluationMatrix bank) column =
       (Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
         (bank.pointAt column) := by
   rw [Matrix.Multiplication.vectorMatrix_apply]
@@ -114,7 +114,7 @@ theorem vectorMatrix_evaluationMatrix (bank : ObservationBank polynomial count)
     _ = FiniteSum.Fin.sumFin (fun row => coefficients row * bank.pointAt column ^ row.val) :=
       FiniteSum.Fin.sumFin_congr (fun row =>
         congrArg (fun value => coefficients row * value)
-          ((Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix_apply bank) row column))
+          ((evaluationMatrix_apply bank) row column))
     _ = _ := (eval_reverse_ofFn coefficients (bank.pointAt column)).symm
 
 open Purelib.Riemann
@@ -123,22 +123,22 @@ open Purelib.Riemann
 Its retained finite root bound separates every coefficient vector through the exact observation readbacks. -/
 theorem evaluationMatrix_leftKernelTrivial (bank : ObservationBank polynomial count) :
     Matrix.Inverse.PivotedScaledInverse.LeftKernelTrivial
-      (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank) := by
+      (evaluationMatrix bank) := by
   intro coefficients kernel
   apply bank.coefficients_zero_of_evaluations_zero coefficients
   intro point member
   rcases bank.exists_pointAt_of_mem member with ⟨column, rfl⟩
-  rw [<- (Readings.PreparedObservationInterpolation.ObservationBank.vectorMatrix_evaluationMatrix bank) coefficients
+  rw [<- (vectorMatrix_evaluationMatrix bank) coefficients
     column]
   exact kernel column
 
 /-- The complete finite scaled inverse of the retained observation matrix has nonzero scalar. -/
 theorem evaluationMatrix_inverseScalar_nonzero (bank : ObservationBank polynomial count) :
     (Matrix.Inverse.PivotedScaledInverse.completeScaledInverse
-      (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank)).scalar ≠ 0 :=
+      (evaluationMatrix bank)).scalar ≠ 0 :=
   Matrix.Inverse.PivotedScaledInverse.completeScaledInverse_scalar_nonzero_of_leftKernelTrivial
-    (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank)
-      (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix_leftKernelTrivial bank)
+    (evaluationMatrix bank)
+      (evaluationMatrix_leftKernelTrivial bank)
 
 end ObservationBank
 
@@ -153,7 +153,7 @@ structure ObservationInterpolation (polynomial : GaussianPolynomial) (count : Na
     polynomial count
   /-- The cached monomial evaluation matrix. -/ matrix : Matrix Gaussian count
   /-- The matrix cache equals evaluation at the exact retained observation bank. -/ matrix_eq : matrix =
-    (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank)
+    (ObservationBank.evaluationMatrix bank)
   /-- The retained scaled inverse with both matrix identities. -/ inverse :
     Matrix.Inverse.Scaled.Basic.ScaledInverse matrix
   /-- The retained inverse scalar is nonzero. -/ scalar_nonzero : inverse.scalar ≠ 0
@@ -169,10 +169,10 @@ open Purelib.Riemann in
 def ofBank (bank : ObservationBank polynomial count) :
     ObservationInterpolation polynomial count :=
   let computed := Matrix.Inverse.ExactPivotInverse.invert
-    (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank)
-    (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix_leftKernelTrivial bank)
+    (ObservationBank.evaluationMatrix bank)
+    (ObservationBank.evaluationMatrix_leftKernelTrivial bank)
   { bank := bank
-    matrix := (Readings.PreparedObservationInterpolation.ObservationBank.evaluationMatrix bank)
+    matrix := (ObservationBank.evaluationMatrix bank)
     matrix_eq := rfl
     inverse := computed.inverse
     scalar_nonzero := computed.scalar_nonzero }
@@ -186,7 +186,7 @@ open Purelib.Polynomial in
 The reconstruction uses the cached evaluation matrix and right scaled-inverse identity with the original coefficient
 polynomial. -/
 theorem reconstruct (interpolation : ObservationInterpolation polynomial count)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) (row : Fin count) :
+    (coefficients : Gaussian.Energy.GaussianVector count) (row : Fin count) :
     FiniteSum.Fin.sumFin (fun column =>
       (Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
           (interpolation.bank.pointAt column) * interpolation.inverse.inverse column row) =
@@ -207,7 +207,7 @@ theorem reconstruct (interpolation : ObservationInterpolation polynomial count)
       have evaluation :=
         (congrArg (fun matrix => Matrix.Multiplication.vectorMatrix coefficients matrix column)
           interpolation.matrix_eq).trans
-            ((Readings.PreparedObservationInterpolation.ObservationBank.vectorMatrix_evaluationMatrix
+            ((ObservationBank.vectorMatrix_evaluationMatrix
               interpolation.bank) coefficients column)
       exact congrArg (fun value => value * interpolation.inverse.inverse column row)
         evaluation.symm
@@ -223,6 +223,6 @@ The data are independent of a later coefficient-vector request and retain the cu
 def curveObservationInterpolation {genus : Nat}
     (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
     ObservationInterpolation curve.polynomial genus :=
-  ObservationInterpolation.ofBank (Readings.PreparedObservationPoints.curveObservations curve)
+  ObservationInterpolation.ofBank (PreparedObservationPoints.curveObservations curve)
 
 end Purelib.Riemann.Readings.PreparedObservationInterpolation

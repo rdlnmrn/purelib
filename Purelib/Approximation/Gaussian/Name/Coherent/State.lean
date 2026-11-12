@@ -71,7 +71,7 @@ set_option genInjectivity false in
 /-- One coherent coefficient at one explicitly displayed finite process state. The state is dependent on the coefficient
 channel and is stored with it rather than selected from a completed value. -/
 structure CoefficientState where
-  /-- The original coherent Gaussian coefficient channel. -/ channel : Coherent.CoherentNamed
+  /-- The original coherent Gaussian coefficient channel. -/ channel : CoherentNamed
   /-- The retained process state belonging to this exact coefficient channel. -/ state : channel.name.process.State
 
 constructive_injectivity CoefficientState
@@ -103,7 +103,7 @@ namespace CoefficientState
 
 /-- The coherence allowance at the coefficient's retained dependent process state. -/
 def allowance (entry :
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState) : Fraction.Rational :=
+  CoefficientState) : Fraction.Rational :=
   entry.channel.coherent.allowance entry.state
 end CoefficientState
 
@@ -134,7 +134,7 @@ namespace CoefficientState
 
 /-- The coefficient's retained coherence allowance is nonnegative. -/
 theorem allowance_nonneg (entry :
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState) :
+  CoefficientState) :
     0 ≤ entry.allowance :=
   entry.channel.coherent.allowance_nonneg entry.state
 end CoefficientState
@@ -166,8 +166,8 @@ namespace CoefficientState
 
 /-- Refine one coefficient state by one displayed positive rational request. -/
 def refine (entry :
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState) (request : Fraction.Rational)
-    (positive : 0 < request) : Approximation.Gaussian.Name.Coherent.State.CoefficientState :=
+  CoefficientState) (request : Fraction.Rational)
+    (positive : 0 < request) : CoefficientState :=
   { channel := entry.channel
     state := entry.channel.name.process.refine entry.state request positive }
 end CoefficientState
@@ -199,7 +199,7 @@ namespace CoefficientState
 
 /-- Refining a coefficient state preserves its original coherent channel. -/
 @[simp] theorem refine_channel (entry :
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState)
+  CoefficientState)
     (request : Fraction.Rational) (positive : 0 < request) :
     (entry.refine request positive).channel = entry.channel := rfl
 end CoefficientState
@@ -231,7 +231,7 @@ namespace CoefficientState
 
 /-- The process's constructive witness at this finite state. -/
 def value (entry :
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState) : Data.Gaussian.Basic.Canonical :=
+  CoefficientState) : Basic.Canonical :=
   (entry.channel.name.process.witness entry.state).val
 end CoefficientState
 
@@ -261,7 +261,7 @@ namespace CoefficientState
 
 /-- The displayed coefficient witness is possible at its retained process state. -/
 theorem value_possible (entry :
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState) :
+  CoefficientState) :
     entry.channel.name.process.Possible entry.state entry.value :=
   (entry.channel.name.process.witness entry.state).property
 end CoefficientState
@@ -293,7 +293,7 @@ namespace CoefficientState
 
 /-- The witness produced after coefficient refinement remains possible at the preceding state. -/
 theorem refine_value_possible_before (entry :
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState)
+  CoefficientState)
     (request : Fraction.Rational) (positive : 0 < request) :
     entry.channel.name.process.Possible entry.state
       (entry.refine request positive).value :=
@@ -345,7 +345,7 @@ namespace Purelib.Approximation.Gaussian.Name.Coherent.State.ExplicitLegendreFra
 
 /-- The exact coherent coefficient-state type, retaining the original channel and its dependent process state. -/
 abbrev CoefficientState :=
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState
+  State.CoefficientState
 end Purelib.Approximation.Gaussian.Name.Coherent.State.ExplicitLegendreFrame
 
 end
@@ -367,7 +367,7 @@ namespace Purelib.Approximation.Gaussian.Name.Coherent.State.ExplicitLegendreSeg
 
 /-- The exact coherent coefficient-state type, retaining the original channel and its dependent process state. -/
 abbrev CoefficientState :=
-  Approximation.Gaussian.Name.Coherent.State.CoefficientState
+  State.CoefficientState
 end Purelib.Approximation.Gaussian.Name.Coherent.State.ExplicitLegendreSegment
 
 end

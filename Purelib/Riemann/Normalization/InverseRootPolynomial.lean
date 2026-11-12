@@ -19,6 +19,8 @@ public import Purelib.Polynomial.Dense.Multiplication
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -46,7 +48,7 @@ end
 
 open Purelib.Polynomial in
 /-- The dense Gaussian polynomial type used by the inverse-root cache. -/
-abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+abbrev Polynomial := Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 open Purelib.Geometry in
 /-- The rational coordinate box on which the inverse-root cache is certified. -/
 abbrev Box := Rational.Box
@@ -77,70 +79,70 @@ open Purelib.Data
 The retained input residual equals one minus the parameter times the value squared. -/
 theorem correction_residual (parameter value residual : Gaussian.Basic.Canonical)
     (residual_eq : residual = 1 - parameter * value ^ 2) :
-    1 - parameter * Normalization.InverseRootPolynomial.correction value residual ^ 2 =
-      Normalization.InverseRootPolynomial.residualStep residual := by
+    1 - parameter * correction value residual ^ 2 =
+      residualStep residual := by
   have twice : (2 : Gaussian.Basic.Canonical) * half = 1 := by decide
   have squared : (4 : Gaussian.Basic.Canonical) * half ^ 2 = 1 := by decide
   calc
-    _ = Normalization.InverseRootPolynomial.residualStep residual + residual * (1 - 2 * half) +
+    _ = residualStep residual + residual * (1 - 2 * half) +
         residual ^ 2 * (2 * half - 4 * half ^ 2) := by
       rw [residual_eq]
-      unfold Normalization.InverseRootPolynomial.correction Normalization.InverseRootPolynomial.residualStep
+      unfold correction residualStep
       ring1
-    _ = Normalization.InverseRootPolynomial.residualStep residual := by rw [twice, squared]; ring1
+    _ = residualStep residual := by rw [twice, squared]; ring1
 
 /-- A square residual of quadrance at most one sixteenth contracts by a factor of at least four.
 
 The estimate applies to the exact finite polynomial residual update. -/
 theorem residualStep_contracts {residual : Gaussian.Basic.Canonical}
-    (small : Gaussian.Basic.Canonical.normSq residual <= 1 / 16) :
-    Gaussian.Basic.Canonical.normSq (Normalization.InverseRootPolynomial.residualStep residual) <=
-      Gaussian.Basic.Canonical.normSq residual / 4 := by
-  have residualNonnegative := Gaussian.Basic.Canonical.normSq_nonneg residual
-  have residualLeOne : Gaussian.Basic.Canonical.normSq residual <= 1 := small.trans (by decide)
-  have factorBound : Gaussian.Basic.Canonical.normSq ((3 : Gaussian.Basic.Canonical) + residual) <= 20 := by
+    (small : normSq residual <= 1 / 16) :
+    normSq (residualStep residual) <=
+      normSq residual / 4 := by
+  have residualNonnegative := normSq_nonneg residual
+  have residualLeOne : normSq residual <= 1 := small.trans (by decide)
+  have factorBound : normSq ((3 : Gaussian.Basic.Canonical) + residual) <= 20 := by
     calc
-      _ <= 2 * (Gaussian.Basic.Canonical.normSq (3 : Gaussian.Basic.Canonical) + Gaussian.Basic.Canonical.normSq
+      _ <= 2 * (normSq (3 : Gaussian.Basic.Canonical) + normSq
         residual) := by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
           Gaussian.Norm.Bounds.normSq_add_le_two _ _
-      _ <= 2 * (9 + 1) := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      _ <= 2 * (9 + 1) := Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add (le_of_eq (by decide)) residualLeOne) (by decide)
       _ = 20 := by decide
-  have scaledSmall : Gaussian.Basic.Canonical.normSq residual * 16 <= 1 :=
-    (Rat.Fraction.Order.Field.le_div_iff_pos (by decide : (0 : Rat.Fraction.Rational) < 16)).1 small
-  have numeratorBound : Gaussian.Basic.Canonical.normSq residual ^ 2 * 20 <= Gaussian.Basic.Canonical.normSq residual *
+  have scaledSmall : normSq residual * 16 <= 1 :=
+    (Field.le_div_iff_pos (by decide : (0 : Rat.Fraction.Rational) < 16)).1 small
+  have numeratorBound : normSq residual ^ 2 * 20 <= normSq residual *
     4 := by
     calc
-      _ <= Gaussian.Basic.Canonical.normSq residual ^ 2 * 64 :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (show (20 : Rat.Fraction.Rational) <= 64 by decide +kernel) (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      _ = (Gaussian.Basic.Canonical.normSq residual * 16) * (Gaussian.Basic.Canonical.normSq residual * 4) := by ring1
-      _ <= 1 * (Gaussian.Basic.Canonical.normSq residual * 4) :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        scaledSmall (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct residualNonnegative (by decide))
-      _ = Gaussian.Basic.Canonical.normSq residual * 4 := Rat.Fraction.Field.one_mul _
+      _ <= normSq residual ^ 2 * 64 :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (show (20 : Rat.Fraction.Rational) <= 64 by decide +kernel) (Arithmetic.sq_nonneg_direct _)
+      _ = (normSq residual * 16) * (normSq residual * 4) := by ring1
+      _ <= 1 * (normSq residual * 4) :=
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+        scaledSmall (Arithmetic.mul_nonneg_direct residualNonnegative (by decide))
+      _ = normSq residual * 4 := Rat.Fraction.Field.one_mul _
   calc
-    Gaussian.Basic.Canonical.normSq (Normalization.InverseRootPolynomial.residualStep residual) =
-      Gaussian.Basic.Canonical.normSq residual ^ 2 * Gaussian.Basic.Canonical.normSq (3 + residual) * (1 / 16) := by
-      unfold Normalization.InverseRootPolynomial.residualStep
+    normSq (residualStep residual) =
+      normSq residual ^ 2 * normSq (3 + residual) * (1 / 16) := by
+      unfold residualStep
       rw [pow_two residual, pow_two half,
-        Gaussian.Basic.Canonical.normSq_mul, Gaussian.Basic.Canonical.normSq_mul,
-        Gaussian.Basic.Canonical.normSq_mul, Gaussian.Basic.Canonical.normSq_mul]
-      have halfNorm : Gaussian.Basic.Canonical.normSq half = (1 / 4 : Rat.Fraction.Rational) := by decide
+        normSq_mul, normSq_mul,
+        normSq_mul, normSq_mul]
+      have halfNorm : normSq half = (1 / 4 : Rat.Fraction.Rational) := by decide
       rw [halfNorm]
       rw [show (1 / 4 : Rat.Fraction.Rational) * (1 / 4) = 1 / 16 by decide]
       ring1
-    _ <= Gaussian.Basic.Canonical.normSq residual ^ 2 * 20 * (1 / 16) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct factorBound
-          (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _)) (by decide)
-    _ <= (Gaussian.Basic.Canonical.normSq residual * 4) * (1 / 16) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorBound (by decide)
-    _ = Gaussian.Basic.Canonical.normSq residual * (4 * (1 / 16)) := by ring1
-    _ = Gaussian.Basic.Canonical.normSq residual * (1 / 4) := by rw [show (4 : Rat.Fraction.Rational) * (1 / 16) = 1 / 4
+    _ <= normSq residual ^ 2 * 20 * (1 / 16) :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct factorBound
+          (Arithmetic.sq_nonneg_direct _)) (by decide)
+    _ <= (normSq residual * 4) * (1 / 16) :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorBound (by decide)
+    _ = normSq residual * (4 * (1 / 16)) := by ring1
+    _ = normSq residual * (1 / 4) := by rw [show (4 : Rat.Fraction.Rational) * (1 / 16) = 1 / 4
       by decide]
-    _ = Gaussian.Basic.Canonical.normSq residual / 4 := by
+    _ = normSq residual / 4 := by
       rewrite [Rat.Fraction.Field.div_eq_mul_inv_direct, Rat.Fraction.Field.one_mul]
       exact Eq.refl _
 
@@ -161,7 +163,7 @@ structure Model (polynomial : Polynomial) (box : Box) where
   /-- The retained quadrance bound is nonnegative. -/ bound_nonnegative : 0 <= bound
   /-- The retained bound is at most one sixteenth. -/ bound_small : bound <= 1 / 16
   /-- Every point in the box satisfies the retained residual quadrance bound. -/ residualBound : forall point,
-    box.Contains point -> Gaussian.Basic.Canonical.normSq (residual.eval point) <= bound
+    box.Contains point -> normSq (residual.eval point) <= bound
 
 constructive_injectivity Model
 
@@ -175,21 +177,21 @@ open Purelib.Polynomial in
 
 The supplied pointwise proof bounds the seed's residual quadrance by one sixteenth throughout the same box. -/
 @[expose] def ofSeed (polynomial : Polynomial) (box : Box) (seed : Gaussian.Basic.Canonical)
-    (small : forall point, box.Contains point -> Gaussian.Basic.Canonical.normSq (1 - polynomial.eval point * seed ^ 2)
+    (small : forall point, box.Contains point -> normSq (1 - polynomial.eval point * seed ^ 2)
       <= 1 / 16) :
     Model polynomial box where
-  value := Dense.Basic.DensePolynomial.constant seed
-  residual := Dense.Basic.DensePolynomial.constant 1 - polynomial * Dense.Basic.DensePolynomial.constant (seed ^ 2)
+  value := constant seed
+  residual := constant 1 - polynomial * constant (seed ^ 2)
   residual_eq := fun point => by
-    rw [Dense.Basic.DensePolynomial.eval_sub, Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Basic.DensePolynomial.eval_constant, Dense.Basic.DensePolynomial.eval_constant,
-      Dense.Basic.DensePolynomial.eval_constant]
+    rw [eval_sub, eval_mul,
+      eval_constant, eval_constant,
+      eval_constant]
   bound := 1 / 16
   bound_nonnegative := by decide
   bound_small := le_rfl
   residualBound := fun point inside => by
-    simpa only [Dense.Basic.DensePolynomial.eval_sub, Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Basic.DensePolynomial.eval_constant] using small point inside
+    simpa only [eval_sub, eval_mul,
+      eval_constant] using small point inside
 
 open Purelib.Riemann in
 open Purelib.Data in
@@ -199,41 +201,41 @@ open Purelib.Polynomial in
 Consume the retained residual directly in both updates, preserve its exact equation, and divide the uniform bound by
 four. -/
 @[expose] def step (model : Model polynomial box) : Model polynomial box :=
-  { value := model.value * (Dense.Basic.DensePolynomial.constant 1 + model.residual.scale half)
-    residual := (model.residual * model.residual * (Dense.Basic.DensePolynomial.constant 3 + model.residual)).scale
+  { value := model.value * (constant 1 + model.residual.scale half)
+    residual := (model.residual * model.residual * (constant 3 + model.residual)).scale
       (half ^ 2)
     residual_eq := fun point => by
-      simp only [Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_add,
-        Dense.Basic.DensePolynomial.eval_constant, Dense.Basic.DensePolynomial.eval_scale]
-      have identity := Normalization.InverseRootPolynomial.correction_residual (polynomial.eval point) (model.value.eval
+      simp only [eval_mul, eval_add,
+        eval_constant, eval_scale]
+      have identity := correction_residual (polynomial.eval point) (model.value.eval
         point)
         (model.residual.eval point) (model.residual_eq point)
-      unfold Normalization.InverseRootPolynomial.correction Normalization.InverseRootPolynomial.residualStep at identity
+      unfold correction residualStep at identity
       exact (by ring1 : half ^ 2 *
           (model.residual.eval point * model.residual.eval point * (3 + model.residual.eval point)) =
         model.residual.eval point ^ 2 * (3 + model.residual.eval point) * half ^ 2).trans identity.symm
     bound := model.bound / 4
-    bound_nonnegative := Rat.Fraction.Order.Field.div_nonneg_direct model.bound_nonnegative (by decide)
+    bound_nonnegative := Field.div_nonneg_direct model.bound_nonnegative (by decide)
     bound_small := by
-      have divided := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
+      have divided := Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
         (by decide : (0 : Rat.Fraction.Rational) <= (4 : Rat.Fraction.Rational)⁻¹)
       have small : model.bound / 4 <= (1 / 16 : Rat.Fraction.Rational) / 4 := by
         simpa only [Rat.Fraction.Field.div_eq_mul_inv_direct] using divided
       exact small.trans (by decide)
     residualBound := fun point inside => by
       have initial := model.residualBound point inside
-      have contracted := Normalization.InverseRootPolynomial.residualStep_contracts (initial.trans model.bound_small)
-      have divided := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct initial
+      have contracted := residualStep_contracts (initial.trans model.bound_small)
+      have divided := Arithmetic.mul_le_mul_of_nonneg_right_direct initial
         (by decide : (0 : Rat.Fraction.Rational) <= (4 : Rat.Fraction.Rational)⁻¹)
-      have comparison : Gaussian.Basic.Canonical.normSq (model.residual.eval point) / 4 <= model.bound / 4 := by
+      have comparison : normSq (model.residual.eval point) / 4 <= model.bound / 4 := by
         simpa only [Rat.Fraction.Field.div_eq_mul_inv_direct] using divided
       have evaluation :
-          ((model.residual * model.residual * (Dense.Basic.DensePolynomial.constant 3 + model.residual)).scale (half ^
+          ((model.residual * model.residual * (constant 3 + model.residual)).scale (half ^
             2)).eval point =
-            Normalization.InverseRootPolynomial.residualStep (model.residual.eval point) := by
-        simp only [Dense.Basic.DensePolynomial.eval_scale, Dense.Basic.DensePolynomial.eval_mul,
-          Dense.Basic.DensePolynomial.eval_add, Dense.Basic.DensePolynomial.eval_constant,
-          Normalization.InverseRootPolynomial.residualStep]
+            residualStep (model.residual.eval point) := by
+        simp only [eval_scale, eval_mul,
+          eval_add, eval_constant,
+          residualStep]
         ring1
       rw [evaluation]
       exact contracted.trans comparison }
@@ -246,6 +248,15 @@ four. -/
   | 0 => model
   | index + 1 => (refine model index).step
 
+/-- Two finite refinements read the same original model at the sum of their actual indices. -/
+theorem refine_add (model : Model polynomial box) (first last : Nat) :
+    (model.refine first).refine last = model.refine (first + last) := by
+  induction last with
+  | zero => rfl
+  | succ last ih =>
+      change ((model.refine first).refine last).step = (model.refine (first + last)).step
+      exact congrArg Model.step ih
+
 open Purelib.Riemann in
 open Purelib.Approximation in
 open Purelib.Data in
@@ -254,11 +265,11 @@ theorem refine_bound (model : Model polynomial box) (index : Nat) :
     (model.refine index).bound = Rational.Geometric.Basic.quarterRadius model.bound index := by
   induction index with
   | zero =>
-      rw [Normalization.InverseRootPolynomial.Model.refine,
+      rw [refine,
         Rational.Geometric.Basic.quarterRadius_eq_mul_pow, pow_zero,
         Rat.Fraction.Field.mul_one_direct]
   | succ index inductionHypothesis =>
-      rw [Normalization.InverseRootPolynomial.Model.refine, Normalization.InverseRootPolynomial.Model.step_bound,
+      rw [refine, step_bound,
         inductionHypothesis]
       simp only [Rational.Geometric.Basic.quarterRadius_eq_mul_pow, pow_succ,
         Rat.Fraction.Field.div_eq_mul_inv_direct, Rat.Fraction.Field.one_mul]
@@ -271,7 +282,7 @@ open Purelib.Data in
 The evaluated error uses the same retained source polynomial and refined value cache. -/
 theorem refine_residualBound (model : Model polynomial box) (index : Nat)
     (point : Gaussian.Basic.Canonical) (inside : box.Contains point) :
-    Gaussian.Basic.Canonical.normSq (1 - polynomial.eval point * ((model.refine index).value.eval point) ^ 2) <=
+    normSq (1 - polynomial.eval point * ((model.refine index).value.eval point) ^ 2) <=
       Rational.Geometric.Basic.quarterRadius model.bound index := by
   rw [<- (model.refine index).residual_eq, <- model.refine_bound]
   exact (model.refine index).residualBound point inside
@@ -289,9 +300,9 @@ theorem refine_eval_eq {polynomial : Polynomial} {leftBox rightBox : Box}
   induction index with
   | zero => exact equal
   | succ index ih =>
-      simp only [Model.refine, Model.step, DensePolynomial.eval_mul,
-        DensePolynomial.eval_add, DensePolynomial.eval_constant,
-        DensePolynomial.eval_scale, Model.residual_eq, ih, -eq_self]
+      simp only [refine, step, eval_mul,
+        eval_add, eval_constant,
+        eval_scale, Model.residual_eq, ih, -eq_self]
       rfl
 
 end Model

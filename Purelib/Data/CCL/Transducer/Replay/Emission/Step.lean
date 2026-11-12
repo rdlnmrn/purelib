@@ -21,6 +21,9 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Gaussian.Norm.Basic
 
+open Purelib.CCL.Progressive.IntegrationReplay
+open Purelib.Data.Gaussian.Basic.Canonical.Norm
+
 section
 @[expose] public section
 
@@ -48,9 +51,9 @@ open Purelib.Data.ComplexContinuedFraction.Encoding in
 /-- Retain a zero-count residual replay cursor translated by the selected sector representative and its exact residual
 upper bound. -/
 def sectorNext (control :
-  CCL.Progressive.IntegrationReplay.Control) (cursor : Approximation.Gaussian.Process.Recipe.Cursor) (ball :
+  Control) (cursor : Process.Recipe.Cursor) (ball :
   Enclosure.Ball.Data.BallData)
-    (sector : Data.ComplexContinuedFraction.Encoding.Sector) : Data.CCL.Transducer.Replay.Mode :=
+    (sector : Sector) : Mode :=
   .residual (cursor.translated control sector.rep) 0 (Enclosure.Ball.Data.Bounds.residualUpper sector ball)
 
 section
@@ -58,16 +61,16 @@ open Purelib.Data.Gaussian
 /-- Retain the supplied regular kind and count at the inverse-gamma-scaled cursor with the ball's exact unary
 lower-bound data. -/
 def unaryNext (control :
-  CCL.Progressive.IntegrationReplay.Control) (cursor : Approximation.Gaussian.Process.Recipe.Cursor) (ball :
+  Control) (cursor : Process.Recipe.Cursor) (ball :
   Enclosure.Ball.Data.BallData)
-    (kind : Mode.Basic.RegularKind) (count : Nat) : Data.CCL.Transducer.Replay.Mode :=
+    (kind : Mode.Basic.RegularKind) (count : Nat) : Mode :=
   .loop kind count (cursor.scaled control Basic.Canonical.gamma⁻¹) (.ofLower (Enclosure.Ball.Data.Bounds.unaryLower
     ball))
 
 /-- Retain the supplied low count at the exact cursor scaled by the first gamma power. -/
 def lowNext (control :
-  CCL.Progressive.IntegrationReplay.Control) (cursor : Approximation.Gaussian.Process.Recipe.Cursor) (count : Nat) :
-      Data.CCL.Transducer.Replay.Mode :=
+  Control) (cursor : Process.Recipe.Cursor) (count : Nat) :
+      Mode :=
   .low count (cursor.scaled control (Power.natPow Basic.Canonical.gamma 1))
 
 end
@@ -80,13 +83,13 @@ open Purelib.Data.Gaussian
 Below one, emit the low-entry pair; in the closed one-to-13/6 band, emit the selected sector chunk. Above that band,
 emit one true bit and retain the initial-high unary successor. -/
 def initialAfter (control :
-  CCL.Progressive.IntegrationReplay.Control) (cursor : Approximation.Gaussian.Process.Recipe.Cursor) (ball :
-  Enclosure.Ball.Data.BallData) : Data.CCL.Transducer.Replay.Emission :=
-  letI := Basic.Canonical.Norm.Comparison.decidableLENormSq 1 ball.center
-  letI := Basic.Canonical.Norm.Comparison.decidableNormSqLE ball.center (13 / 6)
-  if 1 ≤ Data.Gaussian.Norm.Basic.normSq ball.center then
-    if Data.Gaussian.Norm.Basic.normSq ball.center ≤ 13 / 6 then
-      let sector := Data.ComplexContinuedFraction.Encoding.Sector.select ball.center
+  Control) (cursor : Process.Recipe.Cursor) (ball :
+  Enclosure.Ball.Data.BallData) : Emission :=
+  letI := Comparison.decidableLENormSq 1 ball.center
+  letI := Comparison.decidableNormSqLE ball.center (13 / 6)
+  if 1 ≤ Norm.Basic.normSq ball.center then
+    if Norm.Basic.normSq ball.center ≤ 13 / 6 then
+      let sector := Sector.select ball.center
       ⟨false :: false :: sector.code, sectorNext control cursor ball sector⟩
     else ⟨[true], unaryNext control cursor ball .initialHigh 1⟩
   else ⟨[false, true], lowNext control cursor 1⟩
@@ -96,15 +99,15 @@ def initialAfter (control :
 A center below unit squared norm emits a unary bit at the successor count. A normalized center strictly below 13/6 emits
 its selected sector; otherwise failure keeps the same cursor and offending ball. -/
 def lowAfter (control :
-  CCL.Progressive.IntegrationReplay.Control) (count : Nat) (cursor : Approximation.Gaussian.Process.Recipe.Cursor) (ball
+  Control) (count : Nat) (cursor : Process.Recipe.Cursor) (ball
       :
   Enclosure.Ball.Data.BallData) :
-    Except Data.CCL.Transducer.Replay.Failure Data.CCL.Transducer.Replay.Emission :=
-  letI := Basic.Canonical.Norm.Comparison.decidableLENormSq 1 ball.center
-  letI := Basic.Canonical.Norm.Comparison.decidableNormSqLT ball.center (13 / 6)
-  if 1 ≤ Data.Gaussian.Norm.Basic.normSq ball.center then
-    if below : Data.Gaussian.Norm.Basic.normSq ball.center < 13 / 6 then
-      let sector := Data.ComplexContinuedFraction.Encoding.Sector.select ball.center
+    Except Failure Emission :=
+  letI := Comparison.decidableLENormSq 1 ball.center
+  letI := Comparison.decidableNormSqLT ball.center (13 / 6)
+  if 1 ≤ Norm.Basic.normSq ball.center then
+    if below : Norm.Basic.normSq ball.center < 13 / 6 then
+      let sector := Sector.select ball.center
       .ok ⟨false :: sector.code, sectorNext control cursor ball sector⟩
     else .error (.lowOvershoot cursor ball below)
   else .ok ⟨[true], lowNext control cursor (count + 1)⟩
@@ -114,13 +117,13 @@ end
 open Purelib.Data.Gaussian in
 /-- A failed low replay decision retains the same cursor and ball with the violated strict 13/6 center bound. -/
 theorem lowAfter_error {control :
-  CCL.Progressive.IntegrationReplay.Control} {count : Nat} {cursor : Approximation.Gaussian.Process.Recipe.Cursor} {ball
+  Control} {count : Nat} {cursor : Process.Recipe.Cursor} {ball
       :
   Enclosure.Ball.Data.BallData}
-    {error : Data.CCL.Transducer.Replay.Failure} (failure : lowAfter control count cursor ball =
+    {error : Failure} (failure : lowAfter control count cursor ball =
       .error error)
       :
-    ∃ violated : ¬ Data.Gaussian.Norm.Basic.normSq ball.center < 13 / 6, error = .lowOvershoot cursor ball violated :=
+    ∃ violated : ¬ Norm.Basic.normSq ball.center < 13 / 6, error = .lowOvershoot cursor ball violated :=
       by
   unfold lowAfter at failure
   split at failure
@@ -138,14 +141,14 @@ open Purelib.Data.Gaussian in
 A normalized center in the closed band through 13/6 emits the selected sector; a larger center emits a unary bit at the
 successor count. Failure retains the same cursor and ball lacking the unit lower bound. -/
 def loopAfter (control :
-  CCL.Progressive.IntegrationReplay.Control) (kind : Mode.Basic.RegularKind) (count : Nat) (cursor :
-  Approximation.Gaussian.Process.Recipe.Cursor) (ball : Enclosure.Ball.Data.BallData) :
-    Except Data.CCL.Transducer.Replay.Failure Data.CCL.Transducer.Replay.Emission :=
-  letI := Basic.Canonical.Norm.Comparison.decidableLENormSq 1 ball.center
-  letI := Basic.Canonical.Norm.Comparison.decidableNormSqLE ball.center (13 / 6)
-  if normalized : 1 ≤ Data.Gaussian.Norm.Basic.normSq ball.center then
-    if Data.Gaussian.Norm.Basic.normSq ball.center ≤ 13 / 6 then
-      let sector := Data.ComplexContinuedFraction.Encoding.Sector.select ball.center
+  Control) (kind : Mode.Basic.RegularKind) (count : Nat) (cursor :
+  Process.Recipe.Cursor) (ball : Enclosure.Ball.Data.BallData) :
+    Except Failure Emission :=
+  letI := Comparison.decidableLENormSq 1 ball.center
+  letI := Comparison.decidableNormSqLE ball.center (13 / 6)
+  if normalized : 1 ≤ Norm.Basic.normSq ball.center then
+    if Norm.Basic.normSq ball.center ≤ 13 / 6 then
+      let sector := Sector.select ball.center
       .ok ⟨false :: sector.code, sectorNext control cursor ball sector⟩
     else .ok ⟨[true], unaryNext control cursor ball kind (count + 1)⟩
   else .error (.unnormalized cursor ball normalized)
@@ -153,12 +156,12 @@ def loopAfter (control :
 open Purelib.Data.Gaussian in
 /-- A failed regular replay decision retains the same cursor and ball with the violated unit center lower bound. -/
 theorem loopAfter_error {control :
-  CCL.Progressive.IntegrationReplay.Control} {kind : Mode.Basic.RegularKind} {count : Nat} {cursor :
-  Approximation.Gaussian.Process.Recipe.Cursor} {ball : Enclosure.Ball.Data.BallData}
-    {error : Data.CCL.Transducer.Replay.Failure} (failure : loopAfter control kind count cursor
+  Control} {kind : Mode.Basic.RegularKind} {count : Nat} {cursor :
+  Process.Recipe.Cursor} {ball : Enclosure.Ball.Data.BallData}
+    {error : Failure} (failure : loopAfter control kind count cursor
       ball = .error
       error) :
-    ∃ violated : ¬ 1 ≤ Data.Gaussian.Norm.Basic.normSq ball.center, error = .unnormalized cursor ball violated := by
+    ∃ violated : ¬ 1 ≤ Norm.Basic.normSq ball.center, error = .unnormalized cursor ball violated := by
   unfold loopAfter at failure
   split at failure
   · split at failure <;> cases failure

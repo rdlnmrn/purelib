@@ -98,55 +98,55 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparis
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
     {ambient : Rational.Box}
 
 /-- Read the original ordered and oriented triangle-edge occurrences from the retained segment assignment. -/
-@[expose] def sourceEdges : ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath
+@[expose] def sourceEdges : ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath
   curve.polynomial ambient start finish}
     {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
       Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
       Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared},
-    Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces → List
+    PreparedFaceSegments.AssignedSegments mesh pieces → List
       (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge mesh.triangles.length)
   | _, _, _, _, _, _, .nil _ _ => []
   | _, _, _, _, _, _, .cons placement remaining => placement.location.sourceEdge ::
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges remaining
+    AssignedSegments.sourceEdges remaining
 
 /-- Projecting the retained triangle-edge occurrences gives the exact original assigned edge list. -/
-theorem sourceEdges_project : ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath
+theorem sourceEdges_project : ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath
   curve.polynomial ambient start finish}
     {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
       Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
       Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-    (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces),
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned).map (fun source =>
+    (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
+    (AssignedSegments.sourceEdges assigned).map (fun source =>
       source.project mesh.triangulation.faces) = assigned.indexed
   | _, _, _, _, _, _, .nil _ _ => rfl
   | _, _, _, _, _, _, .cons placement remaining =>
       congrArg₂ List.cons placement.location.sourceEdge_project
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges_project
+        (AssignedSegments.sourceEdges_project
         remaining)
 
 /-- The original triangle-edge readings equal the retained corner increments entry by entry. -/
-theorem sourceEdges_increments {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-  faces.regulars} {differential : Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat}
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-      (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+theorem sourceEdges_increments {domains : Face.DomainBanks.FaceDomainBank frames
+  faces.regulars} {differential : Differentials.Basic.Differential genus} {index : Nat}
+    {shared : Face.PrimitiveData.FacePrimitiveBank differential index domains}
+      (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
         Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces),
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned).map (fun source
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
+      (AssignedSegments.sourceEdges assigned).map (fun source
         => source.increment readings.values) =
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned
+        CornerRequests.AssignedSegments.cornerIncrements shared assigned
   | _, _, _, _, _, _, .nil _ _ => rfl
   | _, _, _, _, _, _, .cons placement remaining =>
       congrArg₂ List.cons (readings.route_increment placement.location)
@@ -159,36 +159,36 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparis
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted source}
-  {bank : Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank prepared} {differential : Fin genus} {comparison :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential}
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus} {prepared :
+    CyclePrograms.CutCycleProgram lifted source}
+  {bank : FaceBanks.FaceBank prepared} {differential : Fin genus} {comparison :
+    PeriodPrimitiveComparison.PrimitiveBank bank differential}
   {target : Readings.PreparedPrimitiveChargeBounds.Coordinate} {minimumStage : Nat}
 
 /-- The original whole-period comparison value equals the sum of the retained triangle-edge increments. -/
 theorem value_eq_triangles (result :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+  PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
   minimumStage)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings result.locals.numerics
+    (readings : TrianglePrimitiveReadings.TriangleReadings result.locals.numerics
       lifted.mesh) :
-    result.value = Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      ((Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges bank.assigned).map
+    result.value = Gaussian.Norm.Sum.Basic.gaussianSum
+      ((AssignedSegments.sourceEdges bank.assigned).map
       (fun source => source.increment readings.values)) :=
-  result.value_eq_corners.trans (congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges_increments readings
+  result.value_eq_corners.trans (congrArg Gaussian.Norm.Sum.Basic.gaussianSum
+    (AssignedSegments.sourceEdges_increments readings
       bank.assigned)).symm
 
 set_option genInjectivity false in
 /-- The local triangle bank and sewn values are both retained executable
 data. A caller sharing several periods may reuse the same triangle bank. -/
-structure Sewn (result : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod
+structure Sewn (result : PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod
   comparison target minimumStage) (patch : Topology.Surface.Sewing.SewingTree.SewnPatch lifted.mesh.triangulation.faces)
   where
   /-- The actual original triangle readings of the retained period's numerical primitive bank. -/ triangles :
-    Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings result.locals.numerics lifted.mesh
+    TrianglePrimitiveReadings.TriangleReadings result.locals.numerics lifted.mesh
   /-- The sewn sample constructed from those exact retained triangle values. -/ surface :
     Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample patch triangles.values
 
@@ -196,39 +196,39 @@ constructive_injectivity Sewn
 
 /-- Construct the sewn sample using the supplied original triangle-value bank without reacquiring its readings. -/
 @[expose] def sewWith (result :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+  PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
   minimumStage) (patch : Topology.Surface.Sewing.SewingTree.SewnPatch lifted.mesh.triangulation.faces)
-    (triangles : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings result.locals.numerics
-      lifted.mesh) : Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.Sewn result patch :=
+    (triangles : TrianglePrimitiveReadings.TriangleReadings result.locals.numerics
+      lifted.mesh) : Sewn result patch :=
   ⟨triangles, Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample.build patch triangles.values⟩
 
 /-- Acquire the original triangle-value bank once and retain it in the sewn sample. -/
 @[expose] def sew (result :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+  PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
   minimumStage) (patch : Topology.Surface.Sewing.SewingTree.SewnPatch lifted.mesh.triangulation.faces) :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.Sewn result patch :=
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.sewWith result patch
-    (Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings.build result.locals.numerics
+  Sewn result patch :=
+  RequestedPeriod.sewWith result patch
+    (TrianglePrimitiveReadings.TriangleReadings.build result.locals.numerics
     lifted.mesh)
 
 namespace Sewn
 
-variable {result : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod
+variable {result : PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod
   comparison target minimumStage} {patch : Topology.Surface.Sewing.SewingTree.SewnPatch lifted.mesh.triangulation.faces}
 
 /-- The retained triangle-edge sum approximates the original scheduled period-program sample within its target. -/
-theorem program_accurate (sample : Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.Sewn result
+theorem program_accurate (sample : Sewn result
   patch) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      ((Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges bank.assigned).map
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
+      ((AssignedSegments.sourceEdges bank.assigned).map
       (fun source => source.increment sample.triangles.values)) -
         ((prepared.program differential).integral.model result.sample.stage).integralSample) < target := by
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.value_eq_triangles result
+  rw [← RequestedPeriod.value_eq_triangles result
     sample.triangles]
   exact result.program_accurate
 
 /-- The retained sewn-face squared errors are at most twice their total allowance. -/
-theorem face_errors (sample : Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.Sewn result
+theorem face_errors (sample : Sewn result
   patch) : sample.surface.faces.squaredErrors ≤ 2 * sample.surface.faces.totalAllowance :=
   sample.surface.face_errors
 

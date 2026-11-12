@@ -62,6 +62,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! One finite request controls the total stitched exterior on both sheets,
@@ -79,12 +81,12 @@ open Purelib.RootIsolation
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
       bank)}
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
+    {domains : Face.DomainBanks.FaceDomainBank frames faces}
 
 set_option genInjectivity false in
 /-- A coefficient-independent request for the complete stitched exterior of both original sheets.
@@ -92,8 +94,8 @@ set_option genInjectivity false in
 It retains the initial local boundary request, fixed exterior-reading caps and their exact refined preparation with a
 paid total charge. -/
 structure ExteriorBoundaryRequest (coarse : (sheet : Fin 2) →
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet)
-    (fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  RegularDomainMeshes.RegularMeshes domains sheet)
+    (fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
       sheet) (target : Fraction.Rational) where
   /-- The retained local boundary allowance. -/ localTarget : Fraction.Rational
   /-- The local boundary allowance is one quarter of the supplied target. -/ localTarget_eq : localTarget = target / 4
@@ -102,57 +104,57 @@ structure ExteriorBoundaryRequest (coarse : (sheet : Fin 2) →
   /-- The complete original face-count and genus-weighted charge fits the supplied target. -/ paid : 2 * localTarget + 8
     * (faces.length : Fraction.Rational) ^ 2 * (genus : Fraction.Rational) ^ 2 * pairTarget ≤ target
   /-- The initial local boundary request on the original coarse meshes and fixed preflights. -/ initial :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed localTarget
+    RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed localTarget
   /-- The retained basis-pair reading caps for those original meshes. -/ caps :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReadingCaps.RegularMeshes.TwoSheetRequest.ExteriorCaps initial.energy
+    Exterior.ReadingCaps.RegularMeshes.TwoSheetRequest.ExteriorCaps initial.energy
     pairTarget
   /-- The refined local request retaining the same original meshes. -/ prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed localTarget
+    RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed localTarget
   /-- The refined preparation is exactly the initial request tightened by the retained caps. -/ prepared_eq : prepared =
     initial.limitReadings caps.values caps.positive
   /-- Every original face and basis-pair exterior error meets the retained pair target at a sufficient stage. -/
     pair_bound : ∀ stage (later : prepared.energy.index ≤ stage) sheet position first second,
-    Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound prepared.energy stage
+    RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound prepared.energy stage
       later sheet position first second ≤ pairTarget
 
 constructive_injectivity ExteriorBoundaryRequest
 
 namespace ExteriorBoundaryRequest
 
-variable {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+variable {coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
 
 /-- Allocate the original local and pair targets, retain their fixed reading caps and refine the original request with
 its total payment certificate. -/
-@[expose] def build (coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes
+@[expose] def build (coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes
   domains sheet)
-    (fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    (fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
       sheet) (target : Fraction.Rational) (positive : 0 < target) :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest coarse fixed target := by
+    ExteriorBoundaryRequest coarse fixed target := by
   let localTarget := target / 4
-  have localPositive : 0 < localTarget := Fraction.Order.Field.div_pos_direct positive (by decide)
+  have localPositive : 0 < localTarget := Field.div_pos_direct positive (by decide)
   let weight := 8 * (Rational.Budget.Aggregate.countCoordinate faces.length) ^ 2 *
     (Rational.Budget.Aggregate.countCoordinate genus) ^ 2
   have weightEq : weight = 8 * (faces.length : Fraction.Rational) ^ 2 * (genus : Fraction.Rational) ^ 2 := by
     simp only [weight, Rational.Budget.Aggregate.countCoordinate_eq, -eq_self, -iff_self]
     rfl
-  have weightNonnegative : 0 ≤ weight := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  have weightNonnegative : 0 ≤ weight := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.sq_nonneg_direct _)
   let pairTarget := Rational.Budget.Weighted.allowance (target / 2) weight
   have pairPositive : 0 < pairTarget := Rational.Budget.Weighted.allowance_positive
-    (Fraction.Order.Field.div_pos_direct positive (by decide)) weightNonnegative
-  let initial := Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest.build
+    (Field.div_pos_direct positive (by decide)) weightNonnegative
+  let initial := RegularLocalBoundaryRequest.LocalBoundaryRequest.build
     coarse fixed localTarget localPositive
-  let caps := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReadingCaps.RegularMeshes.TwoSheetRequest.ExteriorCaps.build
+  let caps := Exterior.ReadingCaps.RegularMeshes.TwoSheetRequest.ExteriorCaps.build
     initial.energy pairTarget pairPositive
   let prepared := initial.limitReadings caps.values caps.positive
   refine ⟨localTarget, rfl, pairTarget, pairPositive, ?_, initial, caps, prepared, rfl,
     fun stage later sheet position first second => caps.pair_bound stage later sheet position first second⟩
   rw [← weightEq]
   have pairPaid := Rational.Budget.Weighted.mul_allowance_le
-    (Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 2)).le weightNonnegative
+    (Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 2)).le weightNonnegative
   apply (add_le_add (le_refl (2 * localTarget)) pairPaid).trans_eq
   dsimp only [localTarget, -eq_self, -iff_self]
   have quarter : target / 4 * 4 = target := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
@@ -172,60 +174,60 @@ private theorem coefficient_nonnegative (values : LinearAlgebra.Gaussian.Energy.
 
 /-- The complete original two-sheet stitched exterior satisfies the retained target homogeneously in both coefficient
 vectors. -/
-theorem bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest coarse fixed
+theorem bound (request : ExteriorBoundaryRequest coarse fixed
   target)
-    {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+    {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
       (later : request.prepared.ownership.index ≤ stage)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.Samples
+    (samples : TwoSheetBilinearRequest.TwoSheetRequest.Samples
       request.prepared.energy cache)
     (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (assemblies : Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.Assemblies
+    (assemblies : RegularClippedAssembly.TwoSheetRequest.Assemblies
       request.prepared.energy cache left right) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
       Fin faces.length =>
       ((assemblies.get sheet).get position).exterior))) ≤ Readings.PreparedObservationCoercivity.coefficientNormSq left
         * Readings.PreparedObservationCoercivity.coefficientNormSq right * target := by
   let energyLater := request.prepared.ownership.energy_le.trans later
   let q := Readings.PreparedObservationCoercivity.coefficientNormSq left *
     Readings.PreparedObservationCoercivity.coefficientNormSq right
-  have qNonnegative : 0 ≤ q := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest.coefficient_nonnegative left)
-    (Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest.coefficient_nonnegative right)
+  have qNonnegative : 0 ≤ q := Arithmetic.mul_nonneg_direct
+    (ExteriorBoundaryRequest.coefficient_nonnegative left)
+    (ExteriorBoundaryRequest.coefficient_nonnegative right)
   have leftNorm := FiniteSum.Fin.sumFin_congr
     (fun row : Fin genus => Gaussian.Norm.Basic.normSq_eq_canonical (left row))
   have rightNorm := FiniteSum.Fin.sumFin_congr
     (fun row : Fin genus => Gaussian.Norm.Basic.normSq_eq_canonical (right row))
   have weighted (sheet : Fin 2) (position : Fin faces.length) :
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Norm.Basic.normSq (left
-        first) * Data.Gaussian.Norm.Basic.normSq (right second) *
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound
+      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Gaussian.Norm.Basic.normSq (left
+        first) * Gaussian.Norm.Basic.normSq (right second) *
+      RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound
         request.prepared.energy stage energyLater sheet position first second)) ≤ q * request.pairTarget := by
     have estimate := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun first : Fin genus =>
       FiniteSum.Rational.Order.Positivity.sumFin_mono _ _
-      (fun second : Fin genus => Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (request.pair_bound stage
+      (fun second : Fin genus => Arithmetic.mul_le_mul_of_nonneg_left_direct (request.pair_bound stage
         energyLater sheet position first second)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg (left first))
+        (Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg (left first))
           (Gaussian.Norm.Basic.normSq_nonneg (right second)))))
     apply estimate.trans_eq
     simp only [FiniteSum.Fin.sumFin_mul_left, FiniteSum.Fin.sumFin_mul_right, leftNorm, rightNorm, q,
       Readings.PreparedObservationCoercivity.coefficientNormSq, -eq_self, -iff_self]
     rfl
   have faceErrors := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun sheet : Fin 2 =>
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun position : Fin faces.length =>
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (weighted sheet position)
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
+        Arithmetic.mul_le_mul_of_nonneg_left_direct (weighted sheet position)
+          (Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
             (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus)))))
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le faces.length)))
-  have estimate := Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.LocalBoundaryRequest.exterior_bound
+  have estimate := RegularClippedErrorBound.LocalBoundaryRequest.exterior_bound
     request.prepared later samples left right assemblies
   apply estimate.trans
-  have combined := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (add_le_add (le_refl (q * request.localTarget)) (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have combined := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (add_le_add (le_refl (q * request.localTarget)) (Arithmetic.mul_le_mul_of_nonneg_left_direct
       faceErrors (show (0 : Fraction.Rational) ≤ 2 by decide)))
     (show (0 : Fraction.Rational) ≤ 2 by decide)
   apply combined.trans
-  apply le_trans (le_of_eq ?_) (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct request.paid qNonnegative)
+  apply le_trans (le_of_eq ?_) (Arithmetic.mul_le_mul_of_nonneg_left_direct request.paid qNonnegative)
   simp only [FiniteSum.Fin.Rational.sum_constant, -eq_self, -iff_self]
   ring1
 

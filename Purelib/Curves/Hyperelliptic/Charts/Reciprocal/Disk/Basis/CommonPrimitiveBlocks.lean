@@ -84,16 +84,16 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover (Basi
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisCommonInterval
   (PrimitiveSample PrimitiveRequest)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
+    BasisSourceCovers parent}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin_zero sumFin_mul_right)
@@ -103,25 +103,25 @@ open Purelib.Integration.Path.Dyadic.DyadicBoundaryRibbon (dyadicArea)
 
 namespace BasisCommonInterval.PrimitiveSample
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {interval :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+variable {cover : Cover data} {interval :
+  BasisCommonInterval cover covers}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 set_option genInjectivity false in
 /-- The actual dyadic source and pullback sample blocks on one retained common interval.
 
 Both complete increment paths and executable summaries remain cached with their full area difference. -/
-structure Block (sample : BasisCommonInterval.PrimitiveSample interval regular polynomials) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+structure Block (sample : PrimitiveSample interval regular polynomials) (coefficients :
+  GaussianVector genus)
     (depth : Nat) where
   /-- The actual original source sample at every retained dyadic vertex. -/ source :
-    DyadicPrimitivePathSamples.DyadicSample (sample.sourceValue coefficients) depth interval.edge.left.parameter
+    DyadicSample (sample.sourceValue coefficients) depth interval.edge.left.parameter
     interval.edge.right.parameter
   /-- The actual original pullback sample at those same dyadic vertices. -/ pullback :
-    DyadicPrimitivePathSamples.DyadicSample (sample.pullbackValue coefficients) depth interval.edge.left.parameter
+    DyadicSample (sample.pullbackValue coefficients) depth interval.edge.left.parameter
     interval.edge.right.parameter
-  /-- The cached difference of the two complete original sample areas. -/ difference : InverseRootPolynomial.Gaussian
+  /-- The cached difference of the two complete original sample areas. -/ difference : Gaussian
   /-- The area difference cache equals the source summary area minus the pullback summary area. -/ difference_eq :
     difference = source.summary.area - pullback.summary.area
 
@@ -129,10 +129,10 @@ constructive_injectivity Block
 
 /-- Sample the actual functions once per dyadic vertex and retain their full increment paths, totals and areas. No
 endpoint closure is assumed. -/
-@[expose] def block (sample : BasisCommonInterval.PrimitiveSample interval regular polynomials) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+@[expose] def block (sample : PrimitiveSample interval regular polynomials) (coefficients :
+  GaussianVector genus)
     (depth : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample.Block
+      Block
       sample coefficients depth :=
   let source := DyadicSample.build (sample.sourceValue coefficients) depth interval.edge.left.parameter
     interval.edge.right.parameter
@@ -143,78 +143,78 @@ endpoint closure is assumed. -/
 namespace Block
 
 variable {sample :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisCommonInterval.PrimitiveSample
-  interval regular polynomials} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {depth : Nat} {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  PrimitiveSample
+  interval regular polynomials} {coefficients : GaussianVector genus}
+  {depth : Nat} {target : Coordinate} {floor : Nat}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample
   in
 /-- The cached source block area equals its original anchored dyadic path area. -/
 theorem source_area (block :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample.Block
+  Block
   sample coefficients depth) :
-    block.source.summary.area = DyadicBoundaryRibbon.dyadicArea (PrimitiveSample.sourcePath sample coefficients) depth
+    block.source.summary.area = dyadicArea (PrimitiveSample.sourcePath sample coefficients) depth
       interval.edge.left.parameter interval.edge.right.parameter := by
   rw [block.source.summary.area_eq, block.source.increments_eq,
-    ← DyadicPrimitivePaths.dyadicIncrements_sub_constant (sample.sourceValue coefficients) (sample.sourceValue
+    ← dyadicIncrements_sub_constant (sample.sourceValue coefficients) (sample.sourceValue
       coefficients interval.edge.left.parameter)]
-  exact DyadicPrimitivePaths.pathArea_dyadicIncrements (PrimitiveSample.sourcePath sample coefficients) depth _ _
+  exact pathArea_dyadicIncrements (PrimitiveSample.sourcePath sample coefficients) depth _ _
     (PrimitiveSample.sourcePath_left sample coefficients)
 
 /-- The cached pullback block area equals its original anchored dyadic path area. -/
 theorem pullback_area (block :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample.Block
+  Block
   sample coefficients depth) :
-    block.pullback.summary.area = DyadicBoundaryRibbon.dyadicArea (PrimitiveSample.pullbackPath sample coefficients)
+    block.pullback.summary.area = dyadicArea (PrimitiveSample.pullbackPath sample coefficients)
       depth interval.edge.left.parameter interval.edge.right.parameter := by
   rw [block.pullback.summary.area_eq, block.pullback.increments_eq,
-    ← DyadicPrimitivePaths.dyadicIncrements_sub_constant (sample.pullbackValue coefficients) (sample.pullbackValue
+    ← dyadicIncrements_sub_constant (sample.pullbackValue coefficients) (sample.pullbackValue
       coefficients interval.edge.left.parameter)]
-  exact DyadicPrimitivePaths.pathArea_dyadicIncrements (PrimitiveSample.pullbackPath sample coefficients) depth _ _
+  exact pathArea_dyadicIncrements (PrimitiveSample.pullbackPath sample coefficients) depth _ _
     (PrimitiveSample.pullbackPath_left sample coefficients)
 
 /-- The actual cached block area difference satisfies the homogeneous original tolerance and fourth-power interval-width
 bound. -/
 theorem area_error (block :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample.Block
+  Block
   sample coefficients depth)
-    (request : BasisCommonInterval.PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
+    (request : PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
     Data.Gaussian.Norm.Basic.normSq block.difference ≤ target * (144 * BasisSourceCovers.primitiveSlope covers
       + 160 * target) *
-      (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 * (interval.edge.right.parameter -
+      (coefficientNormSq coefficients)^2 * (interval.edge.right.parameter -
         interval.edge.left.parameter)^4 := by
   rw [block.difference_eq, block.source_area, block.pullback_area]
   exact PrimitiveSample.area_error sample request later coefficients depth
 
 /-- The difference of the two original cached block totals satisfies the retained homogeneous increment bound. -/
 theorem total_error (block :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample.Block
+  Block
   sample coefficients depth)
-    (request : BasisCommonInterval.PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
+    (request : PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
     Data.Gaussian.Norm.Basic.normSq (block.source.summary.total - block.pullback.summary.total) ≤
       target * (interval.edge.right.parameter - interval.edge.left.parameter)^2 *
-        PreparedObservationCoercivity.coefficientNormSq coefficients := by
+        coefficientNormSq coefficients := by
   rw [block.source.total, block.pullback.total]
   exact sample.accurate request later coefficients ⟨le_rfl, interval.ordered⟩ ⟨interval.ordered, le_rfl⟩
 
 /-- The actual cached source block total has the original cover-slope bound. -/
 theorem source_total_bound (block :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample.Block
+  Block
   sample coefficients depth) :
     Data.Gaussian.Norm.Basic.normSq block.source.summary.total ≤ BasisSourceCovers.primitiveSlope covers *
-      (interval.edge.right.parameter - interval.edge.left.parameter)^2 * PreparedObservationCoercivity.coefficientNormSq
+      (interval.edge.right.parameter - interval.edge.left.parameter)^2 * coefficientNormSq
         coefficients := by
   rw [block.source.total]
   exact PrimitiveSample.source_increment_bound sample coefficients interval.edge.left.inside interval.edge.right.inside
 
 /-- The actual cached pullback block total has the retained enlarged cover-slope bound. -/
 theorem pullback_total_bound (block :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBlocks.BasisCommonInterval.PrimitiveSample.Block
+  Block
   sample coefficients depth)
-    (request : BasisCommonInterval.PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
+    (request : PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
     Data.Gaussian.Norm.Basic.normSq block.pullback.summary.total ≤ 2 * (BasisSourceCovers.primitiveSlope covers
       + target) *
-      (interval.edge.right.parameter - interval.edge.left.parameter)^2 * PreparedObservationCoercivity.coefficientNormSq
+      (interval.edge.right.parameter - interval.edge.left.parameter)^2 * coefficientNormSq
         coefficients := by
   rw [block.pullback.total]
   exact PrimitiveSample.pullback_increment_bound sample request later coefficients ⟨le_rfl, interval.ordered⟩

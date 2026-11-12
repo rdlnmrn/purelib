@@ -90,7 +90,7 @@ open Purelib.RootIsolation in
 The retained depths select each owner's inspected box, while the outcome concerns their original root names. -/
 abbrev OwnerHandoffAttempt {parameter : Gaussian.Basic.Canonical} (left right :
   Riemann.Topology.SquareRootContinuationChain.Owner parameter) :=
-  SquareRoot.Preparation.Handoff.Refinement.HandoffAttempt (Riemann.Paths.OwnerTraceReadings.ownerName left)
+  HandoffAttempt (Riemann.Paths.OwnerTraceReadings.ownerName left)
     (Riemann.Paths.OwnerTraceReadings.ownerName right)
     (fun index => (left.refineAt index).track.initial.box)
     (fun index => (right.refineAt index).track.initial.box)
@@ -105,7 +105,7 @@ def ofOwners {parameter : Gaussian.Basic.Canonical} (left right : Riemann.Topolo
     (leftRefined rightRefined : Riemann.Topology.SquareRootContinuationChain.Owner parameter)
     (left_eq : leftRefined = left.refineAt leftDepth)
     (right_eq : rightRefined = right.refineAt rightDepth) :
-      SquareRoot.Preparation.Handoff.Refinement.OwnerHandoffAttempt left right :=
+      OwnerHandoffAttempt left right :=
   let checked := Riemann.Transport.PreparedOwnerHandoffChecks.SquareRootTrace.OwnerHandoff.check leftRefined
     rightRefined
   let firstEquivalent := fun (_ : Unit) =>
@@ -117,22 +117,22 @@ def ofOwners {parameter : Gaussian.Basic.Canonical} (left right : Riemann.Topolo
   ⟨leftDepth, rightDepth, checked.leftBox, checked.rightBox,
     checked.leftBox_eq.trans (congrArg (fun owner => owner.track.initial.box) left_eq),
     checked.rightBox_eq.trans (congrArg (fun owner => owner.track.initial.box) right_eq),
-    SquareRoot.Preparation.Handoff.Refinement.HandoffOutcome.reindex checked.outcome firstEquivalent lastEquivalent⟩
+    HandoffOutcome.reindex checked.outcome firstEquivalent lastEquivalent⟩
 
 /-- Refine the two supplied occurrences once at the requested depths, then
 check their retained boxes. No canonical owner assignment is performed. -/
 def checkAt {parameter : Gaussian.Basic.Canonical} (left right : Riemann.Topology.SquareRootContinuationChain.Owner
   parameter) (leftDepth rightDepth : Nat) :
-    SquareRoot.Preparation.Handoff.Refinement.OwnerHandoffAttempt left right :=
-  SquareRoot.Preparation.Handoff.Refinement.OwnerHandoffAttempt.ofOwners left right leftDepth rightDepth (left.refineAt
+    OwnerHandoffAttempt left right :=
+  ofOwners left right leftDepth rightDepth (left.refineAt
     leftDepth) (right.refineAt rightDepth) rfl rfl
 
 /-- The checked attempt retains exactly the two requested refinement depths. -/
 theorem checkAt_depths {parameter : Gaussian.Basic.Canonical} (left right :
   Riemann.Topology.SquareRootContinuationChain.Owner parameter) (leftDepth rightDepth : Nat) :
-    (SquareRoot.Preparation.Handoff.Refinement.OwnerHandoffAttempt.checkAt left right leftDepth rightDepth).leftDepth =
+    (checkAt left right leftDepth rightDepth).leftDepth =
       leftDepth ∧
-      (SquareRoot.Preparation.Handoff.Refinement.OwnerHandoffAttempt.checkAt left right leftDepth rightDepth).rightDepth
+      (checkAt left right leftDepth rightDepth).rightDepth
         = rightDepth := ⟨rfl, rfl⟩
 
 end OwnerHandoffAttempt

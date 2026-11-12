@@ -7,6 +7,8 @@ import Purelib.Data.List.Append
 import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Riemann.Normalization.RectangularInverseModels
 import Purelib.Data.Gaussian.Norm.Sum.Basic
+import Purelib.Data.Gaussian.Norm.Sum.Indexed
+import Purelib.Algebra.FiniteSum.Fin
 import Purelib.Data.List.Flatten
 import Purelib.Data.List.Map
 import Purelib.Data.Rat.Fraction.Field
@@ -228,6 +230,41 @@ theorem axis_bounds {steps : Nat} (axis : Axis steps) {axisCuts parameters : Lis
     rw [equal]
     exact present index.succ
 
+/-- Assign an interval of a larger crossing partition to its original midpoint-selected cell.
+
+The supplied inclusion contains every crossing of this actual grid. Only
+midpoint coverage is needed: the original axis bounds derive both closed
+endpoint incidences, including stationary and reversed coordinates.
+-/
+@[expose] def assignIncluded {parameters : List Coordinate} (cuts : GridCuts geometry)
+    (partition : Geometry.Rectangle.AxisPartition 0 1 parameters)
+    (included : ∀ parameter ∈ cuts.parameters first last, parameter ∈ parameters)
+    (interval : PreparedAxisPartitions.Interval) (member : interval ∈ partition.intervals)
+    (middleInside : Geometry.Covers geometry (point first last ((interval.lower + interval.upper) / 2))) :
+    SegmentPiece geometry first last := by
+  let middle := point first last ((interval.lower + interval.upper) / 2)
+  have within := partition.interval_bounds member
+  let horizontal := RectangularUniformGeometry.Axis.locate
+    geometry.x middle.re middleInside.1 middleInside.2.1
+  let vertical := RectangularUniformGeometry.Axis.locate
+    geometry.y middle.im middleInside.2.2.1 middleInside.2.2.2
+  have xBound := axis_bounds geometry.x cuts.x_mem partition member first.re (last.re - first.re)
+    (fun parameter member => included parameter (List.mem_append_left _ member)) horizontal.index horizontal.inside
+  have yBound := axis_bounds geometry.y cuts.y_mem partition member first.im (last.im - first.im)
+    (fun parameter member => included parameter (List.mem_append_right _ member)) vertical.index vertical.inside
+  exact ⟨interval, within, horizontal.index, vertical.index, point first last interval.lower, rfl,
+    point first last interval.upper, rfl, ⟨xBound.1.1, xBound.1.2, yBound.1.1, yBound.1.2⟩,
+    ⟨xBound.2.1, xBound.2.2, yBound.2.1, yBound.2.2⟩⟩
+
+/-- The generalized assignment retains the exact supplied ordinal interval. -/
+theorem assignIncluded_interval {parameters : List Coordinate} (cuts : GridCuts geometry)
+    (partition : Geometry.Rectangle.AxisPartition 0 1 parameters)
+    (included : ∀ parameter ∈ cuts.parameters first last, parameter ∈ parameters)
+    (interval : PreparedAxisPartitions.Interval) (member : interval ∈ partition.intervals)
+    (middleInside : Geometry.Covers geometry (point first last ((interval.lower + interval.upper) / 2))) :
+    (cuts.assignIncluded (first := first) (last := last) partition included interval member middleInside).interval =
+      interval := by rfl
+
 /-- Assign an original partition interval to the cells located at its exact midpoint.
 
 The retained coordinate cuts certify both endpoint bounds in those same cells, preserving the original interval and
@@ -237,22 +274,36 @@ point equations. -/
     (partition : Geometry.Rectangle.AxisPartition 0 1 (cuts.parameters first last))
     (interval : PreparedAxisPartitions.Interval) (member : interval ∈ partition.intervals) : SegmentPiece geometry first
       last := by
-  let middle := point first last ((interval.lower + interval.upper) / 2)
   have within := partition.interval_bounds member
   have midpoint := PreparedSegmentCuts.midpoint_bounds interval
   have middleInside := Geometry.covers_point geometry firstInside lastInside
     ⟨within.1.trans midpoint.1.le, midpoint.2.le.trans within.2⟩
-  let horizontal := RectangularUniformGeometry.Axis.locate
-    geometry.x middle.re middleInside.1 middleInside.2.1
-  let vertical := RectangularUniformGeometry.Axis.locate
-    geometry.y middle.im middleInside.2.2.1 middleInside.2.2.2
-  have xBound := axis_bounds geometry.x cuts.x_mem partition member first.re (last.re - first.re)
-    (fun _ member => List.mem_append_left _ member) horizontal.index horizontal.inside
-  have yBound := axis_bounds geometry.y cuts.y_mem partition member first.im (last.im - first.im)
-    (fun _ member => List.mem_append_right _ member) vertical.index vertical.inside
-  exact ⟨interval, within, horizontal.index, vertical.index, point first last interval.lower, rfl,
-    point first last interval.upper, rfl, ⟨xBound.1.1, xBound.1.2, yBound.1.1, yBound.1.2⟩,
-    ⟨xBound.2.1, xBound.2.2, yBound.2.1, yBound.2.2⟩⟩
+  exact cuts.assignIncluded (first := first) (last := last) partition
+    (fun _ present => present) interval member middleInside
+
+/-- Factoring the assignment preserves the complete original midpoint-selected result for all inputs. -/
+private theorem assign_original (cuts : GridCuts geometry)
+    (firstInside : Geometry.Covers geometry first) (lastInside : Geometry.Covers geometry last)
+    (partition : Geometry.Rectangle.AxisPartition 0 1 (cuts.parameters first last))
+    (interval : PreparedAxisPartitions.Interval) (member : interval ∈ partition.intervals) :
+    cuts.assign firstInside lastInside partition interval member = (show SegmentPiece geometry first last from by
+      let middle := point first last ((interval.lower + interval.upper) / 2)
+      have within := partition.interval_bounds member
+      have midpoint := PreparedSegmentCuts.midpoint_bounds interval
+      have middleInside := Geometry.covers_point geometry firstInside lastInside
+        ⟨within.1.trans midpoint.1.le, midpoint.2.le.trans within.2⟩
+      let horizontal := RectangularUniformGeometry.Axis.locate
+        geometry.x middle.re middleInside.1 middleInside.2.1
+      let vertical := RectangularUniformGeometry.Axis.locate
+        geometry.y middle.im middleInside.2.2.1 middleInside.2.2.2
+      have xBound := axis_bounds geometry.x cuts.x_mem partition member first.re (last.re - first.re)
+        (fun _ member => List.mem_append_left _ member) horizontal.index horizontal.inside
+      have yBound := axis_bounds geometry.y cuts.y_mem partition member first.im (last.im - first.im)
+        (fun _ member => List.mem_append_right _ member) vertical.index vertical.inside
+      exact ⟨interval, within, horizontal.index, vertical.index, point first last interval.lower, rfl,
+        point first last interval.upper, rfl, ⟨xBound.1.1, xBound.1.2, yBound.1.1, yBound.1.2⟩,
+        ⟨xBound.2.1, xBound.2.2, yBound.2.1, yBound.2.2⟩⟩
+    ) := by rfl
 
 /-- Assign the retained interval list to its midpoint-selected cells in order.
 
@@ -304,6 +355,9 @@ constructive_injectivity SegmentSplit
 
 namespace SegmentSplit
 
+open Purelib.Algebra.FiniteSum.Fin (sumFin)
+open Purelib.Data.Gaussian.Norm.Sum.Indexed (normSq_sumFin_sub_le_count_mul_sumFin sumFin_map)
+
 variable {geometry : Geometry columns rows} {cuts : GridCuts geometry} {first last : Gaussian}
 
 /-- Partition the original segment at retained grid crossings and cache its exact cell-owned pieces.
@@ -326,7 +380,7 @@ theorem count_le (split : SegmentSplit cuts first last) : split.count ≤ column
   omega
 
 /-- Successive increments along the original increasing interval walk sum to its endpoint difference. -/
-private theorem intervals_telescope (value : Coordinate → Gaussian) {intervals : List PreparedAxisPartitions.Interval} :
+theorem intervals_telescope (value : Coordinate → Gaussian) {intervals : List PreparedAxisPartitions.Interval} :
     {first last : Coordinate} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk intervals first last) →
       Data.Gaussian.Norm.Sum.Basic.gaussianSum (walk.edges.map fun interval => value interval.upper - value
         interval.lower) =
@@ -365,6 +419,37 @@ theorem telescope (split : SegmentSplit cuts first last) (value : Gaussian → G
   rw [pieces_readback, split.intervals_eq, ← split.partition.walk_edges]
   exact (intervals_telescope (fun parameter => value (point first last parameter)) split.partition.walk).trans
     (by rw [PreparedSegmentCuts.point_zero, PreparedSegmentCuts.point_one])
+
+/-- The retained fragment comparisons bound the total reading against one original primitive increment.
+
+Each original piece keeps its own reading and squared-error payment. The
+same ordered piece list supplies their finite sums and cached count; the
+unchanged primitive telescopes through the retained partition to its two
+original endpoints.
+-/
+theorem comparison_le (split : SegmentSplit cuts first last)
+    (reading : SegmentPiece geometry first last → Gaussian) (primitive : Gaussian → Gaussian)
+    (bounds : SegmentPiece geometry first last → Coordinate)
+    (bounded : ∀ piece ∈ split.pieces,
+      Norm.Basic.normSq (reading piece - (primitive piece.lastPoint - primitive piece.firstPoint)) ≤ bounds piece) :
+    Norm.Basic.normSq
+      (sumFin (fun index : Fin split.pieces.length => reading (split.pieces[index.val]'index.isLt)) -
+        (primitive last - primitive first)) ≤
+      (split.count : Coordinate) *
+        sumFin (fun index : Fin split.pieces.length => bounds (split.pieces[index.val]'index.isLt)) := by
+  have estimate := normSq_sumFin_sub_le_count_mul_sumFin
+    (fun index : Fin split.pieces.length => reading (split.pieces[index.val]'index.isLt))
+    (fun index : Fin split.pieces.length =>
+      let piece := split.pieces[index.val]'index.isLt
+      primitive piece.lastPoint - primitive piece.firstPoint)
+    (fun index : Fin split.pieces.length => bounds (split.pieces[index.val]'index.isLt))
+    (fun index => bounded _ (_root_.List.getElem_mem index.isLt))
+  have exactPrimitive :=
+    (sumFin_map split.pieces (fun piece => primitive piece.lastPoint - primitive piece.firstPoint)).trans
+      (split.telescope primitive)
+  rewrite [exactPrimitive] at estimate
+  rewrite [split.count_eq]
+  exact estimate
 
 /-- Every unit-interval parameter belongs to a retained segment piece.
 
@@ -429,6 +514,24 @@ theorem points_mem (split : SegmentSplit cuts first last) {piece : SegmentPiece 
     (member : piece ∈ split.pieces) : piece.firstPoint ∈ split.points ∧ piece.lastPoint ∈ split.points := by
   exact ⟨Flatten.mem_flatMap.mpr ⟨piece, member, List.mem_cons_self⟩,
     Flatten.mem_flatMap.mpr ⟨piece, member, List.mem_cons_of_mem _ List.mem_cons_self⟩⟩
+
+/-- The literal first endpoint occurs in the retained split-point bank, including stationary segments. -/
+theorem first_mem_points (split : SegmentSplit cuts first last) : first ∈ split.points := by
+  obtain ⟨piece, member, inside⟩ := split.covers 0 ⟨Fraction.Order.Basic.le_refl 0, by decide⟩
+  have lower : piece.interval.lower = 0 := le_antisymm inside.1 piece.within.1
+  have equal : piece.firstPoint = first :=
+    piece.first_eq.trans ((congrArg (point first last) lower).trans
+      (PreparedSegmentCuts.point_zero first last))
+  exact Eq.mp (congrArg (fun value => value ∈ split.points) equal) (split.points_mem member).1
+
+/-- The literal last endpoint occurs in the same split-point bank, retaining its separate outer role. -/
+theorem last_mem_points (split : SegmentSplit cuts first last) : last ∈ split.points := by
+  obtain ⟨piece, member, inside⟩ := split.covers 1 ⟨by decide, Fraction.Order.Basic.le_refl 1⟩
+  have upper : piece.interval.upper = 1 := le_antisymm piece.within.2 inside.2
+  have equal : piece.lastPoint = last :=
+    piece.last_eq.trans ((congrArg (point first last) upper).trans
+      (PreparedSegmentCuts.point_one first last))
+  exact Eq.mp (congrArg (fun value => value ∈ split.points) equal) (split.points_mem member).2
 
 /-- The retained point list has exactly twice the piece count.
 

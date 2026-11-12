@@ -71,21 +71,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -111,7 +111,7 @@ theorem source_parameters_terminal (fragment : PairedFragmentBlocks.OwnedFragmen
 /-- The original fragment source increments are exactly the parameterized increments of the supplied identical source
 owner. -/
 theorem source_increments_readback (fragment : PairedFragmentBlocks.OwnedFragment evaluated data otherData)
-    (entry : PairedFragmentQueries.SourceEntry plan sample otherSample fine) (same : fragment.entry = entry) :
+    (entry : SourceEntry plan sample otherSample fine) (same : fragment.entry = entry) :
     (CenteredPathIncrements.Sample.increments fragment.source) = SourceListResampling.increments
       (PairedFragmentValues.sourceValues entry)
       (fragment.parameters 0)
@@ -125,18 +125,18 @@ end OwnedFragment
 
 /-- Geometric assembly of a single parent: identical source owner, adjacent parameter endpoints, forward order and the
 actual mesh-width bound. -/
-inductive SourceFragmentChain (entry : PairedFragmentQueries.SourceEntry plan sample otherSample fine) (width :
-  InverseRootPolynomial.Coordinate) :
-    List (PairedFragmentBlocks.OwnedFragment evaluated data otherData) → InverseRootPolynomial.Coordinate →
-      InverseRootPolynomial.Coordinate → Prop
+inductive SourceFragmentChain (entry : SourceEntry plan sample otherSample fine) (width :
+  Coordinate) :
+    List (PairedFragmentBlocks.OwnedFragment evaluated data otherData) → Coordinate →
+      Coordinate → Prop
   /-- The empty source chain starts and finishes at the same retained parameter. -/ | nil (point :
-    InverseRootPolynomial.Coordinate) :
+    Coordinate) :
     SourceFragmentChain entry width []
     point point
   /-- Extend a source chain by one forward fragment with the identical source owner, adjacent endpoint and paid
     parameter width. -/ | cons (fragment : PairedFragmentBlocks.OwnedFragment evaluated data otherData)
       {rest : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)} {last :
-        InverseRootPolynomial.Coordinate}
+        Coordinate}
       (same : fragment.entry = entry) (forward : fragment.forward = true)
       (steps : ∀ edge : Fin fragment.count,
         fragment.parameters edge.succ - fragment.parameters edge.castSucc ≤ width)
@@ -149,7 +149,7 @@ inductive SourceFragmentChain (entry : PairedFragmentQueries.SourceEntry plan sa
 def sourceFragmentParameters (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) : List
   Coordinate :=
   (fragments.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.OwnedFragment.sourceParameters).flatten
+    OwnedFragment.sourceParameters).flatten
 
 namespace SourceFragmentChain
 variable {entry : SourceEntry plan
@@ -159,10 +159,10 @@ variable {entry : SourceEntry plan
 
 /-- The assembled retained fragment parameters form a complete ascending chain between the original endpoints. -/
 theorem parameters_chain (chain :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.SourceFragmentChain entry width fragments first
+  SourceFragmentChain entry width fragments first
   last) :
     SourceResampling.Chain first
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.sourceFragmentParameters fragments) last :=
+      (SourceFragmentRuns.sourceFragmentParameters fragments) last :=
       by
   induction chain with
   | nil point => exact .nil point
@@ -175,22 +175,22 @@ theorem parameters_chain (chain :
 
 /-- Every assembled source parameter step satisfies the common retained fragment width. -/
 theorem parameter_widths (chain :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.SourceFragmentChain entry width fragments first
+  SourceFragmentChain entry width fragments first
   last) :
     SourceResampling.widths first
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.sourceFragmentParameters fragments) width
+      (SourceFragmentRuns.sourceFragmentParameters fragments) width
       := by
   induction chain with
   | nil point => trivial
   | @cons fragment rest last same forward steps tail ih =>
     have next : SourceResampling.widths
         (SourceListResampling.terminal (fragment.parameters 0)
-          (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.OwnedFragment.sourceParameters
+          (OwnedFragment.sourceParameters
           fragment))
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.sourceFragmentParameters rest) width :=
+        (SourceFragmentRuns.sourceFragmentParameters rest) width :=
           by
       rw
-        [(Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.OwnedFragment.source_parameters_terminal
+        [(OwnedFragment.source_parameters_terminal
         fragment)]
       exact ih
     exact SourceListResampling.widths_append
@@ -199,31 +199,31 @@ theorem parameter_widths (chain :
 /-- Flattening the retained source samples changes neither increments nor primitive owners. Parameter concatenation
 includes every junction entry. -/
 theorem source_readback (chain :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.SourceFragmentChain entry width fragments first
+  SourceFragmentChain entry width fragments first
   last) :
     FragmentFamilies.fragmentSourcePath fragments =
       SourceListResampling.increments (PairedFragmentValues.sourceValues entry) first
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.sourceFragmentParameters fragments) := by
+        (SourceFragmentRuns.sourceFragmentParameters fragments) := by
   induction chain with
   | nil point => rfl
   | @cons fragment rest last same forward steps tail ih =>
     change (CenteredPathIncrements.Sample.increments fragment.source) ++ FragmentFamilies.fragmentSourcePath rest =
       SourceListResampling.increments (PairedFragmentValues.sourceValues entry) (fragment.parameters 0)
-        ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.OwnedFragment.sourceParameters fragment)
-          ++ Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.sourceFragmentParameters rest)
+        ((OwnedFragment.sourceParameters fragment)
+          ++ SourceFragmentRuns.sourceFragmentParameters rest)
     rw [SourceListResampling.increments_append,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.OwnedFragment.source_parameters_terminal
+      (OwnedFragment.source_parameters_terminal
       fragment),
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.OwnedFragment.source_increments_readback
+      (OwnedFragment.source_increments_readback
         fragment) entry same, ih]
 
 end SourceFragmentChain
 
 /-- Build the resampling input from cached fragment increments. All inputs beyond the existing fragments describe
 geometry, not analytic accuracy. -/
-def ResampledSourceRun.ofFragments (entry : PairedFragmentQueries.SourceEntry plan sample otherSample fine)
+def ResampledSourceRun.ofFragments (entry : SourceEntry plan sample otherSample fine)
     (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) (width :
-      InverseRootPolynomial.Coordinate)
+      Coordinate)
     (chain : SourceFragmentChain entry width
       fragments 0 1) :
     ConjugateSourceRuns.ResampledSourceRun plan sample otherSample fine :=
@@ -237,12 +237,12 @@ def ResampledSourceRun.ofFragments (entry : PairedFragmentQueries.SourceEntry pl
     steps := chain.parameter_widths }
 
 /-- The run constructor consumes exactly the family's retained source path. -/
-theorem ResampledSourceRun.ofFragments_actual (entry : PairedFragmentQueries.SourceEntry plan sample otherSample fine)
+theorem ResampledSourceRun.ofFragments_actual (entry : SourceEntry plan sample otherSample fine)
     (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) (width :
-      InverseRootPolynomial.Coordinate)
+      Coordinate)
     (chain : SourceFragmentChain entry width
       fragments 0 1) :
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns.ResampledSourceRun.ofFragments entry
+    (ResampledSourceRun.ofFragments entry
       fragments width chain).actual = FragmentFamilies.fragmentSourcePath fragments := rfl
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceFragmentRuns

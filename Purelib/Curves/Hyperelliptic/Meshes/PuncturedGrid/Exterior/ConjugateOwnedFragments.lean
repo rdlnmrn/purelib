@@ -75,21 +75,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentAr
 open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    regular domains differential} {target : InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
   {box otherBox : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other target
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourceReferences.PairedSourcePlan occurrence other target
     minimum}
 
 /-- Bound the complete conjugate owned-fragment area against its original cached source sample.
@@ -97,62 +97,62 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 The retained owner budget pays both actual reading changes, and the monotone fragment parameters retain the full
 grid-to-source area error. -/
 theorem conjugate_owned_fragment_area_bound (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine)
-    (entry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentQueries.SourceEntry plan sample otherSample fine)
+    (entry : PairedFragmentQueries.SourceEntry plan sample otherSample fine)
       (member : entry ∈ evaluated.retained)
-    (piece : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentQueries.Fragment entry) {index count : Nat}
-    (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index) (otherData :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index)
-    (parameters : Fin (count + 1) → Normalization.InverseRootPolynomial.Coordinate)
+    (piece : PairedFragmentQueries.Fragment entry) {index count : Nat}
+    (data : FirstData occurrence index) (otherData :
+      SecondData occurrence other index)
+    (parameters : Fin (count + 1) → InverseRootPolynomial.Coordinate)
     (inside : ∀ vertex, piece.interval.lower ≤ parameters vertex ∧ parameters vertex ≤ piece.interval.upper)
     (forward : Bool)
     (ordered : ∀ edge : Fin count, if forward then parameters edge.castSucc ≤ parameters edge.succ
       else parameters edge.succ ≤ parameters edge.castSucc)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget count
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget count
       allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnedFragments.FirstReadings entry data parameters)
-      (second : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnedFragments.SecondReadings entry otherData
+    (first : PairedOwnedFragments.FirstReadings entry data parameters)
+      (second : PairedOwnedFragments.SecondReadings entry otherData
       parameters)
     (owned : Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnedFragments.ownedValues first second vertex)))
+      (PairedOwnedFragments.ownedValues first second vertex)))
     (source : Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.sourceValues entry (parameters vertex)))) :
-    Data.Gaussian.Norm.Basic.normSq (owned.centeredArea - source.centeredArea) ≤
-      2 * (40 * budget.tolerance * (4 * Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.traceDensity
+      (PairedFragmentValues.sourceValues entry (parameters vertex)))) :
+    Gaussian.Norm.Basic.normSq (owned.centeredArea - source.centeredArea) ≤
+      2 * (40 * budget.tolerance * (4 * PairedFragmentArea.traceDensity
         entry piece index + 3) *
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep forward (parameters 0) (parameters
+        (PairedFragmentArea.parameterStep forward (parameters 0) (parameters
           (Fin.last count)) + allowance)^2 +
-        40 * Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.traceError entry piece index *
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.traceDensity entry piece index *
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep forward (parameters 0)
+        40 * PairedFragmentArea.traceError entry piece index *
+          PairedFragmentArea.traceDensity entry piece index *
+          (PairedFragmentArea.parameterStep forward (parameters 0)
             (parameters (Fin.last count)))^2) := by
   let fixed := Periods.CenteredBilinearPath.Sample.build (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.gridValues entry piece data otherData (parameters
+    (PairedFragmentValues.gridValues entry piece data otherData (parameters
     vertex)))
-  have densityNonnegative : 0 ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.traceDensity entry piece
+  have densityNonnegative : 0 ≤ PairedFragmentArea.traceDensity entry piece
     index :=
     Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg
       (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.queryDensity_nonnegative entry piece index)
+        (PairedFragmentArea.queryDensity_nonnegative entry piece index)
         (Gaussian.Norm.Basic.normSq_nonneg (entry.plan.parent.edge.point 1 - entry.plan.parent.edge.point 0)))
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.sourceDensity_nonnegative entry))
+          (PairedFragmentArea.sourceDensity_nonnegative entry))
   have ownerError := Path.OwnedPathComparison.LengthErrorBudget.reading_comparison budget owned fixed
-    (fun edge : Fin count => Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep forward
+    (fun edge : Fin count => PairedFragmentArea.parameterStep forward
       (parameters edge.castSucc) (parameters edge.succ))
     densityNonnegative (fun edge =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep_nonnegative forward _ _ (ordered
+      PairedFragmentArea.parameterStep_nonnegative forward _ _ (ordered
       edge))
     (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst_error
       (show Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnedFragments.ownedValues first second vertex).sub
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.gridValues entry piece data otherData
+        ((PairedOwnedFragments.ownedValues first second vertex).sub
+        (PairedFragmentValues.gridValues entry piece data otherData
           (parameters vertex))) (budget.tolerance / 4) from
       ⟨by
         have h := owners.first_bound later data first vertex piece.column piece.row
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.fragment_contains entry piece _ (inside
+          (PairedFragmentArea.fragment_contains entry piece _ (inside
           vertex))
         change Fraction.Order.Basic.LessEqual _ _ at h
         change Fraction.Order.Basic.LessEqual _ _
@@ -160,19 +160,19 @@ theorem conjugate_owned_fragment_area_bound (evaluated :
         convert h using 1; rfl,
        by
         have h := owners.second_bound later otherData second vertex piece.column piece.row
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.fragment_contains entry piece _ (inside
+          (PairedFragmentArea.fragment_contains entry piece _ (inside
           vertex))
         change Fraction.Order.Basic.LessEqual _ _ at h
         change Fraction.Order.Basic.LessEqual _ _
         simp only [Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at h
         convert h using 1; rfl⟩))
     (fun edge => by
-      rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep_sq]
+      rw [PairedFragmentArea.parameterStep_sq]
       exact Path.ConjugateIncrementComparison.conjugateFirst_error
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.grid_increment_bound evaluated entry member
+        (PairedFragmentArea.grid_increment_bound evaluated entry member
         piece data otherData _ _ (inside edge.castSucc) (inside edge.succ)))
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterSteps_total] at ownerError
-  have sourceError := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentArea.conjugate_fragment_area_bound
+  rw [PairedFragmentArea.parameterSteps_total] at ownerError
+  have sourceError := ConjugateFragmentArea.conjugate_fragment_area_bound
     evaluated entry member piece data otherData parameters inside forward ordered fixed source
   have identity : owned.centeredArea - source.centeredArea =
       (owned.centeredArea - fixed.centeredArea) + (fixed.centeredArea - source.centeredArea) := by ring1

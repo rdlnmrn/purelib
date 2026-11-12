@@ -39,24 +39,24 @@ open Purelib.Riemann.Paths.PreparedClearPathModels
 open Purelib.Riemann.Paths.PreparedClearPathModels.PreparedPath
 
 /-- A successful dyadic preparation retains the requested depth and diameter and strictly ordered parameter edges. -/
-private theorem tryDyadic_provenance {polynomial : Riemann.Paths.PreparedClearPathModels.GaussianPolynomial} {ambient :
-  Riemann.Paths.PreparedClearPathModels.Box}
-    {start finish : Riemann.Paths.PreparedClearPathModels.Gaussian} (path : Polynomial.Geometry.ClearPath polynomial
+private theorem tryDyadic_provenance {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian} (path : Geometry.ClearPath polynomial
       ambient start finish)
-    (within : path.WithinAmbient) (owner : Riemann.Paths.PreparedClearPathModels.Owner (polynomial.eval start))
+    (within : path.WithinAmbient) (owner : Owner (polynomial.eval start))
     (depth : Nat) (diameter : Fraction.Rational) (positive : 0 < diameter)
-    {prepared : Riemann.Paths.PreparedClearPathModels.PreparedPath path owner}
-    (success : Riemann.Paths.PreparedClearPathModels.PreparedPath.tryDyadic path within owner depth diameter positive =
+    {prepared : PreparedPath path owner}
+    (success : tryDyadic path within owner depth diameter positive =
       some prepared) :
-    Riemann.Paths.PreparedClearPathModels.PreparedPath.AllRequestsDyadic depth diameter positive prepared ∧
-      Riemann.Paths.PreparedClearPathModels.PreparedPath.AllEdgesProper prepared := by
+    AllRequestsDyadic depth diameter positive prepared ∧
+      AllEdgesProper prepared := by
   induction path with
   | nil point =>
-      simp only [Riemann.Paths.PreparedClearPathModels.PreparedPath.tryDyadic] at success
+      simp only [tryDyadic] at success
       cases success
       exact ⟨trivial, trivial⟩
   | cons head tail ih =>
-      rw [Riemann.Paths.PreparedClearPathModels.PreparedPath.tryDyadic] at success
+      rw [tryDyadic] at success
       split at success
       · contradiction
       · rename_i subdivision headSuccess
@@ -68,70 +68,70 @@ private theorem tryDyadic_provenance {polynomial : Riemann.Paths.PreparedClearPa
           have tailFacts := ih within.tail _ tailSuccess
           refine ⟨⟨CompleteSegment.ofTryDyadic_requests head within.head owner depth diameter positive headSuccess,
             tailFacts.1⟩, ⟨?_, tailFacts.2⟩⟩
-          rw [Riemann.Paths.PreparedClearPathModels.CompleteSegment.ofTryDyadic_parameterEdges]
-          exact Riemann.Paths.PreparedClearPathModels.PreparedPath.dyadicEdges_strictParameterEdges depth
-            Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint (by
+          rw [CompleteSegment.ofTryDyadic_parameterEdges]
+          exact dyadicEdges_strictParameterEdges depth
+            zeroEndpoint oneEndpoint (by
             decide)
 
 /-- An executed checked dyadic spine retains its original request provenance and proper parameter edges. -/
-private theorem executed_provenance {polynomial : Riemann.Paths.PreparedClearPathModels.GaussianPolynomial} {ambient :
-  Riemann.Paths.PreparedClearPathModels.Box}
+private theorem executed_provenance {polynomial : GaussianPolynomial} {ambient :
+  Box}
     {depth : Nat} {diameter : Fraction.Rational} {positive : 0 < diameter}
-    {start finish : Riemann.Paths.PreparedClearPathModels.Gaussian} {path : Polynomial.Geometry.ClearPath polynomial
+    {start finish : Gaussian} {path : Geometry.ClearPath polynomial
       ambient start finish}
-    {owner : Riemann.Paths.PreparedClearPathModels.Owner (polynomial.eval start)}
-    (checked : Riemann.Paths.PreparedClearPathModels.PreparedPath.ExecutedCheckedDyadic depth diameter positive path
+    {owner : Owner (polynomial.eval start)}
+    (checked : ExecutedCheckedDyadic depth diameter positive path
       owner) :
-    Riemann.Paths.PreparedClearPathModels.PreparedPath.AllRequestsDyadic depth diameter positive checked.prepared ∧
-      Riemann.Paths.PreparedClearPathModels.PreparedPath.AllEdgesProper checked.prepared := by
+    AllRequestsDyadic depth diameter positive checked.prepared ∧
+      AllEdgesProper checked.prepared := by
   induction checked with
   | nil => exact ⟨trivial, trivial⟩
   | cons head tail owner within safe remaining ih =>
       refine ⟨⟨?_, ih.1⟩, ⟨?_, ih.2⟩⟩
-      · exact Riemann.Paths.PreparedClearPathModels.CompleteSegment.ofTryDyadic_requests head within owner depth
+      · exact CompleteSegment.ofTryDyadic_requests head within owner depth
           diameter positive _
-      · rw [Riemann.Paths.PreparedClearPathModels.CompleteSegment.ofExecutedDyadic_parameterEdges]
-        exact Riemann.Paths.PreparedClearPathModels.PreparedPath.dyadicEdges_strictParameterEdges depth
-          Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint (by
+      · rw [CompleteSegment.ofExecutedDyadic_parameterEdges]
+        exact dyadicEdges_strictParameterEdges depth
+          zeroEndpoint oneEndpoint (by
           decide)
 
 namespace DyadicBank
 
 open Purelib.RootIsolation
 /-- Every supported dyadic bank carries the requested parameters and proper edges in its actual prepared spine. -/
-theorem prepared_provenance {polynomial : Riemann.Paths.PreparedClearPathModels.GaussianPolynomial} {ambient :
-  Riemann.Paths.PreparedClearPathModels.Box}
+theorem prepared_provenance {polynomial : GaussianPolynomial} {ambient :
+  Box}
     {depth : Nat} {diameter : Fraction.Rational} {positive : 0 < diameter}
-    {start finish : Riemann.Paths.PreparedClearPathModels.Gaussian} {path : Polynomial.Geometry.ClearPath polynomial
+    {start finish : Gaussian} {path : Geometry.ClearPath polynomial
       ambient start finish}
-    {owner : Riemann.Paths.PreparedClearPathModels.Owner (polynomial.eval start)} (bank :
-      Riemann.Paths.PreparedClearPathModels.PreparedPath.DyadicBank depth diameter positive path owner) :
-    Riemann.Paths.PreparedClearPathModels.PreparedPath.AllRequestsDyadic depth diameter positive bank.prepared ∧
-      Riemann.Paths.PreparedClearPathModels.PreparedPath.AllEdgesProper bank.prepared := by
+    {owner : Owner (polynomial.eval start)} (bank :
+      DyadicBank depth diameter positive path owner) :
+    AllRequestsDyadic depth diameter positive bank.prepared ∧
+      AllEdgesProper bank.prepared := by
   cases bank with
   | safe checked =>
       exact ⟨Riemann.Paths.PreparedPathGluing.CheckedDyadic.prepared_generated checked,
         Riemann.Paths.PreparedPathGluing.CheckedDyadic.prepared_proper checked⟩
   | executed within prepared success =>
-      exact SquareRoot.Preparation.Bank.Cache.tryDyadic_provenance path within owner
+      exact tryDyadic_provenance path within owner
         depth diameter positive success
-  | executedCertified checked => exact SquareRoot.Preparation.Bank.Cache.executed_provenance checked
+  | executedCertified checked => exact executed_provenance checked
   | certified certificate => exact ⟨certificate.generated, certificate.prepared_allEdgesProper⟩
 
 /-- Retain the actual prepared spine once.  Correctness proofs consume its
 existing evidence, not a replay of the executable comparisons. -/
-@[expose] def cache {polynomial : Riemann.Paths.PreparedClearPathModels.GaussianPolynomial} {ambient :
-  Riemann.Paths.PreparedClearPathModels.Box}
+@[expose] def cache {polynomial : GaussianPolynomial} {ambient :
+  Box}
     {depth : Nat} {diameter : Fraction.Rational} {positive : 0 < diameter}
-    {start finish : Riemann.Paths.PreparedClearPathModels.Gaussian} {path : Polynomial.Geometry.ClearPath polynomial
+    {start finish : Gaussian} {path : Geometry.ClearPath polynomial
       ambient start finish}
-    {owner : Riemann.Paths.PreparedClearPathModels.Owner (polynomial.eval start)} (bank :
-      Riemann.Paths.PreparedClearPathModels.PreparedPath.DyadicBank depth diameter positive path owner) :
-    Riemann.Paths.PreparedClearPathModels.PreparedPath.CertifiedDyadic depth diameter positive path owner where
+    {owner : Owner (polynomial.eval start)} (bank :
+      DyadicBank depth diameter positive path owner) :
+    CertifiedDyadic depth diameter positive path owner where
   within := bank.within
   prepared := bank.prepared
-  generated := (SquareRoot.Preparation.Bank.Cache.DyadicBank.prepared_provenance bank).1
-  prepared_allEdgesProper := (SquareRoot.Preparation.Bank.Cache.DyadicBank.prepared_provenance bank).2
+  generated := (prepared_provenance bank).1
+  prepared_allEdgesProper := (prepared_provenance bank).2
   prepared_stepCount := bank.prepared_stepCount
   prepared_toClearPath := bank.prepared_toClearPath_eq_dyadicRefinePath
 
@@ -144,14 +144,14 @@ open Purelib.Data.Nat in
 
 Each accepted head subdivision is retained before its actual terminal owner is passed to the recursive tail. Request
 provenance, cell counts and clear-path equality are proved from those same caches. -/
-@[expose] def totalCachedAt {polynomial : Riemann.Paths.PreparedClearPathModels.GaussianPolynomial} {ambient :
-  Riemann.Paths.PreparedClearPathModels.Box} (depth : Nat)
+@[expose] def totalCachedAt {polynomial : GaussianPolynomial} {ambient :
+  Box} (depth : Nat)
     (diameter : Fraction.Rational) (positive : 0 < diameter) :
-    ∀ {start finish : Riemann.Paths.PreparedClearPathModels.Gaussian} (path : Polynomial.Geometry.ClearPath polynomial
+    ∀ {start finish : Gaussian} (path : Geometry.ClearPath polynomial
       ambient start finish)
-      (_within : path.WithinAmbient) (owner : Riemann.Paths.PreparedClearPathModels.Owner (polynomial.eval start)),
-      Riemann.Paths.PreparedClearPathModels.sufficientDepth path diameter ≤ depth →
-        Riemann.Paths.PreparedClearPathModels.PreparedPath.CertifiedDyadic depth diameter positive path owner
+      (_within : path.WithinAmbient) (owner : Owner (polynomial.eval start)),
+      sufficientDepth path diameter ≤ depth →
+        CertifiedDyadic depth diameter positive path owner
   | _, _, .nil point, within, owner, _ =>
       { within := within
         prepared := .nil point owner
@@ -160,14 +160,14 @@ provenance, cell counts and clear-path equality are proved from those same cache
         prepared_stepCount := (Nat.mul_zero _).symm
         prepared_toClearPath := rfl }
   | _, _, .cons head tail, within, owner, enough => by
-      have headEnough := (Riemann.Paths.PreparedClearPathModels.headSufficientDepth_le head tail diameter).trans enough
-      have tailEnough := (Riemann.Paths.PreparedClearPathModels.tailSufficientDepth_le head tail diameter).trans enough
+      have headEnough := (headSufficientDepth_le head tail diameter).trans enough
+      have tailEnough := (tailSufficientDepth_le head tail diameter).trans enough
       have safe := Riemann.Branches.PreparedSheetContinuation.Subdivision.dyadicMeshSafe_of_sufficientDepth_le
-        head Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
-          (Riemann.Paths.PreparedClearPathModels.ownerAtStart head owner) depth diameter positive (by decide) headEnough
-      let first := Riemann.Paths.PreparedClearPathModels.CompleteSegment.ofSafeDyadic head within.head owner depth
+        head zeroEndpoint oneEndpoint
+          (ownerAtStart head owner) depth diameter positive (by decide) headEnough
+      let first := CompleteSegment.ofSafeDyadic head within.head owner depth
         diameter positive safe
-      let rest := Purelib.RootIsolation.SquareRoot.Preparation.Bank.Cache.CertifiedDyadic.totalCachedAt depth diameter
+      let rest := CertifiedDyadic.totalCachedAt depth diameter
         positive tail within.tail first.finishOwner tailEnough
       exact
         { within := within
@@ -175,20 +175,20 @@ provenance, cell counts and clear-path equality are proved from those same cache
           generated := ⟨CompleteSegment.ofSafeDyadic_requests head within.head owner depth diameter positive safe,
             rest.generated⟩
           prepared_allEdgesProper := ⟨by
-            rw [Riemann.Paths.PreparedClearPathModels.CompleteSegment.ofSafeDyadic_parameterEdges]
-            exact Riemann.Paths.PreparedClearPathModels.PreparedPath.dyadicEdges_strictParameterEdges depth
-              Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint (by
+            rw [CompleteSegment.ofSafeDyadic_parameterEdges]
+            exact dyadicEdges_strictParameterEdges depth
+              zeroEndpoint oneEndpoint (by
               decide),
             rest.prepared_allEdgesProper⟩
           prepared_stepCount := by
             change first.subdivision.stepCount + rest.prepared.stepCount = _
-            rw [rest.prepared_stepCount, Riemann.Paths.PreparedClearPathModels.CompleteSegment.ofSafeDyadic_stepCount]
-            dsimp only [Polynomial.Geometry.ClearPath.segmentCount]
+            rw [rest.prepared_stepCount, CompleteSegment.ofSafeDyadic_stepCount]
+            dsimp only [Geometry.ClearPath.segmentCount]
             rw [Multiplication.left_distrib, Nat.mul_one]
             exact Nat.add_comm _ _
           prepared_toClearPath := by
             change first.clearPath.append rest.prepared.toClearPath = _
-            rw [rest.prepared_toClearPath, Riemann.Paths.PreparedClearPathModels.CompleteSegment.ofSafeDyadic_clearPath]
+            rw [rest.prepared_toClearPath, CompleteSegment.ofSafeDyadic_clearPath]
             rfl }
 
 end CertifiedDyadic

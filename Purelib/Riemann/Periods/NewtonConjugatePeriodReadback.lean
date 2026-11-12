@@ -20,6 +20,8 @@ import Purelib.Topology.Surface.Sewing.SewingRetraction
 public import Purelib.Curves.Hyperelliptic.Meshes.Newton.OriginalPeriodArea
 import Purelib.Topology.Surface.Boundary.PolarizedWordArea
 
+open Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
+
 @[expose] public section
 
 /-! The extracted conjugate period term reads the actual corrected A/B
@@ -49,7 +51,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -59,11 +61,11 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     sheet} {paired : Paired ordered}
     (prepared : Prepared paired)
   {fine : Polynomial.Geometry.Grid.ClearGrid curve.polynomial
-    (Purelib.Curves.Hyperelliptic.Branches.Cuts.Ambient curve)}
-  (included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid fine)
+    (Curves.Hyperelliptic.Branches.Cuts.Ambient curve)}
+  (included : Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid fine)
   {frames : RootIsolation.SquareRoot.Grid.RootFrames fine} (edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank fine)
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank fine)
 
 open Purelib.Algebra in
 open Purelib.Topology in
@@ -75,32 +77,32 @@ Conjugate only the first valuation and retain the chosen new sheet, coordinate i
 both ordered words. -/
 def conjugateResplitPeriodArea (newSheet : Fin 2)
     (first second : OrientedEdge vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
-  FiniteSum.Fin.sumFin fun cycle : Fin genus =>
-    Data.Gaussian.Basic.conj (Surface.Sewing.SewingRetraction.wordValue first (edges.indexedEdges vertices
-      (included.resplit (prepared.aWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+  sumFin fun cycle : Fin genus =>
+    Gaussian.Basic.conj (wordValue first (edges.indexedEdges vertices
+      (included.resplit (prepared.aWalk cycle).closed.walk (VertexBank.coordinate_onGrid
         lifted.vertices _)) newSheet)) *
-      Surface.Sewing.SewingRetraction.wordValue second (edges.indexedEdges vertices
+      wordValue second (edges.indexedEdges vertices
         (included.resplit (prepared.bWalk cycle).closed.walk
-          (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid lifted.vertices _)) newSheet) -
-    Data.Gaussian.Basic.conj (Surface.Sewing.SewingRetraction.wordValue first (edges.indexedEdges vertices
-      (included.resplit (prepared.bWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+          (VertexBank.coordinate_onGrid lifted.vertices _)) newSheet) -
+    Gaussian.Basic.conj (wordValue first (edges.indexedEdges vertices
+      (included.resplit (prepared.bWalk cycle).closed.walk (VertexBank.coordinate_onGrid
         lifted.vertices _)) newSheet)) *
-      Surface.Sewing.SewingRetraction.wordValue second (edges.indexedEdges vertices
+      wordValue second (edges.indexedEdges vertices
         (included.resplit (prepared.aWalk cycle).closed.walk
-          (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid lifted.vertices _)) newSheet)
+          (VertexBank.coordinate_onGrid lifted.vertices _)) newSheet)
 
 open Purelib.Topology in
 open Purelib.Data in
 /-- Conjugating each edge value commutes with the finite ordered word sum. -/
 private theorem word_conj {count : Nat} (value : OrientedEdge count → Gaussian.Basic.Canonical) (word : List
   (OrientedEdge count)) :
-    Surface.Sewing.SewingRetraction.wordValue (fun edge => Data.Gaussian.Basic.conj (value edge)) word =
-      Data.Gaussian.Basic.conj (Surface.Sewing.SewingRetraction.wordValue value word) := by
+    wordValue (fun edge => Gaussian.Basic.conj (value edge)) word =
+      Gaussian.Basic.conj (wordValue value word) := by
   induction word with
   | nil => rfl
   | cons edge rest ih =>
-      change Data.Gaussian.Basic.conj (value edge) + Surface.Sewing.SewingRetraction.wordValue _ rest =
-        Data.Gaussian.Basic.conj (value edge + Surface.Sewing.SewingRetraction.wordValue value rest)
+      change Gaussian.Basic.conj (value edge) + wordValue _ rest =
+        Gaussian.Basic.conj (value edge + wordValue value rest)
       rw [ih, Gaussian.Basic.conj_add]
 
 open Purelib.Algebra in
@@ -114,36 +116,36 @@ open Purelib.RootIsolation in
 The same prepared A/B walks, resplitting and lifted banks occur in the original area and extracted pairing. -/
 theorem extract_conjugate_resplit (newSheet : Fin 2)
     (first second : OrientedEdge vertices.count → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+    BilinearPolarization.extract (fun coefficient =>
       Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared included edges vertices newSheet
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix (fun edge =>
-        Data.Gaussian.Basic.conj (first edge)) second coefficient)) =
+      (BilinearPolarization.mix (fun edge =>
+        Gaussian.Basic.conj (first edge)) second coefficient)) =
       conjugateResplitPeriodArea prepared included edges vertices newSheet first second := by
   unfold Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea conjugateResplitPeriodArea
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_sum]
+  rw [BilinearPolarization.extract_sum]
   apply FiniteSum.Fin.sumFin_congr
   intro cycle
   let aWord := edges.indexedEdges vertices
-    (included.resplit (prepared.aWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+    (included.resplit (prepared.aWalk cycle).closed.walk (VertexBank.coordinate_onGrid
       lifted.vertices _)) newSheet
   let bWord := edges.indexedEdges vertices
-    (included.resplit (prepared.bWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+    (included.resplit (prepared.bWalk cycle).closed.walk (VertexBank.coordinate_onGrid
       lifted.vertices _)) newSheet
   calc
-    _ = Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Path.BoundaryRibbon.area
-        (Data.Gaussian.Basic.conj (Data.Gaussian.Basic.conj (Surface.Sewing.SewingRetraction.wordValue first
+    _ = BilinearPolarization.extract (fun coefficient =>
+      area
+        (Gaussian.Basic.conj (Gaussian.Basic.conj (wordValue first
           aWord)) +
-          coefficient * Surface.Sewing.SewingRetraction.wordValue second aWord)
-        (Data.Gaussian.Basic.conj (Data.Gaussian.Basic.conj (Surface.Sewing.SewingRetraction.wordValue first
+          coefficient * wordValue second aWord)
+        (Gaussian.Basic.conj (Gaussian.Basic.conj (wordValue first
           bWord)) +
-          coefficient * Surface.Sewing.SewingRetraction.wordValue second bWord)) :=
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr (fun coefficient =>
+          coefficient * wordValue second bWord)) :=
+      BilinearPolarization.extract_congr (fun coefficient =>
         by
-        rw [Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix,
-          Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix, word_conj,
+        rw [BilinearPolarization.word_mix,
+          BilinearPolarization.word_mix, word_conj,
           word_conj])
-    _ = _ := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_area _ _ _ _
+    _ = _ := BilinearPolarization.extract_area _ _ _ _
 
 open Purelib.Algebra in
 open Purelib.Curves in

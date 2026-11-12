@@ -20,6 +20,8 @@ import Purelib.Geometry.Projective.Line.Basic
 import Purelib.Geometry.Projective.Line.Hermitian
 import Purelib.RationalFunctions.Curve.Basic
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -57,9 +59,9 @@ def realComparison
     (determinantNonzero :
       BoundaryAdjugate.determinant matrix ≠ 0)
     (threshold : Fraction.Rational) :
-    Parametrization (Hermitian.realComparisonForm matrix threshold) := by
+    Parametrization (realComparisonForm matrix threshold) := by
   let source := Line.realLine threshold
-  refine Parametrization.ofTransformedCurve _ source
+  refine ofTransformedCurve _ source
     (BoundaryAdjugate.adjugate matrix) 1 (by decide)
     (Projective.unitDenominatorWeightLower source
       (Line.realLine_denominatorAt threshold))
@@ -95,7 +97,7 @@ def realComparison
       (BoundaryAdjugate.adjugate matrix)).point parameter =
       Homography.Basic.homographic (BoundaryAdjugate.adjugate matrix)
         (source.point parameter) by exact pointIdentity]
-  apply (Hermitian.real_homographic_eq_iff matrix _ threshold
+  apply (real_homographic_eq_iff matrix _ threshold
     forwardDenominatorNonzero).1
   rw [inverseIdentity]
   exact congrArg Data.Gaussian.Basic.re
@@ -107,9 +109,9 @@ def imaginaryComparison
     (determinantNonzero :
       BoundaryAdjugate.determinant matrix ≠ 0)
     (threshold : Fraction.Rational) :
-    Parametrization (Hermitian.imagComparisonForm matrix threshold) := by
+    Parametrization (imagComparisonForm matrix threshold) := by
   let source := Line.imaginaryLine threshold
-  refine Parametrization.ofTransformedCurve _ source
+  refine ofTransformedCurve _ source
     (BoundaryAdjugate.adjugate matrix) 1 (by decide)
     (Projective.unitDenominatorWeightLower source
       (Line.imaginaryLine_denominatorAt threshold))
@@ -146,7 +148,7 @@ def imaginaryComparison
       (BoundaryAdjugate.adjugate matrix)).point parameter =
       Homography.Basic.homographic (BoundaryAdjugate.adjugate matrix)
         (source.point parameter) by exact pointIdentity]
-  apply (Hermitian.imag_homographic_eq_iff matrix _ threshold
+  apply (imag_homographic_eq_iff matrix _ threshold
     forwardDenominatorNonzero).1
   rw [inverseIdentity]
   exact congrArg Data.Gaussian.Basic.im
@@ -159,11 +161,11 @@ def normComparison
     (determinantNonzero :
       BoundaryAdjugate.determinant matrix ≠ 0)
     (base : Data.Gaussian.Basic.Canonical) :
-    Parametrization (Hermitian.normComparisonForm matrix
-        (Data.Gaussian.Norm.Basic.normSq
+    Parametrization (normComparisonForm matrix
+        (Basic.normSq
       base)) := by
   let source := Circle.circle base
-  refine Parametrization.ofTransformedCurve _ source
+  refine ofTransformedCurve _ source
     (BoundaryAdjugate.adjugate matrix) 1 (by decide)
     (Projective.circleDenominatorWeightLower source
       (Circle.circle_denominatorAt base))
@@ -198,11 +200,11 @@ def normComparison
       (BoundaryAdjugate.adjugate matrix)).point parameter =
       Homography.Basic.homographic (BoundaryAdjugate.adjugate matrix)
         (source.point parameter) by exact pointIdentity]
-  apply (Hermitian.norm_homographic_eq_iff matrix _ (Data.Gaussian.Norm.Basic.normSq base)
+  apply (norm_homographic_eq_iff matrix _ (Basic.normSq base)
     forwardDenominatorNonzero).1
   rw [inverseIdentity]
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical,
-    Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+  rw [Basic.normSq_eq_canonical,
+    Basic.normSq_eq_canonical]
   exact Circle.normSq_circle_point base parameter
 
 /-- Reciprocal chart of the same pulled-back centered norm boundary. Its zero parameter supplies the projective point
@@ -212,11 +214,11 @@ def normComparisonReciprocal
     (determinantNonzero :
       BoundaryAdjugate.determinant matrix ≠ 0)
     (base : Data.Gaussian.Basic.Canonical) :
-    Parametrization (Hermitian.normComparisonForm matrix
-        (Data.Gaussian.Norm.Basic.normSq
+    Parametrization (normComparisonForm matrix
+        (Basic.normSq
       base)) := by
   let source := Circle.reciprocalCircle base
-  refine Parametrization.ofTransformedCurve _ source
+  refine ofTransformedCurve _ source
     (BoundaryAdjugate.adjugate matrix) 1 (by decide)
     (Projective.circleDenominatorWeightLower source
       (Circle.reciprocalCircle_denominatorAt base))
@@ -253,11 +255,11 @@ def normComparisonReciprocal
       (BoundaryAdjugate.adjugate matrix)).point parameter =
       Homography.Basic.homographic (BoundaryAdjugate.adjugate matrix)
         (source.point parameter) by exact pointIdentity]
-  apply (Hermitian.norm_homographic_eq_iff matrix _ (Data.Gaussian.Norm.Basic.normSq base)
+  apply (norm_homographic_eq_iff matrix _ (Basic.normSq base)
     forwardDenominatorNonzero).1
   rw [inverseIdentity]
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical,
-    Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+  rw [Basic.normSq_eq_canonical,
+    Basic.normSq_eq_canonical]
   exact Circle.normSq_reciprocalCircle_point
     base parameter
 end Purelib.Geometry.Projective.Hermitian.Parametrization

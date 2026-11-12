@@ -43,6 +43,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Every prefix of the existing Newton child list has a primitive comparison.
@@ -67,11 +69,11 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 The retained pointwise error bound is restricted to the actual prefix, keeping the original full-list count as a uniform
 upper bound. -/
-theorem prefix_error_le (primitive : Basic.Canonical → Basic.Canonical) (cells : List Basic.CellModel)
+theorem prefix_error_le (primitive : Basic.Canonical → Basic.Canonical) (cells : List CellModel)
     (length : Nat) {budget : Fraction.Rational} (nonnegative : 0 ≤ budget)
     (bounded : ∀ cell ∈ cells,
-      Data.Gaussian.Norm.Basic.normSq (primitive cell.finish - primitive cell.start - cell.integralSample) ≤ budget) :
-    Data.Gaussian.Norm.Basic.normSq (Primitive.incrementSum primitive (cells.take length) - (Basic.PathModel.mk
+      normSq (primitive cell.finish - primitive cell.start - cell.integralSample) ≤ budget) :
+    normSq (Primitive.incrementSum primitive (cells.take length) - (PathModel.mk
       (cells.take
       length)).integralSample) ≤
       (cells.length : Fraction.Rational)^2 * budget := by
@@ -80,8 +82,8 @@ theorem prefix_error_le (primitive : Basic.Canonical → Basic.Canonical) (cells
   · intro error member
     obtain ⟨cell, inCells, rfl⟩ := Map.mem_map.mp member
     exact bounded cell (List.mem_of_mem_take inCells)
-  · rw [Primitive.errorTerms, Data.List.Map.length_map]
-    rw [Data.List.Prefix.Take.length_take]
+  · rw [Primitive.errorTerms, Map.length_map]
+    rw [Prefix.Take.length_take]
     change (if length ≤ cells.length then length else cells.length) ≤ cells.length
     by_cases ordered : length ≤ cells.length
     · rewrite [if_pos ordered]
@@ -180,32 +182,32 @@ theorem primitive_prefix_error_le (request : Request profile target) (positive :
     (patch : PreparedPatch parent) {index : Nat}
     (model : PrimitiveModel (patch.neighborhood count) index (differentialNumerator differential))
     (finishInside : (patch.neighborhood count).box.Contains (parent.edge.point 1)) (length : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Primitive.incrementSum model.primitive.value.eval
+    normSq (Primitive.incrementSum model.primitive.value.eval
         ((request.block.children.map CenteredEdge.model).take length) -
-      (Basic.PathModel.mk ((request.block.children.map CenteredEdge.model).take length)).integralSample) ≤
-        2 * model.primitive.remainderBound * movement parent * Geometric.Basic.quarterRadius (movement parent)
+      (PathModel.mk ((request.block.children.map CenteredEdge.model).take length)).integralSample) ≤
+        2 * model.primitive.remainderBound * movement parent * quarterRadius (movement parent)
           request.block.depth +
           (4 * Bounds.Box.denseEvalNormBound (differentialNumerator differential) (patch.neighborhood count).box *
-            Geometric.Basic.quarterRadius (patch.neighborhood count).inverseErrorScale index + 40 * target) * movement
+            quarterRadius (patch.neighborhood count).inverseErrorScale index + 40 * target) * movement
               parent := by
   let numerator := Bounds.Box.denseEvalNormBound (differentialNumerator differential) (patch.neighborhood count).box
-  let distance := Geometric.Basic.quarterRadius (movement parent) request.block.depth
-  let coefficient := 4 * numerator * Geometric.Basic.quarterRadius (patch.neighborhood count).inverseErrorScale index +
+  let distance := quarterRadius (movement parent) request.block.depth
+  let coefficient := 4 * numerator * quarterRadius (patch.neighborhood count).inverseErrorScale index +
     40 * target
   have numeratorNonnegative : 0 ≤ numerator :=
     (Bounds.Box.denseHornerNormBounds_nonneg (differentialNumerator differential) (patch.neighborhood count).box).1
   have distanceNonnegative : 0 ≤ distance :=
     Geometric.Basic.quarterRadius_nonneg (PreparedPrimitiveRequests.movement_nonnegative parent) _
   have coefficientNonnegative : 0 ≤ coefficient := add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide +kernel)
       numeratorNonnegative)
       (Geometric.Basic.quarterRadius_nonneg (patch.neighborhood count).inverseErrorScale_positive.le index))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) positive)
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) positive)
   have nonnegative : 0 ≤ 2 * model.primitive.remainderBound * distance^2 + coefficient * distance :=
-    add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
+    add_nonneg (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct
       (by decide +kernel) model.primitive.remainderBound_nonnegative)
-      (Fraction.Order.Arithmetic.pow_nonneg_direct distanceNonnegative 2))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct coefficientNonnegative distanceNonnegative)
+      (Arithmetic.pow_nonneg_direct distanceNonnegative 2))
+      (Arithmetic.mul_nonneg_direct coefficientNonnegative distanceNonnegative)
   have starts := PreparedPrimitivePaths.block_starts_inside request.block (patch.neighborhood count).box
     (patch.start_inside count) finishInside
   have finishes := PreparedPrimitivePaths.block_finishes_inside request.block (patch.neighborhood count).box
@@ -223,7 +225,7 @@ theorem primitive_prefix_error_le (request : Request profile target) (positive :
         (request.child_error inChildren) (PreparedPrimitivePaths.block_movement_le request.block inChildren)
       rw [← Norm.Basic.normSq_eq_canonical] at scalar
       exact scalar)
-  rw [Data.List.Map.length_map, request.block.childCount] at estimate
+  rw [Map.length_map, request.block.childCount] at estimate
   have cancel := Geometric.DyadicCount.dyadic_count_cancel (movement parent) request.block.depth
   have identity : (((2 ^ request.block.depth : Nat) : Coordinate)^2 *
       (2 * model.primitive.remainderBound * distance^2 + coefficient * distance)) =
@@ -248,14 +250,14 @@ theorem primitive_vertex_error_le (request : Request profile target) (positive :
     (patch : PreparedPatch parent) {index : Nat}
     (model : PrimitiveModel (patch.neighborhood count) index (differentialNumerator differential))
     (finishInside : (patch.neighborhood count).box.Contains (parent.edge.point 1)) (length : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (model.primitive.value.eval
+    normSq (model.primitive.value.eval
         (PreparedPrimitivePaths.prefixPoint (parent.edge.segment.pointAt parent.edge.left.parameter)
           request.block.children length) - model.primitive.value.eval (parent.edge.point 0) -
-      (Basic.PathModel.mk ((request.block.children.map CenteredEdge.model).take length)).integralSample) ≤
-        2 * model.primitive.remainderBound * movement parent * Geometric.Basic.quarterRadius (movement parent)
+      (PathModel.mk ((request.block.children.map CenteredEdge.model).take length)).integralSample) ≤
+        2 * model.primitive.remainderBound * movement parent * quarterRadius (movement parent)
           request.block.depth +
           (4 * Bounds.Box.denseEvalNormBound (differentialNumerator differential) (patch.neighborhood count).box *
-            Geometric.Basic.quarterRadius (patch.neighborhood count).inverseErrorScale index + 40 * target) * movement
+            quarterRadius (patch.neighborhood count).inverseErrorScale index + 40 * target) * movement
               parent := by
   have bounded := primitive_prefix_error_le request positive patch model finishInside length
   rw [PreparedPrimitivePaths.prefix_incrementSum _ request.block.chain length] at bounded
@@ -268,10 +270,10 @@ open Purelib.Riemann.Paths in
 /-- Read the retained comparison bound at any original prepared prefix vertex. -/
 theorem PrimitiveComparison.vertex_error_le {request : Request profile target} {index : Nat}
     (comparison : PrimitiveComparison request count index) (positive : 0 ≤ target) (length : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (comparison.2.1.primitive.value.eval
+    normSq (comparison.2.1.primitive.value.eval
         (PreparedPrimitivePaths.prefixPoint (parent.edge.segment.pointAt parent.edge.left.parameter)
           request.block.children length) - comparison.2.1.primitive.value.eval (parent.edge.point 0) -
-      (Basic.PathModel.mk ((request.block.children.map CenteredEdge.model).take length)).integralSample) ≤
+      (PathModel.mk ((request.block.children.map CenteredEdge.model).take length)).integralSample) ≤
         comparison.2.2.bound := by
   rw [comparison.2.2.bound_eq]
   exact primitive_vertex_error_le request positive comparison.1.patch comparison.2.1

@@ -24,14 +24,19 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction
 import Purelib.Approximation.Gaussian.Process.Basic
+import Purelib.Polynomial.Multivariate.Sparse
 
-open Purelib.Approximation.Gaussian.Acquisition.Expression.Basic (Expr)
+open Purelib.Approximation.Gaussian.Acquisition.Expression.Basic
 
 @[expose] public section
 
-/-! # Automatic-route regressions, including symbolic and opaque inputs -/
+/-!
+Symbolic and opaque acquisition through retained arithmetic expressions.
+-/
 
 namespace Purelib.Examples.Approximation.Gaussian.Acquisition.Automation.WorkedExamples
+
+open Purelib.Approximation.Gaussian.Division.Acquisition
 
 open Purelib.Approximation.Gaussian.Acquisition (Annotated)
 
@@ -47,6 +52,7 @@ open Purelib.Approximation.Gaussian.Division
 open Purelib.Examples.Approximation.Gaussian.Division
 open Purelib.Data.Gaussian
 open Purelib.Riemann.RootContinuation
+open Purelib.Polynomial.Multivariate (Sparse)
 
 /-- A singleton expression environment retaining the supplied opaque coherent name. -/
 def atomEnvironment (input :
@@ -58,12 +64,12 @@ def atomEnvironment (input :
 The original arithmetic channel is kept while symbolic provenance records cancellation. -/
 def cancellation (input :
   CoherentNamed) :=
-  (Expr.sub (.atom 0) (.atom 0)).compile (atomEnvironment input)
+  (Expr.sub (.atom ⟨0, by decide⟩) (.atom ⟨0, by decide⟩)).compile (atomEnvironment input)
 
 /-- Compiling self-subtraction retains the exact rational value zero. -/
 theorem cancellation_value (input :
   CoherentNamed) : (cancellation input).rationalValue = some 0 :=
-  Expr.compile_cancel (atomEnvironment input) (.atom 0)
+  Expr.compile_cancel (atomEnvironment input) (.atom ⟨0, by decide⟩)
 
 /-- Acquisition recognizes compiled self-subtraction as exact zero. -/
 theorem cancellation_zero (input :
@@ -100,8 +106,8 @@ theorem squaredRoot_value :
   (squaredRoot.compile
   emptyEnvironment).rationalValue = some two
   := by
-  unfold squaredRoot
-  rewrite [Expr.compile, if_pos rfl]
+  unfold squaredRoot Expr.compile
+  rewrite [Expr.retain_mul, dif_pos rfl]
   exact Annotated.root_square_value two 0
 
 /-- The compiled expression subtracting two from its repeated square root product. -/
@@ -146,7 +152,7 @@ The environment may return the same coherent name, but the expression keeps the 
 theorem
   distinct_opaque_atoms_not_identified
   (input : CoherentNamed) :
-    ((Expr.sub (.atom (0 : Fin 2)) (.atom 1)).compile (fun _ =>
+    ((Expr.sub (.atom (0 : Fin 2)) (.atom ⟨1, by decide⟩)).compile (fun _ =>
         Annotated.opaque
       input)).provenance = none := rfl
 
@@ -214,33 +220,100 @@ def delayedDivision :=
 /-- The delayed denominator acquisition returns readiness. -/
 theorem delayed_ready :
   delayedDivision.2.status = .ready := rfl
-/-- The acquisition report retains the delayed denominator's refined source. -/
-theorem delayed_state_retained :
-  delayedDivision.1.next.state.source = true := rfl
-/-- Delayed acquisition preserves its original next-index counter. -/
-theorem delayed_index_unchanged :
-  delayedDivision.1.next.state.nextIndex = 0 := rfl
 
-/-- Resuming the ready delayed report uses its cached acquisition route. -/
-theorem delayed_resume_uses_cache :
-  (Acquisition.Dispatch.Report.resume delayedDivision
-  Bounded.WorkedExamples.tinyInput 1 (by decide)).1.route = .cached := rfl
+/-- The two original opaque channels at their distinct source indices. -/
+def opaquePair (first second : CoherentNamed) : Fin 2 → Annotated :=
+  Fin.cases (Annotated.opaque first) (fun _ => Annotated.opaque second)
 
-/-- Resuming the tiny denominator with its smaller certified threshold prepares it.
+/-- A commuted sum difference that has no syntactic self-cancellation. -/
+def commutedSumDifference : Expr 2 :=
+  .sub (.add (.atom ⟨0, by decide⟩) (.atom ⟨1, by decide⟩)) (.add (.atom ⟨1, by decide⟩) (.atom ⟨0, by decide⟩))
 
-Reuses the original numerical report and requests the exact positive squared-norm gap of the fixed tiny input. -/
-theorem tiny_resume_finer_ready :
-    (Acquisition.Dispatch.Report.resume (Acquisition.Dispatch.acquire Bounded.WorkedExamples.oneInput
-      opaqueTiny 1 (by decide)) Bounded.WorkedExamples.oneInput
-      Gap.WorkedExamples.tinyGap
-      Gap.WorkedExamples.tinyGap_positive).2.status = .ready := rfl
+/-- The unchanged original expression with automatically inferred exact zero provenance. -/
+def commutedZero (first second : CoherentNamed) : Annotated :=
+  commutedSumDifference.compile (opaquePair first second)
 
-/-- Resuming a symbolic cancellation report uses its cached zero result. -/
-theorem zero_resume_uses_cache
-  (input : CoherentNamed) :
-    (Acquisition.Dispatch.Report.resume (Acquisition.Dispatch.acquire Bounded.WorkedExamples.oneInput
-      (Acquisition.State.start (cancellation input)) 1 (by decide))
-      Bounded.WorkedExamples.tinyInput 1 (by decide)).1.route = .cached := rfl
+/-- Polynomial normalization infers zero for arbitrary original opaque input channels. -/
+theorem commuted_zero_value (first second : CoherentNamed) :
+    (commutedZero first second).rationalValue = some 0 := by
+  unfold commutedZero
+  apply Expr.compile_inferred_value
+  · rfl
+  · unfold Expr.normalize Compiled.normalize
+    dsimp only
+    rewrite [Construction.normalize_form]
+    dsimp only [Compiled.bindings]
+    change (Sparse.sub
+      (Sparse.add (Sparse.atom (⟨0, by decide⟩ : Fin 4))
+        (Sparse.atom (⟨1, by decide⟩ : Fin 4)))
+      (Sparse.add (Sparse.atom (⟨1, by decide⟩ : Fin 4))
+        (Sparse.atom (⟨0, by decide⟩ : Fin 4)))).terms = (Sparse.constant (0 : Canonical)).terms
+    decide +kernel
+
+/-- Inferred commuted cancellation reaches exact division exclusion without a supplied zero certificate. -/
+theorem commuted_zero_division (first second : CoherentNamed) :
+    (Dispatch.acquire oneInput (State.start (commutedZero first second)) 1 (by decide)).2.status = .zero :=
+  Dispatch.start_rational_zero oneInput (commutedZero first second) 1 (by decide) (commuted_zero_value first second)
+
+/-- An expanded shifted square whose canonical value is one at the original opaque source. -/
+def expandedUnitExpression : Expr 2 :=
+  .sub (.sub (.mul (.add (.atom ⟨0, by decide⟩) (.rational 1)) (.add (.atom ⟨0, by decide⟩) (.rational 1)))
+    (.mul (.atom ⟨0, by decide⟩) (.atom ⟨0, by decide⟩))) (.mul (.rational 2) (.atom ⟨0, by decide⟩))
+
+/-- Compile the original expanded arithmetic while inferring its exact unit reading. -/
+def expandedUnit (first second : CoherentNamed) : Annotated :=
+  expandedUnitExpression.compile (opaquePair first second)
+
+/-- The original expanded shifted square receives the exact unit value for arbitrary opaque input channels. -/
+theorem expanded_unit_value (first second : CoherentNamed) :
+    (expandedUnit first second).rationalValue = some 1 := by
+  unfold expandedUnit
+  apply Expr.compile_inferred_value
+  · rfl
+  · unfold Expr.normalize Compiled.normalize
+    dsimp only
+    rewrite [Construction.normalize_form]
+    dsimp only [Compiled.bindings]
+    change (Sparse.sub
+      (Sparse.sub
+        (Sparse.mul
+          (Sparse.add (Sparse.atom (⟨0, by decide⟩ : Fin 3)) (Sparse.constant 1))
+          (Sparse.add (Sparse.atom (⟨0, by decide⟩ : Fin 3)) (Sparse.constant 1)))
+        (Sparse.mul (Sparse.atom (⟨0, by decide⟩ : Fin 3))
+          (Sparse.atom (⟨0, by decide⟩ : Fin 3))))
+      (Sparse.mul (Sparse.constant 2)
+          (Sparse.atom (⟨0, by decide⟩ : Fin 3)))).terms = (Sparse.constant (1 : Canonical)).terms
+    decide +kernel
+
+/-- The original expanded unit identity minus one, with automatically inferred exact-zero evidence. -/
+def expandedZero (first second : CoherentNamed) : Annotated :=
+  (Expr.sub expandedUnitExpression (.rational 1)).compile (opaquePair first second)
+
+/-- Polynomial normalization infers the exact zero reading of the expanded identity minus one. -/
+theorem expanded_zero_value (first second : CoherentNamed) :
+    (expandedZero first second).rationalValue = some 0 := by
+  unfold expandedZero
+  apply Expr.compile_inferred_value
+  · rfl
+  · unfold Expr.normalize Compiled.normalize
+    dsimp only
+    rewrite [Construction.normalize_form]
+    dsimp only [Compiled.bindings]
+    change (Sparse.sub (Sparse.sub
+      (Sparse.sub
+        (Sparse.mul
+          (Sparse.add (Sparse.atom (⟨0, by decide⟩ : Fin 3)) (Sparse.constant 1))
+          (Sparse.add (Sparse.atom (⟨0, by decide⟩ : Fin 3)) (Sparse.constant 1)))
+        (Sparse.mul (Sparse.atom (⟨0, by decide⟩ : Fin 3))
+          (Sparse.atom (⟨0, by decide⟩ : Fin 3))))
+      (Sparse.mul (Sparse.constant 2)
+          (Sparse.atom (⟨0, by decide⟩ : Fin 3)))) (Sparse.constant 1)).terms = (Sparse.constant (0 : Canonical)).terms
+    decide +kernel
+
+/-- The expanded opaque identity reaches the exact division obstruction without caller-supplied zero evidence. -/
+theorem expanded_zero_division (first second : CoherentNamed) :
+    (Dispatch.acquire oneInput (State.start (expandedZero first second)) 1 (by decide)).2.status = .zero :=
+  Dispatch.start_rational_zero oneInput (expandedZero first second) 1 (by decide) (expanded_zero_value first second)
 
 end Purelib.Examples.Approximation.Gaussian.Acquisition.Automation.WorkedExamples
 

@@ -77,7 +77,7 @@ theorem areaBlocks_right {parents : List (CenteredEdge curve differential)} (req
       simp only [areaBlocks, List.map_cons, List.flatten_cons,
         LocalRequest.areaPairs_right, ih,
         RequestedParents.blocks,
-        DirectBlockRefinement.children, Purelib.Data.List.Map.map_append, Paths.PathArea.increments, -eq_self,
+        DirectBlockRefinement.children, Data.List.Map.map_append, Paths.PathArea.increments, -eq_self,
           -iff_self]
       rfl
 
@@ -88,14 +88,14 @@ open Purelib.Riemann.Readings.UniformPreparedRequests in
 /-- Flattening the primitive blocks preserves the total of the retained parent-request increments. -/
 theorem areaBlocks_left_total {parents : List (CenteredEdge curve differential)} (requests : RequestedParents count
   target parents) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((areaBlocks requests).map Prod.fst).flatten =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum requests.increments := by
+    gaussianSum ((areaBlocks requests).map Prod.fst).flatten =
+      gaussianSum requests.increments := by
   induction requests with
   | nil => rfl
   | cons head tail ih =>
       simp only [areaBlocks, List.map_cons, List.flatten_cons, Path.IncrementArea.sum_append,
         LocalRequest.areaPairs_left_total,
-        ih, RequestedParents.increments, Data.Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
+        ih, RequestedParents.increments, gaussianSum, -eq_self, -iff_self]
       rfl
 
 open Purelib.Data.Gaussian.Norm.Sum.Basic in
@@ -113,12 +113,12 @@ private theorem bounds {parents : List (CenteredEdge curve differential)} (reque
     (samples : ∀ child ∈ requests.blocks.children, normSq child.model.integralSample ≤ density *
       child.edge.pointMovement) :
     ∀ pair ∈ (areaBlocks requests),
-      normSq (Path.IncrementArea.pathArea pair.1 - Path.IncrementArea.pathArea pair.2) ≤ 32 * target * (density *
+      normSq (pathArea pair.1 - pathArea pair.2) ≤ 32 * target * (density *
         distance + target) ∧
-      normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 - Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤
+      normSq (gaussianSum pair.1 - gaussianSum pair.2) ≤
         target ∧
-      normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1) ≤ 2 * (density * distance + target) ∧
-      normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤ 2 * (density * distance + target) := by
+      normSq (gaussianSum pair.1) ≤ 2 * (density * distance + target) ∧
+      normSq (gaussianSum pair.2) ≤ 2 * (density * distance + target) := by
   induction requests with
   | nil => intro _ member; exact False.elim (List.not_mem_nil member)
   | cons head tail ih =>
@@ -153,8 +153,8 @@ theorem area_error {parents : List (CenteredEdge curve differential)} (requests 
     (movements : ∀ parent ∈ parents, movement parent ≤ distance)
     (samples : ∀ child ∈ requests.blocks.children, normSq child.model.integralSample ≤ density *
       child.edge.pointMovement) :
-    normSq (Path.IncrementArea.pathArea ((areaBlocks requests).map Prod.fst).flatten -
-      Path.IncrementArea.pathArea (Paths.PathArea.increments (PathModel.mk (requests.blocks.children.map
+    normSq (pathArea ((areaBlocks requests).map Prod.fst).flatten -
+      pathArea (Paths.PathArea.increments (PathModel.mk (requests.blocks.children.map
         CenteredEdge.model)))) ≤
         64 * ((parents.length : Coordinate) ^ 2 * target) * (density * distance + target) +
           64 * ((parents.length : Coordinate) ^ 4 * target) * (density * distance + target) := by
@@ -194,23 +194,23 @@ theorem dyadic_area_error {parents : List (CenteredEdge curve differential)} (re
     (densityNonnegative : 0 ≤ density) (distanceNonnegative : 0 ≤ distance) (depth : Nat)
     (countEq : parents.length = 2 ^ depth) (targetLe : target ≤ accuracy)
     (countPaid : (parents.length : Coordinate) ^ 2 * target ≤ accuracy)
-    (movements : ∀ parent ∈ parents, movement parent ≤ Basic.quarterRadius distance depth)
+    (movements : ∀ parent ∈ parents, movement parent ≤ quarterRadius distance depth)
     (samples : ∀ child ∈ requests.blocks.children, normSq child.model.integralSample ≤ density *
       child.edge.pointMovement) :
-    normSq (Path.IncrementArea.pathArea ((areaBlocks requests).map Prod.fst).flatten -
-      Path.IncrementArea.pathArea (Paths.PathArea.increments (PathModel.mk (requests.blocks.children.map
+    normSq (pathArea ((areaBlocks requests).map Prod.fst).flatten -
+      pathArea (Paths.PathArea.increments (PathModel.mk (requests.blocks.children.map
         CenteredEdge.model)))) ≤
         128 * accuracy * (density * distance + accuracy) := by
-  have firstBound : density * Basic.quarterRadius distance depth + target ≤ density * distance + accuracy :=
+  have firstBound : density * quarterRadius distance depth + target ≤ density * distance + accuracy :=
     add_le_add (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Basic.quarterRadius_le_scale distanceNonnegative depth) densityNonnegative) targetLe
-  have firstNonnegative : 0 ≤ density * Basic.quarterRadius distance depth + target :=
-    add_nonneg (Arithmetic.mul_nonneg_direct densityNonnegative (Basic.quarterRadius_nonneg distanceNonnegative depth))
+  have firstNonnegative : 0 ≤ density * quarterRadius distance depth + target :=
+    add_nonneg (Arithmetic.mul_nonneg_direct densityNonnegative (quarterRadius_nonneg distanceNonnegative depth))
       positive.le
-  have countDensity : (parents.length : Coordinate) ^ 2 * (density * Basic.quarterRadius distance depth + target) ≤
+  have countDensity : (parents.length : Coordinate) ^ 2 * (density * quarterRadius distance depth + target) ≤
       density * distance + accuracy := by
     calc
-      _ = density * (((parents.length : Coordinate) * ((parents.length : Coordinate) * Basic.quarterRadius distance
+      _ = density * (((parents.length : Coordinate) * ((parents.length : Coordinate) * quarterRadius distance
         depth))) +
         (parents.length : Coordinate) ^ 2 * target := by ring1
       _ = density * distance + (parents.length : Coordinate) ^ 2 * target := by
@@ -219,13 +219,13 @@ theorem dyadic_area_error {parents : List (CenteredEdge curve differential)} (re
   have internal := Arithmetic.mul_le_mul_direct countPaid firstBound firstNonnegative accuracyPositive.le
   have polygon := Arithmetic.mul_le_mul_direct countPaid countDensity
     (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _) firstNonnegative) accuracyPositive.le
-  have bounded := (area_error requests) positive densityNonnegative (Basic.quarterRadius_nonneg distanceNonnegative
+  have bounded := (area_error requests) positive densityNonnegative (quarterRadius_nonneg distanceNonnegative
     depth) movements samples
   apply bounded.trans
   calc
-    _ = 64 * (((parents.length : Coordinate) ^ 2 * target) * (density * Basic.quarterRadius distance depth + target)) +
+    _ = 64 * (((parents.length : Coordinate) ^ 2 * target) * (density * quarterRadius distance depth + target)) +
       64 * (((parents.length : Coordinate) ^ 2 * target) *
-        ((parents.length : Coordinate) ^ 2 * (density * Basic.quarterRadius distance depth + target))) := by ring1
+        ((parents.length : Coordinate) ^ 2 * (density * quarterRadius distance depth + target))) := by ring1
     _ ≤ 64 * (accuracy * (density * distance + accuracy)) + 64 * (accuracy * (density * distance + accuracy)) :=
       add_le_add (Arithmetic.mul_le_mul_of_nonneg_left_direct internal (by decide +kernel))
         (Arithmetic.mul_le_mul_of_nonneg_left_direct polygon (by decide +kernel))

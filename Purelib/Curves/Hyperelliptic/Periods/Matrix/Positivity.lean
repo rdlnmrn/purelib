@@ -64,15 +64,15 @@ namespace Purelib.Curves.Hyperelliptic.Periods.Matrix.Positivity
 
 /-- Rational centre matrix returned by one shared finite request. -/
 @[expose] def centerMatrix {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
-    (target : Fraction.Rational) (positive : 0 < target) : QuadraticForm.GaussianMatrix genus :=
+    (target : Fraction.Rational) (positive : 0 < target) : GaussianMatrix genus :=
   LinearAlgebra.Matrix.matrixOfFn fun row column =>
     data.omegaCenter target positive row column
 
 /-- The retained center matrix reads the sampled imaginary period entry. -/
 @[simp] theorem centerMatrix_apply {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
     (target : Fraction.Rational) (positive : 0 < target)
     (row column : Fin genus) :
@@ -83,14 +83,14 @@ namespace Purelib.Curves.Hyperelliptic.Periods.Matrix.Positivity
 /-- The canonical entrywise radius matrix repeats the chosen shrinking rational radius. Sampling at its square avoids
 extracting square roots. -/
 @[expose] def automaticRadius {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (_data : PeriodMatrix.NormalizedPeriodData curve)
     (radius : Fraction.Rational) (_positive : 0 < radius) : Budget.RationalMatrix genus :=
   LinearAlgebra.Matrix.matrixOfFn fun _row _column => radius
 
 /-- The canonical entry radius is the specified positive linear refinement radius. -/
 @[simp] theorem automaticRadius_apply {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
     (radius : Fraction.Rational) (positive : 0 < radius)
     (row column : Fin genus) :
@@ -99,7 +99,7 @@ extracting square roots. -/
 
 /-- Every canonical entry radius is positive when the retained refinement radius is positive. -/
 theorem automaticRadius_positive {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
     (radius : Fraction.Rational) (positive : 0 < radius)
     (row column : Fin genus) :
@@ -109,7 +109,7 @@ theorem automaticRadius_positive {genus : Nat}
 
 /-- Each sampled period squared radius lies below the square of its canonical entry radius. -/
 theorem omegaRadiusSq_lt_automaticRadius_sq {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
     (radius : Fraction.Rational) (positive : 0 < radius)
     (row column : Fin genus) :
@@ -124,9 +124,9 @@ set_option genInjectivity false in
 /-- A finite rational certificate sufficient to answer one pointwise positivity request. `weighted_lower` is only an
 entrywise scalar inequality; the universal matrix-box conclusion is derived below by finite summation. -/
 structure RequestCertificate {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
-    (vector : QuadraticForm.RationalVector genus) (_nonzero : QuadraticForm.NonzeroVector vector)
+    (vector : RationalVector genus) (_nonzero : NonzeroVector vector)
     (target : Fraction.Rational) (_positive : 0 < target) where
   /-- The smaller positive target retained for this finite refinement. -/ refinementTarget : Fraction.Rational
   /-- The retained refinement target is strictly positive. -/ refinementPositive : 0 < refinementTarget
@@ -150,32 +150,32 @@ structure RequestCertificate {genus : Nat}
       -(budget row column) <= vector row * delta * vector column
   /-- The center quadratic form exceeds the retained positive margin plus the total error budget. -/ center_margin :
     epsilon + Budget.totalBudget budget <
-      QuadraticForm.imaginaryQuadraticForm vector
+      imaginaryQuadraticForm vector
         (centerMatrix data refinementTarget refinementPositive)
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Periods.Matrix.Positivity.RequestCertificate
+constructive_injectivity Positivity.RequestCertificate
 
 namespace RequestCertificate
 
 /-- The finite radius and budget checks imply the original universal box positivity contract. -/
 theorem compatible_positive {genus :
   Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.RequestCertificate data vector nonzero target
+    (certificate : RequestCertificate data vector nonzero target
       positive)
-    (candidate : QuadraticForm.GaussianMatrix genus)
+    (candidate : GaussianMatrix genus)
     (compatible : forall row column : Fin genus,
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (candidate row column -
             data.omegaCenter certificate.refinementTarget
               certificate.refinementPositive row column) <=
         data.omegaRadiusSq certificate.refinementTarget
           certificate.refinementPositive row column) :
-    certificate.epsilon < QuadraticForm.imaginaryQuadraticForm vector candidate := by
-  let center := Curves.Hyperelliptic.Periods.Matrix.Positivity.centerMatrix data certificate.refinementTarget
+    certificate.epsilon < imaginaryQuadraticForm vector candidate := by
+  let center := centerMatrix data certificate.refinementTarget
     certificate.refinementPositive
   let perturbation : Fraction.Rational :=
     FiniteSum.Fin.sumFin fun row =>
@@ -192,12 +192,12 @@ theorem compatible_positive {genus :
     intro column
     let delta := candidate row column - center row column
     have compatibleDistance :
-        Data.Gaussian.Norm.Basic.normSq delta <=
+        Basic.normSq delta <=
           data.omegaRadiusSq certificate.refinementTarget
             certificate.refinementPositive row column := by
-      simpa only [delta, center, Curves.Hyperelliptic.Periods.Matrix.Positivity.centerMatrix_apply] using
+      simpa only [delta, center, centerMatrix_apply] using
         compatible row column
-    have distance : Data.Gaussian.Norm.Basic.normSq delta <
+    have distance : Basic.normSq delta <
         (certificate.radius row column) ^ 2 :=
       compatibleDistance.trans_lt
         (certificate.radiusSq_lt_sq row column)
@@ -205,28 +205,28 @@ theorem compatible_positive {genus :
       (certificate.radius_positive row column) distance
     exact certificate.weighted_lower row column delta.im bounds.1 bounds.2
   have shiftedMargin : certificate.epsilon <
-      QuadraticForm.imaginaryQuadraticForm vector center -
+      imaginaryQuadraticForm vector center -
         Budget.totalBudget certificate.budget := by
     calc
       certificate.epsilon =
           (certificate.epsilon + Budget.totalBudget certificate.budget) +
             -(Budget.totalBudget certificate.budget) := by ring1
-      _ < QuadraticForm.imaginaryQuadraticForm vector center +
+      _ < imaginaryQuadraticForm vector center +
             -(Budget.totalBudget certificate.budget) :=
         Fraction.Order.Arithmetic.add_lt_add_right_direct
           certificate.center_margin (-(Budget.totalBudget certificate.budget))
-      _ = QuadraticForm.imaginaryQuadraticForm vector center -
+      _ = imaginaryQuadraticForm vector center -
             Budget.totalBudget certificate.budget := by ring1
   have perturbedLower :
-      QuadraticForm.imaginaryQuadraticForm vector center - Budget.totalBudget certificate.budget <=
-        QuadraticForm.imaginaryQuadraticForm vector center + perturbation := by
+      imaginaryQuadraticForm vector center - Budget.totalBudget certificate.budget <=
+        imaginaryQuadraticForm vector center + perturbation := by
     simpa only [sub_eq_add_neg, add_comm] using
       add_le_add_left perturbationLower
-        (QuadraticForm.imaginaryQuadraticForm vector center)
+        (imaginaryQuadraticForm vector center)
   have identity := Perturbation.imaginaryQuadraticForm_eq_center_add_perturbation
     vector candidate center
-  rw [show QuadraticForm.imaginaryQuadraticForm vector candidate =
-      QuadraticForm.imaginaryQuadraticForm vector center + perturbation by
+  rw [show imaginaryQuadraticForm vector candidate =
+      imaginaryQuadraticForm vector center + perturbation by
         simpa only [perturbation] using identity]
   exact shiftedMargin.trans_le perturbedLower
 
@@ -234,11 +234,11 @@ theorem compatible_positive {genus :
 @[expose] def
   toPositiveRequestCertificate {genus :
   Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.RequestCertificate data vector nonzero target
+    (certificate : RequestCertificate data vector nonzero target
       positive) :
     PeriodMatrix.PositiveRequestCertificate data vector nonzero target positive where
   refinementTarget := certificate.refinementTarget
@@ -254,9 +254,9 @@ set_option genInjectivity false in
 /-- Minimal finite robustness input for one positivity request. All entrywise budgets and weighted perturbation bounds
 are computed from the displayed rational vector and radius matrix. -/
 structure RadiusCertificate {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
-    (vector : QuadraticForm.RationalVector genus) (_nonzero : QuadraticForm.NonzeroVector vector)
+    (vector : RationalVector genus) (_nonzero : NonzeroVector vector)
     (target : Fraction.Rational) (_positive : 0 < target) where
   /-- The smaller positive target retained for this finite refinement. -/ refinementTarget : Fraction.Rational
   /-- The retained refinement target is strictly positive. -/ refinementPositive : 0 < refinementTarget
@@ -273,23 +273,23 @@ structure RadiusCertificate {genus : Nat}
       (radius row column) ^ 2
   /-- The center quadratic form exceeds the retained positive margin plus the total error budget. -/ center_margin :
     epsilon + Budget.totalBudget (Budget.automaticBudget vector radius) <
-      QuadraticForm.imaginaryQuadraticForm vector
+      imaginaryQuadraticForm vector
         (centerMatrix data refinementTarget refinementPositive)
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Periods.Matrix.Positivity.RadiusCertificate
+constructive_injectivity Positivity.RadiusCertificate
 
 namespace RadiusCertificate
 
 /-- Expand the minimal radius certificate into the detailed finite perturbation certificate. -/
 @[expose] def toRequestCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.RadiusCertificate data vector nonzero target positive)
+    (certificate : RadiusCertificate data vector nonzero target positive)
       :
-    Curves.Hyperelliptic.Periods.Matrix.Positivity.RequestCertificate data vector nonzero target positive where
+    RequestCertificate data vector nonzero target positive where
   refinementTarget := certificate.refinementTarget
   refinementPositive := certificate.refinementPositive
   refinement_lt_target := certificate.refinement_lt_target
@@ -312,9 +312,9 @@ set_option genInjectivity false in
 is below the public target and proves one strict rational centre margin. Sampling, entry radii, budgets, and
 perturbation inequalities are then computed canonically. -/
 structure MarginCertificate {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve)
-    (vector : QuadraticForm.RationalVector genus) (_nonzero : QuadraticForm.NonzeroVector vector)
+    (vector : RationalVector genus) (_nonzero : NonzeroVector vector)
     (target : Fraction.Rational) (_positive : 0 < target) where
   /-- The positive linear radius whose square determines the finite refinement target. -/ refinementRadius :
     Fraction.Rational
@@ -325,106 +325,106 @@ structure MarginCertificate {genus : Nat}
   /-- The center quadratic form strictly exceeds its computed total perturbation budget. -/ center_exceeds_budget :
     Budget.totalBudget (Budget.automaticBudget vector
       (automaticRadius data refinementRadius refinementRadiusPositive)) <
-      QuadraticForm.imaginaryQuadraticForm vector
+      imaginaryQuadraticForm vector
         (centerMatrix data (Quadratic.Bounds.squaredRefinementTarget
           refinementRadius)
           (Quadratic.Bounds.squaredRefinementTarget_positive refinementRadiusPositive))
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate
+constructive_injectivity Positivity.MarginCertificate
 
 namespace MarginCertificate
 
 /-- The retained entrywise rational error budget for this test vector. -/
 @[expose] def budget {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
     Fraction.Rational :=
   Budget.totalBudget (Budget.automaticBudget vector
-    (Curves.Hyperelliptic.Periods.Matrix.Positivity.automaticRadius data certificate.refinementRadius
+    (automaticRadius data certificate.refinementRadius
       certificate.refinementRadiusPositive))
 
 /-- The displayed rational quadratic-form value at the selected finite refinement. -/
 @[expose] def centerValue {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
     Fraction.Rational :=
-  QuadraticForm.imaginaryQuadraticForm vector
-    (Curves.Hyperelliptic.Periods.Matrix.Positivity.centerMatrix data
+  imaginaryQuadraticForm vector
+    (centerMatrix data
       (Quadratic.Bounds.squaredRefinementTarget certificate.refinementRadius)
       (Quadratic.Bounds.squaredRefinementTarget_positive
         certificate.refinementRadiusPositive))
 
 /-- The exact positive rational clearance left after subtracting every finite perturbation budget. -/
 @[expose] def margin {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
     Fraction.Rational :=
   certificate.centerValue - certificate.budget
 
 /-- The difference between the center quadratic form and its computed budget is strictly positive. -/
 theorem margin_positive {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
     0 < certificate.margin :=
   Fraction.Order.Arithmetic.sub_pos_direct certificate.center_exceeds_budget
 
 /-- The retained strictly positive lower margin for the imaginary quadratic form. -/
 @[expose] def epsilon {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
     Fraction.Rational :=
   certificate.margin / 2
 
 /-- The retained quadratic-form margin is strictly positive. -/
 theorem epsilon_positive {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
     0 < certificate.epsilon := by
-  unfold Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate.epsilon
+  unfold epsilon
   exact Fraction.Order.Field.div_pos_direct
     certificate.margin_positive (by decide)
 
 /-- Half the retained positive margin plus the budget remains below the center quadratic form. -/
 theorem epsilon_add_budget_lt_center
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
     certificate.epsilon + certificate.budget < certificate.centerValue := by
   calc
     certificate.epsilon + certificate.budget <
         certificate.margin + certificate.budget :=
       Fraction.Order.Arithmetic.add_lt_add_right_direct
-        (Purelib.Data.Rat.Fraction.Order.Field.half_lt_self certificate.margin_positive) certificate.budget
+        (Fraction.Order.Field.half_lt_self certificate.margin_positive) certificate.budget
     _ = certificate.centerValue := by
-      unfold Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate.margin
+      unfold margin
         budget
         centerValue
       ring1
@@ -433,24 +433,24 @@ theorem epsilon_add_budget_lt_center
 -/
 @[expose] def toRadiusCertificate {genus
   : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve}
-    {vector : QuadraticForm.RationalVector genus} {nonzero : QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Fraction.Rational} {positive : 0 < target}
-    (certificate : Curves.Hyperelliptic.Periods.Matrix.Positivity.MarginCertificate data vector nonzero target positive)
+    (certificate : MarginCertificate data vector nonzero target positive)
       :
-    Curves.Hyperelliptic.Periods.Matrix.Positivity.RadiusCertificate data vector nonzero target positive where
+    RadiusCertificate data vector nonzero target positive where
   refinementTarget := Quadratic.Bounds.squaredRefinementTarget certificate.refinementRadius
   refinementPositive := Quadratic.Bounds.squaredRefinementTarget_positive
     certificate.refinementRadiusPositive
   refinement_lt_target := certificate.refinementTarget_lt_target
   epsilon := certificate.epsilon
   epsilon_positive := certificate.epsilon_positive
-  radius := Curves.Hyperelliptic.Periods.Matrix.Positivity.automaticRadius data certificate.refinementRadius
+  radius := automaticRadius data certificate.refinementRadius
     certificate.refinementRadiusPositive
-  radius_positive := Curves.Hyperelliptic.Periods.Matrix.Positivity.automaticRadius_positive data
+  radius_positive := automaticRadius_positive data
     certificate.refinementRadius certificate.refinementRadiusPositive
-  radiusSq_lt_sq := Curves.Hyperelliptic.Periods.Matrix.Positivity.omegaRadiusSq_lt_automaticRadius_sq data
+  radiusSq_lt_sq := omegaRadiusSq_lt_automaticRadius_sq data
     certificate.refinementRadius certificate.refinementRadiusPositive
   center_margin := by
     simpa only [budget,
@@ -462,24 +462,24 @@ end MarginCertificate
 set_option genInjectivity false in
 /-- Pointwise positivity supplied entirely through finite rational robustness checks at each request. -/
 structure Certificate {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodMatrix.NormalizedPeriodData curve) where
   /-- For each nonzero rational test vector and positive target, return the retained finite refinement and strict
-    center-budget margin. -/ certify : forall (vector : QuadraticForm.RationalVector genus)
-    (nonzero : QuadraticForm.NonzeroVector vector) (target : Fraction.Rational)
+    center-budget margin. -/ certify : forall (vector : RationalVector genus)
+    (nonzero : NonzeroVector vector) (target : Fraction.Rational)
     (positive : 0 < target),
     MarginCertificate data vector nonzero target positive
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Periods.Matrix.Positivity.Certificate
+constructive_injectivity Positivity.Certificate
 
 namespace Certificate
 
 /-- Forget the explicit radii and budgets only after proving the public pointwise positivity contract. -/
 @[expose] def toPointwisePositivity {genus :
   Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodMatrix.NormalizedPeriodData curve} (certificate :
-      Curves.Hyperelliptic.Periods.Matrix.Positivity.Certificate data) :
+      Certificate data) :
     PeriodMatrix.PointwisePositivity data where
   certify := fun vector nonzero target positive =>
     (certificate.certify vector nonzero target

@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Approximation.Gaussian.Enclosure.Ball.Basic
 
+open Purelib.Approximation.Gaussian.Enclosure
+
 section
 @[expose] public section
 
@@ -44,17 +46,17 @@ open Purelib.Data.Rat in
 def residualState (process :
   Approximation.Gaussian.Process) (state : process.State) (count : Nat) :
     process.State :=
-  let target := Padding.Residual.paddingTarget count
+  let target := Residual.paddingTarget count
   process.refine state (target / 6)
     (Fraction.Order.Field.div_pos_direct
-      (Padding.Residual.paddingTarget_pos count) (by decide))
+      (Residual.paddingTarget_pos count) (by decide))
 
 /-- The exact refined residual state's enclosure radius squared is below paddingTarget divided by six. -/
 theorem residual_accurate (process :
   Approximation.Gaussian.Process) (state : process.State)
     (count : Nat) :
     (process.ball (residualState process state count)).radiusSq <
-      Padding.Residual.paddingTarget count / 6 :=
+      Residual.paddingTarget count / 6 :=
   process.accurate state _ _
 
 /-- Decide whether the exact refined residual enclosure is small or apart using the retained accuracy certificate.
@@ -63,11 +65,11 @@ The refinement, target positivity and radius bound belong to the same supplied p
 count. The result retains the certified residual decision for that exact ball. -/
 def decideResidual (process :
   Approximation.Gaussian.Process) (state : process.State) (count : Nat) :
-    Approximation.Gaussian.Enclosure.Residual.Decision
+    Residual.Decision
       (process.ball (residualState process state count))
-      (Padding.Residual.paddingTarget count) :=
-  Approximation.Gaussian.Enclosure.Residual.decide _ _
-    (Padding.Residual.paddingTarget_pos count)
+      (Residual.paddingTarget count) :=
+  Residual.decide _ _
+    (Residual.paddingTarget_pos count)
     (residual_accurate process state count)
 
 section
@@ -85,13 +87,13 @@ theorem residual_persists (process :
 theorem residual_small_sound (process :
   Approximation.Gaussian.Process) (state : process.State)
     (count : Nat)
-    (certificate : Approximation.Gaussian.Enclosure.Residual.SmallBall
+    (certificate : Residual.SmallBall
       (process.ball (residualState process state count))
-      (Padding.Residual.paddingTarget count))
+      (Residual.paddingTarget count))
     {value : Basic.Canonical}
     (possible : process.Possible (residualState process state count) value) :
-    Data.Gaussian.Norm.Basic.normSq value < Padding.Residual.paddingTarget count :=
-  Approximation.Gaussian.Enclosure.Residual.normSq_lt_of_contains certificate
+    Norm.Basic.normSq value < Residual.paddingTarget count :=
+  Residual.normSq_lt_of_contains certificate
     (process.possible_inside possible)
 
 /-- A retained apartness certificate bounds every possible refined residual's squared norm below by its stored positive
@@ -99,11 +101,11 @@ lower bound. -/
 theorem residual_apart_sound (process :
   Approximation.Gaussian.Process) (state : process.State)
     (count : Nat)
-    (certificate : Approximation.Gaussian.Enclosure.Ball.Apart
+    (certificate : Ball.Apart
       (process.ball (residualState process state count)))
     {value : Basic.Canonical}
     (possible : process.Possible (residualState process state count) value) :
-    certificate.lowerSq ≤ Data.Gaussian.Norm.Basic.normSq value :=
+    certificate.lowerSq ≤ Norm.Basic.normSq value :=
   certificate.lower (process.possible_inside possible)
 
 end
@@ -114,13 +116,13 @@ open Purelib.Geometry.Projective in
 def loopTailOfResidualSmall (process :
   Approximation.Gaussian.Process) (state : process.State)
     (count : Nat)
-    (certificate : Approximation.Gaussian.Enclosure.Residual.SmallBall
+    (certificate : Residual.SmallBall
       (process.ball (residualState process state count))
-      (Padding.Residual.paddingTarget count))
+      (Residual.paddingTarget count))
     (value : Basic.Canonical)
     (possible : process.Possible (residualState process state count) value) :
     Chordal.DyadicTail.LoopTail count :=
-  Padding.Residual.loopTailOfSmall certificate value
+  Residual.loopTailOfSmall certificate value
     (process.possible_inside possible)
 
 end

@@ -63,8 +63,8 @@ open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 
 namespace Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial}
-  {ambient : Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial}
+  {ambient : Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid
     polynomial ambient}
 
 open Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank
@@ -72,21 +72,21 @@ open Purelib.Data
 open Purelib.Polynomial
 open Purelib.RootIsolation
 /-- Equal coordinates give equal canonical vertex indices for the same sheet. -/
-private theorem index_congr (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) {first last :
+private theorem index_congr (vertices : VertexBank grid) {first last :
   Gaussian.Basic.Canonical} (equal : first = last)
-    (firstOn : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid first) (lastOn :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex grid last) (sheet : Fin 2) :
+    (firstOn : Geometry.Grid.FromStates.ContainsVertex grid first) (lastOn :
+      Geometry.Grid.FromStates.ContainsVertex grid last) (sheet : Fin 2) :
     vertices.index first firstOn sheet = vertices.index last lastOn sheet := by
   cases equal
   rfl
 
 /-- Re-indexing the coordinate and sheet of a canonical bank index recovers that index. -/
-theorem index_readback (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (point : Gaussian.Basic.Canonical)
-  (onGrid : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) :
+theorem index_readback (vertices : VertexBank grid) (point : Gaussian.Basic.Canonical)
+  (onGrid : Geometry.Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) :
     vertices.index (vertices.coordinate (vertices.index point onGrid sheet))
       (vertices.coordinate_onGrid _) (vertices.sheet (vertices.index point onGrid sheet)) = vertices.index point onGrid
         sheet :=
-  (SquareRoot.Grid.LiftedVertices.VertexBank.index_congr vertices (vertices.coordinate_index point onGrid sheet) _ _
+  (index_congr vertices (vertices.coordinate_index point onGrid sheet) _ _
     _).trans
     (congrArg (vertices.index point onGrid) (vertices.sheet_index point onGrid sheet))
 
@@ -95,12 +95,12 @@ end Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank
 namespace Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank.LiftedFace
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
     VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {face : RegularFace bank} {sheet : Fin 2} {vertex : Fin vertices.count}
 
 /-- Every actual corner of the lifted quadrilateral lies in its original regular face box. -/
@@ -130,13 +130,13 @@ theorem corner_index (lifted : LiftedFace vertices edges face sheet)
       by
   rcases corner with same | same | same | same <;> subst vertex
   · simpa only [lifted.first_eq] using
-      SquareRoot.Grid.LiftedVertices.VertexBank.index_readback vertices _ _ _
+      VertexBank.index_readback vertices _ _ _
   · simpa only [lifted.second_eq] using
-      SquareRoot.Grid.LiftedVertices.VertexBank.index_readback vertices _ _ _
+      VertexBank.index_readback vertices _ _ _
   · simpa only [lifted.third_eq] using
-      SquareRoot.Grid.LiftedVertices.VertexBank.index_readback vertices _ _ _
+      VertexBank.index_readback vertices _ _ _
   · simpa only [lifted.fourth_eq] using
-      SquareRoot.Grid.LiftedVertices.VertexBank.index_readback vertices _ _ _
+      VertexBank.index_readback vertices _ _ _
 
 /-- The sheet at an actual corner agrees with the lifted side starting there.
 
@@ -178,11 +178,11 @@ open Purelib.Riemann.Integration.PuncturedVertexConnections (RegularIncident)
 namespace FramedPuncturedGrid
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
     VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
 
 open Purelib.Riemann in
 set_option genInjectivity false in
@@ -190,7 +190,7 @@ set_option genInjectivity false in
 
 The regular incident face, its selected corner lift and triangle half retain the original triangle index and a canonical
 readback equation for that exact vertex. -/
-structure TriangleAtVertex (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
+structure TriangleAtVertex (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces)
     (index : Fin mesh.triangles.length) (vertex : Fin vertices.count) where
   /-- The regular incident face at the original vertex coordinate. -/ regular : RegularIncident base
     (vertices.coordinate vertex)
@@ -210,9 +210,9 @@ open Purelib.Topology in
 
 The selected corner sheet recovers the original face sheet for either triangle half and every corner, retaining exact
 triangle and vertex indices. -/
-def triangleAtVertex (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
+def triangleAtVertex (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces)
     (index : Fin mesh.triangles.length) (vertex : Fin vertices.count)
-    (contains : Mesh.CornerWalks.OrientedTriangle.ContainsVertex
+    (contains : ContainsVertex
       (mesh.triangulation.faces index) vertex) : TriangleAtVertex mesh index vertex := by
   let decoded := mesh.locateTriangle index
   have corner := Mesh.CornerWalks.QuadOccurrence.corner_of_contains
@@ -240,10 +240,10 @@ open Purelib.RootIsolation in
 Decode the original triangles into retained regular corner lifts, connect their incident cells through the constructed
 vertex star, and transport the resulting corner route back to the original indices. -/
 def vertexConnection (base : FramedPuncturedGrid curve branches higher)
-    {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-      SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank
+    {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+      VertexBank base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank
       frames}
-    (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces) : Mesh.CornerWalks.VertexConnection
+    (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces) : VertexConnection
       mesh.triangulation.faces :=
   fun vertex =>
     let onGrid := vertices.coordinate_onGrid vertex
@@ -254,21 +254,21 @@ def vertexConnection (base : FramedPuncturedGrid curve branches higher)
       let lastCorner := triangleAtVertex mesh last vertex lastContains
       let connection := RegularIncident.connect star firstCorner.regular lastCorner.regular
       let middleLift := connection.middle.lift mesh (vertices.sheet vertex)
-      have firstAt : Mesh.CornerWalks.OrientedTriangle.ContainsVertex
+      have firstAt : ContainsVertex
           (mesh.triangulation.faces (firstCorner.lifted.value.located.occurrence.triangle firstCorner.upper))
           (vertices.index (vertices.coordinate vertex) onGrid (vertices.sheet vertex)) := by
         rw [firstCorner.index_eq, firstCorner.vertex_eq]
         exact firstContains
-      have lastAt : Mesh.CornerWalks.OrientedTriangle.ContainsVertex
+      have lastAt : ContainsVertex
           (mesh.triangulation.faces (lastCorner.lifted.value.located.occurrence.triangle lastCorner.upper))
           (vertices.index (vertices.coordinate vertex) onGrid (vertices.sheet vertex)) := by
         rw [lastCorner.index_eq, lastCorner.vertex_eq]
         exact lastContains
-      let route := Meshes.GridLiftedCornerConnections.FramedPuncturedGrid.RegularIncident.Connection.cornerRoute
+      let route := GridLiftedCornerConnections.FramedPuncturedGrid.RegularIncident.Connection.cornerRoute
         connection onGrid firstCorner.lifted middleLift lastCorner.lifted
         firstCorner.upper lastCorner.upper firstAt lastAt
       have target := route
-      unfold Meshes.GridLiftedCornerConnections.FramedPuncturedGrid.RegularIncident.CornerRoute at target
+      unfold GridLiftedCornerConnections.FramedPuncturedGrid.RegularIncident.CornerRoute at target
       rw [firstCorner.index_eq, lastCorner.index_eq, firstCorner.vertex_eq] at target
       exact target
 

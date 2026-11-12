@@ -1,4 +1,5 @@
 module
+import Purelib.Data.Rat.Fraction.Basic
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.Unit
 public import Purelib.RationalFunctions.ArgumentPrinciple.CCL.Build
@@ -9,6 +10,8 @@ open Purelib.Polynomial
 open Purelib.RationalFunctions
 
 open Purelib.RootIsolation
+
+open Purelib.Data.Rat.Fraction (Rational)
 
 section
 @[expose] public section
@@ -35,9 +38,22 @@ namespace Purelib.RootIsolation.Multiplicity.CCL.Polynomial.Build
 /-- Compute every distinct root site of `p`, its multiplicity, and its
 productive CCL interface by running the finite RFAP construction on `p / 1`. -/
 def isolate (p :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
-    Multiplicity.CCL.Polynomial.Basic.Result p :=
-  ArgumentPrinciple.CCL.Build.prove p Dense.Gaussian.Unit.unitDenominator Dense.Gaussian.Unit.unitDenominator_isZero
+  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (request : Option Rational := none) : Multiplicity.CCL.Polynomial.Basic.Result p :=
+  ArgumentPrinciple.CCL.Build.prove p Dense.Gaussian.Unit.unitDenominator
+    Dense.Gaussian.Unit.unitDenominator_isZero request
+
+/-- The absent event request preserves the complete original polynomial result and its actual site indices. -/
+theorem isolate_none (p :
+    Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
+    isolate p none = ArgumentPrinciple.CCL.Build.prove p Dense.Gaussian.Unit.unitDenominator
+      Dense.Gaussian.Unit.unitDenominator_isZero := rfl
+
+/-- The coefficient-produced root result retains exact original Newton origins and its same complete CCL attachments. -/
+theorem isolate_newtonOrigins (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (request : Option Rational) : (isolate p request).NewtonOrigins :=
+  ArgumentPrinciple.CCL.Build.prove_newtonOrigins p Dense.Gaussian.Unit.unitDenominator
+    Dense.Gaussian.Unit.unitDenominator_isZero request
 
 end Purelib.RootIsolation.Multiplicity.CCL.Polynomial.Build
 

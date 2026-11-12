@@ -7,6 +7,8 @@ import Purelib.Topology.Knot.Braid.Word.Basic
 import Mathlib.Algebra.Ring.Int.Defs
 import Purelib.Topology.Knot.Braid.Basic
 import Purelib.LinearAlgebra.Matrix.Basic
+import Purelib.LinearAlgebra.Vector.Dot
+import Purelib.Data.Vector.Basic
 
 namespace Purelib.Topology.Knot.Braid.ThreeStrand.Integral.Dual
 
@@ -31,6 +33,17 @@ quotient or remembered analytic monodromy matrix is used.
 homology basis. -/
 @[expose] def periodMatrix (word : Braid.Word 3) : LinearAlgebra.Matrix.Basic.IntegralMatrix :=
   Transpose.transpose (Words.wordMatrix word)
+
+/-- The dual braid matrix is forced by finite evaluation on cycle-coordinate columns.
+
+Pairing its transformed integer evaluation coefficients with a cycle equals
+pairing the original coefficients with the word's homology-coordinate image.
+This algebraic convention check is independent of geometric monodromy and
+the comparison of actual integral programs. -/
+theorem periodMatrix_evaluation (word : Braid.Word 3) (evaluations cycle : Data.Vector Int 2) :
+    LinearAlgebra.Vector.Dot.dot (Multiplication.matrixVector (Dual.periodMatrix word) evaluations) cycle =
+      LinearAlgebra.Vector.Dot.dot evaluations (Multiplication.matrixVector (Words.wordMatrix word) cycle) :=
+  Transpose.dot_transpose_matrixVector (Words.wordMatrix word) evaluations cycle
 
 open Purelib.Topology.Knot.Braid.ThreeStrand.Integral
 /-- The dual period matrix of the empty three-strand word is the identity. -/

@@ -66,7 +66,7 @@ set_option genInjectivity false in
 /-- A persistent period program whose every finite integrand observation is uniformly certified to be the requested
 algebraic differential on the chosen sheet. -/
 structure CertifiedPeriodProgram {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (differential : Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus) (differential : Basic.Differential genus)
     (cycle : Refinement.LiftedCycleRefinement 2) where
   /-- The original finite integral program retained by this algebraically certified period. -/ integral :
     RefinementProgram
@@ -82,21 +82,21 @@ namespace CertifiedPeriodProgram
 /-- Cache a proved dominating rational error scale without changing any finite cycle model or uniform differential
 certificate. -/
 def withLargerErrorScale {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Differentials.Basic.Differential genus} {cycle : Refinement.LiftedCycleRefinement 2}
-    (program : Curves.Hyperelliptic.Integration.Algebraic.Period.Basis.CertifiedPeriodProgram curve differential cycle)
+    {curve : Basic.HyperellipticCurve genus}
+    {differential : Basic.Differential genus} {cycle : Refinement.LiftedCycleRefinement 2}
+    (program : CertifiedPeriodProgram curve differential cycle)
     (scale : Fraction.Rational)
     (scaleNonnegative : 0 <= scale)
     (dominates : program.integral.errorScale <= scale) :
-    Curves.Hyperelliptic.Integration.Algebraic.Period.Basis.CertifiedPeriodProgram curve differential cycle where
+    CertifiedPeriodProgram curve differential cycle where
   integral := (RefinementProgram.withLargerErrorScale program.integral) scale scaleNonnegative
     dominates
   certificates := program.certificates
 
 /-- Forget algebraic certification while retaining the exact original finite integral process and lifted cycle. -/
-def toPeriodProgram {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Differentials.Basic.Differential genus} {cycle : Refinement.LiftedCycleRefinement 2}
-    (program : Curves.Hyperelliptic.Integration.Algebraic.Period.Basis.CertifiedPeriodProgram curve differential cycle)
+def toPeriodProgram {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : Basic.Differential genus} {cycle : Refinement.LiftedCycleRefinement 2}
+    (program : CertifiedPeriodProgram curve differential cycle)
       :
     Program.PeriodProgram cycle where
   integral := program.integral
@@ -104,18 +104,18 @@ def toPeriodProgram {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurv
     (program.certificates index)
 
 /-- Read the original coherent output name of the retained certified period program. -/
-def output {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Differentials.Basic.Differential genus} {cycle : Refinement.LiftedCycleRefinement 2}
-    (program : Curves.Hyperelliptic.Integration.Algebraic.Period.Basis.CertifiedPeriodProgram curve differential cycle)
+def output {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : Basic.Differential genus} {cycle : Refinement.LiftedCycleRefinement 2}
+    (program : CertifiedPeriodProgram curve differential cycle)
       :
     Coherent.CoherentNamed :=
   program.toPeriodProgram.output
 
 /-- Each refined cell list has exactly the cell count of its original lifted-cycle refinement. -/
 theorem refinement_cellCount {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Differentials.Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     {cycle : Refinement.LiftedCycleRefinement 2}
-    (program : Curves.Hyperelliptic.Integration.Algebraic.Period.Basis.CertifiedPeriodProgram curve differential cycle)
+    (program : CertifiedPeriodProgram curve differential cycle)
     (index : Nat) :
     (program.integral.model index).cells.length =
       (cycle.liftedPath index).cellCount :=
@@ -150,8 +150,8 @@ set_option genInjectivity false in
 /-- A persistent finite integral program uniformly realizing one displayed odd-power algebraic differential on one
 displayed lifted cycle. -/
 structure CertifiedPeriodProgram {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : OddPower.Basic.OddPowerDifferential)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : OddPower.Basic.OddPowerDifferential curve.polynomial)
     (cycle : Refinement.LiftedCycleRefinement 2) where
   /-- The original finite integral program retained by this algebraically certified period. -/ integral :
     RefinementProgram
@@ -165,20 +165,20 @@ constructive_injectivity CertifiedPeriodProgram
 namespace CertifiedPeriodProgram
 
 /-- Forget algebraic certification while retaining the exact original finite integral process and lifted cycle. -/
-def toPeriodProgram {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : OddPower.Basic.OddPowerDifferential}
+def toPeriodProgram {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
     {cycle : Refinement.LiftedCycleRefinement 2}
-    (program : Curves.Hyperelliptic.Integration.Algebraic.Period.Jets.CertifiedPeriodProgram curve differential cycle) :
+    (program : CertifiedPeriodProgram curve differential cycle) :
     Program.PeriodProgram cycle where
   integral := program.integral
   follows := fun index => UniformPathCertificates.toFollowedBy
     (program.certificates index)
 
 /-- Read the original coherent output name of the retained certified period program. -/
-def output {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : OddPower.Basic.OddPowerDifferential}
+def output {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
     {cycle : Refinement.LiftedCycleRefinement 2}
-    (program : Curves.Hyperelliptic.Integration.Algebraic.Period.Jets.CertifiedPeriodProgram curve differential cycle) :
+    (program : CertifiedPeriodProgram curve differential cycle) :
     Coherent.CoherentNamed := program.integral.output
 
 end CertifiedPeriodProgram

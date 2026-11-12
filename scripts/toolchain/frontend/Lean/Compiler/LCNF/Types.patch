@@ -1,0 +1,116 @@
+--- a/Lean/Compiler/LCNF/Types.lean
++++ b/Lean/Compiler/LCNF/Types.lean
+@@ -128,7 +128,7 @@
+ Convert a Lean type into a LCNF type used by the code generator.
+ -/
+ partial def toLCNFType (type : Expr) : MetaM Expr := do
+-  let res ← go type
++  let res ← go (← IO.mkRef {}) type
+   if (← getEnv).header.isModule then
+     -- Under the module system, `type` may reduce differently in different modules, leading to
+     -- IR-level mismatches and thus undefined behavior. We want to make this part independent of the
+@@ -140,7 +140,7 @@
+     -- miscompilation.
+     -- Note that always using `withExporting` would not always be correct either because it is
+     -- ignored in non-`module`s and thus mismatches with upstream `module`s may again occur.
+-    let res'? ← observing <| withExporting <| go type
++    let res'? ← observing <| withExporting <| go (← IO.mkRef {}) type
+     if let .ok res' := res'? then
+       if res != res' then
+         let mut reason := m!"locally inferred compilation type{indentD res}\n\
+@@ -151,7 +151,7 @@
+         -- list of non-exposed definitions.
+         let origDiag := (← get).diag
+         try
+-          let _ ← observing <| withOptions (diagnostics.set · true)  <| withExporting <| go type
++          let _ ← observing <| withOptions (diagnostics.set · true)  <| withExporting <| go (← IO.mkRef {}) type
+           let env ← getEnv
+           let blocked := (← get).diag.unfoldAxiomCounter.toList.filterMap fun (n, count) => do
+             let count := count - origDiag.unfoldAxiomCounter.findD n 0
+@@ -167,24 +167,43 @@
+           limitation for `module`s that may be lifted in the future."
+   return res
+ where
+-  go type := do
++  /-- Reuse exact conversions within one private or public visibility pass. -/
++  go (cache : IO.Ref (ExprStructMap Expr)) (type : Expr) : MetaM Expr := do
++    if !type.hasMVar then
++      if let some result := (← cache.get)[ExprStructEq.mk type]? then
++        return result
++    let result ← goCore cache type
++    if !type.hasMVar then
++      cache.modify (·.insert ⟨type⟩ result)
++    return result
++
++  goCore (cache : IO.Ref (ExprStructMap Expr)) (type : Expr) : MetaM Expr := do
+     if ← isProp type then
+       return erasedExpr
+     let type ← whnfEta type
++    if !type.hasMVar then
++      if let some result := (← cache.get)[ExprStructEq.mk type]? then
++        return result
++    let result ← visit cache type
++    if !type.hasMVar then
++      cache.modify (·.insert ⟨type⟩ result)
++    return result
++
++  visit (cache : IO.Ref (ExprStructMap Expr)) (type : Expr) : MetaM Expr := do
+     match type with
+     | .sort u     => return .sort u
+-    | .const ..   => visitApp type #[]
++    | .const ..   => visitApp cache type #[]
+     | .lam n d b bi =>
+       withLocalDecl n bi d fun x => do
+-        let d ← go d
+-        let b ← go (b.instantiate1 x)
++        let d ← go cache d
++        let b ← go cache (b.instantiate1 x)
+         if b.isErased then
+           return b
+         else
+           return Expr.lam n d (b.abstract #[x]) bi
+-    | .forallE .. => visitForall type #[]
+-    | .app ..  => type.withApp visitApp
+-    | .fvar .. => visitApp type #[]
++    | .forallE .. => visitForall cache type #[]
++    | .app ..  => type.withApp (visitApp cache)
++    | .fvar .. => visitApp cache type #[]
+     | .proj ``Subtype 0 (.app (.const ``Void.nonemptyType []) _) =>
+       return mkConst ``lcVoid
+     | _        => return mkConst ``lcAny
+@@ -200,21 +219,21 @@
+     else
+       return type
+ 
+-  visitForall (e : Expr) (xs : Array Expr) : MetaM Expr := do
++  visitForall (cache : IO.Ref (ExprStructMap Expr)) (e : Expr) (xs : Array Expr) : MetaM Expr := do
+     match e with
+     | .forallE n d b bi =>
+       let d := d.instantiateRev xs
+       withLocalDecl n bi d fun x => do
+         let isBorrowed := isMarkedBorrowed d
+-        let mut d := (← go d).abstract xs
++        let mut d := (← go cache d).abstract xs
+         if isBorrowed then
+           d := markBorrowed d
+-        return .forallE n d (← visitForall b (xs.push x)) bi
++        return .forallE n d (← visitForall cache b (xs.push x)) bi
+     | _ =>
+-      let e ← go (e.instantiateRev xs)
++      let e ← go cache (e.instantiateRev xs)
+       return e.abstract xs
+ 
+-  visitApp (f : Expr) (args : Array Expr) := do
++  visitApp (cache : IO.Ref (ExprStructMap Expr)) (f : Expr) (args : Array Expr) := do
+     let fNew ← match f with
+       | .const declName us =>
+         if (← getEnv).isExporting && isPrivateName declName then
+@@ -230,7 +249,7 @@
+       if ← isProp arg <||> isPropFormer arg then
+         result := mkApp result erasedExpr
+       else if ← isTypeFormer arg then
+-        result := mkApp result (← go arg)
++        result := mkApp result (← go cache arg)
+       else
+         result := mkApp result (mkConst ``lcAny)
+     return result

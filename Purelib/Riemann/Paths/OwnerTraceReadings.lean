@@ -37,6 +37,8 @@ import Purelib.Riemann.RootContinuation.SquareRootTraceHomotopy
 import Purelib.Data.Gaussian.Cast
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Riemann.RootContinuation.CoherentRoot
+public import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
+import Purelib.Data.Nat.Order
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
@@ -55,6 +57,8 @@ preparation or recentering changes an owner's presentation, not its root.
 -/
 
 namespace Purelib.Riemann.Paths.OwnerTraceReadings
+
+open Purelib.Data.Rat.Fraction.Order
 
 open Purelib.Riemann.RootContinuation.SquareRootTrace
 open Purelib.Data.Rat.Fraction (Rational)
@@ -138,7 +142,7 @@ def acquire (owner : Owner parameter) : OwnerTail owner :=
   have positive : 0 < lower := SquareRootSheets.sampleLower_positive owner.parameterNonzero
   let target : Fraction.Rational := lower ^ 2 / 1024
   have targetPositive : 0 < target := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.pow_pos_direct positive 2) (by decide +kernel)
+    (Arithmetic.pow_pos_direct positive 2) (by decide +kernel)
   let state := CertifiedSquareRoot.residualState owner.parameterNonzero owner.track target targetPositive
   { lower := lower
     lower_positive := positive
@@ -153,6 +157,14 @@ def acquire (owner : Owner parameter) : OwnerTail owner :=
       have bound := CertifiedSquareRoot.residualState_candidate_residual_lt
         owner.parameterNonzero owner.track target targetPositive possible
       simpa only [pow_two] using bound.le }
+
+/-- The two actual acquired tails at one radicand retain the SAME intrinsic sample-norm lower bound.
+
+The owners, tracks and apart states remain separate; this is only the
+scalar lower-cache readback of the original acquisition algorithm.
+-/
+theorem acquire_lower_eq (left right : Owner parameter) :
+    (acquire left).lower = (acquire right).lower := rfl
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -213,7 +225,7 @@ theorem residual_small (reading : Reading tail) : reading.residualNorm ≤ readi
     _ ≤ tail.residualTarget := tail.residual reading.possible
     _ = tail.lower ^ 2 / 1024 := tail.residualTarget_eq
     _ ≤ _ := div_1024_mono
-      (Fraction.Order.Arithmetic.pow_le_pow_direct tail.lower_positive.le reading.lower 2)
+      (Arithmetic.pow_le_pow_direct tail.lower_positive.le reading.lower 2)
 
 end Reading
 
@@ -334,6 +346,60 @@ def leftReading (join : OwnerJoin left right) : OwnerTail.Reading join.leftTail 
 def rightReading (join : OwnerJoin left right) : OwnerTail.Reading join.rightTail :=
   .acquire join.rightTail join.comparison.rightIndex join.comparison.right_ge
 
+open Purelib.Approximation.Gaussian in
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+/-- Every later original left sample stays within one 256th of the same retained left reading's squared norm.
+
+The actual join comparison bounds both samples through its one retained
+right-side index. The original left reading and both tail caches remain
+unchanged, and the sharper constant is already paid by that comparison.
+-/
+theorem sample_near_leftReading (join : OwnerJoin left right) (index : Nat)
+    (later : join.comparison.leftIndex ≤ index) :
+    normSq ((ownerApproximation left).sample index - join.leftReading.value) ≤ join.leftReading.norm / 256 := by
+  let reference := join.leftReading
+  have firstClose := join.comparison.close later (Nat.le_refl join.comparison.rightIndex)
+  have referenceClose := join.comparison.close
+    (Nat.le_refl join.comparison.leftIndex) (Nat.le_refl join.comparison.rightIndex)
+  change Norm.Basic.normSq ((ownerApproximation left).sample reference.index -
+    (ownerApproximation right).sample join.comparison.rightIndex) < _ at referenceClose
+  rewrite [← reference.value_eq, Norm.Basic.normSq_eq_canonical] at referenceClose
+  rewrite [Norm.Basic.normSq_eq_canonical] at firstClose
+  have reverse : normSq ((ownerApproximation right).sample join.comparison.rightIndex -
+      reference.value) = normSq (reference.value -
+        (ownerApproximation right).sample join.comparison.rightIndex) := by
+    rewrite [show (ownerApproximation right).sample join.comparison.rightIndex - reference.value =
+      -(reference.value - (ownerApproximation right).sample join.comparison.rightIndex) by ring1,
+      Basic.Canonical.normSq_neg]
+    rfl
+  have triangle := Norm.Bounds.normSq_sub_le_via
+    ((ownerApproximation left).sample index)
+    ((ownerApproximation right).sample join.comparison.rightIndex) reference.value
+  simp only [Norm.Basic.normSq_eq_canonical] at triangle
+  rewrite [reverse] at triangle
+  calc
+    _ ≤ 2 * (normSq ((ownerApproximation left).sample index -
+        (ownerApproximation right).sample join.comparison.rightIndex) +
+      normSq (reference.value - (ownerApproximation right).sample join.comparison.rightIndex)) :=
+      triangle
+    _ ≤ 2 * (join.leftTail.lower / 1024 + join.leftTail.lower / 1024) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct firstClose.le referenceClose.le) (by decide +kernel)
+    _ ≤ 2 * (reference.norm / 1024 + reference.norm / 1024) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct
+          (Fraction.Order.Field.divide_mono reference.lower (by decide +kernel))
+          (Fraction.Order.Field.divide_mono reference.lower (by decide +kernel))) (by decide +kernel)
+    _ = (4 * (1024 : Fraction.Rational)⁻¹) * reference.norm := by
+      simp only [Fraction.Field.div_eq_mul_inv_direct]
+      ring1
+    _ = (256 : Fraction.Rational)⁻¹ * reference.norm :=
+      congrArg (fun coefficient : Fraction.Rational => coefficient * reference.norm) (by decide +kernel)
+    _ = reference.norm / 256 := by
+      rewrite [Fraction.Field.div_eq_mul_inv_direct]
+      ring1
+
 open Purelib.Data.Gaussian in
 /-- Retained readings beyond both comparison indices satisfy the left-reading-relative squared distance bound. -/
 theorem distance (join : OwnerJoin left right)
@@ -389,7 +455,96 @@ def stationaryEdge (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoeffi
     checked := ⟨join.leftTail.lower_positive.trans_le first.lower,
       join.distance first second firstLater secondLater, first.residual_small,
       Fraction.Order.Field.div_nonneg_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _) (by decide +kernel)⟩ }
+        (Arithmetic.sq_nonneg_direct _) (by decide +kernel)⟩ }
+
+section Equivalence
+
+open Purelib.Approximation.Gaussian
+open Purelib.Data.Gaussian
+open Purelib.Data.Rat
+open Purelib.Data.Nat
+open Purelib.Riemann.RootContinuation
+
+/-- Refine the same original joined approximation tails to any positive squared-distance request.
+
+The retained join fixes the signed near branch, both original approximations
+and their actual comparison floors. Each request pays two original residual
+indices and uses the same positive left-tail lower bound in the shared
+square-residual distance theorem. It does not rerun root isolation or either
+source preparation.
+-/
+def approximationEquivalent (join : OwnerJoin left right) :
+    Equivalence.Equivalent (ownerApproximation left) (ownerApproximation right) where
+  compare := by
+    intro leftStart rightStart target positive
+    let residualTarget := target * join.leftTail.lower / 4
+    have residualPositive : 0 < residualTarget := Fraction.Order.Field.div_pos_direct
+      (Arithmetic.mul_pos_direct positive join.leftTail.lower_positive) (by decide +kernel)
+    let leftResidual := CertifiedSquareRoot.residualIndex left.track residualTarget residualPositive
+    let rightResidual := CertifiedSquareRoot.residualIndex right.track residualTarget residualPositive
+    let leftFloor := max leftStart join.comparison.leftIndex
+    let rightFloor := max rightStart join.comparison.rightIndex
+    have leftStartBound : leftStart ≤ leftFloor := by
+      dsimp only [leftFloor]
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_left _ _
+    have rightStartBound : rightStart ≤ rightFloor := by
+      dsimp only [rightFloor]
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_left _ _
+    have leftJoinBound : join.comparison.leftIndex ≤ leftFloor := by
+      dsimp only [leftFloor]
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_right _ _
+    have rightJoinBound : join.comparison.rightIndex ≤ rightFloor := by
+      dsimp only [rightFloor]
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_right _ _
+    have leftFloorBound : leftFloor ≤ max leftFloor leftResidual := by
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_left _ _
+    have rightFloorBound : rightFloor ≤ max rightFloor rightResidual := by
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_left _ _
+    have leftResidualBound : leftResidual ≤ max leftFloor leftResidual := by
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_right _ _
+    have rightResidualBound : rightResidual ≤ max rightFloor rightResidual := by
+      rewrite [Order.max_eq_natMax]
+      exact Order.le_max_right _ _
+    refine
+      { leftIndex := max leftFloor leftResidual
+        rightIndex := max rightFloor rightResidual
+        left_ge := leftStartBound.trans leftFloorBound
+        right_ge := rightStartBound.trans rightFloorBound
+        close := ?_ }
+    intro leftLater rightLater leftOrder rightOrder
+    have leftBound := CertifiedSquareRoot.sample_residual_lt_of_index left.track residualTarget residualPositive
+      leftLater (leftResidualBound.trans leftOrder)
+    have rightBound := CertifiedSquareRoot.sample_residual_lt_of_index right.track residualTarget residualPositive
+      rightLater (rightResidualBound.trans rightOrder)
+    have close := join.comparison.close
+      (leftJoinBound.trans (leftFloorBound.trans leftOrder))
+      (rightJoinBound.trans (rightFloorBound.trans rightOrder))
+    rewrite [Norm.Basic.normSq_eq_canonical] at close
+    have near := close.le.trans
+      (Fraction.Order.Field.divide_le_self join.leftTail.lower_positive.le
+        (by decide +kernel : (1 : Fraction.Rational) ≤ 1024))
+    rewrite [Norm.Basic.normSq_eq_canonical]
+    exact SquareRootChannelOwnership.root_distance join.leftTail.lower_positive
+      (join.leftTail.lower_bound leftLater) near leftBound rightBound
+
+/-- The original joined owners name the same signed root at arbitrary requested accuracy.
+
+The actual retained raw comparison supplies the all-accuracy relation. The
+original raw-to-named transport keeps both input tracks and apartness
+preparations; no owner or preparation is reconstructed for this link.
+-/
+def equivalent (join : OwnerJoin left right) : Equivalence.NamedEquivalent (ownerName left) (ownerName right) :=
+  SquareRootTrackEquivalence.rootEquivalent_of_approximationEquivalent
+    left.parameterNonzero left.track right.track join.approximationEquivalent
+
+end Equivalence
 
 end OwnerJoin
 

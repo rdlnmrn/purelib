@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -41,14 +43,14 @@ limit, compactness argument, or completed point.
 namespace Purelib.Geometry.Rational.Box.Interior
 
 /-- Minimum of the four displayed coordinate gaps around a strict interior point. -/
-def strictCoordinateGap (box : Rational.Box) (point :
+def strictCoordinateGap (box : Box) (point :
   Data.Gaussian.Basic.Canonical) : Fraction.Rational :=
   min (point.re - box.xLower)
     (min (box.xUpper - point.re)
       (min (point.im - box.yLower) (box.yUpper - point.im)))
 
 /-- Minimum of the four rational margins from a strictly interior box to its outer box. -/
-def strictBoxGap (inner outer : Rational.Box) :
+def strictBoxGap (inner outer : Box) :
   Fraction.Rational :=
   min (inner.xLower - outer.xLower)
     (min (outer.xUpper - inner.xUpper)
@@ -57,17 +59,17 @@ def strictBoxGap (inner outer : Rational.Box) :
 
 /-- Strict containment of boxes gives a positive minimum side gap. -/
 theorem strictBoxGap_pos
-    {inner outer : Rational.Box} (strict : inner.StrictInterior outer) :
+    {inner outer : Box} (strict : inner.StrictInterior outer) :
     0 < strictBoxGap inner outer := by
   unfold strictBoxGap
-  exact Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.left)
-    (Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.right)
-      (Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.bottom)
-        (Fraction.Order.Arithmetic.sub_pos_direct strict.top)))
+  exact Basic.lt_min (Arithmetic.sub_pos_direct strict.left)
+    (Basic.lt_min (Arithmetic.sub_pos_direct strict.right)
+      (Basic.lt_min (Arithmetic.sub_pos_direct strict.bottom)
+        (Arithmetic.sub_pos_direct strict.top)))
 
 /-- A point within the computed coordinate radius of a strictly interior box is already in the outer box. -/
 theorem contains_of_within_strictBoxGap
-    {inner outer : Rational.Box} {point : Data.Gaussian.Basic.Canonical}
+    {inner outer : Box} {point : Data.Gaussian.Basic.Canonical}
     (near :
       inner.xLower - strictBoxGap inner outer < point.re ∧
       point.re < inner.xUpper + strictBoxGap inner outer ∧
@@ -77,52 +79,52 @@ theorem contains_of_within_strictBoxGap
   let gap := strictBoxGap inner outer
   have gapLeft : gap ≤ inner.xLower - outer.xLower := by
     simpa only [gap, strictBoxGap] using
-      (Fraction.Order.Basic.min_le_left (inner.xLower - outer.xLower)
+      (Basic.min_le_left (inner.xLower - outer.xLower)
         (min (outer.xUpper - inner.xUpper)
           (min (inner.yLower - outer.yLower)
             (outer.yUpper - inner.yUpper))))
   have gapRight : gap ≤ outer.xUpper - inner.xUpper := by
     simpa only [gap, strictBoxGap] using
-      (Fraction.Order.Basic.min_le_right (inner.xLower - outer.xLower)
+      (Basic.min_le_right (inner.xLower - outer.xLower)
         (min (outer.xUpper - inner.xUpper)
           (min (inner.yLower - outer.yLower)
-            (outer.yUpper - inner.yUpper)))).trans (Fraction.Order.Basic.min_le_left _ _)
+            (outer.yUpper - inner.yUpper)))).trans (Basic.min_le_left _ _)
   have gapBottom : gap ≤ inner.yLower - outer.yLower := by
     simpa only [gap, strictBoxGap] using
-      (Fraction.Order.Basic.min_le_right (inner.xLower - outer.xLower)
+      (Basic.min_le_right (inner.xLower - outer.xLower)
         (min (outer.xUpper - inner.xUpper)
           (min (inner.yLower - outer.yLower)
             (outer.yUpper - inner.yUpper)))).trans
-        ((Fraction.Order.Basic.min_le_right (outer.xUpper - inner.xUpper)
+        ((Basic.min_le_right (outer.xUpper - inner.xUpper)
           (min (inner.yLower - outer.yLower)
-            (outer.yUpper - inner.yUpper))).trans (Fraction.Order.Basic.min_le_left _ _))
+            (outer.yUpper - inner.yUpper))).trans (Basic.min_le_left _ _))
   have gapTop : gap ≤ outer.yUpper - inner.yUpper := by
     simpa only [gap, strictBoxGap] using
-      (Fraction.Order.Basic.min_le_right (inner.xLower - outer.xLower)
+      (Basic.min_le_right (inner.xLower - outer.xLower)
         (min (outer.xUpper - inner.xUpper)
           (min (inner.yLower - outer.yLower)
             (outer.yUpper - inner.yUpper)))).trans
-        ((Fraction.Order.Basic.min_le_right (outer.xUpper - inner.xUpper)
+        ((Basic.min_le_right (outer.xUpper - inner.xUpper)
           (min (inner.yLower - outer.yLower)
-            (outer.yUpper - inner.yUpper))).trans (Fraction.Order.Basic.min_le_right _ _))
+            (outer.yUpper - inner.yUpper))).trans (Basic.min_le_right _ _))
   have outerLeft : outer.xLower ≤ inner.xLower - gap := by
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_left_direct gapLeft inner.xLower
+    have shifted := Arithmetic.sub_le_sub_left_direct gapLeft inner.xLower
     have restore : inner.xLower - (inner.xLower - outer.xLower) = outer.xLower := by ring1
     rewrite [restore] at shifted
     exact shifted
   have outerRight : inner.xUpper + gap ≤ outer.xUpper := by
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct gapRight inner.xUpper
+    have shifted := Arithmetic.add_le_add_right_direct gapRight inner.xUpper
     have restore : (outer.xUpper - inner.xUpper) + inner.xUpper = outer.xUpper := by ring1
     have commute : gap + inner.xUpper = inner.xUpper + gap := by ring1
     rewrite [restore, commute] at shifted
     exact shifted
   have outerBottom : outer.yLower ≤ inner.yLower - gap := by
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_left_direct gapBottom inner.yLower
+    have shifted := Arithmetic.sub_le_sub_left_direct gapBottom inner.yLower
     have restore : inner.yLower - (inner.yLower - outer.yLower) = outer.yLower := by ring1
     rewrite [restore] at shifted
     exact shifted
   have outerTop : inner.yUpper + gap ≤ outer.yUpper := by
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct gapTop inner.yUpper
+    have shifted := Arithmetic.add_le_add_right_direct gapTop inner.yUpper
     have restore : (outer.yUpper - inner.yUpper) + inner.yUpper = outer.yUpper := by ring1
     have commute : gap + inner.yUpper = inner.yUpper + gap := by ring1
     rewrite [restore, commute] at shifted
@@ -135,17 +137,17 @@ theorem contains_of_within_strictBoxGap
 
 /-- Strict membership gives a positive minimum gap from the point to the four box sides. -/
 theorem strictCoordinateGap_pos
-    {box : Rational.Box} {point : Data.Gaussian.Basic.Canonical} (strict : box.StrictContains point) :
+    {box : Box} {point : Data.Gaussian.Basic.Canonical} (strict : box.StrictContains point) :
     0 < strictCoordinateGap box point := by
   unfold strictCoordinateGap
-  exact Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.1)
-    (Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.2.1)
-      (Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.2.2.1)
-        (Fraction.Order.Arithmetic.sub_pos_direct strict.2.2.2)))
+  exact Basic.lt_min (Arithmetic.sub_pos_direct strict.1)
+    (Basic.lt_min (Arithmetic.sub_pos_direct strict.2.1)
+      (Basic.lt_min (Arithmetic.sub_pos_direct strict.2.2.1)
+        (Arithmetic.sub_pos_direct strict.2.2.2)))
 
 /-- Leaving a box costs at least the square of the minimum strict coordinate gap in ordinary Gaussian quadrance. -/
 theorem strictCoordinateGap_sq_le_normSq_sub_of_outside
-    {box : Rational.Box} {point other : Data.Gaussian.Basic.Canonical}
+    {box : Box} {point other : Data.Gaussian.Basic.Canonical}
     (strict : box.StrictContains point) (outside : ¬box.Contains other) :
     strictCoordinateGap box point ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq (point -
       other) := by
@@ -158,37 +160,37 @@ theorem strictCoordinateGap_sq_le_normSq_sub_of_outside
         · exact (outside ⟨left, right, bottom, top⟩).elim
         · have above : box.yUpper < other.im := lt_of_not_ge top
           have gapLeEdge : gap ≤ box.yUpper - point.im := by
-            exact (Fraction.Order.Basic.min_le_right _ _).trans
-              ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))
+            exact (Basic.min_le_right _ _).trans
+              ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))
           have edgeLe : box.yUpper - point.im ≤ other.im - point.im :=
-            Fraction.Order.Arithmetic.sub_le_sub_right_direct above.le point.im
+            Arithmetic.sub_le_sub_right_direct above.le point.im
           exact Data.Gaussian.Norm.Bounds.sq_le_normSq_sub_of_imaginary_reverse gapNonnegative
             (gapLeEdge.trans edgeLe)
       · have below : other.im < box.yLower := lt_of_not_ge bottom
         have gapLeEdge : gap ≤ point.im - box.yLower := by
-          exact (Fraction.Order.Basic.min_le_right _ _).trans
-            ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+          exact (Basic.min_le_right _ _).trans
+            ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
         have edgeLe : point.im - box.yLower ≤ point.im - other.im :=
-          Fraction.Order.Arithmetic.sub_le_sub_left_direct below.le point.im
+          Arithmetic.sub_le_sub_left_direct below.le point.im
         exact Data.Gaussian.Norm.Bounds.sq_le_normSq_sub_of_imaginary_forward gapNonnegative
           (gapLeEdge.trans edgeLe)
     · have rightOf : box.xUpper < other.re := lt_of_not_ge right
       have gapLeEdge : gap ≤ box.xUpper - point.re :=
-        (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+        (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
       have edgeLe : box.xUpper - point.re ≤ other.re - point.re :=
-        Fraction.Order.Arithmetic.sub_le_sub_right_direct rightOf.le point.re
+        Arithmetic.sub_le_sub_right_direct rightOf.le point.re
       exact Data.Gaussian.Norm.Bounds.sq_le_normSq_sub_of_real_reverse gapNonnegative
         (gapLeEdge.trans edgeLe)
   · have leftOf : other.re < box.xLower := lt_of_not_ge left
-    have gapLeEdge : gap ≤ point.re - box.xLower := Fraction.Order.Basic.min_le_left _ _
+    have gapLeEdge : gap ≤ point.re - box.xLower := Basic.min_le_left _ _
     have edgeLe : point.re - box.xLower ≤ point.re - other.re :=
-      Fraction.Order.Arithmetic.sub_le_sub_left_direct leftOf.le point.re
+      Arithmetic.sub_le_sub_left_direct leftOf.le point.re
     exact Data.Gaussian.Norm.Bounds.sq_le_normSq_sub_of_real_forward gapNonnegative
       (gapLeEdge.trans edgeLe)
 
 /-- A radius fitting strictly between the point and all four box sides is at most the minimum coordinate gap. -/
 private theorem radius_le_strictCoordinateGap
-    {box : Rational.Box} {point : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
+    {box : Box} {point : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
     (left : box.xLower + radius < point.re)
     (right : point.re + radius < box.xUpper)
     (bottom : box.yLower + radius < point.im)
@@ -198,32 +200,32 @@ private theorem radius_le_strictCoordinateGap
     calc
       radius = (box.xLower + radius) + -box.xLower := by ring1
       _ < point.re + -box.xLower :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct left (-box.xLower)
+        Arithmetic.add_lt_add_right_direct left (-box.xLower)
       _ = point.re - box.xLower := by ring1
   have rightGap : radius < box.xUpper - point.re := by
     calc
       radius = (point.re + radius) + -point.re := by ring1
       _ < box.xUpper + -point.re :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct right (-point.re)
+        Arithmetic.add_lt_add_right_direct right (-point.re)
       _ = box.xUpper - point.re := by ring1
   have bottomGap : radius < point.im - box.yLower := by
     calc
       radius = (box.yLower + radius) + -box.yLower := by ring1
       _ < point.im + -box.yLower :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct bottom (-box.yLower)
+        Arithmetic.add_lt_add_right_direct bottom (-box.yLower)
       _ = point.im - box.yLower := by ring1
   have topGap : radius < box.yUpper - point.im := by
     calc
       radius = (point.im + radius) + -point.im := by ring1
       _ < box.yUpper + -point.im :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct top (-point.im)
+        Arithmetic.add_lt_add_right_direct top (-point.im)
       _ = box.yUpper - point.im := by ring1
   unfold strictCoordinateGap
   exact le_min leftGap.le (le_min rightGap.le (le_min bottomGap.le topGap.le))
 
 /-- The uniform four-coordinate strip supplies the same ordinary distance lower bound at every point carrying it. -/
 theorem interiorStripRadius_sq_le_normSq_sub_of_outside
-    {box : Rational.Box} {point other : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
+    {box : Box} {point other : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
     (positive : 0 < radius)
     (left : box.xLower + radius < point.re)
     (right : point.re + radius < box.xUpper)
@@ -236,28 +238,28 @@ theorem interiorStripRadius_sq_le_normSq_sub_of_outside
         calc
           box.xLower = box.xLower + 0 := by ring1
           _ < box.xLower + radius :=
-            Fraction.Order.Arithmetic.add_lt_add_left_direct positive
+            Arithmetic.add_lt_add_left_direct positive
               box.xLower).trans left,
       (show point.re < point.re + radius by
         calc
           point.re = point.re + 0 := by ring1
           _ < point.re + radius :=
-            Fraction.Order.Arithmetic.add_lt_add_left_direct positive
+            Arithmetic.add_lt_add_left_direct positive
               point.re).trans right,
       (show box.yLower < box.yLower + radius by
         calc
           box.yLower = box.yLower + 0 := by ring1
           _ < box.yLower + radius :=
-            Fraction.Order.Arithmetic.add_lt_add_left_direct positive
+            Arithmetic.add_lt_add_left_direct positive
               box.yLower).trans bottom,
       (show point.im < point.im + radius by
         calc
           point.im = point.im + 0 := by ring1
           _ < point.im + radius :=
-            Fraction.Order.Arithmetic.add_lt_add_left_direct positive
+            Arithmetic.add_lt_add_left_direct positive
               point.im).trans top⟩
   have radiusLe := radius_le_strictCoordinateGap left right bottom top
-  have squareLe := Fraction.Order.Arithmetic.pow_le_pow_direct positive.le
+  have squareLe := Arithmetic.pow_le_pow_direct positive.le
     radiusLe 2
   exact squareLe.trans
     (strictCoordinateGap_sq_le_normSq_sub_of_outside strict outside)
@@ -292,7 +294,7 @@ namespace Purelib.Geometry.Rational.Box.Interior
 `outer`, and a box lying within `margin` of `sample` is not separated from `inner`, then the displayed sample lies in
 `outer`. No limiting point is introduced. -/
 theorem contains_sample_of_not_separated_of_protected_margin
-    {outer inner nearby : Rational.Box}
+    {outer inner nearby : Box}
     {sample : Data.Gaussian.Basic.Canonical}
     {margin : Fraction.Rational}
     (innerLeft : outer.xLower + margin < inner.xLower)
@@ -322,13 +324,13 @@ theorem contains_sample_of_not_separated_of_protected_margin
   have topWithMargin : sample.im - margin < outer.yUpper - margin :=
     nearbyBottom.trans_lt ((le_of_not_gt notAbove).trans_lt innerTop)
   exact
-    ⟨(Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
+    ⟨(Arithmetic.lt_of_add_lt_add_right_direct
         leftWithMargin).le,
-      (Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct (by
+      (Arithmetic.lt_of_add_lt_add_right_direct (by
         simpa only [sub_eq_add_neg] using rightWithMargin)).le,
-      (Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
+      (Arithmetic.lt_of_add_lt_add_right_direct
         bottomWithMargin).le,
-      (Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct (by
+      (Arithmetic.lt_of_add_lt_add_right_direct (by
         simpa only [sub_eq_add_neg] using topWithMargin)).le⟩
 
 end Purelib.Geometry.Rational.Box.Interior

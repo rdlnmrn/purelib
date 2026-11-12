@@ -1,6 +1,6 @@
 module
 import Purelib.Data.Gaussian.Basic
-import Purelib.Data.Gaussian.Field
+public import Purelib.Data.Gaussian.Field
 public import Purelib.Geometry.Projective.Line.Basic
 
 import Purelib.Tactic.QuotientFreeOmega
@@ -61,6 +61,7 @@ theorem omega_hasNonzeroCoordinate :
 end Purelib.Geometry.Projective.Line.Gaussian.Proj
 
 end
+
 
 namespace Purelib.Geometry.Projective.Line.Gaussian.Proj
 
@@ -227,5 +228,54 @@ end Purelib.Geometry.Projective.Line.Gaussian
 end
 
 end
+
+end
+
+public section
+
+namespace Purelib.Geometry.Projective.Line.Gaussian.Proj
+
+open Purelib.Data
+
+/-- Read the total Gaussian quotient of a finite homogeneous pair.
+
+Its affine interpretation requires a nonzero denominator. In particular,
+the value of this total operation at infinity does not certify an affine
+representation of that projective point.
+-/
+@[expose] def affineReading (point : GaussianLine) : Gaussian.Basic.Canonical := point.p / point.q
+
+/-- A valid homogeneous pair equivalent to an affine point has a nonzero denominator. -/
+theorem denominator_ne_zero_of_equivalent_affine {point : GaussianLine} {value : Gaussian.Basic.Canonical}
+    (valid : HasNonzeroCoordinate point) (equivalent : point.Equivalent (Proj.affine value)) : point.q ≠ 0 := by
+  intro denominatorZero
+  have cross := equivalent
+  change point.p * 1 = value * point.q at cross
+  rewrite [Gaussian.Basic.mul_one, denominatorZero, Gaussian.Basic.mul_zero] at cross
+  cases valid with
+  | inl numeratorNonzero => exact numeratorNonzero cross
+  | inr denominatorNonzero => exact denominatorNonzero denominatorZero
+
+/-- The explicit homogeneous quotient equals any equivalent affine value when its denominator is nonzero. -/
+theorem affineReading_eq_of_equivalent {point : GaussianLine} {value : Gaussian.Basic.Canonical}
+    (denominatorNonzero : point.q ≠ 0) (equivalent : point.Equivalent (Proj.affine value)) :
+    affineReading point = value := by
+  have cross := equivalent
+  change point.p * 1 = value * point.q at cross
+  rewrite [Gaussian.Basic.mul_one] at cross
+  change point.p * point.q⁻¹ = value
+  rewrite [cross, Gaussian.Basic.mul_assoc,
+    Gaussian.Basic.Canonical.mul_inv_cancel point.q denominatorNonzero, Gaussian.Basic.mul_one]
+  rfl
+
+/-- A finite pair with nonzero denominator is projectively equivalent to its explicit affine reading. -/
+theorem equivalent_affineReading (point : GaussianLine) (denominatorNonzero : point.q ≠ 0) :
+    point.Equivalent (Proj.affine (affineReading point)) := by
+  change point.p * 1 = (point.p * point.q⁻¹) * point.q
+  rewrite [Gaussian.Basic.mul_assoc,
+    Gaussian.Basic.Canonical.inv_mul_cancel point.q denominatorNonzero, Gaussian.Basic.mul_one]
+  rfl
+
+end Purelib.Geometry.Projective.Line.Gaussian.Proj
 
 end

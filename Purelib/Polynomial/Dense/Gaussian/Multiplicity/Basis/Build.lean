@@ -18,6 +18,8 @@ import Purelib.Polynomial.Dense.Gaussian.Multiplicity.CoprimeRelation
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Basic
+
 open Purelib.Data
 
 open Purelib.Polynomial
@@ -44,10 +46,10 @@ namespace Basis.Build
 
 Repeated occurrences contribute separately, so this total records degree before the coprime multiplicity basis is
 assembled. -/
-@[expose] def occurrenceDegree : List Dense.Gaussian.Squarefree.Decomposition.Basic.Factor → Nat
+@[expose] def occurrenceDegree : List Factor → Nat
   | [] => 0
   | factor :: factors =>
-      factor.polynomial.natDegree + Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Build.occurrenceDegree factors
+      factor.polynomial.natDegree + Build.occurrenceDegree factors
 
 end Basis.Build
 
@@ -56,18 +58,18 @@ set_option genInjectivity false in
 
 The original entries retain their multiplicities, pointwise product identity
 and exact weighted-degree balance against that same occurrence list. -/
-structure Basis (source : List Dense.Gaussian.Squarefree.Decomposition.Basic.Factor) where
+structure Basis (source : List Factor) where
   /-- The retained squarefree basis entries with their multiplicities. -/ entries : List
-    Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry
+    Basis.Basic.BasisEntry
   /-- Distinct retained entries carry pairwise coprimality certificates. -/ pairwise :
-    Dense.Gaussian.Multiplicity.Basis.Basic.BasisPairwise entries
+    Basis.Basic.BasisPairwise entries
   /-- The weighted basis value equals evaluation of the original occurrence product at every displayed point. -/
-    valueIdentity : ∀ point : Purelib.Data.Gaussian.Basic.Canonical,
-    Dense.Gaussian.Multiplicity.Basis.Basic.basisValue entries point =
-      (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct source).eval point
+    valueIdentity : ∀ point : Gaussian.Basic.Canonical,
+    Basis.Basic.basisValue entries point =
+      (Squarefree.Decomposition.Basic.factorProduct source).eval point
   /-- The weighted basis degree equals the total degree of the original occurrence list. -/ degreeIdentity :
-    Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree entries =
-    Dense.Gaussian.Multiplicity.Basis.Build.occurrenceDegree source
+    Basis.Basic.basisDegree entries =
+    Basis.Build.occurrenceDegree source
 
 constructive_injectivity Basis
 
@@ -77,21 +79,21 @@ namespace Basis.Build
 
 Each original head occurrence is inserted into the retained tail basis. The
 result caches the selected entries with their product and degree certificates. -/
-@[expose] def buildBasis : (source : List Dense.Gaussian.Squarefree.Decomposition.Basic.Factor) →
+@[expose] def buildBasis : (source : List Factor) →
   Basis source
   | [] =>
       { entries := []
         pairwise := List.Pairwise.nil
         valueIdentity := by
           intro point
-          simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisValue,
-            Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct, Dense.Basic.DensePolynomial.eval_constant,
+          simp only [Basic.basisValue,
+            Squarefree.Decomposition.Basic.factorProduct, Basic.DensePolynomial.eval_constant,
               -eq_self, -iff_self]
           rfl
         degreeIdentity := rfl }
   | factor :: factors => by
-      let tailBasis := Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Build.buildBasis factors
-      let insertion := Dense.Gaussian.Multiplicity.Basis.Insert.insertPart (Dense.Gaussian.Squarefree.Part.Factor.toPart
+      let tailBasis := Build.buildBasis factors
+      let insertion := Insert.insertPart (Squarefree.Part.Factor.toPart
         factor) tailBasis.entries
         tailBasis.pairwise
       exact
@@ -101,14 +103,14 @@ result caches the selected entries with their product and degree certificates. -
             intro point
             rw [insertion.valueIdentity point,
               tailBasis.valueIdentity point]
-            simp only [Dense.Gaussian.Squarefree.Part.Factor.toPart,
-              Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct, Dense.Basic.DensePolynomial.eval_mul,
+            simp only [Squarefree.Part.Factor.toPart,
+              Squarefree.Decomposition.Basic.factorProduct, Basic.DensePolynomial.eval_mul,
                 -eq_self, -iff_self]
             ring1
           degreeIdentity := by
             rw [insertion.degreeIdentity, tailBasis.degreeIdentity]
-            simp only [Dense.Gaussian.Squarefree.Part.Factor.toPart,
-              Dense.Gaussian.Multiplicity.Basis.Build.occurrenceDegree, -eq_self, -iff_self]
+            simp only [Squarefree.Part.Factor.toPart,
+              occurrenceDegree, -eq_self, -iff_self]
             ring1 }
 
 end Basis.Build
@@ -119,13 +121,13 @@ namespace Basis.Build
 
 Both scans retain every original factor degree in the same list order,
 including separately repeated occurrences. -/
-theorem occurrenceDegree_eq_sum (source : List Dense.Gaussian.Squarefree.Decomposition.Basic.Factor) :
-    Dense.Gaussian.Multiplicity.Basis.Build.occurrenceDegree source =
+theorem occurrenceDegree_eq_sum (source : List Factor) :
+    occurrenceDegree source =
       (source.map fun factor => factor.polynomial.natDegree).sum := by
   induction source with
   | nil => rfl
   | cons factor factors inductionHypothesis =>
-      simp only [Dense.Gaussian.Multiplicity.Basis.Build.occurrenceDegree, List.map_cons, List.sum_cons,
+      simp only [occurrenceDegree, List.map_cons, List.sum_cons,
         inductionHypothesis, -eq_self, -iff_self]
       rfl
 

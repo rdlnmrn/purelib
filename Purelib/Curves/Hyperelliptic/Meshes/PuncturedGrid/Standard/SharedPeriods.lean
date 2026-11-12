@@ -64,6 +64,9 @@ import Purelib.Topology.Surface.Cut.Patch
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
+import Purelib.Data.List.Permutation
+
+open Purelib.Data.Rat.Fraction.Order
 
 public section
 
@@ -101,10 +104,10 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (FaceP
 open Purelib.Riemann.Integration.PreparedRefinementPrograms (rawPeriodDataOfData)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
   {base : FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+    (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
   {lifted : LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
   {index differential : Fin genus} {row :
@@ -121,25 +124,25 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPerio
 set_option genInjectivity false in
 /-- Both original tours share the same domains, numerical bank and point meshes. Additional surface/observation points
 remain in that same bank. -/
-structure SharedReadings (assignments : GridFragments.SheetAssignments fragments domains) (tolerance :
-  Fraction.Rational)
-    (extraPoints : List Data.Gaussian.Basic.Canonical) (floor : Nat) where
+structure SharedReadings (assignments : SheetAssignments fragments domains) (tolerance :
+  Rational)
+    (extraPoints : List Gaussian) (floor : Nat) where
   /-- The cached complete point list shared by both original fragment banks and supplied extra observations. -/ points :
-    List Data.Gaussian.Basic.Canonical
+    List Gaussian
   /-- The point cache is exactly the original A and B fragment point lists followed by the supplied extra points. -/
     points_eq : points =
     (SheetEntries.points assignments.a ++
       SheetEntries.points assignments.b) ++ extraPoints
   /-- The retained complete face-mesh requests on those exact points and original domains. -/ budgets :
-    CommonMeshes.FaceMeshBudgets (PeriodMatrix.standardDifferential differential) points tolerance domains
+    FaceMeshBudgets (PeriodMatrix.standardDifferential differential) points tolerance domains
   /-- The additional retained numerical stage floor. -/ extraFloor : Nat
   /-- The cached common numerical stage for both original tours and all shared point meshes. -/ numericalIndex : Nat
   /-- The common stage is exactly the maximum of the retained additional floor, caller floor and face-mesh request. -/
     numericalIndex_eq : numericalIndex = max extraFloor (max floor (FaceMeshBudgets.index budgets))
   /-- The actual shared differential primitive bank at that retained stage. -/ numerics :
-    PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains
+    FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains
   /-- The complete retained face meshes consuming that same actual primitive bank. -/ meshes :
-    CommonMeshes.FaceSharedMeshes budgets numerics
+    FaceSharedMeshes budgets numerics
   /-- The actual original A fragment sum on these retained shared meshes. -/ a : SheetEntries.SharedSum meshes
     assignments.a
   /-- The actual original B fragment sum on those same retained shared meshes. -/ b : SheetEntries.SharedSum meshes
@@ -151,26 +154,38 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPeriods
 
 variable {assignments :
   SheetAssignments fragments
-  domains} {tolerance : Rational} {extraPoints : List Purelib.Data.Gaussian.Basic.Canonical}
+  domains} {tolerance : Rational} {extraPoints : List Gaussian}
   {floor : Nat}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPeriods.SharedReadings
 
+/-- Every literal chosen-grid vertex belongs to the SAME retained point bank when its vertex list was supplied.
+
+The original whole points factory supplies this membership. The given
+extra list retains both the complete vertex enumeration and all further
+observation points; no mesh, numerical bank or source cache is rebuilt.
+-/
+theorem vertices_mem (shared : SharedReadings assignments tolerance
+    (List.ofFn lifted.vertices.coordinate ++ extraPoints) floor) (vertex : Fin lifted.vertices.count) :
+    lifted.vertices.coordinate vertex ∈ shared.points := by
+  rw [shared.points_eq]
+  exact List.mem_append_right _ (List.mem_append_left _ (Data.List.Permutation.ofFn_mem _ vertex))
+
 /-- The retained common numerical stage meets the original caller floor. -/
-theorem numericalIndex_ge (shared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPeriods.SharedReadings
+theorem numericalIndex_ge (shared : SharedReadings
   assignments tolerance extraPoints floor) : floor ≤ shared.numericalIndex := by
   rw [shared.numericalIndex_eq]
   exact (Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_right _ _)
 
 /-- The retained common numerical stage meets its additional stored floor. -/
-theorem extraFloor_le (shared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPeriods.SharedReadings
+theorem extraFloor_le (shared : SharedReadings
   assignments tolerance extraPoints floor) : shared.extraFloor ≤ shared.numericalIndex := by
   rw [shared.numericalIndex_eq]
   exact Data.Nat.Order.le_max_left _ _
 
 /-- The explicit residual includes every analytic-piece count and both outer fragment-count factors. No smallness claim
 is inferred from closure. -/
-theorem a_accurate (shared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPeriods.SharedReadings assignments
+theorem a_accurate (shared : SharedReadings assignments
   tolerance extraPoints floor)
     (stage : Nat) (later : comparison.stage ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (shared.a.value -
@@ -188,13 +203,13 @@ theorem a_accurate (shared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.
           stage).integralSample) := by ring1
   rw [identity]
   exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
-      ((Fraction.Order.Arithmetic.add_le_add_right_direct mesh _).trans_lt
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct period _))).trans_eq (by ring1))
+    ((Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
+      ((Arithmetic.add_le_add_right_direct mesh _).trans_lt
+        (Arithmetic.add_lt_add_left_direct period _))).trans_eq (by ring1))
 
 /-- The actual shared B fragment sum estimates the original standard B period with its complete computed mesh residual
 and requested tail error. -/
-theorem b_accurate (shared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPeriods.SharedReadings assignments
+theorem b_accurate (shared : SharedReadings assignments
   tolerance extraPoints floor)
     (stage : Nat) (later : comparison.stage ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (shared.b.value -
@@ -212,9 +227,9 @@ theorem b_accurate (shared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.
           stage).integralSample) := by ring1
   rw [identity]
   exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
-      ((Fraction.Order.Arithmetic.add_le_add_right_direct mesh _).trans_lt
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct period _))).trans_eq (by ring1))
+    ((Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
+      ((Arithmetic.add_le_add_right_direct mesh _).trans_lt
+        (Arithmetic.add_lt_add_left_direct period _))).trans_eq (by ring1))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.SharedPeriods.SharedReadings
 

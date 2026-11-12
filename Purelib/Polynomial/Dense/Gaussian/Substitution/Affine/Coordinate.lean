@@ -32,29 +32,29 @@ public theorem
   composeLine_coordinate (origin
   direction : Gaussian.Basic.Canonical)
     (directionNonzero : direction ≠ 0) :
-    Dense.Gaussian.Substitution.Affine.composeLine Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial origin
+    composeLine Monomial.Coordinate.coordinatePolynomial origin
       direction =
       ⟨[direction, origin]⟩ := by
-  rw [Dense.Gaussian.Substitution.Affine.composeLine, Dense.Gaussian.Substitution.Affine.composeLineCoeffs]
-  simp only [Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial, List.foldl_cons, List.foldl_nil]
-  rw [Dense.Gaussian.Substitution.Affine.mulLine_zero, Dense.Basic.DensePolynomial.zero_add_normalize,
-    Dense.Basic.DensePolynomial.normalize_constant_of_ne one_ne_zero]
-  rw [Dense.Gaussian.Substitution.Affine.mulLine, Dense.Basic.DensePolynomial.scale_constant,
-    Dense.Basic.DensePolynomial.scale_constant,
+  rw [composeLine, composeLineCoeffs]
+  simp only [Monomial.Coordinate.coordinatePolynomial, List.foldl_cons, List.foldl_nil]
+  rw [mulLine_zero, Basic.DensePolynomial.zero_add_normalize,
+    Basic.DensePolynomial.normalize_constant_of_ne one_ne_zero]
+  rw [mulLine, Basic.DensePolynomial.scale_constant,
+    Basic.DensePolynomial.scale_constant,
     Gaussian.Basic.mul_one,
     Gaussian.Basic.mul_one,
-    Dense.Basic.DensePolynomial.normalize_constant_of_ne directionNonzero,
-    Dense.Basic.DensePolynomial.shift_one_constant_of_ne directionNonzero]
+    Basic.DensePolynomial.normalize_constant_of_ne directionNonzero,
+    Basic.DensePolynomial.shift_one_constant_of_ne directionNonzero]
   by_cases originZero : origin = 0
   · subst origin
-    rw [Dense.Basic.DensePolynomial.normalize_constant_zero, Dense.Basic.DensePolynomial.zero_add_normalize,
-      Dense.Basic.DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero,
-      Dense.Basic.DensePolynomial.add_constant_zero,
-      Dense.Basic.DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero]
-  · rw [Dense.Basic.DensePolynomial.normalize_constant_of_ne originZero,
-      Dense.Basic.DensePolynomial.constant_add_linear origin directionNonzero,
-      Dense.Basic.DensePolynomial.add_constant_zero,
-      Dense.Basic.DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero]
+    rw [Basic.DensePolynomial.normalize_constant_zero, Basic.DensePolynomial.zero_add_normalize,
+      Basic.DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero,
+      Basic.DensePolynomial.add_constant_zero,
+      Basic.DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero]
+  · rw [Basic.DensePolynomial.normalize_constant_of_ne originZero,
+      Basic.DensePolynomial.constant_add_linear origin directionNonzero,
+      Basic.DensePolynomial.add_constant_zero,
+      Basic.DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero]
 
 end Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.Coordinate
 

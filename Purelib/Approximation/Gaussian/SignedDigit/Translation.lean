@@ -31,6 +31,8 @@ import Purelib.Data.SignedDigit.Binary.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation
@@ -66,88 +68,88 @@ namespace Purelib.Approximation.Gaussian.SignedDigit.Translation
 /-! ## Translation from finite fast-Cauchy observations -/
 
 /-- The original approximation's uniform centre bound plus one, used as a common signed-digit coordinate scale. -/
-@[expose] def ambientScale (approximation : Gaussian.Sequence.ApproximationData) : Fraction.Rational :=
+@[expose] def ambientScale (approximation : Sequence.ApproximationData) : Fraction.Rational :=
   approximation.centerBound + 1
 
 /-- The signed-digit ambient coordinate scale is strictly positive. -/
-theorem ambientScale_pos (approximation : Gaussian.Sequence.ApproximationData) :
-    0 < Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation :=
-  Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct approximation.centerBound_nonneg (by decide)
+theorem ambientScale_pos (approximation : Sequence.ApproximationData) :
+    0 < ambientScale approximation :=
+  Arithmetic.add_pos_of_nonneg_of_pos_direct approximation.centerBound_nonneg (by decide)
 
 /-- The approximation's retained centre bound is at most the square of its ambient coordinate scale. -/
 private theorem centerBound_le_ambientScale_sq
-    (approximation : Gaussian.Sequence.ApproximationData) :
-    approximation.centerBound ≤ Purelib.Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2 :=
+    (approximation : Sequence.ApproximationData) :
+    approximation.centerBound ≤ ambientScale approximation ^ 2 :=
       by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ approximation.centerBound ^ 2 +
         approximation.centerBound + 1 :=
       add_nonneg
         (add_nonneg
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+          (Arithmetic.sq_nonneg_direct _)
           approximation.centerBound_nonneg) (by decide)
-    _ = Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2 - approximation.centerBound := by
-      unfold Approximation.Gaussian.SignedDigit.Translation.ambientScale
+    _ = ambientScale approximation ^ 2 - approximation.centerBound := by
+      unfold ambientScale
       ring1
 
 /-- Both coordinates of every finite approximation sample lie between the signed ambient scale bounds. -/
-theorem sample_coordinate_bounds (approximation : Gaussian.Sequence.ApproximationData)
+theorem sample_coordinate_bounds (approximation : Sequence.ApproximationData)
     (index : Nat) :
-    -Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ≤ (approximation.sample index).re ∧
-      (approximation.sample index).re ≤ Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ∧
-      -Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ≤ (approximation.sample index).im ∧
-      (approximation.sample index).im ≤ Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation := by
+    -ambientScale approximation ≤ (approximation.sample index).re ∧
+      (approximation.sample index).re ≤ ambientScale approximation ∧
+      -ambientScale approximation ≤ (approximation.sample index).im ∧
+      (approximation.sample index).im ≤ ambientScale approximation := by
   have normBound := (approximation.sample_bounded index).trans
-    (Approximation.Gaussian.SignedDigit.Translation.centerBound_le_ambientScale_sq approximation)
+    (centerBound_le_ambientScale_sq approximation)
   have realSquare : (approximation.sample index).re ^ 2 ≤
-      Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2 := by
+      ambientScale approximation ^ 2 := by
     calc
       (approximation.sample index).re ^ 2 ≤
           (approximation.sample index).re ^ 2 +
             (approximation.sample index).im ^ 2 :=
         le_add_of_nonneg_right
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      _ ≤ Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2 := normBound
+          (Arithmetic.sq_nonneg_direct _)
+      _ ≤ ambientScale approximation ^ 2 := normBound
   have imagSquare : (approximation.sample index).im ^ 2 ≤
-      Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2 := by
+      ambientScale approximation ^ 2 := by
     calc
       (approximation.sample index).im ^ 2 ≤
           (approximation.sample index).re ^ 2 +
             (approximation.sample index).im ^ 2 :=
         le_add_of_nonneg_left
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      _ ≤ Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2 := normBound
-  have scaleNonnegative := (Approximation.Gaussian.SignedDigit.Translation.ambientScale_pos approximation).le
+          (Arithmetic.sq_nonneg_direct _)
+      _ ≤ ambientScale approximation ^ 2 := normBound
+  have scaleNonnegative := (ambientScale_pos approximation).le
   exact
-    ⟨Fraction.Order.Arithmetic.neg_le_of_sq_le_sq_direct
+    ⟨Arithmetic.neg_le_of_sq_le_sq_direct
         scaleNonnegative realSquare,
-      Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+      Arithmetic.le_of_sq_le_sq_direct
         scaleNonnegative realSquare,
-      Fraction.Order.Arithmetic.neg_le_of_sq_le_sq_direct
+      Arithmetic.neg_le_of_sq_le_sq_direct
         scaleNonnegative imagSquare,
-      Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+      Arithmetic.le_of_sq_le_sq_direct
         scaleNonnegative imagSquare⟩
 
 /-- Compute a finite signed-digit depth whose scale-two squared-radius allowance meets the original positive request. -/
-@[expose] def requestDepth (approximation : Gaussian.Sequence.ApproximationData)
-    (request : Translation.Request) : Nat :=
+@[expose] def requestDepth (approximation : Sequence.ApproximationData)
+    (request : Request) : Nat :=
   Search.firstQuarterBelow
-    (2 * Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2) 0 request.targetSq
+    (2 * ambientScale approximation ^ 2) 0 request.targetSq
 
 /-- A random-access approximation request translated into two persistent redundant signed-digit prefixes. -/
-@[expose] def fromApproximation (approximation : Gaussian.Sequence.ApproximationData) :
-    Translation.Realizer
+@[expose] def fromApproximation (approximation : Sequence.ApproximationData) :
+    Realizer
       (Sequence.approximationRepresentation approximation)
       Representation.representation where
   translate index request := by
     let refined := approximation.refineIndex index request.targetSq
       request.positive
-    let depth := Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation request
+    let depth := requestDepth approximation request
     let output := Cell.ofPoint (approximation.sample refined)
-      (Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation)
-        (Approximation.Gaussian.SignedDigit.Translation.ambientScale_pos approximation)
-      (Approximation.Gaussian.SignedDigit.Translation.sample_coordinate_bounds approximation refined) depth
+      (ambientScale approximation)
+        (ambientScale_pos approximation)
+      (sample_coordinate_bounds approximation refined) depth
     exact
       { source' := refined
         output := output
@@ -168,14 +170,14 @@ theorem sample_coordinate_bounds (approximation : Gaussian.Sequence.Approximatio
                 approximation.sample later =
               -(approximation.sample later - approximation.sample refined) := by
               apply Data.Gaussian.Basic.ext <;>
-                simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                  Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
+                simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                  Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
             rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
             exact closeForward
           exact closeReverse.trans
             (le_add_of_nonneg_right
-              (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-                (Fraction.Order.Arithmetic.sq_nonneg_direct output.tail)))
+              (Arithmetic.mul_nonneg_direct (by decide)
+                (Arithmetic.sq_nonneg_direct output.tail)))
         target_to_source := by
           intro targetValue targetPossible
           refine ⟨approximation.sample refined,
@@ -188,16 +190,16 @@ theorem sample_coordinate_bounds (approximation : Gaussian.Sequence.Approximatio
         precisionLoss := 0
         precisionLoss_nonneg := le_rfl
         precision := by
-          change Geometric.Basic.quarterRadius
-              (2 * Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2) depth <
+          change Basic.quarterRadius
+              (2 * ambientScale approximation ^ 2) depth <
             request.targetSq + 0
           calc
-            Geometric.Basic.quarterRadius
-                (2 * Approximation.Gaussian.SignedDigit.Translation.ambientScale approximation ^ 2) depth <
+            Basic.quarterRadius
+                (2 * ambientScale approximation ^ 2) depth <
                 request.targetSq :=
               Search.firstQuarterBelow_accurate _
-                (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-                  (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+                (Arithmetic.mul_nonneg_direct (by decide)
+                  (Arithmetic.sq_nonneg_direct _))
                 0 request.targetSq request.positive
             _ = request.targetSq + 0 := by ring1
         schedule :=
@@ -211,65 +213,65 @@ theorem sample_coordinate_bounds (approximation : Gaussian.Sequence.Approximatio
 
 /-- Nat-indexed executable entry point which hides the representation's definitionally equal observation type from
 clients. -/
-@[expose] def fromApproximationAt (approximation : Gaussian.Sequence.ApproximationData) (index : Nat)
-    (request : Translation.Request) :=
-  (Approximation.Gaussian.SignedDigit.Translation.fromApproximation approximation).translate index request
+@[expose] def fromApproximationAt (approximation : Sequence.ApproximationData) (index : Nat)
+    (request : Request) :=
+  (fromApproximation approximation).translate index request
 
 /-- The translated signed-digit cell has exactly the computed request depth. -/
-@[simp] theorem fromApproximationAt_depth (approximation : Gaussian.Sequence.ApproximationData)
-    (index : Nat) (request : Translation.Request) :
-    (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request).output.depth =
-      Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation request := rfl
+@[simp] theorem fromApproximationAt_depth (approximation : Sequence.ApproximationData)
+    (index : Nat) (request : Request) :
+    (fromApproximationAt approximation index request).output.depth =
+      requestDepth approximation request := rfl
 
 /-- The translated real digit word has exactly the computed request depth. -/
 @[simp] theorem fromApproximationAt_real_length
-    (approximation : Gaussian.Sequence.ApproximationData) (index : Nat)
-    (request : Translation.Request) :
-    (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index
+    (approximation : Sequence.ApproximationData) (index : Nat)
+    (request : Request) :
+    (fromApproximationAt approximation index
       request).output.realDigits.length =
-      Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation request :=
-  (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request).output.real_length
+      requestDepth approximation request :=
+  (fromApproximationAt approximation index request).output.real_length
 
 /-- The translated imaginary digit word has exactly the computed request depth. -/
 @[simp] theorem fromApproximationAt_imag_length
-    (approximation : Gaussian.Sequence.ApproximationData) (index : Nat)
-    (request : Translation.Request) :
-    (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index
+    (approximation : Sequence.ApproximationData) (index : Nat)
+    (request : Request) :
+    (fromApproximationAt approximation index
       request).output.imagDigits.length =
-      Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation request :=
-  (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request).output.imag_length
+      requestDepth approximation request :=
+  (fromApproximationAt approximation index request).output.imag_length
 
 /-- The translation cost bound is four times the computed request depth plus four. -/
 @[simp] theorem fromApproximationAt_costBound
-    (approximation : Gaussian.Sequence.ApproximationData) (index : Nat)
-    (request : Translation.Request) :
-    (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request).costBound =
-      4 * Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation request + 4 := rfl
+    (approximation : Sequence.ApproximationData) (index : Nat)
+    (request : Request) :
+    (fromApproximationAt approximation index request).costBound =
+      4 * requestDepth approximation request + 4 := rfl
 
 /-- The original translation result retains the computed depth, both digit lengths and the matching finite cost bound.
 -/
-theorem fromApproximationAt_data (approximation : Gaussian.Sequence.ApproximationData)
-    (index : Nat) (request : Translation.Request) :
-    let result := Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request
-    result.output.depth = Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation request ∧
-      result.output.realDigits.length = Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation
+theorem fromApproximationAt_data (approximation : Sequence.ApproximationData)
+    (index : Nat) (request : Request) :
+    let result := fromApproximationAt approximation index request
+    result.output.depth = requestDepth approximation request ∧
+      result.output.realDigits.length = requestDepth approximation
         request ∧
-      result.output.imagDigits.length = Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation
+      result.output.imagDigits.length = requestDepth approximation
         request ∧
-      result.costBound = 4 * Approximation.Gaussian.SignedDigit.Translation.requestDepth approximation request + 4 := by
+      result.costBound = 4 * requestDepth approximation request + 4 := by
   dsimp only
-  exact ⟨Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt_depth approximation index request,
-    Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt_real_length approximation index request,
-    Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt_imag_length approximation index request,
-    Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt_costBound approximation index request⟩
+  exact ⟨fromApproximationAt_depth approximation index request,
+    fromApproximationAt_real_length approximation index request,
+    fromApproximationAt_imag_length approximation index request,
+    fromApproximationAt_costBound approximation index request⟩
 
 /-- The translated signed-digit cell's precision allowance is strictly below the original target. -/
-theorem fromApproximationAt_precision (approximation : Gaussian.Sequence.ApproximationData)
-    (index : Nat) (request : Translation.Request) :
+theorem fromApproximationAt_precision (approximation : Sequence.ApproximationData)
+    (index : Nat) (request : Request) :
     Representation.representation.precisionSq
-        (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request).output <
+        (fromApproximationAt approximation index request).output <
       request.targetSq := by
-  let result := Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request
+  let result := fromApproximationAt approximation index request
   calc
     Representation.representation.precisionSq result.output <
         request.targetSq + result.precisionLoss := result.precision
@@ -278,13 +280,13 @@ theorem fromApproximationAt_precision (approximation : Gaussian.Sequence.Approxi
       ring1
 
 /-- Converting the translated signed-digit cell to its enclosing ball preserves the original strict precision target. -/
-theorem fromApproximationAt_toBall_precision (approximation : Gaussian.Sequence.ApproximationData)
-    (index : Nat) (request : Translation.Request) :
+theorem fromApproximationAt_toBall_precision (approximation : Sequence.ApproximationData)
+    (index : Nat) (request : Request) :
     Ball.ballRepresentation.precisionSq
         (Representation.toBall.map
-          (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request).output) <
+          (fromApproximationAt approximation index request).output) <
       request.targetSq := by
-  let output := (Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt approximation index request).output
+  let output := (fromApproximationAt approximation index request).output
   calc
     Ball.ballRepresentation.precisionSq
         (Representation.toBall.map output) ≤
@@ -294,7 +296,7 @@ theorem fromApproximationAt_toBall_precision (approximation : Gaussian.Sequence.
       change Representation.representation.precisionSq output + 0 = _
       ring1
     _ < request.targetSq :=
-      Approximation.Gaussian.SignedDigit.Translation.fromApproximationAt_precision approximation index request
+      fromApproximationAt_precision approximation index request
 end Purelib.Approximation.Gaussian.SignedDigit.Translation
 
 end

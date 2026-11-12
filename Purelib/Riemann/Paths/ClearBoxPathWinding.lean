@@ -213,67 +213,6 @@ open Purelib.Riemann.Paths.ClearBoxPathWinding.ClearBoxPaths (windingPotential)
 variable {polynomial : GaussianPolynomial} {ambient box :
   Box}
 
-namespace Polynomial.Geometry.ClearPath
-
-open Purelib.Data.Gaussian in
-open Purelib.Geometry.Rational in
-open Purelib.Polynomial in
-/-- Every retained vertex of the original cleared path belongs to the given box. -/
-@[expose] def InBox (box : Box) : {start finish :
-  Basic.Canonical} → ClearPath polynomial ambient start finish → Prop
-  | _, _, .nil point => box.Contains point
-  | start, _, .cons _ tail => box.Contains start ∧ InBox box tail
-
-end Polynomial.Geometry.ClearPath
-
-open _root_.Purelib.Polynomial.Geometry.ClearPath (InBox)
-
-namespace Polynomial.Geometry.ClearPath.InBox
-
-open Purelib.Data.Gaussian in
-open Purelib.Polynomial in
-/-- An original path retained inside a box starts inside that same box. -/
-theorem start {start finish : Basic.Canonical} {path :
-  ClearPath polynomial ambient start finish}
-    (inside : InBox box path) : box.Contains start := by
-  cases path with
-  | nil => exact inside
-  | cons => exact inside.1
-
-end Polynomial.Geometry.ClearPath.InBox
-
-namespace Polynomial.Geometry.ClearPath.InBox
-
-open Purelib.Data.Gaussian in
-open Purelib.Geometry.Rational in
-open Purelib.Polynomial in
-/-- Transport original path-vertex containment along the retained box refinement. -/
-theorem mono {larger : Box} (refines :
-  box.Refines larger) :
-    ∀ {start finish : Basic.Canonical} {path : ClearPath polynomial ambient start finish},
-      InBox box path → InBox larger path
-  | _, _, .nil _, inside => refines.contains inside
-  | _, _, .cons _ _, inside => ⟨refines.contains inside.1, mono
-    refines inside.2⟩
-
-end Polynomial.Geometry.ClearPath.InBox
-
-namespace Polynomial.Geometry.ClearPath.InBox
-
-open Purelib.Data.Gaussian in
-open Purelib.Polynomial in
-/-- An original ambient-contained path with a contained start has every retained vertex inside its ambient box. -/
-theorem ofWithin : ∀ {start finish : Basic.Canonical} (path
-  : ClearPath polynomial ambient start finish),
-    path.WithinAmbient → ambient.Contains start → InBox ambient path
-  | _, _, .nil _, _, inside => inside
-  | _, _, .cons head tail, within, inside => by
-      have last := head.pointAt_contains within.head 1 (by decide)
-      rw [Geometry.ClearPath.ClearSegment.pointAt_one] at last
-      exact ⟨inside, ofWithin tail within.tail last⟩
-
-end Polynomial.Geometry.ClearPath.InBox
-
 namespace Riemann.Paths.ClearBoxPathWinding.ClearPath
 
 open Purelib.Data.Gaussian in

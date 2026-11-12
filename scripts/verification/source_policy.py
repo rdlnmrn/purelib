@@ -10,6 +10,7 @@ from scripts.verification import modules, sources
 
 
 FORBIDDEN = {"noncomputable", "classical", "native_decide", "sorry", "admit"}
+NAMED_DECLARATIONS = {"def", "abbrev", "opaque", "theorem", "lemma"}
 RESOURCE = re.compile(r"\bset_option\s+(maxRecDepth|maxHeartbeats)\b")
 COMPLETED_IMPORTS = ("Mathlib.MeasureTheory", "Mathlib.Topology", "Mathlib.SetTheory",
                      "Mathlib.Cardinal", "Mathlib.Analysis")
@@ -19,11 +20,19 @@ def violations(source):
     """Report actual source tokens and imports, ignoring prose and string inputs."""
     result = []
     masked = sources.code(source, quoted_input=True)
-    for token in sources.lex(masked):
+    tokens = sources.lex(masked)
+    for index, token in enumerate(tokens):
         if token.kind == "ident" and (token.text in FORBIDDEN or token.text.startswith("Classical.")):
             # Quoted names are data, rather than executed proof commands.
             if source[max(0, token.start - 1):token.start] == "`":
                 continue
+            # A declaration can be named `admit`; its body is still checked.
+            if token.text == "admit" and index:
+                previous = tokens[index - 1]
+                if (previous.text in NAMED_DECLARATIONS and
+                        source[max(0, previous.start - 1):previous.start] != "`" and
+                        not masked[previous.end:token.start].strip()):
+                    continue
             result.append((source.count("\n", 0, token.start) + 1,
                            "forbidden constructive shortcut: " + token.text))
     for match in RESOURCE.finditer(masked):

@@ -6,6 +6,7 @@ public import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction
 import Purelib.Tactic.QuotientFreeOmega
+import Purelib.Tactic.Ring
 import Mathlib.Algebra.NeZero
 import Mathlib.Algebra.GroupWithZero.NeZero
 
@@ -33,13 +34,39 @@ There is no root collection, completed carrier, or generic resultant.
 
 namespace Purelib.Data.Gaussian.Power
 
-open Purelib.Data.Gaussian in
+open Purelib.Data.Gaussian
+open Purelib.Data.Rat.Fraction (Rational)
+
 /-- Gaussian conjugation commutes with each natural power. -/
 theorem conj_pow (point : Basic.Canonical) : ∀ degree,
     Basic.conj (point ^ degree) = Basic.conj point ^ degree
   | 0 => rfl
   | degree + 1 => by
       rw [pow_succ, pow_succ, Basic.conj_mul, conj_pow point degree]
+
+/-- A finite natural power distributes over the same two Gaussian scalars.
+
+Structural induction retains the original multiplication and natural-power
+operations at every exponent, without selecting roots or completing a carrier.
+-/
+theorem mul_pow (left right : Basic.Canonical) :
+    ∀ index : Nat, (left * right) ^ index = left ^ index * right ^ index
+  | 0 => by rewrite [pow_zero, pow_zero, pow_zero]; ring1
+  | index + 1 => by
+      rewrite [pow_succ, pow_succ, pow_succ, mul_pow left right index]
+      ring1
+
+/-- Taking a natural Gaussian power on the real axis gives the same exact rational power. -/
+theorem realAxis_pow (value : Rational) : ∀ exponent : Nat,
+    (⟨value, 0⟩ : Basic.Canonical) ^ exponent = ⟨value ^ exponent, 0⟩
+  | 0 => rfl
+  | exponent + 1 => by
+      rw [pow_succ, pow_succ, realAxis_pow value exponent]
+      apply Basic.ext
+      · change value ^ exponent * value - (0 : Rational) * 0 = value ^ exponent * value
+        ring1
+      · change value ^ exponent * (0 : Rational) + 0 * value = 0
+        ring1
 end Purelib.Data.Gaussian.Power
 
 end

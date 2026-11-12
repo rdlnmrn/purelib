@@ -109,24 +109,24 @@ open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 /-- A finite vector retaining its original entry count. -/
 abbrev Vector := Data.Vector
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {source :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
-  {cycles : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.Vector
-    (Purelib.Topology.Surface.Sewing.CutCycleChains.ClosedCutCycle lifted.cutPolygon.patch.cut.vertexLabels
-    (lifted.cutPolygon.patch.cut.boundary.map (Purelib.Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {source :
+    Differential genus} {count : Nat}
+  {cycles : Vector
+    (ClosedCutCycle lifted.cutPolygon.patch.cut.vertexLabels
+    (lifted.cutPolygon.patch.cut.boundary.map (OrientedEdge.map
       lifted.cutPolygon.patch.cut.vertexLabels))) count}
 
 set_option genInjectivity false in
 /-- Cached geometric streams for the original component period programs.
 
 Every stream sample is tied to the actual integral sample of its retained component model at the same stage. -/
-structure ComponentSamples (bank : CyclePrograms.CutCycleProgramBank lifted source cycles) (differential : Fin genus)
+structure ComponentSamples (bank : CutCycleProgramBank lifted source cycles) (differential : Fin genus)
   where
   /-- The cached geometric approximation for each original component program. -/ streams :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.Vector WeightedPeriods.GeometricApproximation count
+    Vector WeightedPeriods.GeometricApproximation count
   /-- Every cached stream stage equals its original component program integral sample. -/ samples_eq : ∀ index stage,
     (streams index).sample stage =
     (((bank.programs index).program differential).integral.model stage).integralSample
@@ -135,21 +135,21 @@ constructive_injectivity ComponentSamples
 
 namespace ComponentSamples
 
-variable {bank : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source
+variable {bank : CutCycleProgramBank lifted source
   cycles} {differential : Fin genus}
 
 /-- Cache the original component streams or their exact coefficient-weighted period without replacing the retained
 program bank. -/
-@[expose] def build (bank : CyclePrograms.CutCycleProgramBank lifted source cycles) (differential : Fin genus) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples bank differential :=
+@[expose] def build (bank : CutCycleProgramBank lifted source cycles) (differential : Fin genus) :
+  ComponentSamples bank differential :=
   ⟨vectorOfFn fun index => WeightedPeriodNames.programApproximation ((bank.programs index).program
     differential).integral,
     fun index stage => by rw [Data.Vector.Basic.vectorOfFn_apply]; rfl⟩
 
 /-- The cached geometric output agrees operationally with the original retained named period programs. -/
 @[expose] def output_equivalent (components :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples bank differential) (index : Fin count) :
-    Gaussian.Equivalence.NamedEquivalent ((bank.programs index).program differential).output.name
+  ComponentSamples bank differential) (index : Fin count) :
+    NamedEquivalent ((bank.programs index).program differential).output.name
       (PeriodMatrix.geometricNamed (components.streams index)).name :=
   Equivalence.approximationEquivalent_toNamed
     (Equivalence.approximationEquivalentOfSamplesEq
@@ -161,9 +161,9 @@ end ComponentSamples
 set_option genInjectivity false in
 /-- A weighted stream whose samples remain tied to the original certified component models. Alternative checked scales
 and cached streams are allowed. -/
-structure ChainPeriod {bank : CyclePrograms.CutCycleProgramBank lifted source cycles} {differential : Fin genus}
-    (components : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples bank differential)
-      (weights : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.Vector Int count) where
+structure ChainPeriod {bank : CutCycleProgramBank lifted source cycles} {differential : Fin genus}
+    (components : ComponentSamples bank differential)
+      (weights : Vector Int count) where
   /-- The retained integer weights indexed by the original component bank. -/ coefficients :
     WeightedPeriods.Coefficients weights
   /-- The cached geometric approximation of the original weighted chain period. -/ approximation :
@@ -176,61 +176,61 @@ constructive_injectivity ChainPeriod
 
 namespace ChainPeriod
 
-variable {bank : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source
+variable {bank : CutCycleProgramBank lifted source
   cycles} {differential : Fin genus}
-  {components : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples bank differential}
-    {weights : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.Vector Int count}
+  {components : ComponentSamples bank differential}
+    {weights : Vector Int count}
 
 /-- Cache the original component streams or their exact coefficient-weighted period without replacing the retained
 program bank. -/
-@[expose] def build (components : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples bank
-  differential) (weights : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.Vector Int count) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components weights :=
+@[expose] def build (components : ComponentSamples bank
+  differential) (weights : Vector Int count) :
+  ChainPeriod components weights :=
   let coefficients := Coefficients.build weights
   ⟨coefficients, coefficients.approximation components.streams, fun _ => rfl⟩
 
 /-- Read the original integer-weighted component cycle chain from the retained program bank. -/
-@[expose] def chain (_period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
+@[expose] def chain (_period : ChainPeriod components
   weights) :
-    CutCycleChains.CutCycleChain lifted.cutPolygon.patch.cut.vertexLabels
+    CutCycleChain lifted.cutPolygon.patch.cut.vertexLabels
       (lifted.cutPolygon.patch.cut.boundary.map (OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels)) :=
   ⟨count, cycles, weights⟩
 
 /-- The retained integer-weighted component chain has zero boundary. -/
-theorem chain_closed (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
+theorem chain_closed (period : ChainPeriod components
   weights) (vertex : Fin lifted.vertices.count) :
     period.chain.boundary vertex = 0 := period.chain.boundary_zero vertex
 
 /-- The geometric named output of the cached original chain-period approximation. -/
-@[expose] def output (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
+@[expose] def output (period : ChainPeriod components
   weights) : CoherentNamed := PeriodMatrix.geometricNamed period.approximation
 
 /-- Negate the original coefficient vector and cached stream, retaining the same component program bank. -/
-@[expose] def negate (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
-  weights) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
+@[expose] def negate (period : ChainPeriod components
+  weights) : ChainPeriod components
   (Data.Vector.Basic.vectorOfFn fun index => -weights index) :=
   ⟨period.coefficients.negate, period.approximation.neg,
     fun stage => by rw [GeometricApproximation.neg_sample, period.sample_eq,
       period.coefficients.negate_combine]⟩
 
 /-- Negating the retained period gives exactly the negation of its original component chain. -/
-theorem negate_chain (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
+theorem negate_chain (period : ChainPeriod components
   weights) : period.negate.chain = period.chain.negate := rfl
 
 /-- Each cached chain sample is the exact integer-weighted sum of the original component model samples. -/
-theorem sample_eq_programs (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
+theorem sample_eq_programs (period : ChainPeriod components
   weights) (stage : Nat) :
     period.approximation.sample stage = FiniteSum.Fin.sumFin (fun index => (weights index :
-      Data.Gaussian.Basic.Canonical) *
+      Canonical) *
       (((bank.programs index).program differential).integral.model stage).integralSample) := by
   rw [period.sample_eq, period.coefficients.combine_eq]
-  exact FiniteSum.Fin.sumFin_congr fun index => congrArg (fun value => (weights index : Data.Gaussian.Basic.Canonical) *
+  exact FiniteSum.Fin.sumFin_congr fun index => congrArg (fun value => (weights index : Canonical) *
     value) (components.samples_eq index stage)
 
 /-- The cached geometric output agrees operationally with the original retained named period programs. -/
-@[expose] def output_equivalent (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod
+@[expose] def output_equivalent (period : ChainPeriod
   components weights) :
-    Gaussian.Equivalence.NamedEquivalent (Coefficients.named period.coefficients
+    NamedEquivalent (Coefficients.named period.coefficients
       (fun index => ((bank.programs index).program differential).output)).name
       period.output.name :=
   (Coefficients.named_equivalent
@@ -242,9 +242,9 @@ theorem sample_eq_programs (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.C
 
 /-- Any component comparison is charged with the actual integer row. There is no assumption that the coefficient
 amplification is at most one. -/
-theorem comparison_bound (period : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components
-  weights) (values : Fin count → Data.Gaussian.Basic.Canonical) (stage : Nat)
-    (bounds : Fin count → WeightedPeriods.Coordinate)
+theorem comparison_bound (period : ChainPeriod components
+  weights) (values : Fin count → Canonical) (stage : Nat)
+    (bounds : Fin count → Coordinate)
     (bounded : ∀ index, Data.Gaussian.Norm.Basic.normSq
       (values index - (((bank.programs index).program differential).integral.model stage).integralSample) ≤ bounds
         index) :

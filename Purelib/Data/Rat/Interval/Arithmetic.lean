@@ -59,6 +59,37 @@ public theorem addConstant_contains (interval : Bounds) (shift : Fraction.Ration
     (inside : interval.Contains value) : (Interval.Arithmetic.addConstant interval shift).Contains (value + shift) :=
   ⟨add_le_add inside.1 le_rfl, add_le_add inside.2 le_rfl⟩
 
+/-- Add the corresponding endpoints of two retained rational intervals.
+
+The lower and upper endpoint sums enclose every sum of contained values.
+Direct scalar addition transports the original endpoint ordering witnesses. -/
+@[expose] public def add (left right : Bounds) : Bounds :=
+  ⟨left.lower + right.lower, left.upper + right.upper,
+    Order.Arithmetic.add_le_add_direct left.valid right.valid⟩
+
+/-- Interval addition encloses the sum of values contained in the original input intervals. -/
+public theorem add_contains (left right : Bounds) {first second : Fraction.Rational}
+    (firstInside : left.Contains first) (secondInside : right.Contains second) :
+    (Interval.Arithmetic.add left right).Contains (first + second) :=
+  ⟨Order.Arithmetic.add_le_add_direct firstInside.1 secondInside.1,
+    Order.Arithmetic.add_le_add_direct firstInside.2 secondInside.2⟩
+
+/-- Subtract opposite endpoints of two retained rational intervals.
+
+The lower endpoint subtracts the original upper endpoint of the right
+interval; the upper endpoint subtracts its lower endpoint. Direct scalar
+subtraction preserves the original validity witnesses. -/
+@[expose] public def sub (left right : Bounds) : Bounds :=
+  ⟨left.lower - right.upper, left.upper - right.lower,
+    Order.Arithmetic.sub_le_sub_direct left.valid right.valid⟩
+
+/-- The difference interval encloses the difference of its two retained input values. -/
+public theorem sub_contains {left right : Bounds} {first second : Fraction.Rational}
+    (firstInside : left.Contains first) (secondInside : right.Contains second) :
+    (Interval.Arithmetic.sub left right).Contains (first - second) :=
+  ⟨Order.Arithmetic.sub_le_sub_direct firstInside.1 secondInside.2,
+    Order.Arithmetic.sub_le_sub_direct firstInside.2 secondInside.1⟩
+
 /-- Construct a rational interval enclosing all products of a fixed scalar with the original interval.
 
 Multiply the two retained endpoints by the scalar and order the resulting endpoints using minimum and maximum. This

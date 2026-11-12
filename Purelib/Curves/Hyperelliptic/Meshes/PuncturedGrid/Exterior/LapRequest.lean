@@ -61,6 +61,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -131,7 +133,7 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {next : FramedPuncturedGrid curve branches higher}
   {current : LiftedPuncturedGrid next}
   {domains : FaceDomainBank current.frames
@@ -141,8 +143,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 namespace ExteriorLapRequest
 
 /-- The paired total of the actual word readings consists of the two original scalar word values. -/
-private theorem total_readback {count : Nat} (first second : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical)
-  (word : List (Stokes.OrientedEdge count)) :
+private theorem total_readback {count : Nat} (first second : OrientedEdge count → Canonical)
+  (word : List (OrientedEdge count)) :
     PairedIncrementArea.total (word.map (fun edge => (⟨first edge, second edge⟩ : Stokes.PrimitivePoint))) =
       ⟨wordValue first word, SewingRetraction.wordValue second word⟩ := by
   induction word with
@@ -153,35 +155,35 @@ private theorem total_readback {count : Nat} (first second : Stokes.OrientedEdge
       rfl
 
 /-- The actual indexed walk value obeys the retained primitive magnitude bound scaled by its squared edge count. -/
-private theorem word_bound {differential : Differentials.Basic.Differential genus} (fixed :
-  MagnitudeBank.FaceMagnitudeBank domains differential)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
-    (later : fixed.index ≤ stage) {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk next.bank.grid start
+private theorem word_bound {differential : Differential genus} (fixed :
+  FaceMagnitudeBank domains differential)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
+    (later : fixed.index ≤ stage) {start finish : Canonical} (walk : Walks.Walk next.bank.grid start
       finish) (sheet : Fin 2) :
-    Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation current.mesh
+    Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation current.mesh
       readings.values) (current.edges.indexedEdges current.vertices walk sheet)) ≤
-      (walk.edgeCount : Fraction.Rational) ^ 2 * (4 * fixed.bound) := by
-  let retainedMagnitude := Readings.EdgeMagnitude.ofBank
+      (walk.edgeCount : Rational) ^ 2 * (4 * fixed.bound) := by
+  let retainedMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh current.mesh) fixed later readings
   let observation := WordObservations.realize retainedMagnitude (current.edges.indexedEdges current.vertices walk sheet)
   have cached := observation.bounded
-  change Data.Gaussian.Norm.Basic.normSq observation.total ≤ observation.bound at cached
+  change Gaussian.Norm.Basic.normSq observation.total ≤ observation.bound at cached
   rw [observation.total_readback, observation.bound_readback, WordObservations.BoundSpecification] at cached
-  change Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
+  change Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
     current.mesh readings.values) (current.edges.indexedEdges current.vertices walk sheet)) ≤
-    ((current.edges.indexedEdges current.vertices walk sheet).length : Fraction.Rational) ^ 2 * (4 * fixed.bound)
+    ((current.edges.indexedEdges current.vertices walk sheet).length : Rational) ^ 2 * (4 * fixed.bound)
       at cached
   rw [current.edges.indexedEdges_length] at cached
   exact cached
 /-- The common two-differential exterior-lap magnitude bound is nonnegative. -/
-theorem magnitude_nonnegative (leftFixed : MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
-    (rightFixed : MagnitudeBank.FaceMagnitudeBank domains rightDifferential) :
-    0 ≤ (next.bank.exterior.edgeCount : Fraction.Rational) ^ 2 * (4 * max leftFixed.bound rightFixed.bound) :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.pow_nonneg_direct
+theorem magnitude_nonnegative (leftFixed : FaceMagnitudeBank domains leftDifferential)
+    (rightFixed : FaceMagnitudeBank domains rightDifferential) :
+    0 ≤ (next.bank.exterior.edgeCount : Rational) ^ 2 * (4 * max leftFixed.bound rightFixed.bound) :=
+  Arithmetic.mul_nonneg_direct (Arithmetic.pow_nonneg_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (leftFixed.nonnegative.trans
-      (Fraction.Order.Basic.le_max_left _ _)))
+    (Arithmetic.mul_nonneg_direct (by decide) (leftFixed.nonnegative.trans
+      (Basic.le_max_left _ _)))
 
 end ExteriorLapRequest
 
@@ -190,25 +192,25 @@ set_option genInjectivity false in
 
 One retained paired placement carries both polygon and differential increment requests, including the explicit lap-total
 cross-term budget in odd degree. -/
-structure ExteriorLapRequest (leftFixed : MagnitudeBank.FaceMagnitudeBank domains leftDifferential) (rightFixed :
-  MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
-     (error : Fraction.Rational) where
+structure ExteriorLapRequest (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed :
+  FaceMagnitudeBank domains rightDifferential)
+     (error : Rational) where
   /-- The requested exterior-lap error is strictly positive. -/ positive : 0 < error
-  /-- The cached common magnitude bound for the two differential exterior-lap values. -/ magnitude : Fraction.Rational
+  /-- The cached common magnitude bound for the two differential exterior-lap values. -/ magnitude : Rational
   /-- The cached bound uses the actual squared exterior edge count and maximum retained differential magnitude. -/
-    magnitude_eq : magnitude = (next.bank.exterior.edgeCount : Fraction.Rational) ^ 2 *
+    magnitude_eq : magnitude = (next.bank.exterior.edgeCount : Rational) ^ 2 *
     (4 * max leftFixed.bound rightFixed.bound)
-  /-- The common allowance for the two differential lap increment requests. -/ totalTarget : Fraction.Rational
+  /-- The common allowance for the two differential lap increment requests. -/ totalTarget : Rational
   /-- The increment allowance is the weighted share of one quarter of the target. -/ totalTarget_eq : totalTarget =
     Weighted.allowance (error / 4) (4 * magnitude)
   /-- The actual paired placement of the original exterior walk. -/ paired : WalkOccurrences.PairedWalk current.mesh
     next.bank.exterior
-  /-- The retained polygon comparison between its two initial sheets. -/ polygons : PolygonRequests.PolygonRequest
+  /-- The retained polygon comparison between its two initial sheets. -/ polygons : PolygonRequest
     leftFixed rightFixed paired 0 1 (error / 4)
   /-- The first differential increment-cancellation request on that exact paired exterior walk. -/ leftTotal :
-    PairedWalk.IncrementRequest paired domains leftDifferential 0 totalTarget
+    IncrementRequest paired domains leftDifferential 0 totalTarget
   /-- The second differential increment-cancellation request on that same paired exterior walk. -/ rightTotal :
-    PairedWalk.IncrementRequest paired domains rightDifferential 0 totalTarget
+    IncrementRequest paired domains rightDifferential 0 totalTarget
 
 constructive_injectivity ExteriorLapRequest
 
@@ -221,15 +223,15 @@ variable {leftFixed : FaceMagnitudeBank domains
 
 /-- Prepare the paired exterior walk once and retain the polygon and both increment requests with the explicit
 cross-term allowance. -/
-@[expose] def build (leftFixed : MagnitudeBank.FaceMagnitudeBank domains leftDifferential) (rightFixed :
-  MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
-     (error : Fraction.Rational) (positive : 0 < error) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.LapRequest.ExteriorLapRequest leftFixed rightFixed error :=
-  let magnitude := (next.bank.exterior.edgeCount : Fraction.Rational) ^ 2 * (4 * max leftFixed.bound rightFixed.bound)
+@[expose] def build (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed :
+  FaceMagnitudeBank domains rightDifferential)
+     (error : Rational) (positive : 0 < error) :
+    ExteriorLapRequest leftFixed rightFixed error :=
+  let magnitude := (next.bank.exterior.edgeCount : Rational) ^ 2 * (4 * max leftFixed.bound rightFixed.bound)
   let totalTarget := Weighted.allowance (error / 4) (4 * magnitude)
-  have quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
+  have quarterPositive := Field.div_pos_direct positive (by decide : (0 : Rational) < 4)
   have totalPositive := Weighted.allowance_positive quarterPositive
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (magnitude_nonnegative leftFixed
       rightFixed))
   let paired := PairedWalk.build current.mesh next.bank.exterior
@@ -239,7 +241,7 @@ cross-term allowance. -/
     IncrementRequest.build paired domains rightDifferential 0 totalTarget totalPositive⟩
 
 /-- The common maximum stage paying the exterior polygon and both increment request stages. -/
-@[expose] def index (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.LapRequest.ExteriorLapRequest
+@[expose] def index (request : ExteriorLapRequest
   leftFixed rightFixed error) : Nat :=
   max request.polygons.index (max request.leftTotal.index request.rightTotal.index)
 
@@ -250,18 +252,18 @@ local instance : NeZero (2 : Nat) := ⟨by decide +kernel⟩
 
 /-- In odd degree the actual closed exterior is the double contour. Both differential increment requests pay its
 lap-total cross term. -/
-theorem odd_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.LapRequest.ExteriorLapRequest
+theorem odd_accurate (request : ExteriorLapRequest
   leftFixed rightFixed error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank current.mesh) (rightReadings :
+      TriangleReadings rightBank current.mesh)
     (later : request.index ≤ stage) (degree : curve.polynomial.natDegree = 2 * genus + 1) (sheet : Fin 2) :
     let value := fun edge => (⟨edgeValuation current.mesh leftReadings.values edge,
       CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩ : Stokes.PrimitivePoint)
     let walk := next.bank.exterior
     let lap := PairedIncrementArea.area ((current.edges.indexedEdges current.vertices walk sheet).map value)
-    Data.Gaussian.Norm.Basic.normSq (lap + lap - PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (lap + lap - PairedIncrementArea.area
       ((current.edges.indexedEdges current.vertices (walk.append walk) 0).map value)) ≤ error := by
   intro value walk lap
   have polygonLater := (Nat.Order.le_max_left _ _).trans later
@@ -282,38 +284,38 @@ theorem odd_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exteri
     constructor
     · have h := (word_bound leftFixed
         leftReadings fixedLater.1 walk 0).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.le_max_left leftFixed.bound
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_left leftFixed.bound
             rightFixed.bound) (by decide))
-          (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
-      change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-      simp only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+          (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
+      change Basic.LessEqual _ _ at h ⊢
+      simp only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] at h
       convert h using 1
     · have h := (word_bound rightFixed
         rightReadings fixedLater.2 walk 0).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.le_max_right leftFixed.bound
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_right leftFixed.bound
             rightFixed.bound) (by decide))
-          (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
-      change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-      simp only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+          (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
+      change Basic.LessEqual _ _ at h ⊢
+      simp only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] at h
       convert h using 1
-  have oldBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Basic.Canonical.normSq point ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq point ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    simpa only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-  have canonicalBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Norm.Basic.normSq point ≤ limit) :
-      Data.Gaussian.Basic.Canonical.normSq point ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    simpa only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
+  have oldBound {point : Canonical} {limit : Rational}
+      (h : Canonical.normSq point ≤ limit) :
+      Gaussian.Norm.Basic.normSq point ≤ limit := by
+    change Basic.LessEqual _ _ at h ⊢
+    simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using h
+  have canonicalBound {point : Canonical} {limit : Rational}
+      (h : Gaussian.Norm.Basic.normSq point ≤ limit) :
+      Canonical.normSq point ≤ limit := by
+    change Basic.LessEqual _ _ at h ⊢
+    simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using h
   have small : PrimitivePoint.Bounded ((totals 0).add (totals 1)) request.totalTarget := by
     dsimp only [totals, value]
     rw [total_readback,
       total_readback]
     exact ⟨canonicalBound leftTotal, canonicalBound rightTotal⟩
-  have cross : Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea (totals 0) (totals 1)) ≤ error / 4 := by
+  have cross : Gaussian.Norm.Basic.normSq (Stokes.edgeArea (totals 0) (totals 1)) ≤ error / 4 := by
     have same : Stokes.edgeArea (totals 0) (totals 1) = Stokes.edgeArea (totals 0) ((totals 0).add (totals 1)) := by
       simp only [-eq_self, -iff_self, Stokes.edgeArea, PrimitivePoint.add]
       ring1
@@ -322,33 +324,33 @@ theorem odd_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exteri
     apply (PrimitivePoint.area_bound bounded small).trans
     rw [request.totalTarget_eq]
     exact Weighted.mul_allowance_le
-      (Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Fraction.Rational) < 4)).le
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative)
+      (Field.div_pos_direct request.positive (by decide : (0 : Rational) < 4)).le
+      (Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative)
   have opposite := request.polygons.accurate leftReadings rightReadings polygonLater (by decide)
-  have either : ∀ sheet : Fin 2, Data.Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas
+  have either : ∀ sheet : Fin 2, Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas
     1)) ≤ error / 4 := by
     intro position
     refine Fin.cases_induction ?_ (fun next => ?_) position
-    · change Data.Gaussian.Norm.Basic.normSq (areas 0 + areas 0 - (areas 0 + areas 1)) ≤ error / 4
+    · change Gaussian.Norm.Basic.normSq (areas 0 + areas 0 - (areas 0 + areas 1)) ≤ error / 4
       rw [show areas 0 + areas 0 - (areas 0 + areas 1) = areas 0 - areas 1 by ring1]
       exact opposite
     · refine Fin.cases_induction ?_ (fun empty => Fin.elim0 empty) next
-      change Data.Gaussian.Norm.Basic.normSq (areas 1 + areas 1 - (areas 0 + areas 1)) ≤ error / 4
+      change Gaussian.Norm.Basic.normSq (areas 1 + areas 1 - (areas 0 + areas 1)) ≤ error / 4
       rw [show areas 1 + areas 1 - (areas 0 + areas 1) = -(areas 0 - areas 1) by ring1,
-        Data.Gaussian.Norm.Basic.normSq_neg]
+        Gaussian.Norm.Basic.normSq_neg]
       exact opposite
   have double : current.edges.indexedEdges current.vertices (walk.append walk) 0 = words 0 ++ words 1 :=
     (current.edges.indexedEdges_append current.vertices walk walk 0).trans
       (congrArg (fun rest => words 0 ++ rest)
         (congrArg (current.edges.indexedEdges current.vertices walk) (current.exterior_swap_odd degree 0)))
   rw [double, List.Map.map_append, PairedAreaBlocks.area_append]
-  change Data.Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas 1 + Stokes.edgeArea
+  change Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas 1 + Stokes.edgeArea
     (totals 0) (totals 1))) ≤ error
   rw [show areas sheet + areas sheet - (areas 0 + areas 1 + Stokes.edgeArea (totals 0) (totals 1)) =
     (areas sheet + areas sheet - (areas 0 + areas 1)) - Stokes.edgeArea (totals 0) (totals 1) by ring1]
-  exact ((Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (either sheet) cross) (by decide))).trans_eq
+  exact ((Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (either sheet) cross) (by decide))).trans_eq
       ((by ring1 : 2 * (error / 4 + error / 4) = error / 4 * 4).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by
         decide)))
 
@@ -361,48 +363,48 @@ local instance : NeZero (2 : Nat) := ⟨by decide +kernel⟩
 
 /-- Both degree shapes compare the same one-lap polygon with the literal closed exterior component list; no component
 area is set to zero. -/
-theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.LapRequest.ExteriorLapRequest leftFixed
+theorem accurate (request : ExteriorLapRequest leftFixed
   rightFixed error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank current.mesh) (rightReadings :
+      TriangleReadings rightBank current.mesh)
     (later : request.index ≤ stage) (sheet : Fin 2) :
     let value := fun edge => (⟨edgeValuation current.mesh leftReadings.values edge,
       CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩ : Stokes.PrimitivePoint)
     let area := fun word => PairedIncrementArea.area (word.map value)
     let lap := area (current.edges.indexedEdges current.vertices next.bank.exterior sheet)
-    Data.Gaussian.Norm.Basic.normSq (lap + lap - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Gaussian.Norm.Basic.normSq (lap + lap - Gaussian.Norm.Sum.Basic.gaussianSum
       (current.exteriorBoundaries.map area)) ≤ error := by
   intro value area lap
   cases shape : curve.degreeShape with
   | odd degree =>
       have estimate := request.odd_accurate leftReadings rightReadings later degree sheet
       simpa only [-eq_self, -iff_self, LiftedPuncturedGrid.exteriorBoundaries, shape, List.map_cons, List.map_nil,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum, add_zero] using estimate
+        Gaussian.Norm.Sum.Basic.gaussianSum, add_zero] using estimate
   | even _ =>
       have opposite := request.polygons.accurate leftReadings rightReadings
         ((Nat.Order.le_max_left _ _).trans later) (by decide)
       let areas := fun initial => area (current.edges.indexedEdges current.vertices next.bank.exterior initial)
       have quarter : error / 4 ≤ error := by
-        apply (Fraction.Order.Field.div_le_iff_pos (by decide)).mpr
+        apply (Field.div_le_iff_pos (by decide)).mpr
         exact (show error = error * 1 by ring1).le.trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Fraction.Rational) ≤ 4)
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Rational) ≤ 4)
             request.positive.le)
-      have estimate : ∀ initial : Fin 2, Data.Gaussian.Norm.Basic.normSq (areas initial + areas initial -
+      have estimate : ∀ initial : Fin 2, Gaussian.Norm.Basic.normSq (areas initial + areas initial -
         (areas 0 + areas 1)) ≤ error := by
         intro position
         refine Fin.cases_induction ?_ (fun next => ?_) position
-        · change Data.Gaussian.Norm.Basic.normSq (areas 0 + areas 0 - (areas 0 + areas 1)) ≤ error
+        · change Gaussian.Norm.Basic.normSq (areas 0 + areas 0 - (areas 0 + areas 1)) ≤ error
           rw [show areas 0 + areas 0 - (areas 0 + areas 1) = areas 0 - areas 1 by ring1]
           exact opposite.trans quarter
         · refine Fin.cases_induction ?_ (fun empty => Fin.elim0 empty) next
-          change Data.Gaussian.Norm.Basic.normSq (areas 1 + areas 1 - (areas 0 + areas 1)) ≤ error
+          change Gaussian.Norm.Basic.normSq (areas 1 + areas 1 - (areas 0 + areas 1)) ≤ error
           rw [show areas 1 + areas 1 - (areas 0 + areas 1) = -(areas 0 - areas 1) by ring1,
-            Data.Gaussian.Norm.Basic.normSq_neg]
+            Gaussian.Norm.Basic.normSq_neg]
           exact opposite.trans quarter
       simpa only [-eq_self, -iff_self, LiftedPuncturedGrid.exteriorBoundaries, shape, List.map_cons, List.map_nil,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum, add_zero] using estimate sheet
+        Gaussian.Norm.Sum.Basic.gaussianSum, add_zero] using estimate sheet
 
 end
 

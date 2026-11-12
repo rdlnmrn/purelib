@@ -16,6 +16,10 @@ import Purelib.Geometry.Rational.Box.Boundary
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Legendre
@@ -54,97 +58,97 @@ def factorMoveDominanceAt (source target : Data.Gaussian.Basic.Canonical) {box :
     (oneClearance : Boundary.Basic.BoundaryClearance
       (translatedCoordinate 1) box)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (source - target) < movingClearance.bound) :
     Dominance.Basic.BoundaryNormDominance
       (Paths.polynomial source) (Polynomial.perturbationAt source target) box where
   margin := zeroClearance.bound * oneClearance.bound *
     (movingClearance.bound -
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
         (source - target))
   positive := by
-    apply Fraction.Order.Arithmetic.mul_pos_direct
-    · exact Fraction.Order.Arithmetic.mul_pos_direct
+    apply Arithmetic.mul_pos_direct
+    · exact Arithmetic.mul_pos_direct
         zeroClearance.positive oneClearance.positive
-    · exact Fraction.Order.Arithmetic.sub_pos_direct displacementSmall
+    · exact Arithmetic.sub_pos_direct displacementSmall
   lower := by
     intro point boundary
     have zeroLower := zeroClearance.lower point boundary
     have movingLower := movingClearance.lower point boundary
     have oneLower := oneClearance.lower point boundary
-    rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at zeroLower movingLower oneLower
+    rw [← Basic.normSq_eq_canonical] at zeroLower movingLower oneLower
     have commonLower : zeroClearance.bound * oneClearance.bound ≤
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             ((translatedCoordinate 0).eval point) *
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             ((translatedCoordinate 1).eval point) := by
-      exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
         zeroLower oneClearance.positive.le).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             oneLower
-            (Data.Gaussian.Norm.Basic.normSq_nonneg
+            (Basic.normSq_nonneg
               ((translatedCoordinate 0).eval point)))
     have gapLower : movingClearance.bound -
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             (source - target) ≤
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             ((translatedCoordinate source).eval
               point) -
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             (source - target) :=
-      Fraction.Order.Arithmetic.sub_le_sub_right_direct movingLower _
+      Arithmetic.sub_le_sub_right_direct movingLower _
     have gapNonnegative : 0 ≤ movingClearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
           (source - target) :=
-      (Fraction.Order.Arithmetic.sub_pos_direct displacementSmall).le
+      (Arithmetic.sub_pos_direct displacementSmall).le
     have commonNonnegative : 0 ≤
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             ((translatedCoordinate 0).eval point) *
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             ((translatedCoordinate 1).eval point) :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+      Arithmetic.mul_nonneg_direct
+        (Basic.normSq_nonneg _)
+        (Basic.normSq_nonneg _)
     have scaled :=
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct
         commonLower gapNonnegative).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           gapLower commonNonnegative)
-    rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical ((Paths.polynomial source).eval point),
-      ← Data.Gaussian.Norm.Basic.normSq_eq_canonical ((Polynomial.perturbationAt source target).eval point)]
+    rw [← Basic.normSq_eq_canonical ((Paths.polynomial source).eval point),
+      ← Basic.normSq_eq_canonical ((Polynomial.perturbationAt source target).eval point)]
     rw [Polynomial.polynomial_eval_factorsAt source,
       Polynomial.perturbationAt_eval source target,
-      Data.Gaussian.Norm.Basic.normSq_mul,
-      Data.Gaussian.Norm.Basic.normSq_mul,
-      Data.Gaussian.Norm.Basic.normSq_mul,
-      Data.Gaussian.Norm.Basic.normSq_mul]
+      Basic.normSq_mul,
+      Basic.normSq_mul,
+      Basic.normSq_mul,
+      Basic.normSq_mul]
     calc
       zeroClearance.bound * oneClearance.bound *
           (movingClearance.bound -
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
               (source - target)) ≤
-        (Data.Gaussian.Norm.Basic.normSq
+        (Basic.normSq
             ((translatedCoordinate 0).eval point) *
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             ((translatedCoordinate 1).eval point)) *
-          (Data.Gaussian.Norm.Basic.normSq
+          (Basic.normSq
               ((translatedCoordinate
                 source).eval point) -
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
               (source - target)) := scaled
       _ =
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
                 ((translatedCoordinate 0).eval point) *
-              Data.Gaussian.Norm.Basic.normSq
+              Basic.normSq
                 ((translatedCoordinate
                   source).eval point) *
-              Data.Gaussian.Norm.Basic.normSq
+              Basic.normSq
                 ((translatedCoordinate 1).eval point) -
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
                 ((translatedCoordinate 0).eval point) *
-              Data.Gaussian.Norm.Basic.normSq
+              Basic.normSq
                 ((translatedCoordinate 1).eval point) *
-              Data.Gaussian.Norm.Basic.normSq
+              Basic.normSq
                 (source - target) := by ring1
 end Purelib.Curves.Legendre.Rouche
 

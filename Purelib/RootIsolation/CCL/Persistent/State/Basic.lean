@@ -66,7 +66,7 @@ structure State (p : CoefficientPolynomial)
     WindingOneState p ambient
   /-- The retained raw CCL prefix. -/ word : Data.List.BinaryPrefix.Basic.SourcePersistentCCLWordAlias
   /-- Compute a compatible nonzero sample for this exact prefix in every supplied later refining state. -/ samples :
-    CCL.Persistent.Sample.Basic.PersistentSamples word numerical
+    Sample.Basic.PersistentSamples word numerical
 
 constructive_injectivity State
 
@@ -78,13 +78,13 @@ def initial
     (numerical : WindingOneState p ambient) : State p ambient :=
   { numerical := numerical
     word := []
-    samples := CCL.Persistent.Sample.Basic.PersistentSamples.initial numerical }
+    samples := Sample.Basic.PersistentSamples.initial numerical }
 
 /-- Obtain the current displayed compatible sample by applying the provider
 to the current box itself. -/
 def currentSample
     {p : CoefficientPolynomial} {ambient : Box}
-    (state : State p ambient) : CCL.Persistent.Sample.Basic.CompatibleSample state.word
+    (state : State p ambient) : Sample.Basic.CompatibleSample state.word
       state.numerical.box :=
   state.samples.sample state.numerical
     (Box.refines_refl state.numerical.box)
@@ -133,7 +133,7 @@ structure StateRefines
 /-- Every persistent state refines itself in both box containment and raw-prefix order. -/
 theorem stateRefines_refl
     {p : CoefficientPolynomial} {ambient : Box}
-    (state : State p ambient) : CCL.Persistent.State.Basic.StateRefines state state :=
+    (state : State p ambient) : StateRefines state state :=
   ⟨Box.refines_refl state.numerical.box,
     ⟨[], Data.List.Append.append_nil _⟩⟩
 
@@ -145,8 +145,8 @@ namespace State.Basic.StateRefines
 theorem trans
     {p : CoefficientPolynomial} {ambient : Box}
     {inner middle outer : State p ambient}
-    (innerMiddle : CCL.Persistent.State.Basic.StateRefines inner middle)
-    (middleOuter : CCL.Persistent.State.Basic.StateRefines middle outer) : CCL.Persistent.State.Basic.StateRefines inner
+    (innerMiddle : StateRefines inner middle)
+    (middleOuter : StateRefines middle outer) : StateRefines inner
       outer :=
   ⟨innerMiddle.box.trans middleOuter.box, by
     rcases middleOuter.word with ⟨middleSuffix, middleWord⟩
@@ -182,7 +182,7 @@ theorem refineAlong_refines
     {p : CoefficientPolynomial} {ambient : Box}
     (track : WindingOneTrack p ambient) (current : State p ambient)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) :
-    CCL.Persistent.State.Basic.StateRefines (CCL.Persistent.State.Basic.refineAlong track current epsilon positive)
+    StateRefines (refineAlong track current epsilon positive)
       current :=
   ⟨track.nested current.numerical epsilon positive, ⟨[], Data.List.Append.append_nil _⟩⟩
 
@@ -191,7 +191,7 @@ theorem refineAlong_accurate
     {p : CoefficientPolynomial} {ambient : Box}
     (track : WindingOneTrack p ambient) (current : State p ambient)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) :
-    (CCL.Persistent.State.Basic.refineAlong track current epsilon positive).numerical.box.diagonalSq ≤
+    (refineAlong track current epsilon positive).numerical.box.diagonalSq ≤
       epsilon ^ 2 :=
   track.accurate current.numerical epsilon positive
 

@@ -5,7 +5,8 @@ import Purelib.Curves.Hyperelliptic.Differentials.Basic
 import Purelib.Geometry.Rational.Box.Basic
 
 import Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContinuedComparison
+import Purelib.Riemann.Branches.ContainedPreparedPolynomialSheets
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContinuedComparison.Entry
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy
@@ -124,7 +125,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     Differential genus}
   {axes : PrimitiveAxes base.bank.grid}
     {parent : CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
+  {cuts : List Data.Rat.Fraction.Rational}
+  {partition : Geometry.Rectangle.AxisPartition 0 1 cuts}
     {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
   {fragment : RegularPrimitiveFragment axes
     parent partition interval}
@@ -143,27 +145,10 @@ theorem original_aligned (assigned : RegularPrimitiveFragment.SheetEntry fragmen
     (inside : inner.Contains fragment.located.first) (index : Nat) :
     InverseRootPolynomial.RootAligned ((Model.overlapRefine cell.model) index) fragment.located.first
       (parent.edge.rootName interval.lower assigned.fractionInside) := by
-  let models := (RegularPrimitiveFragment.domainCache fragment domains).models
-  let face := fragment.face.located.face
-  obtain ⟨ownerTrace, winding⟩ := assigned.entry.reached
-  let route := Route.build face.clearance face.cell.box.anchor fragment.located.first
-    face.cell.box.contains_anchor (cell.geometry.refines.contains inside)
-  let traced := TracedPath.build route.path route.within (models.frame.owners assigned.entry.sheet)
-  let frame := OwnerFrame.build assigned.sample.owner.parameterNonzero
-  have equivalent := TracedPath.equivalentOfOwnerPathSelections
-    (BranchCellBank.referenceAt base.bank.toBranchCellBank _ (face.cell.anchor_mem face.member)).toLoop route.within
-      traced ownerTrace frame
-    (frame.select traced.finishOwner) (frame.select assigned.sample.owner)
-    ((Route.winding face.clearance (BranchIsolation.degreePositive curve) route face.cell.box.contains_anchor).trans
-      winding.symm)
-  have aligned : InverseRootPolynomial.RootAligned ((Model.overlapRefine cell.model) index) fragment.located.first
-      (OwnerTraceReadings.ownerName traced.finishOwner) :=
-    ContinuedComparison.trace_aligned cell source traced
-      (Polynomial.Geometry.ClearPath.InBox.ofWithin route.path route.within face.cell.box.contains_anchor) frame inside
-        index
-  obtain ⟨original⟩ := assigned.original
+  let original := assigned.original
   intro otherCount patch patchInside sample roots otherIndex
-  exact aligned patch patchInside sample (equivalent.trans (original.symm.trans roots)) otherIndex
+  exact ContinuedComparison.entry_aligned assigned.entry cell source inside index
+    patch patchInside sample (original.symm.trans roots) otherIndex
 
 /-- No extra Newton-step floor is imposed on the already retained request. -/
 theorem nearest (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request)
@@ -178,7 +163,7 @@ theorem nearest (assigned : RegularPrimitiveFragment.SheetEntry fragment domains
   have patchInside : request.neighborhood.box.Contains fragment.located.first := by
     rw [fragment.located.first_eq]
     exact (PrimitiveSplits.endpoints_inside partition fragment.located.member request).1
-  obtain ⟨original⟩ := assigned.original
+  let original := assigned.original
   exact PreparedPolynomialSheetReadings.nearest_at_index
     (original_aligned assigned cell inside
     leftIndex) inside

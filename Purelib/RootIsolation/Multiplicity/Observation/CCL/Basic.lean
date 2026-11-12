@@ -14,6 +14,8 @@ import Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive
 import Purelib.Polynomial.Dense.Gaussian.Roots.Certificate
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Part
 
+open Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis
+
 open Purelib.Polynomial
 
 open Purelib.RootIsolation
@@ -33,23 +35,23 @@ namespace Purelib.RootIsolation.Multiplicity.Observation.CCL.Basic
 
 /-- CCL data attached to one already-proved RFAP factor observation. -/
 def ObservationCCL
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries} :
-    Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context → Type
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries} :
+    Coprime.Side.PositiveSideInput.FactorObservation input context → Type
   | .exact _ _ _ =>
-      RootIsolation.Roots.CCL.Terminal context.focus.part.polynomial
+      Roots.CCL.Terminal context.focus.part.polynomial
   | .higher _ _ =>
       FTA.Squarefree.AdapterResult context.focus.part.polynomial
 
 /-- Construct the CCL attachment by reusing the exact terminal constructor or
 the exact same higher-degree box result stored by RFAP. -/
 def observationCCL
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) :
+      Coprime.Side.PositiveSideInput.FactorObservation input context) :
     ObservationCCL observation := by
   cases observation with
   | exact root degree oppositeAtRoot =>

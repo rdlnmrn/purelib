@@ -73,136 +73,136 @@ open _root_.Purelib.Data.Gaussian.Basic (conj)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_conj)
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
-  {patch : SewingTree.SewnPatch faces} {leftLocal rightLocal : Fin faceCount → PrimitiveSewing.PrimitiveValues 3}
-  {left : SewnPrimitiveSamples.CachedSample patch leftLocal} {right : SewnPrimitiveSamples.CachedSample patch
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
+  {patch : SewnPatch faces} {leftLocal rightLocal : Fin faceCount → PrimitiveValues 3}
+  {left : CachedSample patch leftLocal} {right : CachedSample patch
     rightLocal}
 
 /-- Original scalar seam allowances bound the conjugate/value primitive increment discrepancy. -/
-theorem increment_error (sample : SewnConjugateSamples.ConjugatePair left right)
-    (first : SewnPrimitiveFaces.FaceTrace leftLocal left.sewn.values) (second : SewnPrimitiveFaces.FaceTrace rightLocal
+theorem increment_error (sample : ConjugatePair left right)
+    (first : FaceTrace leftLocal left.sewn.values) (second : FaceTrace rightLocal
       right.sewn.values)
     (triangleEq : first.triangle = second.triangle) (sourceEq : first.source = second.source)
-    {error : SewnPrimitiveFaces.Coordinate} (leftBound : first.allowance ≤ error) (rightBound : second.allowance ≤
+    {error : Coordinate} (leftBound : first.allowance ≤ error) (rightBound : second.allowance ≤
       error)
     (index : Fin 3) :
-    (PrimitivePoint.Bounded ((PrimitivePoint.sub ((PrimitivePoint.sub (sample.values (SewnPrimitiveFaces.corner
+    (PrimitivePoint.Bounded ((PrimitivePoint.sub ((PrimitivePoint.sub (sample.values (corner
       first.triangle index))) (sample.values first.triangle.first)))
-      ⟨conj (leftLocal first.source index) - Data.Gaussian.Basic.conj (leftLocal first.source 0),
+      ⟨conj (leftLocal first.source index) - conj (leftLocal first.source 0),
         rightLocal first.source index - rightLocal first.source 0⟩)) error := by
   constructor
   · rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-    change Data.Gaussian.Norm.Basic.normSq (((sample.values (SewnPrimitiveFaces.corner first.triangle index)).left -
+    change normSq (((sample.values (corner first.triangle index)).left -
         (sample.values first.triangle.first).left) - _) ≤ error
-    rw [sample.increment_left ⟨first.triangle.first, SewnPrimitiveFaces.corner first.triangle index⟩]
-    rw [← ConjugatePair.conj_sub, ← ConjugatePair.conj_sub, Gaussian.Norm.Basic.normSq_conj]
+    rw [sample.increment_left ⟨first.triangle.first, corner first.triangle index⟩]
+    rw [← conj_sub, ← conj_sub, normSq_conj]
     exact (first.increment_error_bound index).trans leftBound
   · rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-    change Data.Gaussian.Norm.Basic.normSq (((sample.values (SewnPrimitiveFaces.corner first.triangle index)).right -
+    change normSq (((sample.values (corner first.triangle index)).right -
         (sample.values first.triangle.first).right) - _) ≤ error
-    rw [sample.increment_right ⟨first.triangle.first, SewnPrimitiveFaces.corner first.triangle index⟩, triangleEq,
+    rw [sample.increment_right ⟨first.triangle.first, corner first.triangle index⟩, triangleEq,
       sourceEq]
     exact (second.increment_error_bound index).trans rightBound
 
 /-- Bound one original conjugate/value face-area error using both retained scalar allowances and the supplied magnitude.
 -/
-theorem triangle_area_error (sample : SewnConjugateSamples.ConjugatePair left right)
-    (first : SewnPrimitiveFaces.FaceTrace leftLocal left.sewn.values) (second : SewnPrimitiveFaces.FaceTrace rightLocal
+theorem triangle_area_error (sample : ConjugatePair left right)
+    (first : FaceTrace leftLocal left.sewn.values) (second : FaceTrace rightLocal
       right.sewn.values)
     (triangleEq : first.triangle = second.triangle) (sourceEq : first.source = second.source)
-    {error magnitude : SewnPrimitiveFaces.Coordinate} (nonnegative : 0 ≤ magnitude) (errorNonnegative : 0 ≤ error)
+    {error magnitude : Coordinate} (nonnegative : 0 ≤ magnitude) (errorNonnegative : 0 ≤ error)
     (small : error ≤ 1) (leftBound : first.allowance ≤ error) (rightBound : second.allowance ≤ error)
     (bounded : ∀ index : Fin 3,
-      (PrimitivePoint.Bounded (⟨conj (leftLocal first.source index) - Data.Gaussian.Basic.conj (leftLocal
+      (PrimitivePoint.Bounded (⟨conj (leftLocal first.source index) - conj (leftLocal
         first.source 0),
-        rightLocal first.source index - rightLocal first.source 0⟩ : Stokes.PrimitivePoint)) magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (Stokes.triangleWedgeArea (sample.values first.triangle.first)
+        rightLocal first.source index - rightLocal first.source 0⟩ : PrimitivePoint)) magnitude) :
+    normSq (triangleWedgeArea (sample.values first.triangle.first)
         (sample.values first.triangle.second) (sample.values first.triangle.third) -
-      Stokes.triangleWedgeArea
+      triangleWedgeArea
         ⟨conj (leftLocal first.source 0), rightLocal first.source 0⟩
         ⟨conj (leftLocal first.source 1), rightLocal first.source 1⟩
         ⟨conj (leftLocal first.source 2), rightLocal first.source 2⟩) ≤ 32 * (magnitude + 1) * error := by
   have firstError := increment_error sample first second triangleEq sourceEq leftBound rightBound 1
   have lastError := increment_error sample first second triangleEq sourceEq leftBound rightBound 2
   have estimate := PrimitivePoint.area_difference_bound
-    (first := ⟨conj (leftLocal first.source 1) - Data.Gaussian.Basic.conj (leftLocal first.source 0),
+    (first := ⟨conj (leftLocal first.source 1) - conj (leftLocal first.source 0),
       rightLocal first.source 1 - rightLocal first.source 0⟩)
-    (last := ⟨conj (leftLocal first.source 2) - Data.Gaussian.Basic.conj (leftLocal first.source 0),
+    (last := ⟨conj (leftLocal first.source 2) - conj (leftLocal first.source 0),
       rightLocal first.source 2 - rightLocal first.source 0⟩)
-    (changedFirst := (PrimitivePoint.sub (sample.values (SewnPrimitiveFaces.corner first.triangle 1))) (sample.values
+    (changedFirst := (PrimitivePoint.sub (sample.values (corner first.triangle 1))) (sample.values
       first.triangle.first))
-    (changedLast := (PrimitivePoint.sub (sample.values (SewnPrimitiveFaces.corner first.triangle 2))) (sample.values
+    (changedLast := (PrimitivePoint.sub (sample.values (corner first.triangle 2))) (sample.values
       first.triangle.first))
     nonnegative errorNonnegative small (bounded 1) (bounded 2) firstError lastError
-  change Data.Gaussian.Norm.Basic.normSq (Stokes.triangleWedgeArea (sample.values first.triangle.first)
+  change normSq (triangleWedgeArea (sample.values first.triangle.first)
     (sample.values first.triangle.second) (sample.values first.triangle.third) -
-    Stokes.triangleWedgeArea ⟨conj (leftLocal first.source 0), rightLocal first.source 0⟩
+    triangleWedgeArea ⟨conj (leftLocal first.source 0), rightLocal first.source 0⟩
       ⟨conj (leftLocal first.source 1), rightLocal first.source 1⟩
       ⟨conj (leftLocal first.source 2), rightLocal first.source 2⟩) ≤ _ at estimate
   exact estimate
 
 /-- Apply the conjugate/value area bound at the exact original cut-triangle position and face source. -/
-theorem triangle_area_error_at (sample : SewnConjugateSamples.ConjugatePair left right) (position : Fin
+theorem triangle_area_error_at (sample : ConjugatePair left right) (position : Fin
   patch.cut.triangles.length)
-    {error magnitude : SewnPrimitiveFaces.Coordinate} (nonnegative : 0 ≤ magnitude) (errorNonnegative : 0 ≤ error)
-    (small : error ≤ 1) (leftBound : (Errors.traceAt left position).allowance ≤ error)
-    (rightBound : (Errors.traceAt right position).allowance ≤ error)
+    {error magnitude : Coordinate} (nonnegative : 0 ≤ magnitude) (errorNonnegative : 0 ≤ error)
+    (small : error ≤ 1) (leftBound : (traceAt left position).allowance ≤ error)
+    (rightBound : (traceAt right position).allowance ≤ error)
     (bounded : ∀ index : Fin 3,
-      (PrimitivePoint.Bounded (⟨conj (leftLocal (Errors.traceAt left position).source index) -
-        Data.Gaussian.Basic.conj (leftLocal (Errors.traceAt left position).source 0),
-        rightLocal (Errors.traceAt left position).source index - rightLocal (Errors.traceAt left position).source 0⟩ :
-          Stokes.PrimitivePoint)) magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (Stokes.triangleWedgeArea (sample.values patch.cut.triangles[position.val].first)
+      (PrimitivePoint.Bounded (⟨conj (leftLocal (traceAt left position).source index) -
+        conj (leftLocal (traceAt left position).source 0),
+        rightLocal (traceAt left position).source index - rightLocal (traceAt left position).source 0⟩ :
+          PrimitivePoint)) magnitude) :
+    normSq (triangleWedgeArea (sample.values patch.cut.triangles[position.val].first)
         (sample.values patch.cut.triangles[position.val].second)
         (sample.values patch.cut.triangles[position.val].third) -
-      Stokes.triangleWedgeArea
-        ⟨conj (leftLocal (Errors.traceAt left position).source 0), rightLocal (Errors.traceAt left position).source 0⟩
-        ⟨conj (leftLocal (Errors.traceAt left position).source 1), rightLocal (Errors.traceAt left position).source 1⟩
-        ⟨conj (leftLocal (Errors.traceAt left position).source 2), rightLocal (Errors.traceAt left position).source 2⟩)
+      triangleWedgeArea
+        ⟨conj (leftLocal (traceAt left position).source 0), rightLocal (traceAt left position).source 0⟩
+        ⟨conj (leftLocal (traceAt left position).source 1), rightLocal (traceAt left position).source 1⟩
+        ⟨conj (leftLocal (traceAt left position).source 2), rightLocal (traceAt left position).source 2⟩)
           ≤
           32 * (magnitude + 1) * error := by
-  have estimate := triangle_area_error sample (Errors.traceAt left position) (Errors.traceAt right
+  have estimate := triangle_area_error sample (traceAt left position) (traceAt right
     position)
-    ((Errors.traceAt_triangle left position).trans (Errors.traceAt_triangle right position).symm)
-    (Errors.traceAt_source left right position) nonnegative errorNonnegative small leftBound rightBound bounded
-  rw [Errors.traceAt_triangle left position] at estimate
+    ((traceAt_triangle left position).trans (traceAt_triangle right position).symm)
+    (traceAt_source left right position) nonnegative errorNonnegative small leftBound rightBound bounded
+  rw [traceAt_triangle left position] at estimate
   exact estimate
 
 /-- Bound the complete conjugate/value boundary-area error by every original face allowance and the full triangle count.
 -/
-theorem boundary_area_error (sample : SewnConjugateSamples.ConjugatePair left right)
-    (errors : Fin patch.cut.triangles.length → SewnPrimitiveFaces.Coordinate) {magnitude :
-      SewnPrimitiveFaces.Coordinate}
+theorem boundary_area_error (sample : ConjugatePair left right)
+    (errors : Fin patch.cut.triangles.length → Coordinate) {magnitude :
+      Coordinate}
     (nonnegative : 0 ≤ magnitude) (errorNonnegative : ∀ position, 0 ≤ errors position)
     (small : ∀ position, errors position ≤ 1)
-    (leftBound : ∀ position, (Errors.traceAt left position).allowance ≤ errors position)
-    (rightBound : ∀ position, (Errors.traceAt right position).allowance ≤ errors position)
+    (leftBound : ∀ position, (traceAt left position).allowance ≤ errors position)
+    (rightBound : ∀ position, (traceAt right position).allowance ≤ errors position)
     (bounded : ∀ position (index : Fin 3),
-      (PrimitivePoint.Bounded (⟨conj (leftLocal (Errors.traceAt left position).source index) -
-        Data.Gaussian.Basic.conj (leftLocal (Errors.traceAt left position).source 0),
-        rightLocal (Errors.traceAt left position).source index - rightLocal (Errors.traceAt left position).source 0⟩ :
-          Stokes.PrimitivePoint)) magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (sample.boundaryArea - FiniteSum.Fin.sumFin (fun position =>
-      Stokes.triangleWedgeArea
-        ⟨conj (leftLocal (Errors.traceAt left position).source 0), rightLocal (Errors.traceAt left position).source 0⟩
-        ⟨conj (leftLocal (Errors.traceAt left position).source 1), rightLocal (Errors.traceAt left position).source 1⟩
-        ⟨conj (leftLocal (Errors.traceAt left position).source 2), rightLocal (Errors.traceAt left position).source 2⟩))
+      (PrimitivePoint.Bounded (⟨conj (leftLocal (traceAt left position).source index) -
+        conj (leftLocal (traceAt left position).source 0),
+        rightLocal (traceAt left position).source index - rightLocal (traceAt left position).source 0⟩ :
+          PrimitivePoint)) magnitude) :
+    normSq (sample.boundaryArea - FiniteSum.Fin.sumFin (fun position =>
+      triangleWedgeArea
+        ⟨conj (leftLocal (traceAt left position).source 0), rightLocal (traceAt left position).source 0⟩
+        ⟨conj (leftLocal (traceAt left position).source 1), rightLocal (traceAt left position).source 1⟩
+        ⟨conj (leftLocal (traceAt left position).source 2), rightLocal (traceAt left position).source 2⟩))
           ≤
-      (patch.cut.triangles.length : SewnPrimitiveFaces.Coordinate) *
+      (patch.cut.triangles.length : Coordinate) *
         FiniteSum.Fin.sumFin (fun position => 32 * (magnitude + 1) * errors position) := by
   let actual (position : Fin patch.cut.triangles.length) :=
-    Stokes.triangleWedgeArea (sample.values patch.cut.triangles[position.val].first)
+    triangleWedgeArea (sample.values patch.cut.triangles[position.val].first)
       (sample.values patch.cut.triangles[position.val].second)
       (sample.values patch.cut.triangles[position.val].third)
   let original (position : Fin patch.cut.triangles.length) :=
-    Stokes.triangleWedgeArea
-      ⟨conj (leftLocal (Errors.traceAt left position).source 0), rightLocal (Errors.traceAt left position).source 0⟩
-      ⟨conj (leftLocal (Errors.traceAt left position).source 1), rightLocal (Errors.traceAt left position).source 1⟩
-      ⟨conj (leftLocal (Errors.traceAt left position).source 2), rightLocal (Errors.traceAt left position).source 2⟩
+    triangleWedgeArea
+      ⟨conj (leftLocal (traceAt left position).source 0), rightLocal (traceAt left position).source 0⟩
+      ⟨conj (leftLocal (traceAt left position).source 1), rightLocal (traceAt left position).source 1⟩
+      ⟨conj (leftLocal (traceAt left position).source 2), rightLocal (traceAt left position).source 2⟩
   have areaEq : FiniteSum.Fin.sumFin actual = sample.boundaryArea := by
-    change Stokes.triangleWedgeSum sample.values (fun position : Fin patch.cut.triangles.length =>
+    change triangleWedgeSum sample.values (fun position : Fin patch.cut.triangles.length =>
       patch.cut.triangles[position.val]) = _
-    rw [Stokes.triangleWedgeSum_eq_edgeListArea, Stokes.triangleEdgeOccurrences, OfFn.Basic.ofFn_getElem]
+    rw [triangleWedgeSum_eq_edgeListArea, triangleEdgeOccurrences, OfFn.Basic.ofFn_getElem]
     exact sample.surface_eq_boundary
   have estimate := Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun position => actual position - original position)

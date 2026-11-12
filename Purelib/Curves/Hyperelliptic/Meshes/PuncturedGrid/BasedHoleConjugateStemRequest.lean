@@ -53,6 +53,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -115,7 +117,7 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {current : LiftedPuncturedGrid base}
   {domains : FaceDomainBank current.frames
@@ -123,77 +125,77 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     Differential genus}
   {hole : BranchHole base.bank.toBranchCellBank} {start :
     Canonical}
-  {stem : Purelib.Polynomial.Geometry.Grid.Walks.Walk base.bank.grid start hole.cell.box.anchor}
+  {stem : Walks.Walk base.bank.grid start hole.cell.box.anchor}
 
 namespace PairedStemRequest
 
 /-- The actual indexed walk value obeys the paid face magnitude bound scaled by its squared edge count. -/
-private theorem word_bound {differential : Differentials.Basic.Differential genus} (fixed :
-  MagnitudeBank.FaceMagnitudeBank domains differential)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
-    (later : fixed.index ≤ stage) {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk base.bank.grid start
+private theorem word_bound {differential : Differential genus} (fixed :
+  FaceMagnitudeBank domains differential)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
+    (later : fixed.index ≤ stage) {start finish : Canonical} (walk : Walks.Walk base.bank.grid start
       finish) (sheet : Fin 2) :
-    Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation current.mesh
+    Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation current.mesh
       readings.values) (current.edges.indexedEdges current.vertices walk sheet)) ≤
-      (walk.edgeCount : Fraction.Rational)^2 * (4 * fixed.bound) := by
-  let retainedMagnitude := Readings.EdgeMagnitude.ofBank
+      (walk.edgeCount : Rational)^2 * (4 * fixed.bound) := by
+  let retainedMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh current.mesh) fixed later readings
   let observation := WordObservations.realize retainedMagnitude (current.edges.indexedEdges current.vertices walk sheet)
   have cached := observation.bounded
-  change Data.Gaussian.Norm.Basic.normSq observation.total ≤ observation.bound at cached
+  change Gaussian.Norm.Basic.normSq observation.total ≤ observation.bound at cached
   rw [observation.total_readback, observation.bound_readback, WordObservations.BoundSpecification] at cached
-  change Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
+  change Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
     current.mesh readings.values) (current.edges.indexedEdges current.vertices walk sheet)) ≤
-    ((current.edges.indexedEdges current.vertices walk sheet).length : Fraction.Rational) ^ 2 * (4 * fixed.bound)
+    ((current.edges.indexedEdges current.vertices walk sheet).length : Rational) ^ 2 * (4 * fixed.bound)
       at cached
   rw [current.edges.indexedEdges_length] at cached
   exact cached
 /-- The common two-differential stem-and-hole magnitude ceiling is nonnegative. -/
-private theorem magnitude_nonnegative (leftFixed : MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
-    (rightFixed : MagnitudeBank.FaceMagnitudeBank domains rightDifferential) :
-    0 ≤ ((stem.append hole.boundary).edgeCount : Fraction.Rational)^2 *
+private theorem magnitude_nonnegative (leftFixed : FaceMagnitudeBank domains leftDifferential)
+    (rightFixed : FaceMagnitudeBank domains rightDifferential) :
+    0 ≤ ((stem.append hole.boundary).edgeCount : Rational)^2 *
       (4 * max leftFixed.bound rightFixed.bound) :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.pow_nonneg_direct
+  Arithmetic.mul_nonneg_direct (Arithmetic.pow_nonneg_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (leftFixed.nonnegative.trans
-      (Fraction.Order.Basic.le_max_left _ _)))
+    (Arithmetic.mul_nonneg_direct (by decide) (leftFixed.nonnegative.trans
+      (Basic.le_max_left _ _)))
 
 /-- Evaluating an ordered edge word after conjugation equals conjugating its actual word value. -/
-private theorem word_conj {count : Nat} (value : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical)
+private theorem word_conj {count : Nat} (value : Stokes.OrientedEdge count → Canonical)
     (word : List (Stokes.OrientedEdge count)) :
-    SewingRetraction.wordValue (fun edge => Data.Gaussian.Basic.conj (value edge)) word =
-      Data.Gaussian.Basic.conj (SewingRetraction.wordValue value word) := by
+    SewingRetraction.wordValue (fun edge => Gaussian.Basic.conj (value edge)) word =
+      Gaussian.Basic.conj (SewingRetraction.wordValue value word) := by
   induction word with
   | nil => rfl
   | cons edge rest ih =>
-    change Data.Gaussian.Basic.conj (value edge) + SewingRetraction.wordValue _ rest =
-      Data.Gaussian.Basic.conj (value edge + SewingRetraction.wordValue value rest)
-    rw [ih, Data.Gaussian.Basic.conj_add]
+    change Gaussian.Basic.conj (value edge) + SewingRetraction.wordValue _ rest =
+      Gaussian.Basic.conj (value edge + SewingRetraction.wordValue value rest)
+    rw [ih, Gaussian.Basic.conj_add]
 
 variable {leftFixed : FaceMagnitudeBank domains
   leftDifferential} {rightFixed : FaceMagnitudeBank
   domains rightDifferential}
   {sheet : Fin 2} {error : Rational}
-variable (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid start)
+variable (member : FromStates.ContainsVertex base.bank.grid start)
 include member
 
 /-- The requested bound concerns the based-excursion/lap difference, with the lap starting at the actual sheet reached
 by the outward stem. -/
 theorem conjugate_accurate (request : BasedHoleStemRequest.PairedStemRequest hole stem leftFixed rightFixed sheet error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank current.mesh) (rightReadings :
+      TriangleReadings rightBank current.mesh)
     (later : request.index ≤ stage) :
-    let value := fun edge => (⟨Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh
+    let value := fun edge => (⟨Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh
       leftReadings.values edge),
       CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩ : Stokes.PrimitivePoint)
     let arrival := RootEdgeBank.target current.edges stem sheet
     let loop := current.edges.indexedEdges current.vertices
       (stem.based hole.boundary) sheet
     let boundary := current.edges.indexedEdges current.vertices hole.boundary arrival
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (loop.map value) - PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (loop.map value) - PairedIncrementArea.area
       (boundary.map value)) ≤ error := by
   intro value arrival loop boundary
   have polygonLater := (Nat.Order.le_max_left _ _).trans later
@@ -203,7 +205,7 @@ theorem conjugate_accurate (request : BasedHoleStemRequest.PairedStemRequest hol
   have rightTotal := request.rightTotal.accurate rightReadings ((Nat.Order.le_max_right _ _).trans totalLater)
   let outward := current.edges.indexedEdges current.vertices stem sheet
   let other := current.edges.indexedEdges current.vertices stem (BranchCutLifts.otherSheet sheet)
-  let first := fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh
+  let first := fun edge => Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh
     leftReadings.values edge)
   let second := CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values
   let multiplier : PrimitivePoint := ⟨wordValue first outward + SewingRetraction.wordValue first boundary,
@@ -213,7 +215,7 @@ theorem conjugate_accurate (request : BasedHoleStemRequest.PairedStemRequest hol
   have magnitudeNonnegative : 0 ≤ request.magnitude := request.magnitude_eq ▸
     magnitude_nonnegative
     (stem := stem) leftFixed rightFixed
-  have bounded : PrimitivePoint.Bounded multiplier request.magnitude := by
+  have bounded : Bounded multiplier request.magnitude := by
     have firstBound :=
       word_bound leftFixed
       leftReadings fixedLater.1
@@ -225,54 +227,54 @@ theorem conjugate_accurate (request : BasedHoleStemRequest.PairedStemRequest hol
     rw [current.edges.indexedEdges_append, SewingRetraction.wordValue_append] at firstBound secondBound
     rw [request.magnitude_eq]
     constructor
-    · change Data.Gaussian.Basic.Canonical.normSq (SewingRetraction.wordValue first outward + SewingRetraction.wordValue
+    · change Canonical.normSq (SewingRetraction.wordValue first outward + SewingRetraction.wordValue
         first boundary) ≤ _
       dsimp only [first]
       rw [word_conj,
         word_conj, ←
-        Data.Gaussian.Basic.conj_add]
-      have h := (Data.Gaussian.Norm.Basic.normSq_conj _).trans_le
-        (firstBound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.le_max_left leftFixed.bound
+        Gaussian.Basic.conj_add]
+      have h := (Gaussian.Norm.Basic.normSq_conj _).trans_le
+        (firstBound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_left leftFixed.bound
             rightFixed.bound) (by decide))
-          (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2)))
-      change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-      simpa only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-    · have h := secondBound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.le_max_right leftFixed.bound
+          (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2)))
+      change Basic.LessEqual _ _ at h ⊢
+      simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using h
+    · have h := secondBound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_right leftFixed.bound
           rightFixed.bound) (by decide))
-        (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
-      change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-      simp only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+        (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
+      change Basic.LessEqual _ _ at h ⊢
+      simp only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] at h
       convert h using 1
-  have oldBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Basic.Canonical.normSq point ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq point ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    simpa only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-  have canonicalBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Norm.Basic.normSq point ≤ limit) :
-      Data.Gaussian.Basic.Canonical.normSq point ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    simpa only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-  have small : PrimitivePoint.Bounded defect request.totalTarget := by
+  have oldBound {point : Canonical} {limit : Rational}
+      (h : Canonical.normSq point ≤ limit) :
+      Gaussian.Norm.Basic.normSq point ≤ limit := by
+    change Basic.LessEqual _ _ at h ⊢
+    simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using h
+  have canonicalBound {point : Canonical} {limit : Rational}
+      (h : Gaussian.Norm.Basic.normSq point ≤ limit) :
+      Canonical.normSq point ≤ limit := by
+    change Basic.LessEqual _ _ at h ⊢
+    simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using h
+  have small : Bounded defect request.totalTarget := by
     constructor
-    · change Data.Gaussian.Basic.Canonical.normSq (-(SewingRetraction.wordValue first outward +
+    · change Canonical.normSq (-(SewingRetraction.wordValue first outward +
         SewingRetraction.wordValue first other)) ≤ _
       dsimp only [first]
       rw [word_conj,
         word_conj, ←
-        Data.Gaussian.Basic.conj_add,
-        Data.Gaussian.Basic.Canonical.normSq_neg]
-      exact canonicalBound ((Data.Gaussian.Norm.Basic.normSq_conj _).trans_le leftTotal)
-    · exact canonicalBound ((Data.Gaussian.Norm.Basic.normSq_neg _).trans_le rightTotal)
-  have cross : Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea multiplier defect) ≤ error / 4 := by
+        Gaussian.Basic.conj_add,
+        Canonical.normSq_neg]
+      exact canonicalBound ((Gaussian.Norm.Basic.normSq_conj _).trans_le leftTotal)
+    · exact canonicalBound ((Gaussian.Norm.Basic.normSq_neg _).trans_le rightTotal)
+  have cross : Gaussian.Norm.Basic.normSq (Stokes.edgeArea multiplier defect) ≤ error / 4 := by
     apply oldBound
     apply (PrimitivePoint.area_bound bounded small).trans
     rw [request.totalTarget_eq]
     exact Weighted.mul_allowance_le
-      (Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Fraction.Rational) < 4)).le
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative)
+      (Field.div_pos_direct request.positive (by decide : (0 : Rational) < 4)).le
+      (Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative)
   have different : sheet ≠ BranchCutLifts.otherSheet sheet :=
     (by decide +kernel : ∀ sheet : Fin 2, sheet ≠ BranchCutLifts.otherSheet sheet) sheet
   have opposite := PolygonRequest.conjugate_accurate request.polygons leftReadings rightReadings polygonLater different
@@ -288,9 +290,9 @@ theorem conjugate_accurate (request : BasedHoleStemRequest.PairedStemRequest hol
       Stokes.edgeArea multiplier defect - PairedIncrementArea.area (boundary.map value) =
     (PairedIncrementArea.area (outward.map value) - PairedIncrementArea.area (other.map value)) +
       Stokes.edgeArea multiplier defect by ring1]
-  exact ((Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct opposite cross) (by decide))).trans_eq
+  exact ((Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct opposite cross) (by decide))).trans_eq
       ((by ring1 : 2 * (error / 4 + error / 4) = error / 4 * 4).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by
         decide)))
 

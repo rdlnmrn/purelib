@@ -94,6 +94,22 @@ def ready_respects {client :
       (Division.Partial.Preparation.preparedApart
         secondDenominatorState secondEvidence)
       numeratorEquivalent denominatorEquivalent
+
+/-- An equivalent-denominator quotient agrees with an ordinary ready schedule for the same client.
+
+The comparison uses both original logarithm readiness certificates and the
+stored operational links from the same denominator. -/
+def preparedReady_respects {client : Logarithm.Quotient.Client} {firstOutput secondOutput : Coherent.CoherentNamed}
+    (first : Logarithm.Quotient.PreparedReady client firstOutput) (second : Ready client secondOutput) :
+    Gaussian.Equivalence.NamedEquivalent firstOutput.name secondOutput.name := by
+  rcases first with ⟨firstLogState, firstLogOutput, firstLogValid, prepared, rfl⟩
+  rcases second with ⟨secondLogState, secondLogOutput, secondLogValid, secondState, secondEvidence, rfl⟩
+  have numerator := Chart.Partial.Equivalence.ready_respects firstLogValid secondLogValid
+  let secondPrepared := Division.Prepared.ofEvidence secondState secondEvidence
+  change Gaussian.Equivalence.NamedEquivalent (prepared.quotient firstLogOutput.output).name
+    (secondPrepared.quotient secondLogOutput.output).name
+  exact Division.Prepared.quotient_respects_equivalent prepared secondPrepared (NamedEquivalent.refl _) numerator
+
 end Purelib.Approximation.Gaussian.Logarithm.Quotient.Equivalence
 
 end

@@ -37,6 +37,8 @@ import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Dense.Gaussian
+
 /-!
 # Denominator-controlled root approximation
 
@@ -61,10 +63,10 @@ open Purelib.Approximation
 set_option genInjectivity false in
 /-- Fully displayed output of the denominator-controlled approximation. -/
 structure Output
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
       Nat}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (current : State.Raw.RawWindingState p ambient) (epsilon : Fraction.Rational) where
   /-- The original checked Newton-band extraction for the retained input state and accuracy. -/ extracted :
@@ -73,7 +75,7 @@ structure Output
   radius. -/ fraction : Gaussian.Basic.Canonical.Fraction.NaturalDenominator
   /-- The retained fraction equals the original grid-fraction construction exactly. -/ fraction_eq : fraction =
     Grid.Basic.gridFraction
-    (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p extracted.source.box)
+    (Newton.Box.Anchor.anchorNewtonCenter p extracted.source.box)
     extracted.radius
   /-- The retained fraction lies strictly inside the original extracted band box. -/ strictlyInside :
     extracted.box.StrictContains fraction.value
@@ -81,23 +83,23 @@ structure Output
     Rational.Grid.Basic.gridDenominator extracted.radius ^ 2
   /-- The retained fraction's squared residual meets the original Lipschitz and accuracy
   bound. -/ residual_le : Gaussian.Basic.Canonical.normSq (p.eval fraction.value) ≤
-    2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2
+    2 * Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2
 
 constructive_injectivity Output
 
 /-- Execute Newton-band extraction and select its explicit grid fraction. -/
 @[expose] def approximate
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
       Nat}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (current : State.Raw.RawWindingState p ambient) {epsilon : Fraction.Rational}
     (epsilonPositive : 0 < epsilon) :
     Output degreeAtLeastTwo squarefree elimination current epsilon := by
   let extracted := Newton.Band.Build.extract degreeAtLeastTwo squarefree
     elimination current epsilonPositive
-  let center := Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p extracted.source.box
+  let center := Newton.Box.Anchor.anchorNewtonCenter p extracted.source.box
   let fraction := Grid.Basic.gridFraction center extracted.radius
   have strictlyInside : extracted.box.StrictContains fraction.value := by
     exact Box.Band.Grid.gridFraction_strictly_inside extracted.radiusPositive extracted.band
@@ -106,24 +108,24 @@ constructive_injectivity Output
     Winding.Bounds.Residual.normSq_eval_le_four_lipschitz_diagonal
       (show 0 < p.natDegree by omega) state strictlyInside.contains
   have residualBound : Gaussian.Basic.Canonical.normSq (p.eval fraction.value) ≤
-      2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by
+      2 * Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by
     calc
       Gaussian.Basic.Canonical.normSq (p.eval fraction.value) ≤
-          4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * state.box.diagonalSq := residual
-      _ ≤ 4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+          4 * Bounds.Box.denseLipschitzBound p ambient * state.box.diagonalSq := residual
+      _ ≤ 4 * Bounds.Box.denseLipschitzBound p ambient *
           ((1 / 2 : Fraction.Rational) * epsilon ^ 2) :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           extracted.diagonalSq_le_half
           (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-            (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient).le)
-      _ = 2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by
+            (Bounds.Box.denseLipschitzBound_pos p ambient).le)
+      _ = 2 * Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by
         have fourHalf : (4 : Fraction.Rational) * (1 / 2) = 2 := by decide
         calc
-          4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+          4 * Bounds.Box.denseLipschitzBound p ambient *
               ((1 / 2 : Fraction.Rational) * epsilon ^ 2) =
               ((4 : Fraction.Rational) * (1 / 2)) *
-                Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by ring1
-          _ = 2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by
+                Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by ring1
+          _ = 2 * Bounds.Box.denseLipschitzBound p ambient * epsilon ^ 2 := by
             rw [fourHalf]
   exact
     { extracted := extracted
@@ -136,14 +138,14 @@ constructive_injectivity Output
 /-- Execute the approximation with the square-root-scaled request belonging to its checked
 residual coefficient. -/
 @[expose] def approximateTarget
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
       Nat}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (current : State.Raw.RawWindingState p ambient) (target : Fraction.Rational) :
     Output degreeAtLeastTwo squarefree elimination current
-      (Rational.QuadraticTarget.Basic.targetEpsilon (2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient)
+      (Rational.QuadraticTarget.Basic.targetEpsilon (2 * Bounds.Box.denseLipschitzBound p ambient)
         target) :=
   approximate degreeAtLeastTwo squarefree elimination current
     (Rational.QuadraticTarget.Basic.targetEpsilon_pos _ target)
@@ -151,20 +153,20 @@ residual coefficient. -/
 /-- A positive residual target bounds the original polynomial's squared residual at the
 retained grid fraction. -/
 theorem approximateTarget_residual_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
       Nat}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (current : State.Raw.RawWindingState p ambient) {target : Fraction.Rational}
     (targetPositive : 0 < target) :
     Gaussian.Basic.Canonical.normSq (p.eval
       (approximateTarget degreeAtLeastTwo squarefree elimination current
         target).fraction.value) ≤ target := by
-  let coefficient := 2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient
+  let coefficient := 2 * Bounds.Box.denseLipschitzBound p ambient
   have coefficientPositive : (0 : Fraction.Rational) < coefficient :=
     Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient)
+      (Bounds.Box.denseLipschitzBound_pos p ambient)
   exact
     (approximateTarget degreeAtLeastTwo squarefree elimination current
       target).residual_le.trans

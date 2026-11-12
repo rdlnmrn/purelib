@@ -22,6 +22,8 @@ import Purelib.Geometry.Plane.Point.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Algebra.Field
+
 open Purelib
 
 open Purelib.Curves.Plane
@@ -56,7 +58,7 @@ namespace Purelib.Geometry
 
 namespace Conics.Grammola.Uniqueness
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- The conic-determined binary quadratic whose factors are the two grammola diagonal directions. -/
 def diagonalRecoveryValue (conic : Conic K) (x y
@@ -67,7 +69,7 @@ def diagonalRecoveryValue (conic : Conic K) (x y
 /-- For a grammola conic, the recovery quadratic is a visibly nonzero scalar multiple of the product of its two diagonal
 direction forms. -/
 theorem diagonalRecoveryValue_conic [DecidableEq K]
-    (firstDiagonal secondDiagonal : Plane.Line K)
+    (firstDiagonal secondDiagonal : Line K)
     (firstNonNull : ¬ firstDiagonal.IsNull)
     (secondNonNull : ¬ secondDiagonal.IsNull)
     (associatedQuadrance : K) (twoNonzero : (2 : K) ≠ 0)
@@ -75,12 +77,12 @@ theorem diagonalRecoveryValue_conic [DecidableEq K]
     diagonalRecoveryValue
         (Grammola.conic firstDiagonal secondDiagonal firstNonNull secondNonNull
           associatedQuadrance twoNonzero) x y =
-      8 * Line.Basic.lineNorm firstDiagonal * Line.Basic.lineNorm secondDiagonal *
+      8 * Basic.lineNorm firstDiagonal * Basic.lineNorm secondDiagonal *
         (firstDiagonal.a * secondDiagonal.a +
           firstDiagonal.b * secondDiagonal.b) *
         Grammola.directionProduct firstDiagonal secondDiagonal x y := by
   unfold diagonalRecoveryValue Grammola.quadraticValue Grammola.fourQuadraticDeterminant
-    Grammola.directionProduct Grammola.conic Grammola.conicD Grammola.conicE Grammola.conicF Line.Basic.lineNorm
+    Grammola.directionProduct Grammola.conic conicD conicE conicF Basic.lineNorm
   ring1
 
 /-- The recovery quadratic scales quadratically when all six conic coefficients are rescaled. -/
@@ -96,28 +98,28 @@ theorem diagonalRecoveryValue_coefficientScale
 
 /-- The scalar in the diagonal recovery factorization is nonzero for a valid grammola. -/
 theorem diagonalRecoveryFactor_nonzero
-    (firstDiagonal secondDiagonal : Plane.Line K) (associatedQuadrance : K)
-    (presentation : Grammola.Presentation firstDiagonal secondDiagonal
+    (firstDiagonal secondDiagonal : Line K) (associatedQuadrance : K)
+    (presentation : Presentation firstDiagonal secondDiagonal
       associatedQuadrance)
     (twoNonzero : (2 : K) ≠ 0) :
-    8 * Line.Basic.lineNorm firstDiagonal * Line.Basic.lineNorm secondDiagonal *
+    8 * Basic.lineNorm firstDiagonal * Basic.lineNorm secondDiagonal *
         (firstDiagonal.a * secondDiagonal.a +
           firstDiagonal.b * secondDiagonal.b) ≠ 0 := by
   have fourNonzero : (4 : K) ≠ 0 := by
     have productNonzero : (2 : K) * 2 ≠ 0 :=
-      Algebra.Field.ExplicitField.mul_ne_zero twoNonzero twoNonzero
+      ExplicitField.mul_ne_zero twoNonzero twoNonzero
     simpa only [show (4 : K) = 2 * 2 by ring1] using productNonzero
   have eightNonzero : (8 : K) ≠ 0 := by
     have productNonzero : (4 : K) * 2 ≠ 0 :=
-      Algebra.Field.ExplicitField.mul_ne_zero fourNonzero twoNonzero
+      ExplicitField.mul_ne_zero fourNonzero twoNonzero
     simpa only [show (8 : K) = 4 * 2 by ring1] using productNonzero
   have dotNonzero :
       firstDiagonal.a * secondDiagonal.a +
           firstDiagonal.b * secondDiagonal.b ≠ 0 :=
     presentation.notPerpendicular
-  exact Algebra.Field.ExplicitField.mul_ne_zero
-    (Algebra.Field.ExplicitField.mul_ne_zero
-      (Algebra.Field.ExplicitField.mul_ne_zero eightNonzero
+  exact ExplicitField.mul_ne_zero
+    (ExplicitField.mul_ne_zero
+      (ExplicitField.mul_ne_zero eightNonzero
         presentation.firstNonNull)
       presentation.secondNonNull)
     dotNonzero
@@ -125,8 +127,8 @@ theorem diagonalRecoveryFactor_nonzero
 /-- At the intersection of the diagonals, twice the conic evaluation is the negative associated quadrance times the
 quadratic trace. -/
 theorem center_evaluation_relation [DecidableEq K]
-    (firstDiagonal secondDiagonal : Plane.Line K) (associatedQuadrance : K)
-    (presentation : Grammola.Presentation firstDiagonal secondDiagonal
+    (firstDiagonal secondDiagonal : Line K) (associatedQuadrance : K)
+    (presentation : Presentation firstDiagonal secondDiagonal
       associatedQuadrance)
     (twoNonzero : (2 : K) ≠ 0) :
     let center := Intersection.lineIntersection firstDiagonal secondDiagonal
@@ -145,9 +147,9 @@ theorem center_evaluation_relation [DecidableEq K]
   have onSecond : secondDiagonal.Contains center :=
     Intersection.lineIntersection_on_second firstDiagonal secondDiagonal
       presentation.notParallel
-  unfold Plane.Line.Contains at onFirst onSecond
-  rw [Grammola.conic_evaluate, Grammola.conic_trace]
-  unfold Grammola.clearedEvaluate Basic.lineValue
+  unfold Line.Contains at onFirst onSecond
+  rw [conic_evaluate, conic_trace]
+  unfold clearedEvaluate Basic.lineValue
   rw [onFirst, onSecond]
   ring1
 
@@ -155,12 +157,12 @@ theorem center_evaluation_relation [DecidableEq K]
 quadrance and the same unordered pair of diagonal lines. -/
 theorem exercise_15_14 [DecidableEq K]
     (firstDiagonal₁ firstDiagonal₂ secondDiagonal₁ secondDiagonal₂ :
-      Plane.Line K)
+      Line K)
     (firstAssociated secondAssociated : K)
     (firstPresentation :
-      Grammola.Presentation firstDiagonal₁ firstDiagonal₂ firstAssociated)
+      Presentation firstDiagonal₁ firstDiagonal₂ firstAssociated)
     (secondPresentation :
-      Grammola.Presentation secondDiagonal₁ secondDiagonal₂ secondAssociated)
+      Presentation secondDiagonal₁ secondDiagonal₂ secondAssociated)
     (twoNonzero : (2 : K) ≠ 0) (scale : K) (scaleNonzero : scale ≠ 0)
     (sameConic :
       Scale.CoefficientScale
@@ -213,7 +215,7 @@ theorem exercise_15_14 [DecidableEq K]
     ring1
   have firstTraceNonzero : firstConic.d + firstConic.f ≠ 0 := by
     unfold firstConic
-    exact Grammola.conic_trace_nonzero firstDiagonal₁ firstDiagonal₂
+    exact conic_trace_nonzero firstDiagonal₁ firstDiagonal₂
       firstPresentation.firstNonNull firstPresentation.secondNonNull
       firstAssociated twoNonzero
   have firstCenterRelation :
@@ -250,7 +252,7 @@ theorem exercise_15_14 [DecidableEq K]
       _ = (firstConic.d + firstConic.f) * secondAssociated := by
         rw [traceScale]
   have associatedEqual : firstAssociated = secondAssociated :=
-    Algebra.Field.ExplicitField.eq_of_mul_eq_mul_left firstTraceNonzero associatedTraceProducts
+    ExplicitField.eq_of_mul_eq_mul_left firstTraceNonzero associatedTraceProducts
   have firstRecoveryFactorNonzero :=
     diagonalRecoveryFactor_nonzero firstDiagonal₁ firstDiagonal₂
       firstAssociated firstPresentation twoNonzero
@@ -258,31 +260,31 @@ theorem exercise_15_14 [DecidableEq K]
     diagonalRecoveryFactor_nonzero secondDiagonal₁ secondDiagonal₂
       secondAssociated secondPresentation twoNonzero
   let firstFactor :=
-    8 * Line.Basic.lineNorm firstDiagonal₁ * Line.Basic.lineNorm firstDiagonal₂ *
+    8 * Basic.lineNorm firstDiagonal₁ * Basic.lineNorm firstDiagonal₂ *
       (firstDiagonal₁.a * firstDiagonal₂.a +
         firstDiagonal₁.b * firstDiagonal₂.b)
   let secondFactor :=
-    8 * Line.Basic.lineNorm secondDiagonal₁ * Line.Basic.lineNorm secondDiagonal₂ *
+    8 * Basic.lineNorm secondDiagonal₁ * Basic.lineNorm secondDiagonal₂ *
       (secondDiagonal₁.a * secondDiagonal₂.a +
         secondDiagonal₁.b * secondDiagonal₂.b)
   let productScale := scale ^ 2 * secondFactor / firstFactor
   have productScaleNonzero : productScale ≠ 0 := by
     have scaleSquareNonzero : scale ^ 2 ≠ 0 := by
       simpa only [pow_two] using
-        Algebra.Field.ExplicitField.mul_ne_zero scaleNonzero scaleNonzero
-    apply Algebra.Field.ExplicitField.div_ne_zero
-    · exact Algebra.Field.ExplicitField.mul_ne_zero scaleSquareNonzero
+        ExplicitField.mul_ne_zero scaleNonzero scaleNonzero
+    apply ExplicitField.div_ne_zero
+    · exact ExplicitField.mul_ne_zero scaleSquareNonzero
         secondRecoveryFactorNonzero
     · exact firstRecoveryFactorNonzero
   have productScaleCancel : productScale * firstFactor =
       scale ^ 2 * secondFactor := by
     unfold productScale
-    exact Algebra.Field.ExplicitField.div_mul_cancel _ firstRecoveryFactorNonzero
+    exact ExplicitField.div_mul_cancel _ firstRecoveryFactorNonzero
   have directionProductsEqual (x y : K) :
       Grammola.directionProduct firstDiagonal₁ firstDiagonal₂ x y =
         productScale *
           Grammola.directionProduct secondDiagonal₁ secondDiagonal₂ x y := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_left firstRecoveryFactorNonzero
+    apply ExplicitField.eq_of_mul_eq_mul_left firstRecoveryFactorNonzero
     calc
       firstFactor * Grammola.directionProduct firstDiagonal₁ firstDiagonal₂ x y =
           diagonalRecoveryValue firstConic x y := by

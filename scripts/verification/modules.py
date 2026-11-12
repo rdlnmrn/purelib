@@ -16,11 +16,11 @@ from pathlib import Path
 
 from scripts.paths import ROOT
 IGNORED_DIRECTORIES = {
-    ".git", ".lake", ".elan", ".external", "scripts",
+    ".git", ".lake", ".elan", ".external", ".worktrees", "scripts",
     "docs", ".github",
 }
 ACTIVE_ROOTS = {
-    "Purelib", "Test", "papers", "formalisations",
+    "Purelib", "TestPurelib", "papers", "formalisations",
 }
 
 

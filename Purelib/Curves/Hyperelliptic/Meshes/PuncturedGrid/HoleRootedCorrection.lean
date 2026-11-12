@@ -85,18 +85,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection (fourSideHoleCorrection)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_ite_eq)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {target : Purelib.Data.Rat.Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+    Preflights domains sheet}
+  {target : Rational} {i j : Fin genus} {stage : Nat} {cache :
+    Numerics domains stage}
+  {request : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains cuts sheet
     coarseDepth) fixed target}
 
 open Purelib.Riemann.Meshes (LiftedPuncturedGrid)
@@ -106,23 +106,23 @@ set_option genInjectivity false in
 /-- The actual root-sheet lifts of all four retained hole-adjacent faces.
 
 Each dependent vector preserves the selected face owner and both original inward-edge sheets. -/
-structure HoleSideLifts (lifted : Meshes.LiftedPuncturedGrid base) {hole : Fin base.faces.holes.length}
+structure HoleSideLifts (lifted : LiftedPuncturedGrid base) {hole : Fin base.faces.holes.length}
     (adjacent : HoleAdjacentFaces base (base.faces.holes[hole.val]'hole.isLt)) where
-  /-- The two inward-root lifts of the original bottom adjacent face. -/ bottom : Data.Vector.DependentVector (fun sheet
-    : Fin 2 => HoleAdjacentFace.LiftedSide adjacent.bottom lifted sheet)
-  /-- The two inward-root lifts of the original top adjacent face. -/ top : Data.Vector.DependentVector (fun sheet : Fin
-    2 => HoleAdjacentFace.LiftedSide adjacent.top lifted sheet)
-  /-- The two inward-root lifts of the original left adjacent face. -/ left : Data.Vector.DependentVector (fun sheet :
-    Fin 2 => HoleAdjacentFace.LiftedSide adjacent.left lifted sheet)
-  /-- The two inward-root lifts of the original right adjacent face. -/ right : Data.Vector.DependentVector (fun sheet :
-    Fin 2 => HoleAdjacentFace.LiftedSide adjacent.right lifted sheet)
+  /-- The two inward-root lifts of the original bottom adjacent face. -/ bottom : DependentVector (fun sheet
+    : Fin 2 => LiftedSide adjacent.bottom lifted sheet)
+  /-- The two inward-root lifts of the original top adjacent face. -/ top : DependentVector (fun sheet : Fin
+    2 => LiftedSide adjacent.top lifted sheet)
+  /-- The two inward-root lifts of the original left adjacent face. -/ left : DependentVector (fun sheet :
+    Fin 2 => LiftedSide adjacent.left lifted sheet)
+  /-- The two inward-root lifts of the original right adjacent face. -/ right : DependentVector (fun sheet :
+    Fin 2 => LiftedSide adjacent.right lifted sheet)
 
 constructive_injectivity HoleSideLifts
 
 /-- Construct all four adjacent-face lifts in their original inward-root sheet order. -/
-def HoleSideLifts.build (lifted : Meshes.LiftedPuncturedGrid base) {hole : Fin base.faces.holes.length}
+def HoleSideLifts.build (lifted : LiftedPuncturedGrid base) {hole : Fin base.faces.holes.length}
     (adjacent : HoleAdjacentFaces base (base.faces.holes[hole.val]'hole.isLt)) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleRootedCorrection.HoleSideLifts lifted adjacent :=
+      HoleSideLifts lifted adjacent :=
   ⟨DependentVector.ofFn (fun sheet => LiftedSide.build adjacent.bottom lifted sheet),
     DependentVector.ofFn (fun sheet => LiftedSide.build adjacent.top lifted sheet),
     DependentVector.ofFn (fun sheet => LiftedSide.build adjacent.left lifted sheet),
@@ -137,7 +137,7 @@ def rootedHoleCorrection (perimeters : Matched.FacePerimeters (request := reques
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
     {hole : Fin base.faces.holes.length} {adjacent : HoleAdjacentFaces base
       (base.faces.holes[hole.val]'hole.isLt)}
-    (sides : Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleRootedCorrection.HoleSideLifts lifted adjacent) : Gaussian :=
+    (sides : HoleSideLifts lifted adjacent) : Gaussian :=
   FiniteSum.Fin.sumFin (fun sheet =>
     ((perimeters.perimeters.get adjacent.left.position).get (sides.left.get sheet).selected.sheet).right -
     ((perimeters.perimeters.get adjacent.right.position).get (sides.right.get sheet).selected.sheet).left -
@@ -155,10 +155,10 @@ theorem rootedHoleCorrection_eq (perimeters : Matched.FacePerimeters (request :=
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
     {hole : Fin base.faces.holes.length} {adjacent : HoleAdjacentFaces base
       (base.faces.holes[hole.val]'hole.isLt)}
-    (sides : Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleRootedCorrection.HoleSideLifts lifted adjacent) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleRootedCorrection.rootedHoleCorrection perimeters left right sides =
+    (sides : HoleSideLifts lifted adjacent) :
+    HoleRootedCorrection.rootedHoleCorrection perimeters left right sides =
       HoleFourSideCorrection.fourSideHoleCorrection perimeters left right adjacent := by
-  simp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleRootedCorrection.rootedHoleCorrection,
+  simp only [HoleRootedCorrection.rootedHoleCorrection,
     HoleFourSideCorrection.fourSideHoleCorrection, FiniteSum.Fin.sumFin_sub,
     FiniteSum.Fin.sumFin_add,
     FacePerimeters.sideSum]

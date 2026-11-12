@@ -77,6 +77,26 @@ theorem positivePolynomial_nonzero : ∀ entries :
         (Dense.Gaussian.Power.polynomialPower_nonzero entry.part.nonzero entry.multiplicity)
         (positivePolynomial_nonzero entries)
 
+/-- The same original ordered weighted polynomial already has its leading zeros removed. -/
+theorem positivePolynomial_normalized : (entries : List PositiveEntry) →
+    (positivePolynomial entries).normalize = positivePolynomial entries
+  | [] => DensePolynomial.normalize_constant_of_ne (by decide : (1 : Gaussian.Basic.Canonical) ≠ 0)
+  | entry :: remaining => DensePolynomial.normalize_mul _ _
+
+/-- The original weighted polynomial has the same ordered product of powered original leading coefficients. -/
+theorem positivePolynomial_leadingCoeff : (entries : List PositiveEntry) →
+    (positivePolynomial entries).leadingCoeff =
+      entries.foldr (fun entry total => entry.part.polynomial.leadingCoeff ^ entry.multiplicity * total) 1
+  | [] => (Leading.LeadingTerm.constant (by decide : (1 : Gaussian.Basic.Canonical) ≠ 0)).coefficient_eq
+  | entry :: remaining => by
+      change (Dense.Gaussian.Power.polynomialPower entry.part.polynomial entry.multiplicity *
+        positivePolynomial remaining).leadingCoeff = _
+      rewrite [DensePolynomial.leadingCoeff_mul
+        (Dense.Gaussian.Power.polynomialPower_nonzero entry.part.nonzero entry.multiplicity)
+        (positivePolynomial_nonzero remaining), Dense.Gaussian.Power.leadingCoeff_polynomialPower
+        entry.part.polynomial entry.part.nonzero, positivePolynomial_leadingCoeff remaining]
+      rfl
+
 /-- Weighted degree of the positive-degree entries only. -/
 def positiveDegree : List
   PositiveEntry → Nat

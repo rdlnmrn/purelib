@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Check scope preservation, artifact-bound reuse, failures and interrupted recovery."""
+import contextlib
+import io
 import os
 from pathlib import Path
 import sys
@@ -80,12 +82,56 @@ class ScopeTests(unittest.TestCase):
     def test_build_failure_does_not_start_checker(self):
         for options in (['--wfail'], ['--no-build', '--wfail']):
             with self.subTest(options=options), \
+                    mock.patch.object(runner, 'lint_sources', return_value=0), \
                     mock.patch.object(runner.subprocess, 'run', return_value=mock.Mock(returncode=19)) as build, \
                     mock.patch.object(runner.subprocess, 'check_output') as env:
                 self.assertEqual(runner.lint('lake', options, ['Purelib.A', 'scripts.Harness'], {}), 19)
             build.assert_called_once_with(['lake', *options, 'build', '+Purelib.A', '+scripts.Harness'],
                                           cwd=runner.ROOT)
             env.assert_not_called()
+
+
+class NamespaceLintTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix="namespace-lint-test-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.addCleanup(mock.patch.stopall)
+        mock.patch.object(runner, "ROOT", self.root).start()
+        (self.root / "Purelib").mkdir()
+        (self.root / "Purelib/Clean.lean").write_text("module\n")
+        prefix = "Purelib.LongNamespace.RepeatedOwner"
+        (self.root / "Purelib/Flagged.lean").write_text("module\n" + "".join(
+            f"def value{index} := {prefix}.item{index}\n" for index in range(6)))
+
+    def test_namespace_lint_preserves_explicit_module_scope(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(runner.lint_sources(["Purelib.Clean"]), 0)
+            self.assertEqual(runner.lint_sources(["Purelib.Flagged"]), 1)
+            self.assertEqual(runner.lint_sources(["Purelib.Clean", "Purelib.Flagged"]), 1)
+
+    def test_thresholds_are_explicit_and_match_review_parameters(self):
+        from scripts.verification import namespace_prefixes
+        with mock.patch.object(namespace_prefixes, "main", return_value=0) as check:
+            self.assertEqual(runner.lint_sources(["Purelib.Clean"]), 0)
+        check.assert_called_once_with([
+            "--check", "--min-uses", "6", "--min-components", "3",
+            "--min-prefix-chars", "24", "--min-lines", "3", str(self.root / "Purelib/Clean.lean")])
+
+    def test_missing_authored_sources_fail_and_dependencies_remain_external(self):
+        with self.assertRaisesRegex(ValueError, "nonempty"):
+            runner.lint_sources([])
+        with self.assertRaisesRegex(ValueError, "missing source"):
+            runner.lint_sources(["Purelib.Missing"])
+        self.assertEqual(runner.lint_sources(["Mathlib.Algebra.Ring.Defs"]), 0)
+
+    def test_source_failure_stops_before_build_or_native_checker(self):
+        with contextlib.redirect_stdout(io.StringIO()), \
+                mock.patch.object(runner.subprocess, "run") as build, \
+                mock.patch.object(runner.subprocess, "check_output") as env:
+            self.assertEqual(runner.lint("lake", ["--no-build", "--wfail"], ["Purelib.Flagged"], {}), 1)
+        build.assert_not_called()
+        env.assert_not_called()
 
 
 class NativeBuildTests(unittest.TestCase):

@@ -14,6 +14,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational.SquareRoot.Radius
@@ -66,24 +68,24 @@ theorem squaredVariation_error_lt {target scale radius : RadiusCoordinate}
     (radiusBound : radius ≤ squaredVariationRadius target scale) :
     scale * (8 * radius ^ 2) < target := by
   have denominatorPositive : 0 < 8 * (scale + 1) :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative (by decide))
+    Arithmetic.mul_pos_direct (by decide)
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative (by decide))
   have squareSmall : radius ^ 2 < target / (8 * (scale + 1)) :=
-    (Fraction.Order.Arithmetic.pow_le_pow_direct radiusNonnegative radiusBound 2).trans_lt
+    (Arithmetic.pow_le_pow_direct radiusNonnegative radiusBound 2).trans_lt
       (Geometric.dyadicSquareRadius_sq_lt
-        (Fraction.Order.Field.div_pos_direct targetPositive denominatorPositive))
+        (Field.div_pos_direct targetPositive denominatorPositive))
   have enlarged : scale ≤ scale + 1 := by
     calc
       scale = scale + 0 := (_root_.add_zero scale).symm
-      _ ≤ scale + 1 := Fraction.Order.Arithmetic.add_le_add_direct le_rfl (by decide)
+      _ ≤ scale + 1 := Arithmetic.add_le_add_direct le_rfl (by decide)
   calc
     _ ≤ (scale + 1) * (8 * radius ^ 2) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         enlarged
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+        (Arithmetic.mul_nonneg_direct (by decide)
+          (Arithmetic.sq_nonneg_direct _))
     _ = radius ^ 2 * (8 * (scale + 1)) := by ring1
-    _ < target := (Fraction.Order.Field.lt_div_iff_pos denominatorPositive).1 squareSmall
+    _ < target := (Field.lt_div_iff_pos denominatorPositive).1 squareSmall
 
 end Purelib.Approximation.Budget.SquaredVariationRadius
 

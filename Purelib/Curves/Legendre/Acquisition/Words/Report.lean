@@ -12,6 +12,7 @@ public import Purelib.Curves.Legendre.Acquisition.Words.State
 import Purelib.Curves.Legendre.FractionalWords.Periods
 import Purelib.Curves.Legendre.GuaranteedFold
 public import Purelib.Curves.Legendre.SeparatedWords
+public import Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Rational
 import Purelib.Data.Rat.Fraction.Compatibility
 import Purelib.Data.Rat.Fraction.Order
 import Purelib.Riemann.Integration.LegendreModularMonodromy
@@ -50,13 +51,12 @@ public section
 /-!
 # Evidence-directed finite Legendre words
 
-Reuse a cached provider or separation first. Nonreal rational provenance
-automatically constructs and transports an all-row provider. Otherwise one
-signed numerical inspection prepares either half-plane, or returns retained
-near-boundary evidence. Nonzeroness of the input alone is not used as a
-certificate for every intermediate word denominator. Real inputs and
-unsupported symbolic provenance may remain inconclusive by this sufficient
-test; this is not a decision procedure for each particular real word.
+Reuse a cached provider or separation first. Nonreal rational and admitted
+irrational quadratic provenance supply all-row providers. Exact rational
+readings use ordered denominator inspection, returning complete execution or
+the first certified zero row with its prepared prefix. Other inputs use signed
+numerical acquisition and may retain inconclusive near-boundary evidence.
+Nonzeroness of the input alone is no certificate for every word denominator.
 -/
 
 namespace Purelib.Curves.Legendre.Acquisition.Words
@@ -73,12 +73,28 @@ open Purelib.Approximation.Gaussian.FractionalAction.Integral.Preparation.Basic 
 namespace Report
 
 set_option genInjectivity false in
+/-- An exact ordered word inspection retaining the original rational source, requested word and complete execution. -/
+structure RationalResult (tau : CoherentNamed) (word : SeparatedWords.Word) where
+  /-- The actual original source sidecar used by this finite inspection. -/
+  source : RationalSidecar tau
+  /-- The actual original requested word as executable data. -/
+  request : SeparatedWords.Word
+  /-- The retained word is the original request. -/
+  request_eq : request = word
+  /-- Successful execution or the first actual zero denominator, with the entire prepared prefix and suffix. -/
+  execution : Approximation.Gaussian.FractionalAction.Integral.Words.Rational.Execution source
+    (FractionalWords.Periods.periodBraidMatrices word)
+
+constructive_injectivity RationalResult
+
+set_option genInjectivity false in
 /-- A productive retained word report or an inconclusive near-boundary certificate. -/
-inductive OutcomePayload.{u} (readyType : Type u) (nearType :
-  Type) : Type u
+inductive OutcomePayload.{u} (readyType : Type u) (nearType : Type) (exactType : Type u) : Type u
   /-- Retain the productive word report with its original cached denominator preparations. -/ | ready (result :
     readyType)
   /-- Retain the inconclusive near-boundary certificate at the exact attempted state. -/ | near (certificate : nearType)
+  /-- Retain complete ordered rational execution or its exact first undefined-step certificate. -/
+  | exact (result : exactType)
 
 constructive_injectivity OutcomePayload
 
@@ -93,7 +109,7 @@ state. -/
 @[expose] def Report {tau : Coherent.CoherentNamed} (input :
   State.Input tau) (word : SeparatedWords.Word) (delta : Fraction.Rational) :=
   Sigma fun step : State.Step input => OutcomePayload (SeparatedWords.Report tau word)
-    (Certificate.Near tau step.next.state delta)
+    (Certificate.Near tau step.next.state delta) (Report.RationalResult tau word)
 
 namespace Report
 
@@ -110,11 +126,15 @@ theorem spec {tau : Coherent.CoherentNamed} {input :
     | .ready ready => Nonempty (Gaussian.Equivalence.NamedEquivalent ready.single.output.name ready.output.name)
     | .near _ => ∀ {value : Data.Gaussian.Basic.Canonical}, tau.name.process.Possible
       report.1.next.state.retained.source value →
-        -delta < value.im ∧ value.im < delta := by
+        -delta < value.im ∧ value.im < delta
+    | .exact exact => exact.execution.output =
+        Approximation.Gaussian.FractionalAction.Integral.Words.Step.stepAction tau exact.execution.prefix
+          exact.execution.preparations := by
   refine ⟨report.1.provenance_eq, report.1.index_eq, ?_⟩
   cases report.2 with
   | ready ready => exact ⟨ready.equivalent_single⟩
   | near near => exact near.bounds
+  | exact result => exact result.execution.output_eq
 
 end Report
 

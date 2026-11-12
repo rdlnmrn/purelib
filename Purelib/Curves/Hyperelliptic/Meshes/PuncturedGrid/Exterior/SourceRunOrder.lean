@@ -63,8 +63,8 @@ private def parentStep (forward : Bool) (before after : Nat) : Prop :=
 /-- The remaining parent positions take strict oriented unit steps and finish at the supplied last position. -/
 private def strictParentTail (forward : Bool) (before last : Nat) : List Nat → Prop
   | [] => before = last
-  | next :: rest => Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.parentStep forward before next ∧
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.strictParentTail forward next last rest
+  | next :: rest => SourceChordRuns.parentStep forward before next ∧
+    SourceChordRuns.strictParentTail forward next last rest
 
 /-- The oriented first and last retained parent positions bound the exact requested offset range. -/
 @[expose] def parentAnchors (forward : Bool) (first last offset count : Nat) : Prop :=
@@ -73,7 +73,7 @@ private def strictParentTail (forward : Bool) (before last : Nat) : List Nat →
 
 /-- A list of strict oriented parent steps is the corresponding ascending or reversed consecutive natural range. -/
 private theorem strict_range (forward : Bool) (first last : Nat) (rest : List Nat)
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.strictParentTail forward first last
+    (steps : SourceChordRuns.strictParentTail forward first last
       rest) :
     if forward then first :: rest = List.range' first (rest.length + 1) ∧ last = first + rest.length
     else first :: rest = (List.range' last (rest.length + 1)).reverse ∧ first = last + rest.length := by
@@ -99,7 +99,7 @@ private theorem strict_range (forward : Bool) (first last : Nat) (rest : List Na
       constructor
       · have reverse : (List.range' last ((rest.length + 1) + 1)).reverse =
             (last + (rest.length + 1)) :: (List.range' last (rest.length + 1)).reverse := by
-          rw [Range.Basic.range'_succ, Data.List.Reverse.reverse_append]
+          rw [Range.Basic.range'_succ, Reverse.reverse_append]
           rfl
         exact (congrArg₂ List.cons distance tail.1).trans reverse.symm
       · exact distance
@@ -107,11 +107,11 @@ private theorem strict_range (forward : Bool) (first last : Nat) (rest : List Na
 /-- The original endpoint anchors identify the strict parent list with the exact offset range in its retained
 orientation. -/
 private theorem anchored_range (forward : Bool) (first last offset count : Nat) (rest : List Nat)
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.strictParentTail forward first last
-      rest) (anchors : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.parentAnchors forward first
+    (steps : SourceChordRuns.strictParentTail forward first last
+      rest) (anchors : SourceChordRuns.parentAnchors forward first
       last offset count) :
     first :: rest = if forward then List.range' offset count else (List.range' offset count).reverse := by
-  have ranged := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.strict_range forward first last rest
+  have ranged := SourceChordRuns.strict_range forward first last rest
     steps
   cases forward with
   | true =>
@@ -152,55 +152,55 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrenc
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms (ExteriorProgram)
 open Purelib.Riemann.Normalization
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
-  {requested : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+  {requested : Coordinate} {minimum : Nat}
   {comparison : prepared.ClosedBoundaryComparison other requested minimum} {vertical : Bool}
 
 /-- The retained chord parent positions stay fixed or advance one position in the supplied orientation, ending at the
 designated parent. -/
-private def sourceParentTail (forward : Bool) (before last : Nat) : List (SourceChordRuns.StoredSourceChord comparison
+private def sourceParentTail (forward : Bool) (before last : Nat) : List (StoredSourceChord comparison
   vertical) → Prop
   | [] => before = last
   | next :: rest => (next.2.index.val = before ∨
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.parentStep forward before next.2.index.val) ∧
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward
+    SourceChordRuns.parentStep forward before next.2.index.val) ∧
+      SourceChordRuns.sourceParentTail forward
         next.2.index.val last rest
 
 /-- Skipping original chords of the same parent preserves the remaining oriented parent-step certificate. -/
 private theorem sourceParentTail_skip (forward : Bool) (parent last : Nat)
-    (before after : List (SourceChordRuns.StoredSourceChord comparison vertical))
+    (before after : List (StoredSourceChord comparison vertical))
     (same : ∀ chord ∈ before, chord.2.index.val = parent)
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward parent last
-      (before ++ after)) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward
+    (steps : SourceChordRuns.sourceParentTail forward parent last
+      (before ++ after)) : SourceChordRuns.sourceParentTail forward
       parent last after := by
   induction before with
   | nil => exact steps
   | cons chord rest ih =>
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward index last (rest ++
+      SourceChordRuns.sourceParentTail forward index last (rest ++
       after))
       (same chord List.mem_cons_self)).mp steps.2
     exact ih (fun found member => same found (List.mem_cons_of_mem chord member)) remaining
 
 /-- The adjacent steps of an original indexed chord bank certify its complete oriented parent tail. -/
 private theorem sourceParentTail_ofFn {n : Nat} (forward : Bool) (source : Fin (n + 1) →
-  SourceChordRuns.StoredSourceChord comparison vertical)
+  StoredSourceChord comparison vertical)
     (steps : ∀ i : Fin n, (source i.succ).2.index.val = (source i.castSucc).2.index.val ∨
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.parentStep forward (source
+      SourceChordRuns.parentStep forward (source
         i.castSucc).2.index.val (source i.succ).2.index.val) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward (source 0).2.index.val
+    SourceChordRuns.sourceParentTail forward (source 0).2.index.val
       (source (Fin.last n)).2.index.val
       (List.ofFn (fun i : Fin n => source i.succ)) := by
   induction n with
@@ -218,31 +218,31 @@ namespace SourceChordRun
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun in
 /-- Maximal grouping of the original chord word gives strict oriented steps between its retained run parents. -/
-private theorem strict_parents (rest : List (SourceChordRuns.SourceChordRun comparison vertical)) (run :
-  SourceChordRuns.SourceChordRun comparison vertical)
+private theorem strict_parents (rest : List (SourceChordRun comparison vertical)) (run :
+  SourceChordRun comparison vertical)
     (forward : Bool) (last : Nat) (apart : SourceChordRun.separated (run :: rest))
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward run.parent.val
+    (steps : SourceChordRuns.sourceParentTail forward run.parent.val
       last (run.rest ++ (rest.map chords).flatten)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.strictParentTail forward run.parent.val last
+    SourceChordRuns.strictParentTail forward run.parent.val last
       (rest.map (fun run => run.parent.val)) := by
   induction rest generalizing run with
   | nil =>
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail_skip forward
+    exact SourceChordRuns.sourceParentTail_skip forward
       run.parent.val last run.rest []
       (fun chord member => congrArg Fin.val (run.rest_parent chord member)) steps
   | cons next rest ih =>
-    have boundary := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail_skip forward
+    have boundary := SourceChordRuns.sourceParentTail_skip forward
       run.parent.val last run.rest ((next :: rest).map chords).flatten
       (fun chord member => congrArg Fin.val (run.rest_parent chord member)) steps
     have nextEq := congrArg Fin.val next.first_parent
     have different : next.first.2.index.val ≠ run.parent.val := by
       intro equal
       exact apart.1 ((Fin.ext equal).symm.trans next.first_parent)
-    have strict := (congrArg (fun index => Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.parentStep
+    have strict := (congrArg (fun index => SourceChordRuns.parentStep
       forward run.parent.val index) nextEq).mp
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.remove_stationary different boundary.1)
+      (SourceChordRuns.remove_stationary different boundary.1)
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward index last
+      SourceChordRuns.sourceParentTail forward index last
       (next.rest ++ (rest.map chords).flatten)) nextEq).mp boundary.2
     exact ⟨strict, ih next apart.2 remaining⟩
 
@@ -251,17 +251,17 @@ end SourceChordRun
 namespace SourceChordGrouping
 
 /-- The grouped original indexed chord bank enumerates the exact anchored parent range in its retained orientation. -/
-theorem parent_order_ofFn {n : Nat} {source : Fin (n + 1) → SourceChordRuns.StoredSourceChord comparison vertical}
-    (grouped : SourceChordRuns.SourceChordGrouping comparison vertical (List.ofFn source)) (forward : Bool) (offset
+theorem parent_order_ofFn {n : Nat} {source : Fin (n + 1) → StoredSourceChord comparison vertical}
+    (grouped : SourceChordGrouping comparison vertical (List.ofFn source)) (forward : Bool) (offset
       count : Nat)
     (steps : ∀ i : Fin n, (source i.succ).2.index = (source i.castSucc).2.index ∨
       if forward then (source i.succ).2.index.val = (source i.castSucc).2.index.val + 1
       else (source i.castSucc).2.index.val = (source i.succ).2.index.val + 1)
-    (anchors : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.parentAnchors forward (source
+    (anchors : SourceChordRuns.parentAnchors forward (source
       0).2.index.val (source (Fin.last n)).2.index.val offset count) :
     grouped.runs.map (fun run => run.parent.val) =
       if forward then List.range' offset count else (List.range' offset count).reverse := by
-  have word := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail_ofFn forward source
+  have word := SourceChordRuns.sourceParentTail_ofFn forward source
     (fun i =>
     (steps i).elim (fun same => Or.inl (congrArg Fin.val same)) Or.inr)
   have flattened := grouped.flattened.trans (OfFn.Basic.ofFn_succ (function := source))
@@ -273,47 +273,47 @@ theorem parent_order_ofFn {n : Nat} {source : Fin (n + 1) → SourceChordRuns.St
     rw [runsEq] at flattened
     have heads := List.cons.inj flattened
     have firstEq := (congrArg Fin.val run.first_parent).symm.trans
-      (congrArg (fun chord : SourceChordRuns.StoredSourceChord comparison vertical => chord.2.index.val) heads.1)
+      (congrArg (fun chord : StoredSourceChord comparison vertical => chord.2.index.val) heads.1)
     have remaining := (congrArg₂ (fun index chords =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentTail forward index (source
+      SourceChordRuns.sourceParentTail forward index (source
         (Fin.last n)).2.index.val chords)
       firstEq.symm heads.2.symm).mp word
-    have strict := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.strict_parents rest
+    have strict := SourceChordRun.strict_parents rest
       run forward (source (Fin.last n)).2.index.val
       ((congrArg SourceChordRun.separated runsEq).mp grouped.separated) remaining
     have runAnchors := (congrArg (fun first =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.parentAnchors forward first (source (Fin.last
+      SourceChordRuns.parentAnchors forward first (source (Fin.last
       n)).2.index.val offset count)
       firstEq.symm).mp anchors
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.anchored_range forward run.parent.val
+    exact SourceChordRuns.anchored_range forward run.parent.val
       (source (Fin.last n)).2.index.val offset count
       (rest.map (fun run => run.parent.val)) strict runAnchors
 
 /-- The grouped run parents equal the original bounded parent-index bank in forward or reversed order. -/
-theorem parent_indices_order {chords : List (SourceChordRuns.StoredSourceChord comparison vertical)}
-    (grouped : SourceChordRuns.SourceChordGrouping comparison vertical chords) (forward : Bool)
+theorem parent_indices_order {chords : List (StoredSourceChord comparison vertical)}
+    (grouped : SourceChordGrouping comparison vertical chords) (forward : Bool)
     (indices : List (Fin comparison.original.plans.length)) {offset count : Nat}
     (values : indices.map Fin.val = List.range' offset count)
     (order : grouped.runs.map (fun run => run.parent.val) =
       if forward then List.range' offset count else (List.range' offset count).reverse) :
     grouped.runs.map SourceChordRun.parent = if forward then indices else indices.reverse := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.fin_values_injective
-  rw [Data.List.Map.map_map]
+  apply SourceChordRuns.fin_values_injective
+  rw [Map.map_map]
   cases forward with
   | true => exact order.trans values.symm
   | false =>
-    exact order.trans ((congrArg List.reverse values.symm).trans (Data.List.Reverse.map_reverse Fin.val indices).symm)
+    exact order.trans ((congrArg List.reverse values.symm).trans (Reverse.map_reverse Fin.val indices).symm)
 
 /-- Reading the grouped run increments preserves the exact retained oriented parent-index order. -/
-theorem parent_increments_order {chords : List (SourceChordRuns.StoredSourceChord comparison vertical)}
-    (grouped : SourceChordRuns.SourceChordGrouping comparison vertical chords) (forward : Bool)
+theorem parent_increments_order {chords : List (StoredSourceChord comparison vertical)}
+    (grouped : SourceChordGrouping comparison vertical chords) (forward : Bool)
     (indices : List (Fin comparison.original.plans.length))
     (order : grouped.runs.map SourceChordRun.parent = if forward then indices else indices.reverse) :
     grouped.runs.map (fun run => run.parentIncrement forward) =
       (if forward then indices else indices.reverse).map (SourceChordRuns.sourceParentIncrement comparison forward) :=
         by
   have mapped := congrArg (List.map (SourceChordRuns.sourceParentIncrement comparison forward)) order
-  rw [Data.List.Map.map_map] at mapped
+  rw [Map.map_map] at mapped
   exact mapped
 
 end SourceChordGrouping

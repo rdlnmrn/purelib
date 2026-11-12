@@ -30,6 +30,8 @@ import Purelib.Geometry.Rational.Box.Refinement
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -56,7 +58,7 @@ open Purelib.Polynomial.Clearance.Box in
 /-- The original polynomial region-clearance certificate on the retained box. -/
 abbrev Clearance := Region.RegionClearance
 
-variable {polynomial : Polynomial} {box : Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
+variable {polynomial : Polynomial} {box : InverseRootPolynomial.Box}
 
 open Purelib.Polynomial.Dense.Gaussian in
 set_option genInjectivity false in
@@ -98,12 +100,12 @@ equations and sign certificates retained. -/
   let slope := Bounds.Box.denseLipschitzBound polynomial box
   have slopePositive := Bounds.Box.denseLipschitzBound_pos polynomial box
   let seedSquared : Coordinate := 4 / clearance.bound
-  have seedPositive : 0 < seedSquared := Fraction.Order.Field.div_pos_direct (by decide) clearance.positive
+  have seedPositive : 0 < seedSquared := Field.div_pos_direct (by decide) clearance.positive
   let variation := slope * seedSquared
-  have nonnegative : 0 ≤ variation := Fraction.Order.Arithmetic.mul_nonneg_direct slopePositive.le seedPositive.le
+  have nonnegative : 0 ≤ variation := Arithmetic.mul_nonneg_direct slopePositive.le seedPositive.le
   let diameter : Coordinate := (1 / 64) / (variation + 1)
-  have positive : 0 < diameter := Fraction.Order.Field.div_pos_direct (by decide +kernel)
-    (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative (by decide))
+  have positive : 0 < diameter := Field.div_pos_direct (by decide +kernel)
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative (by decide))
   ⟨slope, rfl, slopePositive, seedSquared, rfl, seedPositive, variation, rfl, nonnegative, diameter, rfl, positive⟩
 
 open Purelib.Data.Gaussian in
@@ -111,18 +113,18 @@ open Purelib.Data.Rat in
 /-- A normalized inverse-root seed inside the original cleared box satisfies the retained squared seed bound. -/
 theorem seed_squared_le (bounds : Bounds clearance) {point : Gaussian}
     (inside : box.Contains point) (seed : Seed (polynomial.eval point)) :
-    Data.Gaussian.Norm.Basic.normSq seed.value ^ 2 ≤ bounds.seedSquared := by
-  have small : Data.Gaussian.Norm.Basic.normSq (1 - polynomial.eval point * seed.value ^ 2) ≤ 1 / 16 :=
+    Norm.Basic.normSq seed.value ^ 2 ≤ bounds.seedSquared := by
+  have small : Norm.Basic.normSq (1 - polynomial.eval point * seed.value ^ 2) ≤ 1 / 16 :=
     (Norm.Basic.normSq_eq_canonical _).trans_le
       (seed.residual_small.trans (by decide +kernel : (1 / 64 : Fraction.Rational) ≤ 1 / 16))
   have normalized := normalized_value_bound small
   rw [bounds.seedSquared_eq]
-  apply (Fraction.Order.Field.le_div_iff_pos clearance.positive).2
+  apply (Field.le_div_iff_pos clearance.positive).2
   calc
-    _ = clearance.bound * Data.Gaussian.Norm.Basic.normSq seed.value ^ 2 := by ring1
-    _ ≤ Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) * Data.Gaussian.Norm.Basic.normSq seed.value ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (clearance.lower point inside)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    _ = clearance.bound * Norm.Basic.normSq seed.value ^ 2 := by ring1
+    _ ≤ Norm.Basic.normSq (polynomial.eval point) * Norm.Basic.normSq seed.value ^ 2 :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (clearance.lower point inside)
+        (Arithmetic.sq_nonneg_direct _)
     _ ≤ 4 := normalized
 
 open Purelib.Data.Rat in
@@ -132,7 +134,7 @@ The retained nonnegative variation and positive diameter transfer the
 supplied subbox bound through the defining reciprocal allowance. -/
 theorem variation_paid (bounds : Bounds clearance) {diameter : Coordinate}
     (small : diameter ≤ bounds.diameter) : bounds.variation * diameter ≤ 1 / 64 := by
-  have translated := Fraction.Order.Arithmetic.add_le_add_right_direct
+  have translated := Arithmetic.add_le_add_right_direct
     (show (0 : Coordinate) ≤ 1 by decide) bounds.variation
   have enlarged : bounds.variation ≤ bounds.variation + 1 :=
     calc
@@ -141,14 +143,14 @@ theorem variation_paid (bounds : Bounds clearance) {diameter : Coordinate}
       _ = bounds.variation + 1 := Fraction.Field.add_comm _ _
   calc
     _ ≤ bounds.variation * bounds.diameter :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small bounds.variation_nonnegative
+      Arithmetic.mul_le_mul_of_nonneg_left_direct small bounds.variation_nonnegative
     _ ≤ (bounds.variation + 1) * bounds.diameter :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         enlarged bounds.diameter_positive.le
     _ = 1 / 64 := by
       rw [bounds.diameter_eq, Fraction.Field.mul_comm]
       exact Fraction.Field.div_mul_cancel_of_ne _ _
-        (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+        (Arithmetic.add_pos_of_nonneg_of_pos_direct
           bounds.variation_nonnegative (by decide)).ne'
 
 open Purelib.Data.Gaussian in
@@ -160,36 +162,36 @@ refining box.
 
 The retained clearance controls the seed size, and the original polynomial variation and diameter certificates control
 movement away from the seed point. -/
-theorem residual_small (bounds : Bounds clearance) {inner : Purelib.Geometry.Rational.Box}
+theorem residual_small (bounds : Bounds clearance) {inner : Geometry.Rational.Box}
     (refines : inner.Refines box) (small : inner.diagonalSq ≤ bounds.diameter)
     {center : Gaussian} (centerInside : inner.Contains center)
     (seed : Seed (polynomial.eval center)) {point : Gaussian} (inside : inner.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (1 - polynomial.eval point * seed.value ^ 2) ≤ 1 / 16 := by
+    Norm.Basic.normSq (1 - polynomial.eval point * seed.value ^ 2) ≤ 1 / 16 := by
   have variation := Bounds.Box.normSq_eval_sub_eval_le_denseLipschitzBound polynomial
     (refines.contains centerInside) (refines.contains inside)
   rw [← bounds.slope_eq] at variation
   have distance := Box.normSq_sub_le_diagonalSq centerInside inside
-  have movement := variation.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have movement := variation.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
     distance bounds.slope_positive.le)
-  have perturbation : Data.Gaussian.Norm.Basic.normSq ((polynomial.eval center - polynomial.eval point) * seed.value ^
+  have perturbation : Norm.Basic.normSq ((polynomial.eval center - polynomial.eval point) * seed.value ^
     2) ≤ 1
     / 64 := by
     rw [Norm.Basic.normSq_mul, Power.normSq_pow]
     calc
       _ ≤ (bounds.slope * inner.diagonalSq) * bounds.seedSquared :=
-        Fraction.Order.Arithmetic.mul_le_mul_direct movement
+        Arithmetic.mul_le_mul_direct movement
           (bounds.seed_squared_le (refines.contains centerInside) seed)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-          (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.slope_positive.le inner.diagonalSq_nonneg)
+          (Arithmetic.sq_nonneg_direct _)
+          (Arithmetic.mul_nonneg_direct bounds.slope_positive.le inner.diagonalSq_nonneg)
       _ = bounds.variation * inner.diagonalSq := by rw [bounds.variation_eq]; ring1
       _ ≤ 1 / 64 := bounds.variation_paid small
   have identity : 1 - polynomial.eval point * seed.value ^ 2 =
       (1 - polynomial.eval center * seed.value ^ 2) +
         (polynomial.eval center - polynomial.eval point) * seed.value ^ 2 := by ring1
-  have seedSmall : Data.Gaussian.Norm.Basic.normSq (1 - polynomial.eval center * seed.value ^ 2) ≤ 1 / 64 :=
+  have seedSmall : Norm.Basic.normSq (1 - polynomial.eval center * seed.value ^ 2) ≤ 1 / 64 :=
     (Norm.Basic.normSq_eq_canonical _).trans_le seed.residual_small
   rw [identity]
-  exact (Norm.Bounds.normSq_add_le_two _ _).trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact (Norm.Bounds.normSq_add_le_two _ _).trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct
     (add_le_add seedSmall perturbation) (by decide)).trans_eq (by
         decide +kernel : (2 : Coordinate) * (1 / 64 + 1 / 64) = 1 / 16))
 
@@ -197,7 +199,7 @@ end Bounds
 
 /-- A subbox refining the original cleared box with squared diameter within the retained model allowance. -/
 structure CellGeometry {clearance : Clearance polynomial box} (bounds : Bounds clearance) (inner :
-  Purelib.Geometry.Rational.Box) where
+  Geometry.Rational.Box) where
   /-- The original inner box refines the original cleared outer box. -/ refines : inner.Refines box
   /-- The original inner squared diameter satisfies the retained allowance. -/ small : inner.diagonalSq ≤
     bounds.diameter
@@ -209,7 +211,7 @@ set_option genInjectivity false in
 The model value is exactly the constant polynomial of the stored seed; its certificate comes from the original geometric
 refinement and residual bound. -/
 structure SeededCell {clearance : Clearance polynomial box} (bounds : Bounds clearance) (inner :
-  Purelib.Geometry.Rational.Box) where
+  Geometry.Rational.Box) where
   /-- The exact retained subbox refinement and diameter certificate. -/ geometry : CellGeometry bounds inner
   /-- The original point at which the inverse-root seed is retained. -/ center : Gaussian
   /-- The retained center belongs to the original subbox. -/ centerInside : inner.Contains center
@@ -224,7 +226,7 @@ constructive_injectivity SeededCell
 namespace SeededCell
 
 variable {clearance : Clearance polynomial box} {bounds : Bounds clearance} {inner :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
+  Box}
 
 open Purelib.Data.Gaussian in
 /-- Construct the constant inverse-root model from the original small-cell geometry and interior seed.
@@ -251,7 +253,7 @@ set_option genInjectivity false in
 /-- A dyadic box partition depth with a retained geometric smallness certificate for the original model bounds. -/
 structure Mesh {clearance : Clearance polynomial box} (bounds : Bounds clearance) where
   /-- The retained dyadic partition depth. -/ depth : Nat
-  /-- The original inner squared diameter satisfies the retained allowance. -/ small : Geometric.Basic.quarterRadius
+  /-- The original inner squared diameter satisfies the retained allowance. -/ small : quarterRadius
     box.diagonalSq depth ≤ bounds.diameter
 
 constructive_injectivity Mesh
@@ -267,8 +269,8 @@ open Purelib.Approximation.Rational
 The geometric search retains the original box diameter and positive bound, supplying the exact smallness certificate for
 the chosen depth. -/
 @[expose] def build (bounds : Bounds clearance) : Mesh bounds :=
-  let depth := Geometric.Search.firstQuarterBelow box.diagonalSq 0 bounds.diameter
-  ⟨depth, (Geometric.Search.firstQuarterBelow_accurate _ box.diagonalSq_nonneg 0 _ bounds.diameter_positive).le⟩
+  let depth := firstQuarterBelow box.diagonalSq 0 bounds.diameter
+  ⟨depth, (firstQuarterBelow_accurate _ box.diagonalSq_nonneg 0 _ bounds.diameter_positive).le⟩
 
 /-- Increase a retained mesh depth while preserving its original model bounds and geometric smallness. -/
 @[expose] def atDepth (mesh : Mesh bounds) (depth : Nat) (later : mesh.depth ≤ depth) : Mesh bounds :=
@@ -283,7 +285,7 @@ open Purelib.Geometry.Rectangle.Partition
   PreparedBoxPartitions.cells mesh.depth box
 
 /-- Every original retained mesh cell satisfies the exact model diameter allowance. -/
-theorem cells_small (mesh : Mesh bounds) {inner : Purelib.Geometry.Rational.Box} (member : inner ∈ mesh.cells) :
+theorem cells_small (mesh : Mesh bounds) {inner : Geometry.Rational.Box} (member : inner ∈ mesh.cells) :
     inner.diagonalSq ≤ bounds.diameter := by
   rw [PreparedBoxPartitions.cells_diagonalSq mesh.depth box member]
   exact mesh.small
@@ -293,7 +295,7 @@ end
 set_option genInjectivity false in
 /-- A retained mesh cell containing the original requested point, with its membership certificate. -/
 structure Located (mesh : Mesh bounds) (point : Gaussian) where
-  /-- The retained original cell box selected from the mesh. -/ box : Purelib.Geometry.Rational.Box
+  /-- The retained original cell box selected from the mesh. -/ box : Geometry.Rational.Box
   /-- The selected box belongs to the exact retained mesh cell list. -/ member : box ∈ mesh.cells
   /-- The original requested point belongs to the retained selected cell. -/ contains : box.Contains point
 
@@ -307,13 +309,13 @@ open Purelib.Geometry.Rectangle.Partition
     PreparedBoxPartitions.locate_contains mesh.depth inside⟩
 
 /-- Restrict the original polynomial clearance to a retained mesh cell through its exact refinement. -/
-@[expose] def clearanceAt (mesh : Mesh bounds) {inner : Purelib.Geometry.Rational.Box} (member : inner ∈ mesh.cells) :
+@[expose] def clearanceAt (mesh : Mesh bounds) {inner : Geometry.Rational.Box} (member : inner ∈ mesh.cells) :
   Clearance polynomial inner
   :=
   clearance.restrict (PreparedBoxPartitions.cells_refine mesh.depth box member)
 
 /-- Package the original mesh cell's refinement and diameter bound as model geometry. -/
-theorem cellGeometry (mesh : Mesh bounds) {inner : Purelib.Geometry.Rational.Box} (member : inner ∈ mesh.cells) :
+theorem cellGeometry (mesh : Mesh bounds) {inner : Geometry.Rational.Box} (member : inner ∈ mesh.cells) :
   CellGeometry bounds inner :=
   ⟨PreparedBoxPartitions.cells_refine mesh.depth box member, mesh.cells_small member⟩
 

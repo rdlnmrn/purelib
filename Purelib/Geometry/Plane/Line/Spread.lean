@@ -42,14 +42,14 @@ variable {K : Type*} [ExplicitField K]
 public theorem normProductNonzero
     (first second : Line K)
     (firstNonNull : ¬ first.IsNull) (secondNonNull : ¬ second.IsNull) :
-    Line.Basic.lineNorm first * Line.Basic.lineNorm second ≠ 0 :=
-  Algebra.Field.ExplicitField.mul_ne_zero firstNonNull secondNonNull
+    Basic.lineNorm first * Basic.lineNorm second ≠ 0 :=
+  ExplicitField.mul_ne_zero firstNonNull secondNonNull
 
 /-- Spread between two displayed non-null lines. -/
 @[expose] def spread (first second : Line K)
     (_firstNonNull : ¬ first.IsNull) (_secondNonNull : ¬ second.IsNull) : K :=
   (first.a * second.b - second.a * first.b) ^ 2 /
-    (Line.Basic.lineNorm first * Line.Basic.lineNorm second)
+    (Basic.lineNorm first * Basic.lineNorm second)
 
 /-- Replacing both non-null lines by parallel representatives preserves spread. -/
 theorem spread_eq_of_parallel_pairs [DecidableEq K]
@@ -59,8 +59,8 @@ theorem spread_eq_of_parallel_pairs [DecidableEq K]
     (secondParallelNonNull : ¬ secondParallel.IsNull)
     (firstDirectionsParallel : first.Parallel firstParallel)
     (secondDirectionsParallel : second.Parallel secondParallel) :
-    Spread.spread first second firstNonNull secondNonNull =
-      Spread.spread firstParallel secondParallel firstParallelNonNull
+    spread first second firstNonNull secondNonNull =
+      spread firstParallel secondParallel firstParallelNonNull
         secondParallelNonNull := by
   rcases Relations.direction_scale_of_parallel first firstParallel
       firstDirectionsParallel with
@@ -69,11 +69,11 @@ theorem spread_eq_of_parallel_pairs [DecidableEq K]
       secondDirectionsParallel with
     ⟨secondScale, secondScaleNonzero, secondA, secondB⟩
   have firstDenominatorNonzero : Basic.lineNorm first * Basic.lineNorm second ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero firstNonNull secondNonNull
+    ExplicitField.mul_ne_zero firstNonNull secondNonNull
   have secondDenominatorNonzero :
       Basic.lineNorm firstParallel * Basic.lineNorm secondParallel ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero firstParallelNonNull secondParallelNonNull
-  unfold Spread.spread
+    ExplicitField.mul_ne_zero firstParallelNonNull secondParallelNonNull
+  unfold spread
   apply Ratio.ratio_eq_of_cross_product firstDenominatorNonzero
     secondDenominatorNonzero
   unfold Basic.lineNorm
@@ -84,12 +84,12 @@ theorem spread_eq_of_parallel_pairs [DecidableEq K]
 theorem spread_eq_zero_iff_parallel [DecidableEq K]
     (first second : Line K)
     (firstNonNull : ¬ first.IsNull) (secondNonNull : ¬ second.IsNull) :
-    Geometry.Plane.Line.Spread.spread first second firstNonNull secondNonNull = 0 ↔
+    spread first second firstNonNull secondNonNull = 0 ↔
       first.Parallel second := by
   let determinant := first.a * second.b - second.a * first.b
-  let denominator := Line.Basic.lineNorm first * Line.Basic.lineNorm second
+  let denominator := Basic.lineNorm first * Basic.lineNorm second
   have denominatorNonzero : denominator ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero firstNonNull secondNonNull
+    ExplicitField.mul_ne_zero firstNonNull secondNonNull
   constructor
   · intro spreadZero
     change determinant ^ 2 / denominator = 0 at spreadZero
@@ -97,7 +97,7 @@ theorem spread_eq_zero_iff_parallel [DecidableEq K]
       calc
         determinant ^ 2 =
             (determinant ^ 2 / denominator) * denominator :=
-              (Algebra.Field.ExplicitField.div_mul_cancel
+              (ExplicitField.div_mul_cancel
                 (determinant ^ 2) denominatorNonzero).symm
         _ = 0 := by
           rw [spreadZero]
@@ -106,7 +106,7 @@ theorem spread_eq_zero_iff_parallel [DecidableEq K]
       by_cases zero : determinant = 0
       · exact zero
       · exact False.elim
-          ((Algebra.Field.ExplicitField.mul_ne_zero zero zero) (by
+          ((ExplicitField.mul_ne_zero zero zero) (by
             simpa [pow_two] using numeratorZero))
     exact determinantZero
   · intro parallel
@@ -114,7 +114,7 @@ theorem spread_eq_zero_iff_parallel [DecidableEq K]
     change determinant ^ 2 / denominator = 0
     rw [parallel]
     rw [show (0 : K) ^ 2 = 0 by ring1]
-    exact Algebra.Field.ExplicitField.zero_div denominator
+    exact ExplicitField.zero_div denominator
 
 /-- Theorem 43 (Spread from points), in coordinate form. -/
 theorem spread_from_points [DecidableEq K]
@@ -122,12 +122,12 @@ theorem spread_from_points [DecidableEq K]
     (firstDistinct : first ≠ vertex) (secondDistinct : second ≠ vertex)
     (firstNonNull : ¬ (Incidence.lineThrough first vertex firstDistinct).IsNull)
     (secondNonNull : ¬ (Incidence.lineThrough second vertex secondDistinct).IsNull) :
-    Spread.spread (Incidence.lineThrough first vertex firstDistinct)
+    spread (Incidence.lineThrough first vertex firstDistinct)
         (Incidence.lineThrough second vertex secondDistinct) firstNonNull secondNonNull =
       (((first.y - vertex.y) * (vertex.x - second.x) -
         (second.y - vertex.y) * (vertex.x - first.x)) ^ 2) /
         (Quadrance.quadrance first vertex * Quadrance.quadrance second vertex) := by
-  unfold Spread.spread
+  unfold spread
   rw [Quadrance.lineThrough_norm_eq_quadrance first vertex firstDistinct,
     Quadrance.lineThrough_norm_eq_quadrance second vertex secondDistinct]
   congr 1
@@ -141,14 +141,14 @@ private theorem spread_lineThrough_reverse_both [DecidableEq K]
       ¬ (Incidence.lineThrough first second firstSecondDistinct).IsNull)
     (firstThirdNonNull :
       ¬ (Incidence.lineThrough first third firstThirdDistinct).IsNull) :
-    Spread.spread (Incidence.lineThrough first second firstSecondDistinct)
+    spread (Incidence.lineThrough first second firstSecondDistinct)
         (Incidence.lineThrough first third firstThirdDistinct)
         firstSecondNonNull firstThirdNonNull =
-      Spread.spread (Incidence.lineThrough second first firstSecondDistinct.symm)
+      spread (Incidence.lineThrough second first firstSecondDistinct.symm)
         (Incidence.lineThrough third first firstThirdDistinct.symm)
-        (Purelib.Geometry.Plane.Line.Null.reversedLine_nonNull first second firstSecondDistinct firstSecondNonNull)
-        (Purelib.Geometry.Plane.Line.Null.reversedLine_nonNull first third firstThirdDistinct firstThirdNonNull) := by
-  unfold Spread.spread Basic.lineNorm Incidence.lineThrough
+        (Null.reversedLine_nonNull first second firstSecondDistinct firstSecondNonNull)
+        (Null.reversedLine_nonNull first third firstThirdDistinct firstThirdNonNull) := by
+  unfold spread Basic.lineNorm Incidence.lineThrough
   congr 1 <;> ring1
 
 /-- Reversing both endpoint orders preserves the spread of two non-null lines. -/
@@ -160,26 +160,26 @@ public theorem spread_reverse_both [DecidableEq K]
       ¬ (Incidence.lineThrough first second firstSecondDistinct).IsNull)
     (firstThirdNonNull :
       ¬ (Incidence.lineThrough first third firstThirdDistinct).IsNull) :
-    Spread.spread (Incidence.lineThrough first second firstSecondDistinct)
+    spread (Incidence.lineThrough first second firstSecondDistinct)
         (Incidence.lineThrough first third firstThirdDistinct)
         firstSecondNonNull firstThirdNonNull =
-      Spread.spread (Incidence.lineThrough second first firstSecondDistinct.symm)
+      spread (Incidence.lineThrough second first firstSecondDistinct.symm)
         (Incidence.lineThrough third first firstThirdDistinct.symm)
         (by
-          exact Purelib.Geometry.Plane.Line.Null.reversedLine_nonNull
+          exact Null.reversedLine_nonNull
             first second firstSecondDistinct firstSecondNonNull)
         (by
-          exact Purelib.Geometry.Plane.Line.Null.reversedLine_nonNull
+          exact Null.reversedLine_nonNull
             first third firstThirdDistinct firstThirdNonNull) := by
-  unfold Spread.spread Basic.lineNorm Incidence.lineThrough
+  unfold spread Basic.lineNorm Incidence.lineThrough
   congr 1 <;> ring1
 
 /-- Spread is symmetric in its two lines. -/
 theorem spread_symm (first second : Line K)
     (firstNonNull : ¬ first.IsNull) (secondNonNull : ¬ second.IsNull) :
-    Spread.spread first second firstNonNull secondNonNull =
-      Spread.spread second first secondNonNull firstNonNull := by
-  unfold Spread.spread
+    spread first second firstNonNull secondNonNull =
+      spread second first secondNonNull firstNonNull := by
+  unfold spread
   congr 1 <;> ring1
 
 end Purelib.Geometry.Plane.Line.Spread
@@ -190,7 +190,7 @@ variable {K : Type*} [ExplicitField K] [DecidableEq K]
 
 /-- Reversing both endpoint orders preserves the spread of two non-null lines. -/
 theorem spread_lineThrough_reverse_both
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (firstSecondDistinct : first ≠ second)
     (firstThirdDistinct : first ≠ third)
     (firstSecondNonNull :

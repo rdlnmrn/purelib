@@ -78,36 +78,36 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -119,14 +119,14 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestoration
 /-- Reindex the entire source polygon; retain every inter-parent joining
 term rather than comparing only the individual parent areas. -/
 theorem sourceAreaAt_eq_selected (sample :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
+  Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
     (comparisons :
       (CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
       sample)) (periodStage : Nat) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+    CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
       comparisons periodStage = Path.IncrementArea.pathArea
       (List.ofFn (fun position : Fin program.cache.parents.length =>
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedSelection.Samples.PreparedComparisons.select
+        (Charts.Reciprocal.Disk.Basis.PreparedSelection.Samples.PreparedComparisons.select
           retained.anchors retained.sources request.schedule.bank
           plans inputs readings fans sample.parents comparisons position).weighted.values.map Prod.fst)).flatten := by
   have right := right
@@ -134,29 +134,29 @@ theorem sourceAreaAt_eq_selected (sample :
       (Integration.PreparedRefinementProgramCore.standardDifferentials genus) periodStage)
     retained.anchors retained.sources request.schedule.bank plans inputs readings fans sample.parents comparisons 0
   have selected :=
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SelectedSourcePaths.Samples.PreparedComparisons.sourcePaths_eq
+    Charts.Reciprocal.Disk.Basis.SelectedSourcePaths.Samples.PreparedComparisons.sourcePaths_eq
     retained.anchors retained.sources request.schedule.bank
     plans inputs readings fans sample.parents comparisons 0
   exact congrArg (fun paths => Path.IncrementArea.pathArea paths.flatten) (right.symm.trans selected)
 
 /-- Retained parent transport preserves the exact selected source increments. -/
 theorem parentPrepared_source (sample :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
+  Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
   (comparisons :
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  (CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample))
     (outer : Fin prepared.occurrences.length)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
+    (ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
       comparisons outer position).weighted.values.map Prod.fst =
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedSelection.Samples.PreparedComparisons.select retained.anchors
+      (Charts.Reciprocal.Disk.Basis.PreparedSelection.Samples.PreparedComparisons.select retained.anchors
         retained.sources request.schedule.bank plans inputs readings fans
-        sample.parents comparisons (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex prepared
+        sample.parents comparisons (ParentIndices.parentIndex prepared
           outer position)).weighted.values.map Prod.fst :=
   congrArg (List.map Prod.fst)
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SelectedSourcePaths.PreparedSelection.castParent_values
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex_read prepared outer position) _)
+    (Charts.Reciprocal.Disk.Basis.SelectedSourcePaths.PreparedSelection.castParent_values
+      (ParentIndices.parentIndex_read prepared outer position) _)
 
 end Sampled
 end CommonBasisRequest

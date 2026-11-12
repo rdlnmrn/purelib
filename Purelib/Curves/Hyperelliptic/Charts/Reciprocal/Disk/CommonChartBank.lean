@@ -121,33 +121,33 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_sub)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
+    (recastCenteredEdge other parent)}
   {data : Data patch count} {otherData :
     Data otherPatch otherCount}
   {cover : Cover data} {otherCover :
     Cover otherData}
-  (regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap) (common :
+  (regular : RegularBounds.Data cap) (common :
     CommonCover cover otherCover)
 
 set_option genInjectivity false in
 /-- A positive local tolerance paying the actual source-path restoration rate.
 
 The tolerance also retains the padded-root ceiling, unit ceiling and original interval allowance. -/
-structure RestorationBudget {interval : UniformReciprocalCommonCover.CommonInterval cover otherCover} {depth : Nat}
-    {geometry : CommonChartPaths.ChartGeometry (cap := cap) interval depth} {target : InverseRootPolynomial.Coordinate}
+structure RestorationBudget {interval : CommonInterval cover otherCover} {depth : Nat}
+    {geometry : ChartGeometry (cap := cap) interval depth} {target : Coordinate}
       {floor : Nat}
-    (prepared : CommonChartSources.SourceChartRequest regular geometry target floor) (allowance :
-      InverseRootPolynomial.Coordinate) where
+    (prepared : SourceChartRequest regular geometry target floor) (allowance :
+      Coordinate) where
   /-- The cached restoration-rate coefficient of the original source comparison request. -/ rate :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The cached rate equals the original source request's restoration rate. -/ rate_eq : rate =
-    SourceComparisonRequest.restorationRate prepared
-  /-- The cached positive local restoration tolerance. -/ tolerance : InverseRootPolynomial.Coordinate
+    restorationRate prepared
+  /-- The cached positive local restoration tolerance. -/ tolerance : Coordinate
   /-- The tolerance is the minimum of the original padded ceiling, unit ceiling, allowance and weighted half-allowance.
   -/
   tolerance_eq : tolerance = min regular.padded.squareTolerance
@@ -164,17 +164,17 @@ structure RestorationBudget {interval : UniformReciprocalCommonCover.CommonInter
 constructive_injectivity RestorationBudget
 
 /-- Select a positive minimum tolerance satisfying the original padded-root and weighted restoration budgets. -/
-@[expose] def RestorationBudget.build {interval : UniformReciprocalCommonCover.CommonInterval cover otherCover} {depth :
+@[expose] def RestorationBudget.build {interval : CommonInterval cover otherCover} {depth :
   Nat}
-    {geometry : CommonChartPaths.ChartGeometry (cap := cap) interval depth} {target : InverseRootPolynomial.Coordinate}
+    {geometry : ChartGeometry (cap := cap) interval depth} {target : Coordinate}
       {floor : Nat}
-    (prepared : CommonChartSources.SourceChartRequest regular geometry target floor) (allowance :
-      InverseRootPolynomial.Coordinate) (positive : 0 < allowance) :
+    (prepared : SourceChartRequest regular geometry target floor) (allowance :
+      Coordinate) (positive : 0 < allowance) :
     RestorationBudget regular prepared allowance := by
-  let rate := SourceComparisonRequest.restorationRate prepared
-  have nonnegative := SourceComparisonRequest.restorationRate_nonnegative prepared
+  let rate := restorationRate prepared
+  have nonnegative := restorationRate_nonnegative prepared
   have halfPositive := Fraction.Order.Field.div_pos_direct positive (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+      decide : (0 : Coordinate) < 2)
   let tolerance := min regular.padded.squareTolerance
     (min 1 (min allowance (Weighted.allowance (allowance / 2) rate)))
   have small : tolerance ≤ 1 := (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
@@ -198,33 +198,33 @@ constructive_injectivity RestorationBudget
 
 set_option genInjectivity false in
 /-- One actual common-cover interval's chart geometry, source preparation and paid restoration request. -/
-structure ChartPlan (depth : Nat) (allowance : InverseRootPolynomial.Coordinate) (floor : Nat) (i : Fin
+structure ChartPlan (depth : Nat) (allowance : Coordinate) (floor : Nat) (i : Fin
   common.intervals.length) where
   /-- The cached chart geometry on this exact retained common interval and depth. -/ geometry :
-    CommonChartPaths.ChartGeometry (cap := cap) (CommonChartPreparation.IntervalAt common i) depth
+    ChartGeometry (cap := cap) (IntervalAt common i) depth
   /-- The original source-to-chart request on the cached interval geometry. -/ prepared :
-    CommonChartSources.SourceChartRequest regular geometry allowance floor
+    SourceChartRequest regular geometry allowance floor
   /-- The retained restoration budget for this exact source preparation. -/ budget :
     RestorationBudget regular prepared allowance
   /-- The source comparison request consuming the original interval preparations and retained tolerance. -/ request :
-    ReciprocalDiskCommonSourceCharts.SourceComparisonRequest prepared budget.tolerance
+    SourceComparisonRequest prepared budget.tolerance
 
 constructive_injectivity ChartPlan
 
 /-- Read a common model stage paying both the original source comparison and its regular coordinate-slope request. -/
-@[expose] def planWeight {depth : Nat} {allowance : InverseRootPolynomial.Coordinate} {floor : Nat} (i : Fin
+@[expose] def planWeight {depth : Nat} {allowance : Coordinate} {floor : Nat} (i : Fin
   common.intervals.length)
     (plan : ChartPlan regular common depth allowance floor
       i) : Nat :=
   max plan.request.index
     (ReciprocalRegularCoordinatePolynomial.regularSlopeRequest plan.request.first
       (4 * plan.request.chart.budget.tolerance)
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 4)
+      (Fraction.Order.Arithmetic.mul_pos_direct (by decide : (0 : Coordinate) < 4)
         plan.request.chart.budget.positive)
       floor).val
 
 /-- The original interval comparison stage is below its retained combined model weight. -/
-theorem planWeight_index_le {depth : Nat} {allowance : InverseRootPolynomial.Coordinate} {floor : Nat}
+theorem planWeight_index_le {depth : Nat} {allowance : Coordinate} {floor : Nat}
     (i : Fin common.intervals.length) (plan : ChartPlan
       regular common depth allowance floor i) :
     plan.request.index ≤ planWeight regular common i plan :=
@@ -233,12 +233,12 @@ theorem planWeight_index_le {depth : Nat} {allowance : InverseRootPolynomial.Coo
   exact Data.Nat.Order.le_max_left _ _
 
 /-- The retained regular-slope request stage is below the same combined model weight. -/
-theorem planWeight_slope_le {depth : Nat} {allowance : InverseRootPolynomial.Coordinate} {floor : Nat}
+theorem planWeight_slope_le {depth : Nat} {allowance : Coordinate} {floor : Nat}
     (i : Fin common.intervals.length) (plan : ChartPlan
       regular common depth allowance floor i) :
     (ReciprocalRegularCoordinatePolynomial.regularSlopeRequest plan.request.first
       (4 * plan.request.chart.budget.tolerance)
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 4)
+      (Fraction.Order.Arithmetic.mul_pos_direct (by decide : (0 : Coordinate) < 4)
         plan.request.chart.budget.positive)
       floor).val ≤ planWeight regular common i plan := by
   rw [planWeight]
@@ -252,18 +252,18 @@ theorem planWeight_slope_le {depth : Nat} {allowance : InverseRootPolynomial.Coo
   omega0⟩
 
 /-- The actual adjacent-chart junction request between the retained original interval plans. -/
-@[expose] def ChartJunctionAt {depth : Nat} {allowance : InverseRootPolynomial.Coordinate} {floor : Nat}
-    (plans : Data.Vector.DependentVector (ChartPlan regular
+@[expose] def ChartJunctionAt {depth : Nat} {allowance : Coordinate} {floor : Nat}
+    (plans : DependentVector (ChartPlan regular
       common depth allowance floor))
     (i : Fin (common.intervals.length - 1)) :=
-  SourceChartRequest.JunctionRequest (plans.get
+  JunctionRequest (plans.get
     (junctionLeft common i)).prepared
     (plans.get (junctionRight common i)).geometry (allowance
       / 16) floor
 
 /-- Read the sufficient stage of the actual retained junction request. -/
-@[expose] def junctionWeight {depth : Nat} {allowance : InverseRootPolynomial.Coordinate} {floor : Nat}
-    (plans : Data.Vector.DependentVector (ChartPlan regular
+@[expose] def junctionWeight {depth : Nat} {allowance : Coordinate} {floor : Nat}
+    (plans : DependentVector (ChartPlan regular
       common depth allowance floor))
     (i : Fin (common.intervals.length - 1)) (junction :
       ChartJunctionAt regular common plans i) : Nat :=
@@ -274,25 +274,25 @@ set_option genInjectivity false in
 
 The retained preparation, interval plans and actual adjacent junctions determine model and reading maxima before
 numerical acquisition. -/
-structure ChartRequest (depth : Nat) (target : InverseRootPolynomial.Coordinate) (floor : Nat) where
+structure ChartRequest (depth : Nat) (target : Coordinate) (floor : Nat) where
   /-- The original complete retained chart preparation on this common cover. -/ preparation :
-    CommonChartPreparation.ChartPreparation regular common
+    ChartPreparation regular common
   /-- The cached path-replacement join budget for the actual common interval count. -/ joinBudget :
-    PathReplacement.JoinBudget common.intervals.length target
-  /-- The cached positive per-interval allowance. -/ allowance : InverseRootPolynomial.Coordinate
+    JoinBudget common.intervals.length target
+  /-- The cached positive per-interval allowance. -/ allowance : Coordinate
   /-- The interval allowance is exactly that retained by the original join budget. -/ allowance_eq : allowance =
     joinBudget.allowance
   /-- The retained tolerance or interval allowance is strictly positive. -/ positive : 0 < allowance
   /-- The actual common interval count squared times the retained allowance is strictly below the original target. -/
-    paid : (common.intervals.length : InverseRootPolynomial.Coordinate) * ((common.intervals.length :
-    InverseRootPolynomial.Coordinate) * allowance) < target
-  /-- The dependent vector of plans on every actual original common interval. -/ plans : Data.Vector.DependentVector
+    paid : (common.intervals.length : Coordinate) * ((common.intervals.length :
+    Coordinate) * allowance) < target
+  /-- The dependent vector of plans on every actual original common interval. -/ plans : DependentVector
     (ChartPlan regular common depth allowance floor)
   /-- Both comparison owners in every actual interval plan are exactly the original prepared entries. -/ comparisons_eq
     : ∀ i, (plans.get i).request.first = (preparation.entries.get i).first ∧
     (plans.get i).request.second = (preparation.entries.get i).second
   /-- The dependent vector of requests on every actual adjacent interval junction. -/ junctions :
-    Data.Vector.DependentVector (ChartJunctionAt regular
+    DependentVector (ChartJunctionAt regular
     common plans)
   /-- The cached common reading-stage floor paying every original junction request. -/ readingFloor : Nat
   /-- The reading floor is exactly the maximum of the original caller floor and all retained junction stages. -/
@@ -308,20 +308,20 @@ namespace ChartRequest
 
 /-- Cache all original interval geometries, comparison plans and adjacent junction requests before selecting their exact
 common stages. -/
-@[expose] def build (preparation : CommonChartPreparation.ChartPreparation regular common) (depth : Nat) (target :
-  InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest regular common depth target floor :=
+@[expose] def build (preparation : ChartPreparation regular common) (depth : Nat) (target :
+  Coordinate) (positive : 0 < target) (floor : Nat) :
+    ChartRequest regular common depth target floor :=
   let joinBudget := JoinBudget.build common.intervals.length target positive
   let allowance := joinBudget.allowance
   have allowancePositive := joinBudget.positive
   let plans := DependentVector.ofFn (fun i =>
-    let geometry := ChartGeometry.build (cap := cap) (CommonChartPreparation.IntervalAt common i) depth
+    let geometry := ChartGeometry.build (cap := cap) (IntervalAt common i) depth
     let prepared := SourceChartRequest.build regular geometry allowance allowancePositive floor
-    let budget := Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.RestorationBudget.build regular prepared
+    let budget := RestorationBudget.build regular prepared
       allowance allowancePositive
     (⟨geometry, prepared, budget, SourceComparisonRequest.build prepared
       (preparation.entries.get i).first (preparation.entries.get i).second budget.tolerance budget.positive⟩ :
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartPlan regular common depth allowance floor i))
+        ChartPlan regular common depth allowance floor i))
   have comparisons : ∀ i, (plans.get i).request.first = (preparation.entries.get i).first ∧
       (plans.get i).request.second = (preparation.entries.get i).second := by
     intro i
@@ -329,16 +329,16 @@ common stages. -/
     rw [DependentVector.ofFn_get]
     exact ⟨rfl, rfl⟩
   let junctions := DependentVector.ofFn (fun i =>
-    JunctionRequest.build (plans.get (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.junctionLeft common
+    JunctionRequest.build (plans.get (junctionLeft common
       i)).prepared
-      (plans.get (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.junctionRight common i)).geometry
-      (common.adjacent i.val (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.junctionRight common i).isLt)
+      (plans.get (junctionRight common i)).geometry
+      (common.adjacent i.val (junctionRight common i).isLt)
         (allowance / 16)
       (Fraction.Order.Field.div_pos_direct allowancePositive (by decide +kernel)) floor)
   ⟨preparation, joinBudget, allowance, rfl, allowancePositive, joinBudget.count_paid,
     plans, comparisons, junctions, max floor (junctions.maximum
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.junctionWeight regular common plans)), rfl,
-    max floor (plans.maximum (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.planWeight regular common)),
+      (junctionWeight regular common plans)), rfl,
+    max floor (plans.maximum (planWeight regular common)),
       rfl⟩
 
 end ChartRequest
@@ -347,17 +347,17 @@ set_option genInjectivity false in
 /-- The original paired source and cap samples with both complete primitive-cell banks at one common model stage. -/
 structure SampleBank (index : Nat) where
   /-- The first original source primitive at the retained common model stage. -/ source :
-    UniformReciprocalPrimitives.SourcePrimitive data index
+    SourcePrimitive data index
   /-- The second original source primitive at that same model stage. -/ otherSource :
-    UniformReciprocalPrimitives.SourcePrimitive otherData index
+    SourcePrimitive otherData index
   /-- The retained cap polynomial sample for the first original differential. -/ firstCap : Primitives.Sample cap
     differential index collar.box
   /-- The retained cap polynomial sample for the second original differential. -/ otherCap : Primitives.Sample cap other
     index collar.box
   /-- The actual primitive-cell bank on the first original cover mesh. -/ firstCells :
-    UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges
+    PrimitiveCells data index cover.mesh.edges
   /-- The actual primitive-cell bank on the second original cover mesh. -/ secondCells :
-    UniformReciprocalPrimitives.PrimitiveCells otherData index otherCover.mesh.edges
+    PrimitiveCells otherData index otherCover.mesh.edges
 
 constructive_injectivity SampleBank
 
@@ -386,7 +386,7 @@ structure ChartEntry (samples : SampleBank (cap := cap)
   /-- The original second interval sample on the retained second cap polynomial. -/ second : ArcSamples.Sample
     plan.request.second samples.otherCap
   /-- The cached comparison using these exact original interval and source samples. -/ evaluated :
-    SourceComparisonRequest.Evaluation plan.request samples.source samples.otherSource first second
+    Evaluation plan.request samples.source samples.otherSource first second
   /-- The actual refined chart reading stage meets its retained floor. -/ readingLater : readingFloor ≤
     evaluated.chart.retained.area.refined.stage
 
@@ -399,7 +399,7 @@ constructive_injectivity ChartEntry
       regular common depth allowance floor i)
     (later : plan.request.index ≤ index) (readingFloor : Nat) :
       ChartEntry samples plan readingFloor :=
-  let interval := CommonChartPreparation.IntervalAt common i
+  let interval := IntervalAt common i
   let firstRead := samples.firstCells.readCell interval.first.cell interval.first.member
   let secondRead := samples.secondCells.readCell interval.second.cell interval.second.member
   let first := ArcSamples.Sample.ofPrimitive plan.request.first samples.firstCap firstRead.primitive firstRead.cell_eq
@@ -409,38 +409,38 @@ constructive_injectivity ChartEntry
   ⟨first, second, evaluated, evaluated.chart.retained.readingFloor_le⟩
 
 namespace ChartRequest
-variable (request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest regular common
+variable (request : ChartRequest regular common
   depth target floor)
 
 /-- The dependent bank of actual interval comparisons consuming one retained shared sample bank. -/
-@[expose] def Entries (samples : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank (cap := cap)
+@[expose] def Entries (samples : SampleBank (cap := cap)
   (cover := cover) (otherCover := otherCover) index) :=
-  Data.Vector.DependentVector (fun i => Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartEntry samples
+  DependentVector (fun i => ChartEntry samples
     (request.plans.get i) request.readingFloor)
 
 /-- Evaluate every actual interval from the supplied shared sample bank above both original request and external reading
 floors. -/
-@[expose] def acquireEntries (samples : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank (cap :=
+@[expose] def acquireEntries (samples : SampleBank (cap :=
   cap) (cover := cover) (otherCover := otherCover) index)
     (later : request.index ≤ index) (externalFloor : Nat) : request.Entries samples :=
   DependentVector.ofFn (fun i =>
-    let entry := Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartEntry.build samples (request.plans.get
+    let entry := ChartEntry.build samples (request.plans.get
       i)
       ((Data.Nat.Order.le_max_left _ _).trans
-        ((DependentVector.get_le_maximum (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.planWeight regular
+        ((DependentVector.get_le_maximum (planWeight regular
           common) request.plans i).trans
           (((Data.Nat.Order.le_max_right _ _).trans_eq request.index_eq.symm).trans later))) (max request.readingFloor
             externalFloor)
     ⟨entry.first, entry.second, entry.evaluated, (Data.Nat.Order.le_max_left _ _).trans entry.readingLater⟩)
 
 /-- Every actual retained interval reading meets the supplied external stage floor. -/
-@[expose] def ReadingsLater (samples : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank (cap :=
+@[expose] def ReadingsLater (samples : SampleBank (cap :=
   cap) (cover := cover) (otherCover := otherCover) index)
     (entries : request.Entries samples) (externalFloor : Nat) : Prop :=
   ∀ i, externalFloor ≤ (entries.get i).evaluated.chart.retained.area.refined.stage
 
 /-- All acquired actual interval readings respect the retained external stage floor. -/
-theorem acquireEntries_later (samples : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank (cap :=
+theorem acquireEntries_later (samples : SampleBank (cap :=
   cap) (cover := cover) (otherCover := otherCover) index)
     (later : request.index ≤ index) (externalFloor : Nat) :
     request.ReadingsLater samples (request.acquireEntries samples later externalFloor) externalFloor := by
@@ -449,9 +449,9 @@ theorem acquireEntries_later (samples : Curves.Hyperelliptic.Charts.Reciprocal.D
     -iff_self]
   rw [DependentVector.ofFn_get]
   exact (Data.Nat.Order.le_max_right _ _).trans
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartEntry.build samples (request.plans.get i)
+    (ChartEntry.build samples (request.plans.get i)
     ((Data.Nat.Order.le_max_left _ _).trans
-      ((DependentVector.get_le_maximum (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.planWeight regular
+      ((DependentVector.get_le_maximum (planWeight regular
         common) request.plans i).trans
         (((Data.Nat.Order.le_max_right _ _).trans_eq request.index_eq.symm).trans later)))
     (max request.readingFloor externalFloor)).readingLater
@@ -464,72 +464,72 @@ exact correction readbacks. -/
 structure Evaluation (index : Nat) where
   /-- The actual common model stage meets the original complete chart request. -/ later : request.index ≤ index
   /-- The exact shared original source and cap sample bank consumed by every interval. -/ samples :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank (cap := cap) (cover := cover) (otherCover :=
+    SampleBank (cap := cap) (cover := cover) (otherCover :=
     otherCover) index
   /-- The cached actual interval comparisons on this retained sample bank. -/ entries : request.Entries samples
   /-- The retained caller-supplied lower reading stage. -/ externalFloor : Nat
   /-- Every actual cached interval reading meets the retained external floor. -/ readingsLater : request.ReadingsLater
     samples entries externalFloor
-  /-- The cached sum of the actual original interval source areas. -/ sourceArea : InverseRootPolynomial.Gaussian
+  /-- The cached sum of the actual original interval source areas. -/ sourceArea : Gaussian
   /-- The source-area cache equals the complete finite sum of retained interval source areas. -/ sourceArea_eq :
-    sourceArea = FiniteSum.Fin.sumFin (fun i => (entries.get i).evaluated.sourceArea)
-  /-- The cached sum of actual original interval chart areas. -/ chartArea : InverseRootPolynomial.Gaussian
+    sourceArea = sumFin (fun i => (entries.get i).evaluated.sourceArea)
+  /-- The cached sum of actual original interval chart areas. -/ chartArea : Gaussian
   /-- The chart-area cache equals the complete finite sum of retained uncentered chart areas. -/ chartArea_eq :
-    chartArea = FiniteSum.Fin.sumFin (fun i => (entries.get
+    chartArea = sumFin (fun i => (entries.get
     i).evaluated.chart.retained.area.evaluated.chart.originalArea)
-  /-- The cached sum of all actual interval restoration corrections. -/ correction : InverseRootPolynomial.Gaussian
+  /-- The cached sum of all actual interval restoration corrections. -/ correction : Gaussian
   /-- The correction cache equals the complete finite sum of original retained corrections. -/ correction_eq :
-    correction = FiniteSum.Fin.sumFin (fun i => (entries.get i).evaluated.correction)
+    correction = sumFin (fun i => (entries.get i).evaluated.correction)
   /-- The complete original source area minus chart area and retained correction satisfies the requested squared-norm
-    target. -/ bounded : Data.Gaussian.Norm.Basic.normSq (sourceArea - chartArea - correction) < target
-  /-- The cached sum of actual locally centered source areas. -/ sourceCenteredArea : InverseRootPolynomial.Gaussian
+    target. -/ bounded : normSq (sourceArea - chartArea - correction) < target
+  /-- The cached sum of actual locally centered source areas. -/ sourceCenteredArea : Gaussian
   /-- The centered-source cache equals the complete finite sum of original interval centered areas. -/
-    sourceCenteredArea_eq : sourceCenteredArea = FiniteSum.Fin.sumFin (fun i => (entries.get
+    sourceCenteredArea_eq : sourceCenteredArea = sumFin (fun i => (entries.get
     i).evaluated.sourceCenteredArea)
-  /-- The cached sum of actual locally centered chart areas. -/ chartCenteredArea : InverseRootPolynomial.Gaussian
+  /-- The cached sum of actual locally centered chart areas. -/ chartCenteredArea : Gaussian
   /-- The centered-chart cache equals the complete finite sum of original interval centered areas. -/
-    chartCenteredArea_eq : chartCenteredArea = FiniteSum.Fin.sumFin (fun i => (entries.get
+    chartCenteredArea_eq : chartCenteredArea = sumFin (fun i => (entries.get
     i).evaluated.chart.retained.area.evaluated.chart.centeredArea)
   /-- The actual centered source and chart sums satisfy the original complete target. -/ centered_bounded :
-    Data.Gaussian.Norm.Basic.normSq (sourceCenteredArea - chartCenteredArea) < target
+    normSq (sourceCenteredArea - chartCenteredArea) < target
 
 constructive_injectivity Evaluation
 
 /-- A parent comparison consumes the already selected shared sample bank at any certified later stage, without
 rebuilding its cap polynomials. -/
-@[expose] def evaluate (samples : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank (cap := cap)
+@[expose] def evaluate (samples : SampleBank (cap := cap)
   (cover := cover) (otherCover := otherCover) index)
     (later : request.index ≤ index) (externalFloor : Nat) :
       Evaluation request index := by
   let entries := request.acquireEntries samples later externalFloor
-  let sourceArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).evaluated.sourceArea)
-  let chartArea := FiniteSum.Fin.sumFin (fun i => (entries.get
+  let sourceArea := sumFin (fun i => (entries.get i).evaluated.sourceArea)
+  let chartArea := sumFin (fun i => (entries.get
     i).evaluated.chart.retained.area.evaluated.chart.originalArea)
-  let correction := FiniteSum.Fin.sumFin (fun i => (entries.get i).evaluated.correction)
+  let correction := sumFin (fun i => (entries.get i).evaluated.correction)
   have estimate := Indexed.normSq_sumFin_le
     (fun i => (entries.get i).evaluated.sourceArea -
       (entries.get i).evaluated.chart.retained.area.evaluated.chart.originalArea - (entries.get i).evaluated.correction)
     request.allowance (fun i => ((entries.get i).evaluated.bounded.trans_le (request.plans.get i).budget.bounded).le)
-  rw [FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_sub] at estimate
-  have paid : (common.intervals.length : InverseRootPolynomial.Coordinate)^2 * request.allowance < target :=
-    (by ring1 : (common.intervals.length : InverseRootPolynomial.Coordinate)^2 * request.allowance =
-      (common.intervals.length : InverseRootPolynomial.Coordinate) * ((common.intervals.length :
-        InverseRootPolynomial.Coordinate) * request.allowance)).trans_lt request.paid
-  let sourceCenteredArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).evaluated.sourceCenteredArea)
-  let chartCenteredArea := FiniteSum.Fin.sumFin (fun i => (entries.get
+  rw [sumFin_sub, sumFin_sub] at estimate
+  have paid : (common.intervals.length : Coordinate)^2 * request.allowance < target :=
+    (by ring1 : (common.intervals.length : Coordinate)^2 * request.allowance =
+      (common.intervals.length : Coordinate) * ((common.intervals.length :
+        Coordinate) * request.allowance)).trans_lt request.paid
+  let sourceCenteredArea := sumFin (fun i => (entries.get i).evaluated.sourceCenteredArea)
+  let chartCenteredArea := sumFin (fun i => (entries.get
     i).evaluated.chart.retained.area.evaluated.chart.centeredArea)
   have centered := Indexed.normSq_sumFin_le
     (fun i => (entries.get i).evaluated.sourceCenteredArea - (entries.get
       i).evaluated.chart.retained.area.evaluated.chart.centeredArea)
     request.allowance (fun i => ((entries.get i).evaluated.centered_bounded.trans_le (request.plans.get
       i).budget.bounded).le)
-  rw [FiniteSum.Fin.sumFin_sub] at centered
+  rw [sumFin_sub] at centered
   exact ⟨later, samples, entries, externalFloor, request.acquireEntries_later samples later externalFloor,
     sourceArea, rfl, chartArea, rfl, correction, rfl, estimate.trans_lt paid,
     sourceCenteredArea, rfl, chartCenteredArea, rfl, centered.trans_lt paid⟩
 
 /-- Evaluation retains exactly the supplied original shared sample bank. -/
-theorem evaluate_samples (samples : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank (cap := cap)
+theorem evaluate_samples (samples : SampleBank (cap := cap)
   (cover := cover) (otherCover := otherCover) index)
     (later : request.index ≤ index) (externalFloor : Nat) : (request.evaluate samples later externalFloor).samples =
       samples := rfl
@@ -539,41 +539,41 @@ theorem evaluate_samples (samples : Curves.Hyperelliptic.Charts.Reciprocal.Disk.
   request.index :=
   let firstCap := Primitives.Sample.build cap differential request.index collar.box
   let otherCap := Primitives.Sample.build cap other request.index collar.box
-  request.evaluate (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank.ofCapSamples (cover := cover)
+  request.evaluate (SampleBank.ofCapSamples (cover := cover)
     (otherCover := otherCover) firstCap otherCap) le_rfl 0
 
 /-- The complete finite indexed sum equals the Gaussian sum of the actual ordered list readings. -/
-private theorem sum_get {α : Type} (values : α → InverseRootPolynomial.Gaussian) (entries : List α) :
-    FiniteSum.Fin.sumFin (fun i : Fin entries.length => values (entries[i.val]'i.isLt)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map values) := by
+private theorem sum_get {α : Type} (values : α → Gaussian) (entries : List α) :
+    sumFin (fun i : Fin entries.length => values (entries[i.val]'i.isLt)) =
+      Basic.gaussianSum (entries.map values) := by
   induction entries with
   | nil => rfl
   | cons head tail ih =>
     rw [FiniteSum.Fin.sumFin_succ]
-    change values head + FiniteSum.Fin.sumFin (fun i : Fin tail.length => values (tail[i.val]'i.isLt)) =
-      values head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map values)
+    change values head + sumFin (fun i : Fin tail.length => values (tail[i.val]'i.isLt)) =
+      values head + Basic.gaussianSum (tail.map values)
     exact congrArg (fun value => values head + value) ih
 
 /-- Mapping actual common intervals to their retained edges preserves the corresponding Gaussian sum. -/
-private theorem sum_edges (values : ClearSheetContinuation.Subdivision.ParameterEdge → InverseRootPolynomial.Gaussian)
-    (entries : List (UniformReciprocalCommonCover.CommonInterval cover otherCover)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun interval => values interval.edge)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((entries.map CommonInterval.edge).map values) := by
+private theorem sum_edges (values : ClearSheetContinuation.Subdivision.ParameterEdge → Gaussian)
+    (entries : List (CommonInterval cover otherCover)) :
+    Basic.gaussianSum (entries.map (fun interval => values interval.edge)) =
+      Basic.gaussianSum ((entries.map CommonInterval.edge).map values) := by
   induction entries with
   | nil => rfl
   | cons head tail ih => exact congrArg (fun value => values head.edge + value) ih
 
 /-- The complete actual common-interval area sum equals the full original parent trace at the combined coarse and fine
 depths. -/
-private theorem sum_interval_areas (values : InverseRootPolynomial.Coordinate → Stokes.PrimitivePoint)
+private theorem sum_interval_areas (values : Coordinate → Stokes.PrimitivePoint)
     (traceDepth : Nat) :
-    FiniteSum.Fin.sumFin (fun i : Fin common.intervals.length => DyadicBilinearBoundaryRibbon.dyadicArea values
-      traceDepth (CommonChartPreparation.IntervalAt common i).edge.left.parameter (CommonChartPreparation.IntervalAt
+    sumFin (fun i : Fin common.intervals.length => DyadicBilinearBoundaryRibbon.dyadicArea values
+      traceDepth (IntervalAt common i).edge.left.parameter (IntervalAt
         common i).edge.right.parameter) =
       DyadicBilinearBoundaryRibbon.dyadicArea values (common.depth + traceDepth) 0 1 := by
-  dsimp only [CommonChartPreparation.IntervalAt, -eq_self, -iff_self]
+  dsimp only [IntervalAt, -eq_self, -iff_self]
   rw [sum_get (fun interval :
-    UniformReciprocalCommonCover.CommonInterval cover otherCover =>
+    CommonInterval cover otherCover =>
     DyadicBilinearBoundaryRibbon.dyadicArea values
       traceDepth interval.edge.left.parameter interval.edge.right.parameter) common.intervals]
   rw [sum_edges (fun edge =>
@@ -591,7 +591,7 @@ theorem Evaluation.sourceArea_full (evaluated :
       (common.depth + depth) 0 1 := by
   rw [evaluated.sourceArea_eq]
   have each (i : Fin common.intervals.length) := (evaluated.entries.get i).evaluated.sourceArea_eq
-  rw [FiniteSum.Fin.sumFin_congr each]
+  rw [sumFin_congr each]
   exact sum_interval_areas _ _
 
 /-- Local centering removes precisely the common mesh's coarse polygon, not the full parent area. Its cross-interval
@@ -604,13 +604,13 @@ theorem Evaluation.sourceCenteredArea_full (evaluated :
   rw [evaluated.sourceCenteredArea_eq]
   have each (i : Fin common.intervals.length) :=
     (evaluated.entries.get i).evaluated.source_centered_decomposition
-  rw [FiniteSum.Fin.sumFin_congr each, FiniteSum.Fin.sumFin_sub, ← evaluated.sourceArea_eq,
+  rw [sumFin_congr each, sumFin_sub, ← evaluated.sourceArea_eq,
     sum_interval_areas, Nat.add_zero]
 
 /-- Subtracting the actual coarse source polygon leaves a full centered-chart discrepancy below the original target. -/
 theorem Evaluation.full_centered_bounded (evaluated :
   Evaluation request index) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBilinearBoundaryRibbon.dyadicArea
+    normSq (DyadicBilinearBoundaryRibbon.dyadicArea
       (CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource)
       (common.depth + depth) 0 1 -
       DyadicBilinearBoundaryRibbon.dyadicArea
@@ -632,7 +632,7 @@ theorem Evaluation.coarseSourceArea_eq (evaluated :
     evaluated.coarseSourceArea = DyadicBilinearBoundaryRibbon.dyadicArea
       (CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource)
       common.depth 0 1 := by
-  unfold CommonChartBank.ChartRequest.Evaluation.coarseSourceArea
+  unfold Evaluation.coarseSourceArea
   rw [evaluated.sourceCenteredArea_full]
   ring1
 
@@ -640,7 +640,7 @@ theorem Evaluation.coarseSourceArea_eq (evaluated :
 target. -/
 theorem Evaluation.full_bounded (evaluated :
   Evaluation request index) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBilinearBoundaryRibbon.dyadicArea
+    normSq (DyadicBilinearBoundaryRibbon.dyadicArea
       (CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource)
       (common.depth + depth) 0 1 - evaluated.chartArea - evaluated.correction) < target := by
   rw [← evaluated.sourceArea_full]
@@ -651,15 +651,15 @@ theorem Evaluation.full_bounded (evaluated :
   Evaluation request index) :=
   List.ofFn (fun i : Fin common.intervals.length => DyadicPairedPrimitivePaths.increments
     (CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource)
-    depth (CommonChartPreparation.IntervalAt common i).edge.left.parameter (CommonChartPreparation.IntervalAt common
+    depth (IntervalAt common i).edge.left.parameter (IntervalAt common
       i).edge.right.parameter)
 
 /-- Every restored interval is joined in the retained common-cover order. The summary composes cached totals and areas,
 including all cross terms. -/
 @[expose] def Evaluation.joinedCharts (evaluated :
   Evaluation request index) :
-    SourceComparisonRequest.PathReplacement evaluated.sourceBlocks.flatten :=
-  PathReplacement.join _ (fun i => (evaluated.entries.get i).evaluated.sourceReplacement)
+    PathReplacement evaluated.sourceBlocks.flatten :=
+  join _ (fun i => (evaluated.entries.get i).evaluated.sourceReplacement)
 
 /-- Each actual interval replacement bound is strictly below its original retained allowance. -/
 theorem Evaluation.localRestoration_paid (evaluated :
@@ -675,11 +675,11 @@ theorem Evaluation.localRestoration_paid (evaluated :
 theorem Evaluation.joinedCharts_paid (evaluated :
   Evaluation request index) :
   evaluated.joinedCharts.bound < target := by
-  have bound := PathReplacement.join_bound _
+  have bound := join_bound _
     (fun i => (evaluated.entries.get i).evaluated.sourceReplacement) (fun i =>
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.Evaluation.localRestoration_paid request
+      (Evaluation.localRestoration_paid request
       evaluated i).le)
-  have paid := (congrArg₂ (fun a b : InverseRootPolynomial.Coordinate => a * b) request.joinBudget.rate_eq.symm
+  have paid := (congrArg₂ (fun a b : Coordinate => a * b) request.joinBudget.rate_eq.symm
     request.allowance_eq).trans_lt
     request.joinBudget.join_paid
   exact bound.trans_lt paid
@@ -691,7 +691,7 @@ theorem Evaluation.sourceBlocks_full (evaluated :
       (CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource)
       (common.depth + depth) 0 1 := by
   let values := CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource
-  let read := fun interval : UniformReciprocalCommonCover.CommonInterval cover otherCover =>
+  let read := fun interval : CommonInterval cover otherCover =>
     DyadicPairedPrimitivePaths.increments values
     depth interval.edge.left.parameter interval.edge.right.parameter
   have mapped : List.ofFn (fun i : Fin common.intervals.length => read (common.intervals[i.val]'i.isLt)) =
@@ -703,7 +703,7 @@ theorem Evaluation.sourceBlocks_full (evaluated :
   rw [mapped]
   have edges : common.intervals.map read = (common.intervals.map CommonInterval.edge).map
       (fun edge => DyadicPairedPrimitivePaths.increments values depth edge.left.parameter edge.right.parameter) := by
-    rw [Data.List.Map.map_map]
+    rw [Map.map_map]
     rfl
   rw [edges, common.edges_eq]
   exact Bilinear.dyadicEdges_flatten_increments values common.depth depth
@@ -720,7 +720,7 @@ theorem Evaluation.joinedCharts_total (evaluated :
 /-- The actual complete source-area discrepancy satisfies the retained joined-chart bound. -/
 theorem Evaluation.joinedCharts_bounded (evaluated :
   Evaluation request index) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments
+    normSq (PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments
       (CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource)
       (common.depth + depth) 0 1) - evaluated.joinedCharts.chart.areaValue) ≤ evaluated.joinedCharts.bound := by
   rw [← evaluated.sourceBlocks_full, ← evaluated.joinedCharts.source.area_eq]
@@ -729,12 +729,12 @@ theorem Evaluation.joinedCharts_bounded (evaluated :
 /-- The actual complete source and restored joined-chart areas satisfy the original requested target. -/
 theorem Evaluation.joinedCharts_accurate (evaluated :
   Evaluation request index) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments
+    normSq (PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments
       (CommonRibbonRequest.sourceValues evaluated.samples.source evaluated.samples.otherSource)
       (common.depth + depth) 0 1) - evaluated.joinedCharts.chart.areaValue) < target :=
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.Evaluation.joinedCharts_bounded request
+  (Evaluation.joinedCharts_bounded request
     evaluated).trans_lt
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.Evaluation.joinedCharts_paid request
+    (Evaluation.joinedCharts_paid request
     evaluated)
 
 end ChartRequest

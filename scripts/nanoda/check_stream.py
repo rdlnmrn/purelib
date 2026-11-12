@@ -5,16 +5,26 @@ This certifies checker success for these bytes only. The caller remains
 responsible for validating export provenance and required-root coverage.
 """
 import argparse
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 
 POLICY = 'nanoda-empty-axioms-no-skips-exact-count-v3'
+
+
+@contextmanager
+def attempt(cache):
+    """Preserve frozen inputs, output and raw exit on failure or interruption."""
+    folder = Path(tempfile.mkdtemp(prefix='nanoda-check-', dir=cache))
+    yield folder
+    shutil.rmtree(folder)
 
 
 def digest(path):
@@ -38,7 +48,22 @@ def result(report, expected_declarations=None):
     return {'declarations': int(successes[0]), 'axioms': sorted(set(axioms)), 'report': report}
 
 
-def check(stream, checker, config, cache, expected_declarations=None):
+def module_results(report, expected_declarations):
+    """Require complete, unique module timings from the guarded checker."""
+    modules = {}
+    for line in report.splitlines():
+        if line.startswith('nanoda module\t'):
+            _, owner, micros, count = line.split('\t')
+            micros, count = int(micros), int(count)
+            if not owner or owner in modules or micros < 0 or micros >= 30_000_000 or count <= 0:
+                raise ValueError('invalid or slow nanoda module result: ' + line)
+            modules[owner] = {'seconds': micros / 1_000_000, 'declarations': count}
+    if sum(row['declarations'] for row in modules.values()) != expected_declarations:
+        raise ValueError('nanoda module results do not cover every checked declaration')
+    return modules
+
+
+def check(stream, checker, config, cache, expected_declarations=None, *, owners=None):
     stream, checker, config, cache = map(Path, (stream, checker, config, cache))
     config_bytes = config.read_bytes()
     settings = json.loads(config_bytes)
@@ -55,6 +80,11 @@ def check(stream, checker, config, cache, expected_declarations=None):
                 'config': hashlib.sha256(config_bytes).hexdigest(), 'policy': POLICY,
                 'helper': digest(Path(__file__)),
                 'expected_declarations': expected_declarations}
+    if owners is not None:
+        owners = Path(owners)
+        identity['module_owners'] = digest(owners)
+        identity['module_timeout_seconds'] = 300
+        identity['module_target_seconds'] = 30
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     cache.mkdir(parents=True, exist_ok=True)
     receipt = cache / (key + '.json')
@@ -65,25 +95,50 @@ def check(stream, checker, config, cache, expected_declarations=None):
             if saved.get('schema') != 1 or saved.get('identity') != identity:
                 raise ValueError(f'invalid nanoda checker receipt: {receipt}')
             checked = result(saved['result']['report'], expected_declarations)
+            if owners is not None:
+                checked['modules'] = module_results(checked['report'], checked['declarations'])
             if checked != saved['result']:
                 raise ValueError(f'inconsistent nanoda checker receipt: {receipt}')
             return checked, True
         # Run with the exact configuration bytes named by the identity, even if
         # the caller later rewrites its temporary runtime configuration file.
-        with tempfile.TemporaryDirectory(prefix='nanoda-check-', dir=cache) as temporary:
+        with attempt(cache) as temporary:
             frozen = Path(temporary) / 'config.json'
             frozen.write_bytes(config_bytes)
+            command = [str(checker.resolve()), str(frozen.resolve())]
+            if owners is not None:
+                frozen_owners = Path(temporary) / 'owners.tsv'
+                frozen_owners.write_bytes(owners.read_bytes())
+                if digest(frozen_owners) != identity['module_owners']:
+                    raise ValueError('module ownership changed before checking')
+                command += ['--modules', str(frozen_owners.resolve())]
             with stream.open('rb') as source:
-                process = subprocess.run([str(checker.resolve()), str(frozen.resolve())],
-                                         stdin=source, stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, text=True)
-            if process.returncode:
-                raise RuntimeError(f'nanoda exited {process.returncode}:\n{process.stdout}')
-            checked = result(process.stdout, expected_declarations)
+                with (Path(temporary) / 'output.log').open('wb') as output:
+                    process = subprocess.Popen(command, stdin=source, stdout=output, stderr=subprocess.STDOUT)
+                    try:
+                        raw_code = process.wait()
+                    except BaseException:
+                        process.terminate()
+                        try:
+                            raw_code = process.wait(timeout=15)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            raw_code = process.wait()
+                        (Path(temporary) / 'exit.json').write_text(json.dumps({'raw_exit_code': raw_code}) + '\n')
+                        raise
+                    (Path(temporary) / 'exit.json').write_text(json.dumps({'raw_exit_code': raw_code}) + '\n')
+            report = (Path(temporary) / 'output.log').read_text()
+            if raw_code:
+                raise RuntimeError(f'nanoda exited {raw_code}:\n{report}')
+            checked = result(report, expected_declarations)
+            if owners is not None:
+                checked['modules'] = module_results(report, checked['declarations'])
             # Do not publish success under an identity whose inputs changed
             # during checking. Export producers should already be immutable.
             if digest(stream) != identity['stream'] or digest(checker) != identity['checker']:
                 raise ValueError('nanoda input changed during checking')
+            if owners is not None and digest(owners) != identity['module_owners']:
+                raise ValueError('module ownership changed during checking')
             pending = Path(temporary) / 'receipt.json'
             pending.write_text(json.dumps({'schema': 1, 'identity': identity,
                                           'result': checked}, sort_keys=True) + '\n')

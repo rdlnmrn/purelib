@@ -99,28 +99,28 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalModels (Terminal
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent ParentData)
 open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements (DirectPathChain)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {center :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian}
-  {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-    ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval center)} {count :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {center :
+    Gaussian}
+  {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+    ((HyperellipticReciprocal.polynomial curve).eval center)} {count :
     Nat}
-  {terminal : Terminal cap owner count} {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential
+  {terminal : Terminal cap owner count} {differential : Differential
     genus}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data terminal differential}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor index : Nat} {box :
-    Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {comparison : TerminalComparison.Data terminal differential}
+  {target : Coordinate} {floor index : Nat} {box :
+    Geometry.Rational.Box}
+  {capSample : Primitives.Sample cap differential index box}
 
 set_option genInjectivity false in
 /-- The displayed base point, retained root coordinate, and negative cap primitive value used by the positive reciprocal
 integrator. -/
-structure Vertex (capSample : Primitives.Sample cap differential index box) (target : InverseRootPolynomial.Coordinate)
+structure Vertex (capSample : Primitives.Sample cap differential index box) (target : Coordinate)
   where
-  /-- The original physical endpoint displayed by the retained chart vertex. -/ point : InverseRootPolynomial.Gaussian
-  /-- The cached original root-coordinate reading at this endpoint. -/ coordinate : InverseRootPolynomial.Gaussian
-  /-- The cached signed cap primitive value at the retained chart coordinate. -/ value : InverseRootPolynomial.Gaussian
+  /-- The original physical endpoint displayed by the retained chart vertex. -/ point : Gaussian
+  /-- The cached original root-coordinate reading at this endpoint. -/ coordinate : Gaussian
+  /-- The cached signed cap primitive value at the retained chart coordinate. -/ value : Gaussian
   /-- The cached value is exactly the negative original regular or ramified cap primitive evaluation. -/ value_eq :
     value = -(if HyperellipticReciprocal.originOrder curve = 0 then coordinate * capSample.primitive.value.eval point
     else capSample.primitive.value.eval coordinate)
@@ -134,29 +134,29 @@ namespace PointRequest
 
 /-- Read the original point, retained root coordinate and signed cap primitive value from this exact endpoint
 evaluation. -/
-@[expose] public def Evaluation.vertex {point : InverseRootPolynomial.Gaussian} {request : FineCharts.PointRequest
+@[expose] public def Evaluation.vertex {point : Gaussian} {request : PointRequest
   comparison point target floor}
     {source : PolynomialPullback.Sample terminal.preparation capSample}
-    (evaluated : PointRequest.Evaluation request source) : Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex
+    (evaluated : Evaluation request source) : Vertex
       capSample target :=
   ⟨point, evaluated.chart.reading.coordinate, -evaluated.chart.reading.value,
     congrArg Neg.neg evaluated.chart.reading.value_eq, evaluated.chart.square_accurate⟩
 
 /-- Equal original physical endpoints give heterogeneously equal retained point requests. -/
-theorem build_heq {first last : InverseRootPolynomial.Gaussian} (equal : first = last)
+theorem build_heq {first last : Gaussian} (equal : first = last)
     (firstInside : terminal.neighborhood.patch.box.Contains first) (lastInside :
       terminal.neighborhood.patch.box.Contains last)
     (firstCap : collar.box.Contains first) (lastCap : collar.box.Contains last)
     (positive : 0 < target) :
-    HEq (PointRequest.build comparison first firstInside firstCap target positive floor)
-      (PointRequest.build comparison last lastInside lastCap target positive floor) := by
+    HEq (build comparison first firstInside firstCap target positive floor)
+      (build comparison last lastInside lastCap target positive floor) := by
   cases equal
   rfl
 
 /-- Equal original endpoint requests give exactly equal evaluated chart vertices at the same retained polynomial stage.
 -/
-theorem evaluate_vertex_eq {first last : InverseRootPolynomial.Gaussian} (equal : first = last)
-    {firstRequest : FineCharts.PointRequest comparison first target floor} {lastRequest : FineCharts.PointRequest
+theorem evaluate_vertex_eq {first last : Gaussian} (equal : first = last)
+    {firstRequest : PointRequest comparison first target floor} {lastRequest : PointRequest
       comparison last target floor}
     (same : HEq firstRequest lastRequest)
     (source : PolynomialPullback.Sample terminal.preparation capSample)
@@ -172,16 +172,16 @@ end PointRequest
 namespace Requests
 
 /-- Adjacent original child requests retain exactly matching endpoint preparations. -/
-@[expose] public def Shared : {children : List (Parent curve differential)} → FineCharts.Requests comparison target
+@[expose] public def Shared : {children : List (Parent curve differential)} → Requests comparison target
   floor children → Prop
   | _, .nil => True
   | _, .cons _ .nil => True
   | _, .cons request (.cons next remaining) => HEq request.last next.first ∧
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Requests.Shared (.cons next remaining)
+    Requests.Shared (.cons next remaining)
 
 /-- The original first child begins at the retained path chain's actual starting coordinate. -/
 private theorem head_coordinate {child : Parent curve differential} {children : List (Parent curve differential)}
-    {start finish : Lifted.Basic.LiftedPoint 2} (chain : PreparedDirectDyadicRefinements.DirectPathChain (child ::
+    {start finish : Lifted.Basic.LiftedPoint 2} (chain : DirectPathChain (child ::
       children) (start := start) (finish := finish)) :
     child.edge.point 0 = start.coordinate := by
   cases chain
@@ -189,61 +189,61 @@ private theorem head_coordinate {child : Parent curve differential} {children : 
 
 /-- Preparing the original retained child chain gives matching requests at every shared physical endpoint. -/
 theorem build_shared {parent : Parent curve differential} {data : ParentData cap differential count parent}
-    {integrationTarget : InverseRootPolynomial.Coordinate} (request : PreparedPrimitives.Request data integrationTarget
+    {integrationTarget : Coordinate} (request : PreparedPrimitives.Request data integrationTarget
       floor)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
+    (target : Coordinate) (positive : 0 < target) :
     (children : List (Parent curve differential)) → (within : ∀ child ∈ children, child ∈ request.block.children) →
-    {start finish : Lifted.Basic.LiftedPoint 2} → PreparedDirectDyadicRefinements.DirectPathChain children (start :=
+    {start finish : Lifted.Basic.LiftedPoint 2} → DirectPathChain children (start :=
       start) (finish := finish) →
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Requests.Shared (Requests.build request target positive
+      Shared (build request target positive
         children within)
   | [], _, _, _, .nil _ => trivial
   | [_], _, _, _, .cons _ _ => trivial
   | child :: next :: children, within, _, _, .cons _ tail => by
-      refine ⟨?_, Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Requests.build_shared request target
+      refine ⟨?_, Requests.build_shared request target
         positive (next :: children)
         (fun next member => within next (List.mem_cons_of_mem child member)) tail⟩
       have junction : child.edge.point 1 = next.edge.point 0 := child.edge.point_one.trans
-        (Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Requests.head_coordinate tail).symm
-      exact Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.PointRequest.build_heq junction _ _ _ _ positive
+        (head_coordinate tail).symm
+      exact PointRequest.build_heq junction _ _ _ _ positive
 
 end Requests
 
 namespace Samples
 
-variable {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample terminal.preparation
+variable {source : PolynomialPullback.Sample terminal.preparation
   capSample}
 
 /-- Adjacent original evaluated children retain literally equal chart endpoint vertices. -/
-@[expose] public def Shared : {children : List (Parent curve differential)} → {requests : FineCharts.Requests comparison
+@[expose] public def Shared : {children : List (Parent curve differential)} → {requests : Requests comparison
   target floor children} →
-    FineCharts.Samples source requests → Prop
+    Samples source requests → Prop
   | _, .nil, _ => True
   | _, .cons _ .nil, _ => True
   | _, .cons _ (.cons _ _), samples => samples.1.last.vertex = samples.2.1.first.vertex ∧
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Samples.Shared samples.2
+    Samples.Shared samples.2
 
 /-- Evaluate the original shared requests on one later polynomial stage and preserve exact common chart vertices. -/
 theorem build_shared (source : PolynomialPullback.Sample terminal.preparation capSample) :
-    {children : List (Parent curve differential)} → (requests : FineCharts.Requests comparison target floor children) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Requests.Shared requests → {start finish :
+    {children : List (Parent curve differential)} → (requests : Requests comparison target floor children) →
+    Requests.Shared requests → {start finish :
       Lifted.Basic.LiftedPoint 2} →
-    PreparedDirectDyadicRefinements.DirectPathChain children (start := start) (finish := finish) →
-    (later : requests.index ≤ index) → Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Samples.Shared
-      (Samples.build source requests later)
+    DirectPathChain children (start := start) (finish := finish) →
+    (later : requests.index ≤ index) → Shared
+      (build source requests later)
   | _, .nil, _, _, _, .nil _, _ => trivial
   | _, .cons _ .nil, _, _, _, .cons _ _, _ => trivial
   | child :: _ :: _, .cons request (.cons next remaining), shared, _, _, .cons _ tail, later => by
-      refine ⟨?_, Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Samples.build_shared source (.cons next
-        remaining) shared.2 tail ((Purelib.Data.Nat.Order.le_max_right _ _).trans later)⟩
+      refine ⟨?_, Samples.build_shared source (.cons next
+        remaining) shared.2 tail ((Data.Nat.Order.le_max_right _ _).trans later)⟩
       have junction : child.edge.point 1 = _ := child.edge.point_one.trans
-        (Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Requests.head_coordinate tail).symm
-      have requestLater : request.index ≤ index := (Purelib.Data.Nat.Order.le_max_left _ _).trans later
-      have nextLater : next.index ≤ index := (Purelib.Data.Nat.Order.le_max_left _ _).trans
-        ((Purelib.Data.Nat.Order.le_max_right _ _).trans later)
-      exact Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.PointRequest.evaluate_vertex_eq junction shared.1
+        (Requests.head_coordinate tail).symm
+      have requestLater : request.index ≤ index := (Data.Nat.Order.le_max_left _ _).trans later
+      have nextLater : next.index ≤ index := (Data.Nat.Order.le_max_left _ _).trans
+        ((Data.Nat.Order.le_max_right _ _).trans later)
+      exact PointRequest.evaluate_vertex_eq junction shared.1
         source
-        ((Purelib.Data.Nat.Order.le_max_right _ _).trans requestLater) ((Purelib.Data.Nat.Order.le_max_left _ _).trans
+        ((Data.Nat.Order.le_max_right _ _).trans requestLater) ((Data.Nat.Order.le_max_left _ _).trans
           nextLater)
 
 end Samples

@@ -46,6 +46,8 @@ import Purelib.Integration.Path.IncrementArea
 import Purelib.Riemann.Branches.ClearSheetContinuation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -96,14 +98,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
     BasisSourceCovers parent}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin_zero sumFin_mul_right)
@@ -128,25 +130,25 @@ variable {sample :
   {target : Coordinate} {floor : Nat}
 
 /-- Refinement preserves the exact endpoints without assuming path closure. -/
-theorem Block.pullback_refinement_total (before : PrimitiveSample.Block sample coefficients coarse)
-    (after : PrimitiveSample.Block sample coefficients (coarse + fine)) :
+theorem Block.pullback_refinement_total (before : Block sample coefficients coarse)
+    (after : Block sample coefficients (coarse + fine)) :
     after.pullback.summary.total = before.pullback.summary.total := by
   rw [after.pullback.total, before.pullback.total]
 
 /-- Full area comparison, uniform in the further finite refinement depth. -/
-theorem Block.pullback_refinement_area (before : PrimitiveSample.Block sample coefficients coarse)
-    (after : PrimitiveSample.Block sample coefficients (coarse + fine))
-    (request : BasisCommonInterval.PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
+theorem Block.pullback_refinement_area (before : Block sample coefficients coarse)
+    (after : Block sample coefficients (coarse + fine))
+    (request : PrimitiveRequest interval regular target floor) (later : request.index ≤ index) :
     Data.Gaussian.Norm.Basic.normSq (after.pullback.summary.area - before.pullback.summary.area) ≤
-      Geometric.Basic.quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + target)^2) coarse *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 * (interval.edge.right.parameter -
+      quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + target)^2) coarse *
+        (coefficientNormSq coefficients)^2 * (interval.edge.right.parameter -
           interval.edge.left.parameter)^4 := by
-  have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have normNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
-  have nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+      normSq_nonneg (coefficients row)))
+  have nonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
       (add_nonneg (BasisSourceCovers.primitiveSlope_nonnegative covers) request.positive.le)) normNonnegative
   have bound := DyadicAreaRefinement.dyadicArea_refinement_bound (PrimitiveSample.pullbackPath sample coefficients)
     nonnegative
@@ -155,47 +157,47 @@ theorem Block.pullback_refinement_area (before : PrimitiveSample.Block sample co
     coarse fine ⟨le_rfl, interval.ordered⟩ ⟨interval.ordered, le_rfl⟩ interval.ordered
   rw [← after.pullback_area, ← before.pullback_area] at bound
   exact bound.trans_eq (by
-      rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow];
+      rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow];
       ring1)
 
 /-- Clipping the request tolerance at one makes the depth scale independent of the chosen polynomial tolerance and
 numerical index. -/
-theorem Block.pullback_refinement_uniform (before : PrimitiveSample.Block sample coefficients coarse)
-    (after : PrimitiveSample.Block sample coefficients (coarse + fine))
-    (request : BasisCommonInterval.PrimitiveRequest interval regular target floor) (later : request.index ≤ index)
+theorem Block.pullback_refinement_uniform (before : Block sample coefficients coarse)
+    (after : Block sample coefficients (coarse + fine))
+    (request : PrimitiveRequest interval regular target floor) (later : request.index ≤ index)
       (small : target ≤ 1) :
     Data.Gaussian.Norm.Basic.normSq (after.pullback.summary.area - before.pullback.summary.area) ≤
-      Geometric.Basic.quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + 1)^2) coarse *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
-  have scale := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.pow_le_pow_direct (add_nonneg (BasisSourceCovers.primitiveSlope_nonnegative covers)
+      quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + 1)^2) coarse *
+        (coefficientNormSq coefficients)^2 := by
+  have scale := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.pow_le_pow_direct (add_nonneg (BasisSourceCovers.primitiveSlope_nonnegative covers)
       request.positive.le)
-      (Fraction.Order.Arithmetic.add_le_add_direct le_rfl small) 2) (by
-          decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 16)
-  have quarter : Geometric.Basic.quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + target)^2) coarse ≤
-      Geometric.Basic.quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + 1)^2) coarse := by
-    rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct scale (Fraction.Order.Arithmetic.pow_nonneg_direct
+      (Arithmetic.add_le_add_direct le_rfl small) 2) (by
+          decide +kernel : (0 : Coordinate) ≤ 16)
+  have quarter : quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + target)^2) coarse ≤
+      quarterRadius (16 * (BasisSourceCovers.primitiveSlope covers + 1)^2) coarse := by
+    rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct scale (Arithmetic.pow_nonneg_direct
       (by decide) coarse)
   have width : interval.edge.right.parameter - interval.edge.left.parameter ≤ 1 :=
-    (Fraction.Order.Arithmetic.sub_le_sub_direct interval.edge.right.inside.2 interval.edge.left.inside.1).trans_eq
-      (show (1 : InverseRootPolynomial.Coordinate) - 0 = 1 by decide +kernel)
-  have widthPower := (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.sub_nonneg_direct
+    (Arithmetic.sub_le_sub_direct interval.edge.right.inside.2 interval.edge.left.inside.1).trans_eq
+      (show (1 : Coordinate) - 0 = 1 by decide +kernel)
+  have widthPower := (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct
     interval.ordered) width 4).trans_eq (_root_.one_pow _)
-  have nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
+  have nonnegative := Arithmetic.mul_nonneg_direct
     (Geometric.Basic.quarterRadius_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 16)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (BasisSourceCovers.primitiveSlope covers + 1))) coarse)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (PreparedObservationCoercivity.coefficientNormSq coefficients))
-  have clipped := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct widthPower nonnegative
+      (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 16)
+        (Arithmetic.sq_nonneg_direct (BasisSourceCovers.primitiveSlope covers + 1))) coarse)
+    (Arithmetic.sq_nonneg_direct (coefficientNormSq coefficients))
+  have clipped := Arithmetic.mul_le_mul_of_nonneg_left_direct widthPower nonnegative
   rw [Fraction.Field.mul_one_direct] at clipped
   exact
     (Block.pullback_refinement_area
     before after request later).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct quarter (Fraction.Order.Arithmetic.sq_nonneg_direct
+    ((Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct quarter (Arithmetic.sq_nonneg_direct
       _))
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Order.Arithmetic.sub_nonneg_direct interval.ordered)
+      (Arithmetic.pow_nonneg_direct (Arithmetic.sub_nonneg_direct interval.ordered)
         4)).trans clipped)
 
 end BasisCommonInterval.PrimitiveSample

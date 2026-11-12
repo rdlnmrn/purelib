@@ -136,3 +136,16 @@ theorem prepareApartState_persists {process :
 end Purelib.Approximation.Gaussian.Process.Apart.Preparation
 
 end
+
+namespace Purelib.Approximation.Gaussian.Process.Apart.Preparation.ApartState
+
+/-- The original source state determines the complete apart state, including its whole-ball lower bound. -/
+public theorem eq_of_source_eq {process : Approximation.Gaussian.Process}
+    {apart : Possible.PossibleApart process} {left right : ApartState process apart}
+    (same : left.source = right.source) : left = right := by
+  cases left
+  cases right
+  cases same
+  rfl
+
+end Purelib.Approximation.Gaussian.Process.Apart.Preparation.ApartState

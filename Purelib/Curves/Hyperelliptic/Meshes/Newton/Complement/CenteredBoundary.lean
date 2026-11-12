@@ -99,33 +99,33 @@ open Purelib.Riemann.RootContinuation.NewtonGlobalCenteredBoundary.SynchronizedS
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Complement.ObservationLower (remainingFaceMask)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {lifted : LiftedPuncturedGrid grid.punctured}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    grid.faces.regulars} {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions
+  {domains : FaceDomainBank frames
+    grid.faces.regulars} {partitions : SurfacePartitions
     observations grid}
-  {coarse : (sheet : Fin 2) → Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains
+  {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains
     sheet}
-  {fixed : (sheet : Fin 2) → Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet}
-    {error : Purelib.Data.Rat.Fraction.Rational}
-  {stage : Nat} {cache : Purelib.Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains
+  {fixed : (sheet : Fin 2) → Preflights domains sheet}
+    {error : Rational}
+  {stage : Nat} {cache : Numerics domains
     stage} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace SynchronizedSurfaceRequests.PerimeterSamples
 
-variable {requests : Purelib.Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed
-  error} {traces : Purelib.Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces
+variable {requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed
+  error} {traces : SynchronizedSurfaceRequests.PerimeterTraces
   requests}
-  (excision : Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
-  (samples : Purelib.Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests
+  (excision : AllHoles.Excision.AllHoleExcision grid lifted)
+  (samples : Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests
     traces cache coefficients)
 
 /-- The centered paired-side evaluation on the actual regular faces remaining after excision. -/
@@ -144,10 +144,10 @@ variable {requests : Purelib.Riemann.Topology.NewtonSynchronizedSurfaceRequests.
     (PerimeterSamples.endpointSideSum samples)
 
 /-- The signed corner areas of the original remaining faces on both retained sheets. -/
-@[expose] def remainingCornerBoundary {assemblies : SynchronizedSurfaceRequests.SheetAssemblies requests (cache :=
+@[expose] def remainingCornerBoundary {assemblies : SheetAssemblies requests (cache :=
   cache) (coefficients := coefficients)}
-    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies} (faces :
-      SynchronizedSurfaceRequests.SheetFaces requests perimeters) : Gaussian :=
+    {perimeters : SheetPerimeters requests assemblies} (faces :
+      SheetFaces requests perimeters) : Gaussian :=
   FiniteSum.Fin.sumFin (fun position => SelectedSides.value (ObservationLower.remainingFaceMask excision position)
     (FiniteSum.Fin.sumFin (fun sheet : Fin 2 =>
     let face := (faces.get sheet).get position
@@ -158,16 +158,16 @@ variable {requests : Purelib.Riemann.Topology.NewtonSynchronizedSurfaceRequests.
       (face.corners 0 (Fin.last (PieceIndices.rows (partitions.get position)))).upperLeft)))
 
 /-- The original selected endpoint-area total equals the retained remaining-face corner boundary. -/
-private theorem remaining_endpointTotal_readback {assemblies : SynchronizedSurfaceRequests.SheetAssemblies requests
+private theorem remaining_endpointTotal_readback {assemblies : SheetAssemblies requests
   (cache := cache) (coefficients := coefficients)}
-    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies} (faces :
-      SynchronizedSurfaceRequests.SheetFaces requests perimeters) :
+    {perimeters : SheetPerimeters requests assemblies} (faces :
+      SheetFaces requests perimeters) :
 
       remainingEndpointTotal
       excision samples =
       remainingCornerBoundary
       excision faces := by
-  unfold CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingEndpointTotal
+  unfold PerimeterSamples.remainingEndpointTotal
     SelectedEvaluationPartition.perimeterEvaluation
     remainingCornerBoundary
   apply FiniteSum.Fin.sumFin_congr
@@ -182,15 +182,15 @@ private theorem remaining_endpointTotal_readback {assemblies : SynchronizedSurfa
 /-- The retained complement exterior splits into its centered perimeter and original endpoint-area total. -/
 private theorem remaining_exterior_split :
 
-      SurfaceEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remainingExterior
+      PerimeterSamples.remainingExterior
       excision samples =
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedEvaluationPartition.perimeterEvaluation
+      SelectedEvaluationPartition.perimeterEvaluation
         (ObservationLower.remainingFaceMask excision) (PerimeterSamples.centeredSideSum samples) +
 
           remainingEndpointTotal
           excision samples := by
   unfold PerimeterSamples.remainingExterior
-    CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingEndpointTotal
+    PerimeterSamples.remainingEndpointTotal
     SelectedEvaluationPartition.perimeterEvaluation
   rw [← FiniteSum.Fin.sumFin_add]
   apply FiniteSum.Fin.sumFin_congr
@@ -211,9 +211,9 @@ private theorem remaining_exterior_split :
 /-- The actual complement exterior equals the centered paired contribution, centered boundary and retained corner
 boundary. -/
 theorem remaining_exterior_eq_corner_boundary
-    {assemblies : SynchronizedSurfaceRequests.SheetAssemblies requests (cache := cache) (coefficients := coefficients)}
-    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies} (faces :
-      SynchronizedSurfaceRequests.SheetFaces requests perimeters)
+    {assemblies : SheetAssemblies requests (cache := cache) (coefficients := coefficients)}
+    {perimeters : SheetPerimeters requests assemblies} (faces :
+      SheetFaces requests perimeters)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) :
     PerimeterSamples.remainingExterior excision samples =
       remainingPairedCentered

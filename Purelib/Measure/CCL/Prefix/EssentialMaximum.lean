@@ -24,6 +24,9 @@ import Mathlib.Order.Basic
 import Mathlib.Order.MinMax
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.CCL
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
 section
@@ -50,10 +53,10 @@ open Purelib.Data.Rat in
 /-- Take the essential maximum magnitude of the retained certificates' scaled cylinder spreads. -/
 @[expose] def prefixFamilyProbeEssentialMaximumRadius
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (factor : Fraction.Rational) : Fraction.Rational :=
   distribution.essentialMaximumMagnitude fun certificate =>
-    factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks
+    factor * Cylinder.cylinderSpread certificate.blocks
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.Rat in
@@ -61,7 +64,7 @@ open Purelib.Geometry.Projective in
 /-- Take the essential maximum magnitude of the probe at the original certificate witnesses. -/
 @[expose] def prefixFamilyProbeWitnessEssentialMaximum
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) : Fraction.Rational :=
   distribution.essentialMaximumMagnitude fun certificate =>
     probe certificate.witness
@@ -72,7 +75,7 @@ open Purelib.Measure in
 /-- The essential maximum cylinder radius is nonnegative for every scalar factor. -/
 theorem prefixFamilyProbeEssentialMaximumRadius_nonnegative
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (factor : Fraction.Rational) :
     0 ≤ prefixFamilyProbeEssentialMaximumRadius distribution factor :=
   distribution.essentialMaximumMagnitude_nonnegative _
@@ -87,19 +90,19 @@ open Purelib.Measure
 The retained original law determines which zero-weight atoms are ignored by both quantities. -/
 @[expose] def prefixFamilyProbeEssentialMaximumBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational) :
-    Data.Rat.Interval where
+    Interval where
   lower := prefixFamilyProbeWitnessEssentialMaximum distribution probe -
     prefixFamilyProbeEssentialMaximumRadius distribution factor
   upper := prefixFamilyProbeWitnessEssentialMaximum distribution probe +
     prefixFamilyProbeEssentialMaximumRadius distribution factor
   valid := by
     have nonnegative := prefixFamilyProbeEssentialMaximumRadius_nonnegative distribution factor
-    apply Fraction.Order.Arithmetic.sub_le_iff_le_add_direct.mpr
-    have translated := Fraction.Order.Arithmetic.add_le_add_right_direct
+    apply Arithmetic.sub_le_iff_le_add_direct.mpr
+    have translated := Arithmetic.add_le_add_right_direct
       ((Fraction.zero_add (0 : Fraction.Rational)) ▸
-        Fraction.Order.Arithmetic.add_le_add_direct nonnegative nonnegative)
+        Arithmetic.add_le_add_direct nonnegative nonnegative)
       (prefixFamilyProbeWitnessEssentialMaximum distribution probe)
     calc
       (prefixFamilyProbeWitnessEssentialMaximum distribution probe) = 0 +
@@ -115,7 +118,7 @@ The retained original law determines which zero-weight atoms are ignored by both
 /-- The essential maximum enclosure has width twice its retained radius. -/
 theorem prefixFamilyProbeEssentialMaximumBound_width
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational) :
     (prefixFamilyProbeEssentialMaximumBound distribution probe factor).width =
       2 * prefixFamilyProbeEssentialMaximumRadius distribution factor := by
@@ -132,25 +135,25 @@ open Purelib.Measure in
 -/
 private theorem cellRadius_le_familyRadius
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor)
-    (atom : Measure.Weighted Cylinder.CompletedPrefixCertificate)
+    (atom : Weighted Cylinder.CompletedPrefixCertificate)
     (member : atom ∈ distribution.atoms) (nonzero : atom.weight ≠ 0) :
-    factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks ≤
+    factor * Cylinder.cylinderSpread atom.item.blocks ≤
       prefixFamilyProbeEssentialMaximumRadius distribution factor := by
   have bounded :=
     distribution.toContent
       |>.essentiallyBoundedBy_essentialMaximumMagnitude
-        (fun certificate => factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks)
+        (fun certificate => factor * Cylinder.cylinderSpread certificate.blocks)
         atom member
   rcases bounded with zero | bound
   · exact (nonzero zero).elim
   · have cellNonnegative :
-        0 ≤ factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
-        (Approximation.CCL.Cylinder.cylinderSpread_nonneg atom.item.blocks)
+        0 ≤ factor * Cylinder.cylinderSpread atom.item.blocks :=
+      Arithmetic.mul_nonneg_direct factorNonnegative
+        (Cylinder.cylinderSpread_nonneg atom.item.blocks)
     change Distance.rationalSeparation
-        (factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks) 0 ≤
+        (factor * Cylinder.cylinderSpread atom.item.blocks) 0 ≤
       prefixFamilyProbeEssentialMaximumRadius distribution factor at bound
     rw [Distance.rationalSeparation_zero_of_nonneg
       cellNonnegative] at bound
@@ -165,7 +168,7 @@ open Purelib.Measure
 radius. -/
 theorem prefixFamilyProbe_essentialMaximumDistance_le_radius
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -200,8 +203,8 @@ theorem prefixFamilyProbe_essentialMaximumDistance_le_radius
           factor * Chordal.Basic.chordalSq
             (points atom.item) atom.item.witness :=
         sensitive _ _
-      _ ≤ factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      _ ≤ factor * Cylinder.cylinderSpread atom.item.blocks :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (Realizes.chordalSq_le_half_pow
             (pointsRealize atom member) atom.item.witnessRealizes)
           factorNonnegative
@@ -212,7 +215,7 @@ theorem prefixFamilyProbe_essentialMaximumDistance_le_radius
 /-- The witness-centered enclosure contains the essential maximum magnitude of any realizing probe family. -/
 theorem prefixFamilyProbeEssentialMaximumBound_contains
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -241,16 +244,16 @@ theorem prefixFamilyProbeEssentialMaximumBound_contains
         prefixFamilyProbe_essentialMaximumDistance_le_radius distribution
           probe factor factorNonnegative sensitive points pointsRealize
   have directed : actual - center ≤ radius ∧ center - actual ≤ radius :=
-    ⟨(Fraction.Order.Basic.le_max_left _ _).trans separation,
-      (Fraction.Order.Basic.le_max_right _ _).trans separation⟩
+    ⟨(Basic.le_max_left _ _).trans separation,
+      (Basic.le_max_right _ _).trans separation⟩
   change center - radius ≤ actual ∧ actual ≤ center + radius
   constructor
-  · apply Fraction.Order.Arithmetic.sub_le_iff_le_add_direct.mpr
+  · apply Arithmetic.sub_le_iff_le_add_direct.mpr
     calc
-      center ≤ radius + actual := Fraction.Order.Arithmetic.sub_le_iff_le_add_direct.mp directed.2
+      center ≤ radius + actual := Arithmetic.sub_le_iff_le_add_direct.mp directed.2
       _ = actual + radius := by ring1
   · calc
-      actual ≤ radius + center := Fraction.Order.Arithmetic.sub_le_iff_le_add_direct.mp directed.1
+      actual ≤ radius + center := Arithmetic.sub_le_iff_le_add_direct.mp directed.1
       _ = center + radius := by ring1
 
 end
@@ -267,7 +270,7 @@ The positive sensitivity factor and per-atom request at one quarter of the targe
 essential radius. -/
 theorem prefixFamilyProbeEssentialMaximumBound_width_lt_requested
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -280,49 +283,49 @@ theorem prefixFamilyProbeEssentialMaximumBound_width_lt_requested
     (prefixFamilyProbeEssentialMaximumBound distribution probe factor).width <
       target := by
   have quarterPositive : 0 < target / 4 :=
-    Fraction.Order.Field.div_pos_direct targetPositive (by decide)
+    Field.div_pos_direct targetPositive (by decide)
   have radiusBound :
       prefixFamilyProbeEssentialMaximumRadius distribution factor ≤
         target / 4 := by
     apply distribution.toContent.essentialMaximumMagnitude_le
-      (fun certificate => factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks)
+      (fun certificate => factor * Cylinder.cylinderSpread certificate.blocks)
       (target / 4) quarterPositive.le
     intro atom member
     by_cases zero : atom.weight = 0
     · exact Or.inl zero
     · apply Or.inr
       have cellNonnegative :
-          0 ≤ factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct factorPositive.le
-          (Approximation.CCL.Cylinder.cylinderSpread_nonneg atom.item.blocks)
+          0 ≤ factor * Cylinder.cylinderSpread atom.item.blocks :=
+        Arithmetic.mul_nonneg_direct factorPositive.le
+          (Cylinder.cylinderSpread_nonneg atom.item.blocks)
       change Distance.rationalSeparation
-          (factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks) 0 ≤ target / 4
+          (factor * Cylinder.cylinderSpread atom.item.blocks) 0 ≤ target / 4
       rw [Distance.rationalSeparation_zero_of_nonneg
         cellNonnegative]
-      have widthSmall := Approximation.CCL.Prefix.completedPrefixProbeBound_width_lt_requested
+      have widthSmall := Prefix.completedPrefixProbeBound_width_lt_requested
         atom.item.witness atom.item.witnessRealizes probe factor
         factorPositive sensitive (target / 4) quarterPositive
         (enough atom member)
-      rw [Approximation.CCL.Prefix.completedPrefixProbeBound_width] at widthSmall
+      rw [Prefix.completedPrefixProbeBound_width] at widthSmall
       exact (calc
-          factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks ≤
-              2 * (factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks) := by
+          factor * Cylinder.cylinderSpread atom.item.blocks ≤
+              2 * (factor * Cylinder.cylinderSpread atom.item.blocks) := by
             calc
-              factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks =
-                  factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks + 0 := by ring1
-              _ ≤ factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks +
-                    factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks :=
+              factor * Cylinder.cylinderSpread atom.item.blocks =
+                  factor * Cylinder.cylinderSpread atom.item.blocks + 0 := by ring1
+              _ ≤ factor * Cylinder.cylinderSpread atom.item.blocks +
+                    factor * Cylinder.cylinderSpread atom.item.blocks :=
                 add_le_add le_rfl cellNonnegative
-              _ = 2 * (factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks) := by ring1
+              _ = 2 * (factor * Cylinder.cylinderSpread atom.item.blocks) := by ring1
           _ < target / 4 := widthSmall).le
   rw [prefixFamilyProbeEssentialMaximumBound_width]
   calc
     2 * prefixFamilyProbeEssentialMaximumRadius distribution factor ≤
         2 * (target / 4) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         radiusBound (by decide)
-    _ = target / 2 := Purelib.Data.Rat.Fraction.Order.two_mul_quarter_eq_half target
-    _ < target := Purelib.Data.Rat.Fraction.Order.Field.half_lt_self targetPositive
+    _ = target / 2 := Fraction.Order.two_mul_quarter_eq_half target
+    _ < target := Field.half_lt_self targetPositive
 
 end
 

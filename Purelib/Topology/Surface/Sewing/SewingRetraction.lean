@@ -321,7 +321,7 @@ path, signed face corrections, endpoints and value equality. -/
         first.correction ++ last.correction,
         fun endpoints => by
           cases endpoints with
-          | cons tail => exact PathEndpoints.append first.endpoints (last.endpoints tail),
+          | cons tail => exact PathBoundary.PathEndpoints.append first.endpoints (last.endpoints tail),
         fun value anti => by
           rw [SewingRetraction.wordValue, SewingRetraction.wordValue_append, SewingRetraction.faceValue_append,
             first.value_eq value anti, last.value_eq value anti]

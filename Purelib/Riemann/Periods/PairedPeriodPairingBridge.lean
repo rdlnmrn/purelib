@@ -22,6 +22,12 @@ public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoo
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface
+
+open Purelib.Topology.Surface.Sewing.CutIntersection.CutBoundaryWord.IntegralPairing
+
+open Purelib.Curves.Hyperelliptic.Branches
+
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
@@ -77,7 +83,7 @@ carries the ordered A/B pairing to the cut crossing/period layers.
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -90,14 +96,14 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 open Purelib.Topology in
 open Purelib.Data in
 /-- Read the valuation on the actual cut generators after their retained vertex relabeling. -/
-def generatorValues (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
+def generatorValues (value : OrientedEdge lifted.vertices.count → Canonical) :
     Fin lifted.cutBoundaryWord.alphabet.count → Gaussian :=
-  fun index => value (Surface.Sewing.VertexSewing.OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels
+  fun index => value (Sewing.VertexSewing.OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels
     (lifted.cutBoundaryWord.alphabet.generators index))
 
 open Purelib.Curves in
 /-- Compute the antisymmetric integer wedge of one retained A/B coordinate row pair. -/
-def coordinateWedge (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index : Fin
+def coordinateWedge (cut : CutBank prepared) (index : Fin
   genus) :
     Fin lifted.cutBoundaryWord.alphabet.count → Fin lifted.cutBoundaryWord.alphabet.count → Int :=
   fun row column =>
@@ -112,35 +118,35 @@ open Purelib.Data in
 
 The valuation is antisymmetric and both retained coordinate rows include their signed face corrections. The contraction
 uses the energy primitive of the same generator values. -/
-theorem row_pairing_eq_contract (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared)
+theorem row_pairing_eq_contract (cut : CutBank prepared)
   (index : Fin genus)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+    (value : OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Path.BoundaryRibbon.area (Surface.Sewing.SewingRetraction.wordValue value (prepared.aWord index))
-        (Surface.Sewing.SewingRetraction.wordValue value (prepared.bWord index)) =
-      Surface.Word.Pairing.contract (fun row column =>
+    Path.BoundaryRibbon.area (wordValue value (prepared.aWord index))
+        (wordValue value (prepared.bWord index)) =
+      Word.Pairing.contract (fun row column =>
           (cut.rows.get index).a.coordinates.totals row * (cut.rows.get index).b.coordinates.totals column -
           (cut.rows.get index).b.coordinates.totals row * (cut.rows.get index).a.coordinates.totals column)
         (fun column => Energy.Polygon.energyPrimitivePoint (generatorValues value column)) +
       Path.BoundaryRibbon.area
-        (Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (cut.rows.get index).a.coordinates.totals
+        (WordCoordinates.combine (cut.rows.get index).a.coordinates.totals
           (generatorValues value))
-        (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+        (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
           index).b.route.correction) +
       Path.BoundaryRibbon.area
-        (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+        (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
           index).a.route.correction)
-        (Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (cut.rows.get index).b.coordinates.totals
+        (WordCoordinates.combine (cut.rows.get index).b.coordinates.totals
           (generatorValues value)) +
       Path.BoundaryRibbon.area
-        (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+        (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
           index).a.route.correction)
-        (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+        (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
           index).b.route.correction) := by
   unfold generatorValues
   rw [(cut.rows.get index).a.value_eq value anti, (cut.rows.get index).b.value_eq value anti]
   simp only [Path.IncrementArea.area_add_left, Path.IncrementArea.area_add_right]
-  rw [Surface.Cut.CoordinatePairing.area_combine_eq_contract]
+  rw [Cut.CoordinatePairing.area_combine_eq_contract]
   ring1
 
 end Purelib.Riemann.Periods.PairedPeriodPairingBridge
@@ -148,7 +154,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -166,32 +172,32 @@ open Purelib.Data in
 /-- The ordered surface residual is the finite sum of coordinate-wedge contractions and retained face terms.
 
 Apply the row identity to the actual prepared A/B words under the same antisymmetric edge valuation. -/
-theorem surfaceResidual_eq_contract_sum (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem surfaceResidual_eq_contract_sum (cut : CutBank
   prepared)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+    (value : OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual prepared value) =
-      FiniteSum.Fin.sumFin (fun index : Fin genus =>
-        Surface.Word.Pairing.contract (coordinateWedge cut index)
+      sumFin (fun index : Fin genus =>
+        Word.Pairing.contract (coordinateWedge cut index)
           (fun column => Energy.Polygon.energyPrimitivePoint (generatorValues value column)) +
         Path.BoundaryRibbon.area
-          (Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (cut.rows.get index).a.coordinates.totals
+          (WordCoordinates.combine (cut.rows.get index).a.coordinates.totals
             (generatorValues value))
-          (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+          (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
             index).b.route.correction) +
         Path.BoundaryRibbon.area
-          (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+          (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
             index).a.route.correction)
-          (Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (cut.rows.get index).b.coordinates.totals
+          (WordCoordinates.combine (cut.rows.get index).b.coordinates.totals
             (generatorValues value)) +
         Path.BoundaryRibbon.area
-          (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+          (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
             index).a.route.correction)
-          (Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+          (faceValue lifted.mesh.triangulation.faces value (cut.rows.get
             index).b.route.correction)) := by
   rw [← (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.pairing_eq_surfaceResidual prepared value anti),
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared.pairing]
-  apply FiniteSum.Fin.sumFin_congr
+    Prepared.pairing]
+  apply sumFin_congr
   intro index
   exact row_pairing_eq_contract cut index value anti
 
@@ -200,7 +206,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -213,10 +219,10 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 open Purelib.Topology in
 open Purelib.Data in
 /-- Contract each retained integer crossing row with the exact cut-generator valuation. -/
-def chordValues (integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
+def chordValues (integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord)
+    (value : OrientedEdge lifted.vertices.count → Canonical) :
     Fin lifted.cutBoundaryWord.alphabet.count → Gaussian :=
-  fun index => Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (integral.paired index) (generatorValues
+  fun index => WordCoordinates.combine (integral.paired index) (generatorValues
     value)
 
 section
@@ -225,33 +231,33 @@ open Purelib.Topology
 open Purelib.Data
 /-- Compute a coordinate row's spanning combination of the retained chord-cycle values. -/
 def chordPart {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
-  Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine cut.span.coefficients
-    (fun index => Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (integral.paired index)
-      (fun column => value (Surface.Sewing.VertexSewing.OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral)
+    (value : OrientedEdge lifted.vertices.count → Canonical) : Gaussian :=
+  WordCoordinates.combine cut.span.coefficients
+    (fun index => WordCoordinates.combine (integral.paired index)
+      (fun column => value (Sewing.VertexSewing.OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels
         (lifted.cutBoundaryWord.alphabet.generators column))))
 
 /-- Compute a coordinate row's retained physical-generator contribution plus its signed face correction. -/
 def residualPart {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
-  Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine cut.span.physical
-    (fun index => value (Surface.Sewing.VertexSewing.OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral)
+    (value : OrientedEdge lifted.vertices.count → Canonical) : Gaussian :=
+  WordCoordinates.combine cut.span.physical
+    (fun index => value (Sewing.VertexSewing.OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels
       (lifted.cutBoundaryWord.alphabet.generators index))) +
-    Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value cut.route.correction
+    faceValue lifted.mesh.triangulation.faces value cut.route.correction
 
 /-- An antisymmetric word valuation splits into its spanning chord part and retained physical/face residual.
 
 The word uses its exact cut-coordinate and spanning certificates. -/
 theorem coordinate_value_eq_chord_add {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral)
+    (value : OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Surface.Sewing.SewingRetraction.wordValue value word = chordPart cut value + residualPart cut value := by
+    wordValue value word = chordPart cut value + residualPart cut value := by
   rw [cut.value_eq value anti, cut.span.value_eq]
   unfold chordPart residualPart
   ring1
@@ -265,12 +271,12 @@ open Purelib.Data
 /-- Split one A/B area into chord pairing and all three chord/residual cross terms.
 
 Both word values use their retained spanning decompositions under the same antisymmetric valuation. -/
-theorem row_pairing_eq_chord_add (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared)
+theorem row_pairing_eq_chord_add (cut : CutBank prepared)
   (index : Fin genus)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+    (value : OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Path.BoundaryRibbon.area (Surface.Sewing.SewingRetraction.wordValue value (prepared.aWord index))
-        (Surface.Sewing.SewingRetraction.wordValue value (prepared.bWord index)) =
+    Path.BoundaryRibbon.area (wordValue value (prepared.aWord index))
+        (wordValue value (prepared.bWord index)) =
       Path.BoundaryRibbon.area (chordPart (cut.rows.get index).a value)
           (chordPart (cut.rows.get index).b value) +
       Path.BoundaryRibbon.area (chordPart (cut.rows.get index).a value)
@@ -287,25 +293,25 @@ theorem row_pairing_eq_chord_add (cut : Hyperelliptic.Meshes.PuncturedGrid.Paire
 /-- The chord area of one A/B row is its spanning-coefficient wedge contracted against chord energy primitives.
 
 The chord values and coefficient rows use the same retained integral pairing. -/
-theorem chord_pairing_eq_contract (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared)
+theorem chord_pairing_eq_contract (cut : CutBank prepared)
   (index : Fin genus)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
+    (value : OrientedEdge lifted.vertices.count → Canonical) :
     Path.BoundaryRibbon.area (chordPart (cut.rows.get index).a value)
         (chordPart (cut.rows.get index).b value) =
-      Surface.Word.Pairing.contract (fun row column =>
+      Word.Pairing.contract (fun row column =>
           (cut.rows.get index).a.span.coefficients row * (cut.rows.get index).b.span.coefficients column -
           (cut.rows.get index).b.span.coefficients row * (cut.rows.get index).a.span.coefficients column)
         (fun column => Energy.Polygon.energyPrimitivePoint
           (chordValues cut.integral value column)) := by
   unfold chordPart chordValues generatorValues
-  rw [Surface.Cut.CoordinatePairing.area_combine_eq_contract]
+  rw [Cut.CoordinatePairing.area_combine_eq_contract]
 
 end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -322,12 +328,12 @@ open Purelib.Data in
 /-- The ordered surface residual is the row sum of chord areas and all retained physical/face cross terms.
 
 The same prepared words and antisymmetric edge valuation determine each row. -/
-theorem surfaceResidual_eq_chord_sum (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem surfaceResidual_eq_chord_sum (cut : CutBank
   prepared)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+    (value : OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual prepared value) =
-      FiniteSum.Fin.sumFin (fun index : Fin genus =>
+      sumFin (fun index : Fin genus =>
         Path.BoundaryRibbon.area (chordPart (cut.rows.get index).a value)
             (chordPart (cut.rows.get index).b value) +
         Path.BoundaryRibbon.area (chordPart (cut.rows.get index).a value)
@@ -337,8 +343,8 @@ theorem surfaceResidual_eq_chord_sum (cut : Hyperelliptic.Meshes.PuncturedGrid.P
         Path.BoundaryRibbon.area (residualPart (cut.rows.get index).a value)
             (residualPart (cut.rows.get index).b value)) := by
   rw [← (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.pairing_eq_surfaceResidual prepared value anti),
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared.pairing]
-  apply FiniteSum.Fin.sumFin_congr
+    Prepared.pairing]
+  apply sumFin_congr
   intro index
   exact row_pairing_eq_chord_add cut index value anti
 
@@ -347,7 +353,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -362,16 +368,16 @@ open Purelib.Curves in
 open Purelib.Topology in
 /-- Compute a retained coordinate row's spanning combination of the integer crossing rows. -/
 def pairedPart {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral) : Fin
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral) : Fin
       lifted.cutBoundaryWord.alphabet.count → Int :=
-  fun column => FiniteSum.Fin.sumFin (fun index => cut.span.coefficients index * integral.paired index column)
+  fun column => sumFin (fun index => cut.span.coefficients index * integral.paired index column)
 
 open Purelib.Curves in
 /-- Split the coordinate wedge into paired, two mixed and physical wedge terms.
 
 The exact spanning equations decompose each A/B coordinate into its crossing-supported and physical components. -/
-theorem coordinateWedge_eq_paired_add (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem coordinateWedge_eq_paired_add (cut : CutBank
   prepared) (index : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count) :
     coordinateWedge cut index row column =
@@ -393,7 +399,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -406,7 +412,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 section
 open Purelib.Curves
 /-- Compute the antisymmetric wedge of the two paired coordinate components. -/
-def pairedWedge (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index : Fin genus)
+def pairedWedge (cut : CutBank prepared) (index : Fin genus)
   :
     Fin lifted.cutBoundaryWord.alphabet.count → Fin lifted.cutBoundaryWord.alphabet.count → Int :=
   fun row column =>
@@ -414,7 +420,7 @@ def pairedWedge (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinat
     pairedPart (cut.rows.get index).b row * pairedPart (cut.rows.get index).a column
 
 /-- Compute the antisymmetric wedge of the two physical coordinate components. -/
-def physicalWedge (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index : Fin
+def physicalWedge (cut : CutBank prepared) (index : Fin
   genus) :
     Fin lifted.cutBoundaryWord.alphabet.count → Fin lifted.cutBoundaryWord.alphabet.count → Int :=
   fun row column =>
@@ -422,7 +428,7 @@ def physicalWedge (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordin
     (cut.rows.get index).b.span.physical row * (cut.rows.get index).a.span.physical column
 
 /-- Compute the A/B wedge with a paired row and physical column. -/
-def mixedWedge (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index : Fin genus)
+def mixedWedge (cut : CutBank prepared) (index : Fin genus)
   :
     Fin lifted.cutBoundaryWord.alphabet.count → Fin lifted.cutBoundaryWord.alphabet.count → Int :=
   fun row column =>
@@ -430,7 +436,7 @@ def mixedWedge (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinate
     pairedPart (cut.rows.get index).b row * (cut.rows.get index).a.span.physical column
 
 /-- Compute the A/B wedge with a physical row and paired column. -/
-def mixedWedge' (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index : Fin genus)
+def mixedWedge' (cut : CutBank prepared) (index : Fin genus)
   :
     Fin lifted.cutBoundaryWord.alphabet.count → Fin lifted.cutBoundaryWord.alphabet.count → Int :=
   fun row column =>
@@ -444,11 +450,11 @@ open Purelib.Topology in
 /-- Pointwise equal integer matrices have equal contractions against the same primitive values. -/
 private theorem contract_congr_pointwise {count : Nat} {first last : Fin count → Fin count → Int}
     (values : Fin count → PrimitivePoint) (equal : ∀ row column, first row column = last row column) :
-    Surface.Word.Pairing.contract first values = Surface.Word.Pairing.contract last values := by
-  unfold Surface.Word.Pairing.contract
-  apply FiniteSum.Fin.sumFin_congr
+    Word.Pairing.contract first values = Word.Pairing.contract last values := by
+  unfold Word.Pairing.contract
+  apply sumFin_congr
   intro row
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro column
   rw [equal]
 
@@ -456,11 +462,11 @@ open Purelib.Topology in
 /-- Contracting the sum of four integer matrices gives the sum of their contractions. -/
 private theorem contract_add_four {count : Nat} (first second third fourth : Fin count → Fin count → Int)
     (values : Fin count → PrimitivePoint) :
-    Surface.Word.Pairing.contract (fun row column => first row column + second row column +
+    Word.Pairing.contract (fun row column => first row column + second row column +
         third row column + fourth row column) values =
-      Surface.Word.Pairing.contract first values + Surface.Word.Pairing.contract second values +
-        Surface.Word.Pairing.contract third values + Surface.Word.Pairing.contract fourth values := by
-  rw [Surface.Word.Pairing.contract_add, Surface.Word.Pairing.contract_add, Surface.Word.Pairing.contract_add]
+      Word.Pairing.contract first values + Word.Pairing.contract second values +
+        Word.Pairing.contract third values + Word.Pairing.contract fourth values := by
+  rw [Word.Pairing.contract_add, Word.Pairing.contract_add, Word.Pairing.contract_add]
 
 open Purelib.Curves in
 open Purelib.Integration in
@@ -470,22 +476,22 @@ open Purelib.Data in
 
 Every term is evaluated against the same chord-cycle energy primitives; no physical or face component is silently
 discarded. -/
-theorem pairing_contract_eq_paired_add (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem pairing_contract_eq_paired_add (cut : CutBank
   prepared) (index : Fin genus)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    Surface.Word.Pairing.contract (coordinateWedge cut index)
+    (value : OrientedEdge lifted.vertices.count → Canonical) :
+    Word.Pairing.contract (coordinateWedge cut index)
         (fun column => Energy.Polygon.energyPrimitivePoint
           (chordValues cut.integral value column)) =
-      Surface.Word.Pairing.contract (pairedWedge cut index)
+      Word.Pairing.contract (pairedWedge cut index)
           (fun column => Energy.Polygon.energyPrimitivePoint
             (chordValues cut.integral value column)) +
-      Surface.Word.Pairing.contract (mixedWedge cut index)
+      Word.Pairing.contract (mixedWedge cut index)
           (fun column => Energy.Polygon.energyPrimitivePoint
             (chordValues cut.integral value column)) +
-      Surface.Word.Pairing.contract (mixedWedge' cut index)
+      Word.Pairing.contract (mixedWedge' cut index)
           (fun column => Energy.Polygon.energyPrimitivePoint
             (chordValues cut.integral value column)) +
-      Surface.Word.Pairing.contract (physicalWedge cut index)
+      Word.Pairing.contract (physicalWedge cut index)
           (fun column => Energy.Polygon.energyPrimitivePoint
             (chordValues cut.integral value column)) := by
   rw [contract_congr_pointwise (first := coordinateWedge cut index)
@@ -500,7 +506,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -515,20 +521,20 @@ open Purelib.Curves in
 open Purelib.Topology in
 /-- The paired coordinate component vanishes at a one-sided physical generator. -/
 theorem pairedPart_eq_zero {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral)
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral)
     (column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided column = true) :
     pairedPart cut column = 0 := by
   unfold pairedPart
-  apply (FiniteSum.Fin.sumFin_congr ?_).trans FiniteSum.Fin.sumFin_zero
+  apply (sumFin_congr ?_).trans sumFin_zero
   intro index
   rw [integral.paired_eq, side, Bool.or_true, if_pos rfl]
   ring1
 
 open Purelib.Curves
 /-- The A-row physical component equals its total on one-sided generators and vanishes elsewhere. -/
-theorem physicalPart_eq (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index :
+theorem physicalPart_eq (cut : CutBank prepared) (index :
   Fin genus)
     (column : Fin lifted.cutBoundaryWord.alphabet.count) :
     (cut.rows.get index).a.span.physical column =
@@ -537,7 +543,7 @@ theorem physicalPart_eq (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodC
   (cut.rows.get index).a.span.physical_eq column
 
 /-- The paired wedge vanishes when both generator indices are one-sided. -/
-theorem pairedWedge_eq_zero (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index
+theorem pairedWedge_eq_zero (cut : CutBank prepared) (index
   : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count)
     (rowSide : lifted.cutBoundaryWord.alphabet.oneSided row = true)
@@ -555,7 +561,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -569,8 +575,8 @@ open Purelib.Curves in
 open Purelib.Topology in
 /-- At a paired generator the paired component equals the exact retained coordinate total. -/
 theorem pairedPart_eq_totals {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral)
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral)
     (column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided column = false) :
     pairedPart cut column = cut.coordinates.totals column := by
@@ -586,14 +592,14 @@ open Purelib.Topology in
 open Purelib.Data in
 /-- All chord-cycle values vanish if the generator valuation vanishes on every paired column. -/
 theorem chordValues_eq_zero_of_paired_zero
-    (integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord)
-    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+    (integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord)
+    (value : OrientedEdge lifted.vertices.count → Canonical)
     (zero : ∀ column, lifted.cutBoundaryWord.alphabet.oneSided column = false →
       generatorValues value column = 0)
     (index : Fin lifted.cutBoundaryWord.alphabet.count) :
     chordValues integral value index = 0 := by
-  unfold chordValues Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine
-  apply (FiniteSum.Fin.sumFin_congr ?_).trans FiniteSum.Fin.sumFin_zero
+  unfold chordValues WordCoordinates.combine
+  apply (sumFin_congr ?_).trans sumFin_zero
   intro column
   by_cases side : lifted.cutBoundaryWord.alphabet.oneSided column
   · rw [integral.paired_eq, side, Bool.or_true, if_pos rfl]
@@ -606,7 +612,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -618,7 +624,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 open Purelib.Curves
 /-- The A-row physical component vanishes on a paired generator. -/
-theorem physical_eq_zero_of_paired (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared)
+theorem physical_eq_zero_of_paired (cut : CutBank prepared)
   (index : Fin genus)
     (column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided column = false) :
@@ -627,7 +633,7 @@ theorem physical_eq_zero_of_paired (cut : Hyperelliptic.Meshes.PuncturedGrid.Pai
   rfl
 
 /-- The B-row physical component vanishes on a paired generator. -/
-theorem physical_b_eq_zero_of_paired (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem physical_b_eq_zero_of_paired (cut : CutBank
   prepared) (index : Fin genus)
     (column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided column = false) :
@@ -636,7 +642,7 @@ theorem physical_b_eq_zero_of_paired (cut : Hyperelliptic.Meshes.PuncturedGrid.P
   rfl
 
 /-- The paired-row mixed wedge vanishes on a one-sided physical row. -/
-theorem mixedWedge_eq_zero_of_row_oneSided (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem mixedWedge_eq_zero_of_row_oneSided (cut : CutBank
   prepared) (index : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided row = true) :
@@ -648,7 +654,7 @@ theorem mixedWedge_eq_zero_of_row_oneSided (cut : Hyperelliptic.Meshes.Punctured
 
 /-- The paired-column mixed wedge vanishes on a one-sided physical column. -/
 theorem mixedWedge'_eq_zero_of_column_oneSided (cut :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index : Fin genus)
+  CutBank prepared) (index : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided column = true) :
     mixedWedge' cut index row column = 0 := by
@@ -658,7 +664,7 @@ theorem mixedWedge'_eq_zero_of_column_oneSided (cut :
   ring1
 
 /-- The physical wedge vanishes on a paired row. -/
-theorem physicalWedge_eq_zero_of_row_paired (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem physicalWedge_eq_zero_of_row_paired (cut : CutBank
   prepared) (index : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided row = false) :
@@ -672,7 +678,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -686,15 +692,15 @@ open Purelib.Algebra in
 open Purelib.Topology in
 open Purelib.Data in
 /-- Agreement of generator valuations on paired columns preserves every chord-cycle value. -/
-theorem chordValues_congr (integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord
+theorem chordValues_congr (integral : Cut.IntegralPairing.CutBoundaryWord
   lifted.cutBoundaryWord)
-    {first second : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical}
+    {first second : OrientedEdge lifted.vertices.count → Canonical}
     (agree : ∀ column, lifted.cutBoundaryWord.alphabet.oneSided column = false →
       generatorValues first column = generatorValues second column)
     (index : Fin lifted.cutBoundaryWord.alphabet.count) :
     chordValues integral first index = chordValues integral second index := by
-  unfold chordValues Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine
-  apply FiniteSum.Fin.sumFin_congr
+  unfold chordValues WordCoordinates.combine
+  apply sumFin_congr
   intro column
   by_cases side : lifted.cutBoundaryWord.alphabet.oneSided column
   · rw [integral.paired_eq, side, Bool.or_true, if_pos rfl]
@@ -706,11 +712,11 @@ open Purelib.Topology in
 /-- Pointwise equal primitive values have equal contractions against the same integer matrix. -/
 private theorem contract_value_congr {count : Nat} (matrix : Fin count → Fin count → Int)
     {first second : Fin count → PrimitivePoint} (agree : ∀ index, first index = second index) :
-    Surface.Word.Pairing.contract matrix first = Surface.Word.Pairing.contract matrix second := by
-  unfold Surface.Word.Pairing.contract
-  apply FiniteSum.Fin.sumFin_congr
+    Word.Pairing.contract matrix first = Word.Pairing.contract matrix second := by
+  unfold Word.Pairing.contract
+  apply sumFin_congr
   intro row
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro column
   rw [agree row, agree column]
 
@@ -722,15 +728,15 @@ open Purelib.Data in
 
 Pointwise agreement on those generators preserves the retained chord values and hence their energy primitive
 contraction. -/
-theorem paired_wedge_congr (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared)
-    {first second : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical}
+theorem paired_wedge_congr (cut : CutBank prepared)
+    {first second : OrientedEdge lifted.vertices.count → Canonical}
     (agree : ∀ column, lifted.cutBoundaryWord.alphabet.oneSided column = false →
       generatorValues first column = generatorValues second column)
     (index : Fin genus) :
-    Surface.Word.Pairing.contract (pairedWedge cut index)
+    Word.Pairing.contract (pairedWedge cut index)
         (fun column => Energy.Polygon.energyPrimitivePoint
           (chordValues cut.integral first column)) =
-      Surface.Word.Pairing.contract (pairedWedge cut index)
+      Word.Pairing.contract (pairedWedge cut index)
         (fun column => Energy.Polygon.energyPrimitivePoint
           (chordValues cut.integral second column)) :=
   contract_value_congr _ (fun column => congrArg
@@ -745,7 +751,7 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_swap sumFin_mul_r
   sumFin_mul_left)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -759,8 +765,8 @@ open Purelib.Curves in
 open Purelib.Topology in
 /-- The paired coordinate component is the retained total minus its physical component. -/
 private theorem pairedPart_sub_physical {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral) (column : Fin
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral) (column : Fin
       lifted.cutBoundaryWord.alphabet.count) :
     pairedPart cut column = cut.coordinates.totals column - cut.span.physical column := by
   unfold pairedPart
@@ -771,14 +777,14 @@ open Purelib.Algebra in
 open Purelib.Curves in
 open Purelib.Topology in
 /-- Contracting the A paired component with B spanning coefficients gives the retained intersection number. -/
-theorem pairedPart_inner (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index :
+theorem pairedPart_inner (cut : CutBank prepared) (index :
   Fin genus) :
-    FiniteSum.Fin.sumFin (fun row => pairedPart (cut.rows.get index).a row *
+    sumFin (fun row => pairedPart (cut.rows.get index).a row *
         (cut.rows.get index).b.span.coefficients row) =
-      (Surface.Sewing.CutIntersection.CutBoundaryWord.IntegralPairing.SpanningCoordinates.intersection (cut.rows.get
+      (SpanningCoordinates.intersection (cut.rows.get
         index).a.span (cut.rows.get index).b.span) := by
-  rw [Surface.Sewing.CutIntersection.CutBoundaryWord.IntegralPairing.SpanningCoordinates.intersection_left_readback]
-  apply FiniteSum.Fin.sumFin_congr
+  rw [SpanningCoordinates.intersection_left_readback]
+  apply sumFin_congr
   intro column
   rw [pairedPart_sub_physical]
 
@@ -787,7 +793,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -801,24 +807,24 @@ open Purelib.Algebra in
 open Purelib.Curves in
 open Purelib.Topology in
 /-- Contracting the B paired component with A spanning coefficients gives the negative retained intersection number. -/
-theorem pairedPart_inner_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared)
+theorem pairedPart_inner_swap (cut : CutBank prepared)
   (index : Fin genus) :
-    FiniteSum.Fin.sumFin (fun row => pairedPart (cut.rows.get index).b row *
+    sumFin (fun row => pairedPart (cut.rows.get index).b row *
         (cut.rows.get index).a.span.coefficients row) =
-      - (Surface.Sewing.CutIntersection.CutBoundaryWord.IntegralPairing.SpanningCoordinates.intersection (cut.rows.get
+      - (SpanningCoordinates.intersection (cut.rows.get
         index).a.span (cut.rows.get index).b.span) := by
-  have h : FiniteSum.Fin.sumFin (fun row => pairedPart (cut.rows.get index).b row *
+  have h : sumFin (fun row => pairedPart (cut.rows.get index).b row *
       (cut.rows.get index).a.span.coefficients row) =
-      (Surface.Sewing.CutIntersection.CutBoundaryWord.IntegralPairing.SpanningCoordinates.intersection (cut.rows.get
+      (SpanningCoordinates.intersection (cut.rows.get
         index).b.span (cut.rows.get index).a.span) := by
-    rw [Surface.Sewing.CutIntersection.CutBoundaryWord.IntegralPairing.SpanningCoordinates.intersection_left_readback
+    rw [SpanningCoordinates.intersection_left_readback
       (cut.rows.get index).b.span
       (cut.rows.get index).a.span]
-    apply FiniteSum.Fin.sumFin_congr
+    apply sumFin_congr
     intro row
     rw [pairedPart_sub_physical]
   rw [h]
-  exact Surface.Sewing.CutIntersection.CutBoundaryWord.IntegralPairing.SpanningCoordinates.intersection_skew
+  exact SpanningCoordinates.intersection_skew
     (cut.rows.get index).b.span (cut.rows.get index).a.span
 
 end Purelib.Riemann.Periods.PairedPeriodPairingBridge
@@ -826,7 +832,7 @@ end Purelib.Riemann.Periods.PairedPeriodPairingBridge
 namespace Purelib.Riemann.Periods.PairedPeriodPairingBridge
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -839,7 +845,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 section
 open Purelib.Curves
 /-- The B-row physical component equals its total on one-sided generators and vanishes elsewhere. -/
-theorem physicalPart_b_eq (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index :
+theorem physicalPart_b_eq (cut : CutBank prepared) (index :
   Fin genus)
     (column : Fin lifted.cutBoundaryWord.alphabet.count) :
     (cut.rows.get index).b.span.physical column =
@@ -850,15 +856,15 @@ theorem physicalPart_b_eq (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.Perio
 open Purelib.Topology in
 /-- At a paired generator the paired component equals its retained coordinate total. -/
 theorem pairedPart_b_eq_totals {word : List (OrientedEdge lifted.vertices.count)}
-    {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word integral)
+    {integral : Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+    (cut : ClosedCoordinates word integral)
     (column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided column = false) :
     pairedPart cut column = cut.coordinates.totals column :=
   pairedPart_eq_totals cut column side
 
 /-- The full coordinate wedge changes sign when its generator indices are exchanged. -/
-theorem coordinateWedge_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index
+theorem coordinateWedge_swap (cut : CutBank prepared) (index
   : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count) :
     coordinateWedge cut index row column = -coordinateWedge cut index column row := by
@@ -866,7 +872,7 @@ theorem coordinateWedge_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.Pe
   ring1
 
 /-- The paired wedge changes sign when its generator indices are exchanged. -/
-theorem pairedWedge_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index :
+theorem pairedWedge_swap (cut : CutBank prepared) (index :
   Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count) :
     pairedWedge cut index row column = -pairedWedge cut index column row := by
@@ -874,7 +880,7 @@ theorem pairedWedge_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.Period
   ring1
 
 /-- The paired wedge vanishes on the diagonal. -/
-theorem pairedWedge_diagonal (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index
+theorem pairedWedge_diagonal (cut : CutBank prepared) (index
   : Fin genus)
     (row : Fin lifted.cutBoundaryWord.alphabet.count) :
     pairedWedge cut index row row = 0 := by
@@ -882,7 +888,7 @@ theorem pairedWedge_diagonal (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.Pe
   ring1
 
 /-- The physical wedge changes sign when its generator indices are exchanged. -/
-theorem physicalWedge_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index :
+theorem physicalWedge_swap (cut : CutBank prepared) (index :
   Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count) :
     physicalWedge cut index row column = -physicalWedge cut index column row := by
@@ -890,7 +896,7 @@ theorem physicalWedge_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.Peri
   ring1
 
 /-- The physical wedge vanishes on the diagonal. -/
-theorem physicalWedge_diagonal (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared)
+theorem physicalWedge_diagonal (cut : CutBank prepared)
   (index : Fin genus)
     (row : Fin lifted.cutBoundaryWord.alphabet.count) :
     physicalWedge cut index row row = 0 := by
@@ -898,7 +904,7 @@ theorem physicalWedge_diagonal (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.
   ring1
 
 /-- The physical-row mixed wedge is the negative transpose of the paired-row mixed wedge. -/
-theorem mixedWedge'_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) (index :
+theorem mixedWedge'_swap (cut : CutBank prepared) (index :
   Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count) :
     mixedWedge' cut index column row = -mixedWedge cut index row column := by
@@ -906,7 +912,7 @@ theorem mixedWedge'_swap (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.Period
   ring1
 
 /-- The paired-row mixed wedge vanishes on a paired column. -/
-theorem mixedWedge_eq_zero_of_column_paired (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem mixedWedge_eq_zero_of_column_paired (cut : CutBank
   prepared) (index : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided column = false) :
@@ -917,7 +923,7 @@ theorem mixedWedge_eq_zero_of_column_paired (cut : Hyperelliptic.Meshes.Puncture
   ring1
 
 /-- The paired-column mixed wedge vanishes on a paired row. -/
-theorem mixedWedge'_eq_zero_of_row_paired (cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank
+theorem mixedWedge'_eq_zero_of_row_paired (cut : CutBank
   prepared) (index : Fin genus)
     (row column : Fin lifted.cutBoundaryWord.alphabet.count)
     (side : lifted.cutBoundaryWord.alphabet.oneSided row = false) :

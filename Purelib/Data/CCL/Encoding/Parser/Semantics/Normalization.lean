@@ -38,9 +38,9 @@ open Purelib.Data.Rat in
 /-- The retained block's radial bracket places its exact normalized Gaussian in the closed unit-to-two squared-norm
 band. -/
 theorem normalizedValue_band_of_radialBracket
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (value : Basic.Canonical)
-    (radial : Parser.Semantics.Basic.radialBracket kind exponent value) :
-    Data.ComplexContinuedFraction.Encoding.Sector.Band (Parser.Semantics.Basic.normalizedValue kind exponent value) :=
+    (kind : Syntax.BlockKind) (exponent : Nat) (value : Basic.Canonical)
+    (radial : Basic.radialBracket kind exponent value) :
+    Sector.Band (Basic.normalizedValue kind exponent value) :=
       by
   have powerPositive : (0 : Fraction.Rational) < (2 : Fraction.Rational) ^ exponent :=
     Fraction.Order.Arithmetic.pow_pos_direct (by decide) exponent
@@ -51,13 +51,13 @@ theorem normalizedValue_band_of_radialBracket
       have powerNonzero : Power.natPow Basic.Canonical.gamma exponent ≠ 0 :=
         Power.natPow_ne_zero_direct Basic.Canonical.gamma (by decide) exponent
       have normIdentity :
-          Data.Gaussian.Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue .initialHigh exponent value) =
-            Data.Gaussian.Norm.Basic.normSq value / (2 : Fraction.Rational) ^ exponent := by
-        rw [Parser.Semantics.Basic.normalizedValue, Norm.Basic.normSq_mul, Field.inv_eq,
+          Norm.Basic.normSq (Basic.normalizedValue .initialHigh exponent value) =
+            Norm.Basic.normSq value / (2 : Fraction.Rational) ^ exponent := by
+        rw [Basic.normalizedValue, Norm.Basic.normSq_mul, Field.inv_eq,
           Field.normSq_inv _ powerNonzero,
           Power.normSq_natPow, Constants.normSq_gamma]
         rfl
-      rw [Data.ComplexContinuedFraction.Encoding.Sector.Band, ← Norm.Basic.normSq_eq_canonical, normIdentity]
+      rw [Sector.Band, ← Norm.Basic.normSq_eq_canonical, normIdentity]
       constructor
       · apply (Fraction.Order.Field.le_div_iff_pos powerPositive).2
         simpa only [Fraction.Field.one_mul] using lower
@@ -66,8 +66,8 @@ theorem normalizedValue_band_of_radialBracket
   | initialLow =>
       rcases radial with ⟨lower, upper⟩
       simp only [← Norm.Basic.normSq_eq_canonical] at lower upper
-      rw [Data.ComplexContinuedFraction.Encoding.Sector.Band, ← Norm.Basic.normSq_eq_canonical,
-        Parser.Semantics.Basic.normalizedValue,
+      rw [Sector.Band, ← Norm.Basic.normSq_eq_canonical,
+        Basic.normalizedValue,
         Norm.Basic.normSq_mul, Power.normSq_natPow,
         Constants.normSq_gamma]
       exact ⟨lower, upper.le⟩
@@ -77,13 +77,13 @@ theorem normalizedValue_band_of_radialBracket
       have powerNonzero : Power.natPow Basic.Canonical.gamma exponent ≠ 0 :=
         Power.natPow_ne_zero_direct Basic.Canonical.gamma (by decide) exponent
       have normIdentity :
-          Data.Gaussian.Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue .loop exponent value) =
-            Data.Gaussian.Norm.Basic.normSq value / (2 : Fraction.Rational) ^ exponent := by
-        rw [Parser.Semantics.Basic.normalizedValue, Norm.Basic.normSq_mul, Field.inv_eq,
+          Norm.Basic.normSq (Basic.normalizedValue .loop exponent value) =
+            Norm.Basic.normSq value / (2 : Fraction.Rational) ^ exponent := by
+        rw [Basic.normalizedValue, Norm.Basic.normSq_mul, Field.inv_eq,
           Field.normSq_inv _ powerNonzero,
           Power.normSq_natPow, Constants.normSq_gamma]
         rfl
-      rw [Data.ComplexContinuedFraction.Encoding.Sector.Band, ← Norm.Basic.normSq_eq_canonical, normIdentity]
+      rw [Sector.Band, ← Norm.Basic.normSq_eq_canonical, normIdentity]
       constructor
       · apply (Fraction.Order.Field.le_div_iff_pos powerPositive).2
         simpa only [Fraction.Field.one_mul] using lower.le
@@ -95,22 +95,22 @@ open Purelib.Data.ComplexContinuedFraction.Encoding
 open Purelib.Data.Gaussian
 /-- A completed block condition places its exact normalized value in the closed sector norm band. -/
 theorem normalizedValue_band_of_fullBlock
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector)
+    (kind : Syntax.BlockKind) (exponent : Nat) (sector : Sector)
     (value : Basic.Canonical)
-    (full : Parser.Semantics.Basic.fullBlockHolds kind exponent sector value) :
-    Data.ComplexContinuedFraction.Encoding.Sector.Band (Parser.Semantics.Basic.normalizedValue kind exponent value) :=
+    (full : Basic.fullBlockHolds kind exponent sector value) :
+    Sector.Band (Basic.normalizedValue kind exponent value) :=
   normalizedValue_band_of_radialBracket kind exponent value full.1
 
 /-- A completed block with nonzero selected residual has an inverse gamma-scaled residual satisfying the initial loop
 condition. -/
 theorem inverse_selected_loop_active
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector)
+    (kind : Syntax.BlockKind) (exponent : Nat) (sector : Sector)
     (value : Basic.Canonical)
-    (full : Parser.Semantics.Basic.fullBlockHolds kind exponent sector value)
-    (residual : Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep ≠ 0) :
-    Parser.Semantics.Basic.activeHolds (.loopUnary 0)
-      ((Basic.Canonical.gamma * (Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep))⁻¹) := by
-  rw [Parser.Semantics.Basic.activeHolds, pow_zero]
+    (full : Basic.fullBlockHolds kind exponent sector value)
+    (residual : Basic.normalizedValue kind exponent value - sector.rep ≠ 0) :
+    Basic.activeHolds (.loopUnary 0)
+      ((Basic.Canonical.gamma * (Basic.normalizedValue kind exponent value - sector.rep))⁻¹) := by
+  rw [Basic.activeHolds, pow_zero]
   rw [← Norm.Basic.normSq_eq_canonical]
   exact Block.Descent.postInversion_norm_gt_one
     (normalizedValue_band_of_fullBlock kind exponent sector value full)

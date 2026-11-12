@@ -34,6 +34,8 @@ import Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts
 import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Curves.Hyperelliptic
+
 @[expose] public section
 
 /-!
@@ -51,7 +53,7 @@ open Purelib.Riemann.Curves.AlgebraicDifferentials
 open Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts
 
 /-- The original rational box type. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 
 open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
@@ -62,7 +64,7 @@ open Purelib.Data.Rat in
 abbrev Coordinate := Fraction.Rational
 
 /-- An ordered finite list of polynomial cell models. -/
-abbrev PathModel := Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel
+abbrev PathModel := Integration.Polynomial.Gaussian.Path.Basic.PathModel
 
 section
 open Purelib
@@ -76,7 +78,7 @@ open Purelib.Riemann.Integration in
 The recursion follows the original requests and cached source owners, keeping the exact center state of each original
 edge. -/
 def canonicalCenterStates {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -104,7 +106,7 @@ open Purelib.Riemann.Integration
 The sum follows the original prepared subdivision and uses each edge's exact canonical center and retained denominator
 projection box. -/
 def canonicalBallIntegralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -127,7 +129,7 @@ def canonicalBallIntegralRealLower {genus : Nat}
 
 Every summand uses the original step and its exact canonical center; the terminal subdivision contributes zero. -/
 def canonicalBallNegatedIntegralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -154,7 +156,7 @@ open Purelib.Data.Gaussian
 open Purelib.Polynomial
 /-- The canonical subdivision real estimate equals the corresponding sum over its canonical centered edges. -/
 theorem canonicalBallIntegralRealLower_eq_centeredEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -178,7 +180,7 @@ theorem canonicalBallIntegralRealLower_eq_centeredEdges {genus : Nat}
 
 /-- The canonical subdivision negated-real estimate equals the corresponding sum over its canonical centered edges. -/
 theorem canonicalBallNegatedIntegralRealLower_eq_centeredEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -209,7 +211,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path
 open Purelib.Polynomial
 /-- For exponent zero, the canonical ball estimate is below the actual centered path integral's real coordinate. -/
 theorem canonicalBallIntegralRealLower_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -231,7 +233,7 @@ theorem canonicalBallIntegralRealLower_le {genus : Nat}
 /-- For exponent zero, the canonical ball estimate is below the negated real coordinate of the actual centered path
 integral. -/
 theorem canonicalBallNegatedIntegralRealLower_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -262,7 +264,7 @@ open Purelib.Riemann.Integration in
 Each actual list occurrence is either the displayed head or an occurrence in the retained tail. The canonical dependent
 center family supplies the head identity and the recursive tail certificate without changing edge owners or caches. -/
 theorem centeredEdges_canonical_center {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -296,7 +298,7 @@ open Purelib.Riemann.Readings in
 The next step uses the first step's advanced owner; both caches and the common sheet are preserved in the boundary
 comparison. -/
 def boundaryWitness {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -344,8 +346,8 @@ open Purelib.Riemann.Branches in
 The constructor consumes the actual next request, cache, ordering and clearance proof, so its witness stays tied to
 those exact step inputs. -/
 abbrev BoundaryBuilder {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
-    {ambient : Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
+    (curve : Basic.HyperellipticCurve genus)
+    {ambient : Box} {start finish : Data.Gaussian.Basic.Canonical}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
     (left : Endpoint)
     (owner : Owner (curve.polynomial.eval (segment.pointAt left.parameter))) :=
@@ -367,7 +369,7 @@ open Purelib.Riemann.Branches in
 Each step forms the builder for the following original owner. A witness is emitted only when a predecessor builder is
 present. -/
 def automaticBoundaryWitnessesFrom {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -400,7 +402,7 @@ open Purelib.Polynomial in
 The first step has no predecessor witness; subsequent comparisons retain both actual caches and the advanced root
 owners. -/
 def automaticBoundaryWitnesses {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -420,7 +422,7 @@ open Purelib.Polynomial
 open Purelib.Riemann.Branches
 /-- With a retained predecessor builder, there is one boundary witness per subdivision step. -/
 private theorem automaticBoundaryWitnessesFrom_some_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -443,7 +445,7 @@ private theorem automaticBoundaryWitnessesFrom_some_length {genus : Nat}
 
 /-- The number of adjacent boundary witnesses is the predecessor of the subdivision step count. -/
 @[simp] theorem automaticBoundaryWitnesses_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -473,9 +475,9 @@ open Purelib.Riemann.Integration in
 
 The result is indexed by the exact edge assembled from the supplied cache, ordering and clearance evidence. -/
 abbrev CenterBuilder {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
-    {ambient : Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
+    {ambient : Box} {start finish : Data.Gaussian.Basic.Canonical}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (left : Endpoint)
@@ -504,7 +506,7 @@ open Purelib.Riemann.Readings in
 Without a predecessor the first center is canonical. Each following center is aligned to the original previous edge's
 canonical endpoint query using the actual boundary equivalence. -/
 def automaticAlignedCenterStatesFrom {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -556,7 +558,7 @@ open Purelib.Polynomial in
 Each later state is selected from the exact adjacent coefficient equivalence, retaining the original step owners and
 caches. -/
 def automaticAlignedCenterStates {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -579,7 +581,7 @@ open Purelib.Riemann.Integration
 Each cell uses its edge's base-reading model; endpoint equalities and the original edge certificate connect the ordered
 cells to the retained clear path. -/
 def certifySubdivision {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -628,7 +630,7 @@ def certifySubdivision {genus : Nat}
 The constructor retains every actual center and cached step, then joins the cell certificates along the original
 sheet-lifted subdivision. -/
 def certifyCenteredSubdivision {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -685,7 +687,7 @@ open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
 /-- Reading models from the supplied centered edges gives exactly the cells of the centered subdivision certificate. -/
 theorem centeredEdges_models {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -714,7 +716,7 @@ open Purelib.Polynomial in
 The resulting cells and uniform certificates retain the exact center states produced by the endpoint-comparison
 construction. -/
 def certifyAutomaticallyAlignedSubdivision {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -734,7 +736,7 @@ open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
 /-- Retain each supplied center value as the exact constant coefficient of its certified cell. -/
 def certifyCenteredSubdivision_constantCells {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -761,7 +763,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 open Purelib.Polynomial in
 /-- Retain the automatically aligned center values as the exact constant coefficients of the certified cells. -/
 def certifyAutomaticallyAlignedSubdivision_constantCells {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -783,7 +785,7 @@ open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
 /-- Centered certification retains exactly one cell for each original subdivision step. -/
 @[simp] theorem certifyCenteredSubdivision_cellCount {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -806,7 +808,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
 /-- Automatic alignment and certification retain the original subdivision step count. -/
 @[simp] theorem certifyAutomaticallyAlignedSubdivision_cellCount {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -826,7 +828,7 @@ open Purelib.Polynomial
 open Purelib.Riemann.Branches
 /-- Base-reading certification retains exactly one cell for each original subdivision step. -/
 @[simp] theorem certifySubdivision_cellCount {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -845,7 +847,7 @@ open Purelib.Riemann.Branches
 
 /-- Read the ordered cell list of a certified subdivision as a path model. -/
 def pathModel {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {ambient : Box} {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}

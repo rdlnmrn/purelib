@@ -1,5 +1,5 @@
-/* Private pinned-ABI prototype. All kernel/metadata objects come from original
-   official factories; no record construction, retagging or pointer casts. */
+/* Private pinned-ABI prototype. Expression and metadata objects come from
+   original compiled records or official factories; no pointer casts. */
 #define _POSIX_C_SOURCE 200809L
 #include <lean/lean.h>
 #include <stdio.h>
@@ -26,10 +26,13 @@ extern uint8_t l_Lean_Name_quickCmpAux(lean_object *, lean_object *);
 extern lean_object *lean_compacted_region_read(lean_object *, lean_object *, lean_object *);
 extern lean_object *lean_compacted_region_free(lean_object *, lean_object *);
 extern lean_object *lean_mk_inductive_decl(lean_object *,lean_object *,lean_object *,uint8_t);
+extern lean_object *lean_mk_theorem_val(lean_object *,lean_object *,lean_object *,lean_object *,lean_object *);
 extern uint8_t l_Lean_instBEqConstructorVal_beq(lean_object *,lean_object *);
 extern uint8_t l_Lean_instBEqRecursorVal_beq(lean_object *,lean_object *);
 extern uint8_t l_Lean_instBEqConstantVal_beq(lean_object *,lean_object *);
 extern lean_object *lean_level_mk_param(lean_object *);
+extern lean_object *lean_level_mk_zero(lean_object *);
+extern lean_object *lean_name_mk_string(lean_object *,lean_object *);
 extern lean_object *lean_expr_mk_const(lean_object *,lean_object *);
 static int shape(lean_object *,unsigned,unsigned);
 static int name_lists_equal(lean_object *a,lean_object *b) {
@@ -274,6 +277,55 @@ static int service(const char *old_file,const char *new_file,const char *sysroot
             else {if(!lean_is_ctor(decl)||lean_obj_tag(decl)>3||lean_ctor_num_objs(decl)!=1)exit(2);lean_inc(decl);}
             env=service_add(env,decl,mode==0||mode==2||mode==3,mode==1,name,len);lean_dec(decl);
             if(!env){result=1;free(payload);break;}
+        } else if(op==9) {
+            /* The loaded theorem supplies the complete type and, in compiled
+               mode, its body. Other bodies and the fresh name are built by
+               official factories, never from caller-supplied compact bytes. */
+            if(!env||length!=16){result=2;free(payload);break;}
+            uint64_t index=read64(payload),body_mode=read64(payload+8);
+            lean_object *infos=lean_ctor_get(data[1],2);
+            if(index>=lean_array_size(infos))exit(2);
+            lean_object *original=lean_array_get_core(infos,index);
+            if(!shape(original,2,1))exit(2);
+            lean_object *val=lean_ctor_get(original,0);
+            if(!shape(val,0,3)||!shape(lean_ctor_get(val,0),0,3))exit(2);
+            lean_object *base=lean_ctor_get(val,0);
+            lean_object *fresh=lean_name_mk_string(lean_box(0),lean_mk_string("SuppliedProofCheckedInsertion"));
+            lean_object *occupied=lean_environment_find(retain(env),retain(fresh));
+            if(!lean_is_scalar(occupied)||lean_unbox(occupied)!=0) {
+                lean_dec(occupied);lean_dec(fresh);fputs("supplied insertion name is present\n",stderr);exit(2);
+            }
+            lean_dec(occupied);
+            lean_object *body=NULL;
+            if(body_mode==0)body=retain(lean_ctor_get(val,1));
+            else if(body_mode==1||body_mode==2) {
+                lean_object *name=lean_name_mk_string(lean_box(0),lean_mk_string("SuppliedProofUnresolvedControl"));
+                if(body_mode==1) {
+                    lean_object *found=lean_environment_find(retain(env),retain(name));
+                    if(!lean_is_scalar(found)||lean_unbox(found)!=0) {
+                        lean_dec(found);lean_dec(name);fputs("unresolved control name is present\n",stderr);exit(2);
+                    }
+                    lean_dec(found);
+                }
+                body=body_mode==1?lean_expr_mk_const(name,lean_box(0)):lean_expr_mk_mvar(name);
+            } else if(body_mode==3)body=lean_expr_mk_bvar(lean_box(0));
+            else if(body_mode==4)body=lean_expr_mk_sort(lean_level_mk_zero(lean_box(0)));
+            else {lean_dec(fresh);result=2;free(payload);break;}
+            lean_object *all=lean_alloc_ctor(1,2,0);
+            lean_ctor_set(all,0,retain(fresh));lean_ctor_set(all,1,lean_box(0));
+            lean_object *theorem=lean_mk_theorem_val(retain(fresh),retain(lean_ctor_get(base,1)),
+                retain(lean_ctor_get(base,2)),body,all);
+            lean_dec(fresh);
+            lean_object *decl=lean_alloc_ctor(2,1,0);lean_ctor_set(decl,0,theorem);
+            lean_object *r=lean_add_decl(retain(env),0,decl,lean_box(0));lean_dec(decl);
+            if(!shape(r,0,1)&&!shape(r,1,1))exit(2);
+            if(lean_obj_tag(r)==0) {
+                lean_object *message=l_Lean_MessageData_toString(l_Lean_Kernel_Exception_toMessageData(
+                    retain(lean_ctor_get(r,0)),lean_options_get_empty(lean_box(0))));
+                lean_dec(r);send_string(2,message);lean_dec(message);
+            } else {
+                lean_dec(r);send_frame(0,"checked-insertion",17);
+            }
         } else if(op==6||op==7) {
             if(!env||length<8){result=2;free(payload);break;}uint64_t index=read64(payload);unsigned tag=op==6?6:7;
             lean_object *infos=lean_ctor_get(data[0],2);if(index>=lean_array_size(infos))exit(2);

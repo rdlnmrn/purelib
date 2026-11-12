@@ -36,11 +36,11 @@ open Purelib.Approximation
 
 /-- Lift operational equivalence of coherent inputs through the total exponential to its retained CCL-prefix law. -/
 @[expose] def exponential_respects (left right : CoherentNamed)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent left.name right.name) :
-    Law.Basic.BitLaw (Exponential.Progressive.Range.Coherent.exp left.name)
-      (Exponential.Progressive.Range.Coherent.exp right.name) :=
+    (equivalent : NamedEquivalent left.name right.name) :
+    BitLaw (Progressive.Range.Coherent.exp left.name)
+      (Progressive.Range.Coherent.exp right.name) :=
   BitLaw.ofEquivalent
-    (Exponential.Progressive.Range.Congruence.automaticExp_respects
+    (Progressive.Range.Congruence.automaticExp_respects
       left right equivalent)
 
 /-! ## Principal arithmetic laws on emitted CCL prefixes -/
@@ -48,14 +48,14 @@ open Purelib.Approximation
 /-- The product of the two total exponential outputs and the exponential of the coherent sum satisfy the retained
 CCL-prefix law. -/
 @[expose] def exponential_addition (left right : CoherentNamed) :
-    Law.Basic.BitLaw
+    BitLaw
       (CoherentNamed.mul
-        (Exponential.Progressive.Range.Coherent.exp left.name)
-        (Exponential.Progressive.Range.Coherent.exp right.name))
-      (Exponential.Progressive.Range.Coherent.exp
+        (Progressive.Range.Coherent.exp left.name)
+        (Progressive.Range.Coherent.exp right.name))
+      (Progressive.Range.Coherent.exp
         (CoherentNamed.add left right).name) :=
   BitLaw.ofEquivalent
-    (Exponential.Progressive.Range.Addition.automaticExp_add left right)
+    (Progressive.Range.Addition.automaticExp_add left right)
 
 end
 

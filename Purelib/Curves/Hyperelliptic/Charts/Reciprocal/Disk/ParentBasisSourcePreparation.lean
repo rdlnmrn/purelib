@@ -57,102 +57,102 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths (ComparedCe
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests (ChartRequests ChartPlans)
 open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility (PreparedPatch)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations (BasisSourceCovers BasisSourceLocations)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.EndpointSchedule.Mesh (BasisEndpoints)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (RegularBasisPolynomials)
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceAllowance.AreaRequest (BasisSourceAllowance)
-variable {target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {target sourceTarget : Coordinate} {floor sourceFloor :
   Nat}
 
 namespace ParentBasisSourcePreparation
 
 /-- Retained polygon allowances on the heterogeneous original cell spine. -/
-def BasisSourceBudgets (endpointTarget allowance : InverseRootPolynomial.Coordinate) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    ParentChartRequests.ChartRequests target floor owners → Type 1
+def BasisSourceBudgets (endpointTarget allowance : Coordinate) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    ChartRequests target floor owners → Type 1
   | _, _, _, .nil => PUnit
-  | _, _, _, .cons head tail => AreaRequest.BasisSourceAllowance head endpointTarget allowance ×
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
+  | _, _, _, .cons head tail => BasisSourceAllowance head endpointTarget allowance ×
+    ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
     allowance tail
 
 end ParentBasisSourcePreparation
 
 namespace ParentBasisSourcePreparation.BasisSourceBudgets
 
-variable {endpointTarget allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {endpointTarget allowance : Coordinate}
 
 /-- Prepare the original source polygon allowance of each actual retained chart cell in spine order. -/
-def build (endpointTarget allowance : InverseRootPolynomial.Coordinate) (endpointPositive : 0 < endpointTarget)
+def build (endpointTarget allowance : Coordinate) (endpointPositive : 0 < endpointTarget)
   (positive : 0 < allowance) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    (requests : ParentChartRequests.ChartRequests target floor owners) →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    (requests : ChartRequests target floor owners) →
+      BasisSourceBudgets endpointTarget
       allowance requests
   | _, _, _, .nil => ⟨⟩
   | _, _, _, .cons head tail =>
       ⟨BasisSourceAllowance.build head endpointTarget allowance endpointPositive positive,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.build
+        BasisSourceBudgets.build
           endpointTarget allowance endpointPositive positive tail⟩
 
 /-- The smallest retained original source allowance across the actual cell spine, capped by the original endpoint
 target. -/
-def minimum : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
-  edges} → {owners : ParentOwners.Owners bank} →
-    (requests : ParentChartRequests.ChartRequests target floor owners) →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
-      allowance requests → InverseRootPolynomial.Coordinate
+def minimum : {edges : List ParameterEdge} → {bank : Bank regular data
+  edges} → {owners : Owners bank} →
+    (requests : ChartRequests target floor owners) →
+      BasisSourceBudgets endpointTarget
+      allowance requests → Coordinate
   | _, _, _, .nil, _ => endpointTarget
   | _, _, _, .cons _ tail, budgets => min budgets.1.sourceTarget
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.minimum tail
+    (BasisSourceBudgets.minimum tail
     budgets.2)
 
 /-- Every retained cell can consume this shared source tolerance. -/
-def Fits (sourceTarget : InverseRootPolynomial.Coordinate) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    (requests : ParentChartRequests.ChartRequests target floor owners) →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
+def Fits (sourceTarget : Coordinate) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    (requests : ChartRequests target floor owners) →
+      BasisSourceBudgets endpointTarget
       allowance requests → Prop
   | _, _, _, .nil, _ => True
   | _, _, _, .cons _ tail, budgets => sourceTarget ≤ budgets.1.sourceTarget ∧
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.Fits
+    BasisSourceBudgets.Fits
     sourceTarget tail budgets.2
 
 /-- A smaller common source tolerance remains admissible for every retained original cell budget. -/
-theorem fits_mono {first last : InverseRootPolynomial.Coordinate} (smaller : first ≤ last) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    (requests : ParentChartRequests.ChartRequests target floor owners) → (budgets :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
+theorem fits_mono {first last : Coordinate} (smaller : first ≤ last) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    (requests : ChartRequests target floor owners) → (budgets :
+      BasisSourceBudgets endpointTarget
       allowance requests) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.Fits last requests
-      budgets → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.Fits first
+    Fits last requests
+      budgets → Fits first
       requests budgets
   | _, _, _, .nil, _, _ => trivial
   | _, _, _, .cons _ tail, budgets, fitted => ⟨smaller.trans fitted.1,
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.fits_mono
+    BasisSourceBudgets.fits_mono
     smaller tail budgets.2 fitted.2⟩
 
 /-- Positive original endpoint and cell budgets give a strictly positive shared minimum tolerance. -/
 theorem minimum_positive (positive : 0 < endpointTarget) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    (requests : ParentChartRequests.ChartRequests target floor owners) → (budgets :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    (requests : ChartRequests target floor owners) → (budgets :
+      BasisSourceBudgets endpointTarget
       allowance requests) →
-    0 < Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.minimum requests
+    0 < minimum requests
       budgets
   | _, _, _, .nil, _ => positive
   | _, _, _, .cons _ tail, budgets => Data.Rat.Fraction.Order.Basic.lt_min budgets.1.positive
@@ -161,12 +161,12 @@ theorem minimum_positive (positive : 0 < endpointTarget) :
 
 /-- The retained shared minimum source tolerance pays the original endpoint target. -/
 theorem minimum_le_endpoint :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    (requests : ParentChartRequests.ChartRequests target floor owners) → (budgets :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    (requests : ChartRequests target floor owners) → (budgets :
+      BasisSourceBudgets endpointTarget
       allowance requests) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.minimum requests budgets
+    minimum requests budgets
       ≤ endpointTarget
   | _, _, _, .nil, _ => le_rfl
   | _, _, _, .cons _ tail, budgets => (Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
@@ -175,39 +175,39 @@ theorem minimum_le_endpoint :
 
 /-- The actual retained minimum source tolerance pays every original cell budget. -/
 theorem minimum_fits :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    (requests : ParentChartRequests.ChartRequests target floor owners) → (budgets :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    (requests : ChartRequests target floor owners) → (budgets :
+      BasisSourceBudgets endpointTarget
       allowance requests) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.Fits
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.minimum requests
+    Fits
+      (minimum requests
       budgets) requests budgets
   | _, _, _, .nil, _ => trivial
   | _, _, _, .cons _ tail, budgets =>
       ⟨Data.Rat.Fraction.Order.Basic.min_le_left _ _,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.fits_mono
+        fits_mono
         (Data.Rat.Fraction.Order.Basic.min_le_right _ _) tail budgets.2
         (minimum_fits
         tail budgets.2)⟩
 
 end ParentBasisSourcePreparation.BasisSourceBudgets
 
-variable {edges : List Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {bank :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} {owners :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank}
+variable {edges : List ParameterEdge} {bank :
+  Bank regular data edges} {owners :
+  Owners bank}
 
 set_option genInjectivity false in
 /-- Cache the common tolerance and prepare every source vertex with it. The cell budgets remain available to pay the
 later polygon comparisons. -/
-structure ParentBasisSourcePreparation (covers : SourceLocations.BasisSourceCovers parent)
-    (endpointTarget allowance : InverseRootPolynomial.Coordinate) (sourceFloor : Nat) (requests :
-      ParentChartRequests.ChartRequests target floor owners) where
+structure ParentBasisSourcePreparation (covers : BasisSourceCovers parent)
+    (endpointTarget allowance : Coordinate) (sourceFloor : Nat) (requests :
+      ChartRequests target floor owners) where
   /-- The original per-cell source polygon allowances on the exact retained heterogeneous spine. -/ budgets :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget allowance
+    ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget allowance
     requests
   /-- The cached positive source tolerance shared by every original cell and vertex. -/ sourceTarget :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The common source tolerance is exactly the original retained budget minimum. -/ source_eq : sourceTarget =
     budgets.minimum requests
   /-- The cached original common source tolerance is strictly positive. -/ positive : 0 < sourceTarget
@@ -216,7 +216,7 @@ structure ParentBasisSourcePreparation (covers : SourceLocations.BasisSourceCove
   /-- Every original retained cell budget accepts the cached common source tolerance. -/ fitted : budgets.Fits
     sourceTarget requests
   /-- The actual original basis-source endpoint requests at that shared tolerance and retained source floor. -/ sources
-    : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests
+    : BasisEndpointRequests covers sourceTarget sourceFloor requests
 
 constructive_injectivity ParentBasisSourcePreparation
 
@@ -224,13 +224,13 @@ namespace ParentBasisSourcePreparation
 
 /-- Cache one positive tolerance paying every original cell and endpoint budget, then prepare the retained source vertex
 bank once. -/
-def build (covers : SourceLocations.BasisSourceCovers parent) (endpointTarget allowance :
-  InverseRootPolynomial.Coordinate)
+def build (covers : BasisSourceCovers parent) (endpointTarget allowance :
+  Coordinate)
     (endpointPositive : 0 < endpointTarget) (positive : 0 < allowance) (sourceFloor : Nat)
-    (requests : ParentChartRequests.ChartRequests target floor owners) :
+    (requests : ChartRequests target floor owners) :
       ParentBasisSourcePreparation covers
       endpointTarget allowance sourceFloor requests := by
-  let budgets := Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePreparation.BasisSourceBudgets.build
+  let budgets := BasisSourceBudgets.build
     endpointTarget allowance endpointPositive positive requests
   let sourceTarget := budgets.minimum requests
   have sourcePositive : 0 < sourceTarget := budgets.minimum_positive endpointPositive requests

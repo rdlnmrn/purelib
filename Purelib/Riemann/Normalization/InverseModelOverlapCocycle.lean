@@ -18,6 +18,8 @@ import Purelib.Tactic.Ring
 public import Mathlib.Algebra.Field.Defs
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -47,14 +49,14 @@ private theorem nearest_of_distance_lt_norm {reference value : Gaussian}
     (close : normSq (reference - value) < normSq reference) :
     normSq (reference - value) ≤ normSq (reference + value) := by
   apply le_of_lt
-  apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct (c := normSq (reference - value))
+  apply Arithmetic.lt_of_add_lt_add_right_direct (c := normSq (reference - value))
   calc
     _ = normSq (reference - value) * 2 := by ring1
-    _ < normSq reference * 2 := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct close (by decide)
+    _ < normSq reference * 2 := Arithmetic.mul_lt_mul_of_pos_right_direct close (by decide)
     _ ≤ 2 * (normSq reference + normSq value) :=
       (by ring1 : normSq reference * 2 = 2 * normSq reference).trans_le
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (le_add_of_nonneg_right (Basic.Canonical.normSq_nonneg _)) (by decide))
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (le_add_of_nonneg_right (normSq_nonneg _)) (by decide))
     _ = normSq (reference + value) + normSq (reference - value) := by
       simp only [normSq, Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im]
       ring1
@@ -68,10 +70,10 @@ private theorem tight_distance (alignment : SignAlignment reference candidate)
     (leftSmall : leftError ≤ 1 / 256) (rightSmall : rightError ≤ 1 / 256) :
     normSq (reference - alignment.value) ≤ (3 / 64 : Coordinate) * normSq reference := by
   have allowance : 6 * (leftError + rightError) ≤ (3 / 64 : Coordinate) :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add leftSmall rightSmall)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add leftSmall rightSmall)
       (by decide)).trans_eq (by decide +kernel : (6 : Coordinate) * (1 / 256 + 1 / 256) = 3 / 64)
   exact (alignment.distance_le leftResidual rightResidual (leftSmall.trans (by decide +kernel))).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct allowance (Basic.Canonical.normSq_nonneg _))
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct allowance (normSq_nonneg _))
 
 /-- Compose two successive nearest-sign alignments under small inverse-root residual bounds.
 
@@ -94,13 +96,13 @@ def composeAligned (first : SignAlignment reference middle)
         normSq (left - alignment.value) ≤ (3 / 64 : Coordinate) * normSq left := by
     intro left right alignment leftError rightError leftResidual rightResidual leftSmall rightSmall
     have allowance : 6 * (leftError + rightError) ≤ (3 / 64 : Coordinate) :=
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add leftSmall rightSmall) (by decide)).trans_eq
           (by decide +kernel : (6 : Coordinate) * (1 / 256 + 1 / 256) = 3 / 64)
     exact (alignment.distance_le leftResidual rightResidual
       (leftSmall.trans (by decide +kernel))).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          allowance (Basic.Canonical.normSq_nonneg _))
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct
+          allowance (normSq_nonneg _))
   have firstDistance := tightDistance first firstResidual middleResidual firstSmall middleSmall
   have middleAligned : normSq (1 - parameter * first.value ^ 2) ≤ middleError := by
     rw [first.square_eq]
@@ -114,20 +116,20 @@ def composeAligned (first : SignAlignment reference middle)
     calc
       _ ≤ 2 * (normSq (reference - first.value) + normSq reference) := bound
       _ ≤ 2 * ((3 / 64 : Coordinate) * normSq reference + normSq reference) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstDistance le_rfl) (by decide)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstDistance le_rfl) (by decide)
       _ = (2 * (3 / 64 + 1) : Coordinate) * normSq reference := by ring1
-      _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
-        (Basic.Canonical.normSq_nonneg _)
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
+        (normSq_nonneg _)
   have composedDistance : normSq (reference - second.value) ≤ (3 / 8 : Coordinate) * normSq reference := by
     calc
       _ ≤ 2 * (normSq (reference - first.value) + normSq (first.value - second.value)) := by
         simpa only [Norm.Basic.normSq_eq_canonical] using (Norm.Bounds.normSq_sub_le_via reference first.value
           second.value)
       _ ≤ 2 * ((3 / 64 : Coordinate) * normSq reference + (3 / 64 : Coordinate) * normSq first.value) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstDistance secondDistance) (by decide)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstDistance secondDistance) (by decide)
       _ ≤ 2 * ((3 / 64 : Coordinate) * normSq reference + (3 / 64 : Coordinate) * (3 * normSq reference)) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (add_le_add le_rfl (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct middleNorm
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (add_le_add le_rfl (Arithmetic.mul_le_mul_of_nonneg_left_direct middleNorm
             (by decide +kernel))) (by decide)
       _ = (2 * (3 / 64 + (3 / 64) * 3) : Coordinate) * normSq reference := by ring1
       _ = _ := by rw [show (2 : Coordinate) * (3 / 64 + (3 / 64) * 3) = 3 / 8 by decide +kernel]
@@ -135,22 +137,22 @@ def composeAligned (first : SignAlignment reference middle)
     (firstResidual.trans (firstSmall.trans (by decide +kernel))))
   rw [Norm.Basic.normSq_eq_canonical] at referencePositive
   have close : normSq (reference - second.value) < normSq reference :=
-    composedDistance.trans_lt ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    composedDistance.trans_lt ((Arithmetic.mul_lt_mul_of_pos_right_direct
       (show (3 / 8 : Coordinate) < 1 by decide) referencePositive).trans_eq (by ring1))
   have nearest : normSq (reference - second.value) ≤
       normSq (reference + second.value) := by
     apply le_of_lt
-    apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
+    apply Arithmetic.lt_of_add_lt_add_right_direct
       (c := normSq (reference - second.value))
     calc
       _ = normSq (reference - second.value) * 2 := by ring1
       _ < normSq reference * 2 :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           close (by decide)
       _ ≤ 2 * (normSq reference + normSq second.value) :=
         (by ring1 : normSq reference * 2 = 2 * normSq reference).trans_le
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-            (le_add_of_nonneg_right (Basic.Canonical.normSq_nonneg _)) (by decide))
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (le_add_of_nonneg_right (normSq_nonneg _)) (by decide))
       _ = normSq (reference + second.value) +
           normSq (reference - second.value) := by
         simp only [normSq, Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im]
@@ -183,7 +185,7 @@ def rebase (first : SignAlignment reference middle) (second : SignAlignment midd
     · change normSq (-middle - (-second.value)) ≤ normSq (-middle + (-second.value))
       have difference : -middle - (-second.value) = -(middle - second.value) := by ring1
       have sum : -middle + (-second.value) = -(middle + second.value) := by ring1
-      rw [difference, sum, Basic.Canonical.normSq_neg, Basic.Canonical.normSq_neg]
+      rw [difference, sum, normSq_neg, normSq_neg]
       exact second.nearest
 
 /-- The direct sign alignment equals composition of the two retained intermediate flips under the stated small
@@ -228,11 +230,11 @@ namespace OverlapReady
 section
 open Purelib.Data.Rat
 /-- Two correction steps reduce any valid inverse-root model's retained bound to at most one two-hundred-fifty-sixth. -/
-private theorem two_steps_small {polynomial : Polynomial} {box : Box} (model : Model polynomial box) :
+theorem two_steps_small {polynomial : Polynomial} {box : Box} (model : Model polynomial box) :
     model.step.step.bound ≤ 1 / 256 := by
   change model.bound / 4 / 4 ≤ 1 / 256
-  apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Coordinate) < 4)).2
-  apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Coordinate) < 4)).2
+  apply (Field.div_le_iff_pos (by decide : (0 : Coordinate) < 4)).2
+  apply (Field.div_le_iff_pos (by decide : (0 : Coordinate) < 4)).2
   exact model.bound_small.trans_eq (by decide +kernel : (1 / 16 : Coordinate) = (1 / 256) * 4 * 4)
 
 /-- Retain the original model if overlap-ready, otherwise take one or two certified correction steps.
@@ -246,9 +248,9 @@ def ofModel {polynomial : Polynomial} {box : Box} (model : Model polynomial box)
     if small : once.bound ≤ 1 / 256 then ⟨once, small⟩
     else ⟨once.step, by
       change model.bound / 4 / 4 ≤ 1 / 256
-      apply (Fraction.Order.Field.div_le_iff_pos
+      apply (Field.div_le_iff_pos
         (by decide : (0 : Coordinate) < 4)).2
-      apply (Fraction.Order.Field.div_le_iff_pos
+      apply (Field.div_le_iff_pos
         (by decide : (0 : Coordinate) < 4)).2
       exact model.bound_small.trans_eq
         (by decide +kernel : (1 / 16 : Coordinate) = (1 / 256) * 4 * 4)⟩

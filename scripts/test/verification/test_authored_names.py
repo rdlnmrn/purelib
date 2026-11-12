@@ -8,7 +8,7 @@ from scripts.verification import authored_names as checker
 
 class AuthoredNameTests(unittest.TestCase):
     def inspect(self, source):
-        return checker.inspect_source("Test/Fixture.lean", source)
+        return checker.inspect_source("TestPurelib/Fixture.lean", source)
 
     def test_comments_strings_and_nested_comments_are_opaque(self):
         row = self.inspect('module\n/- namespace _Hidden /- bad_public -/ -/\n'

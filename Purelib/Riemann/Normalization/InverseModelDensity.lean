@@ -10,6 +10,8 @@ import Purelib.Polynomial.Geometry.EvaluationLower
 import Purelib.Riemann.Normalization.InverseModelOverlap
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -42,34 +44,34 @@ theorem density_mul_inverse_lower {parameter numerator value : Gaussian} {densit
     (valid : density * normSq parameter ≤ normSq numerator)
     (small : normSq (1 - parameter * value ^ 2) ≤ 1 / 16) :
     density / 4 ≤ normSq (numerator * value) := by
-  rw [Gaussian.Basic.Canonical.normSq_mul]
+  rw [normSq_mul]
   have lower := (by decide : (1 / 4 : Coordinate) ≤ 1 / 3).trans (normalized_value_lower small)
   if bounded : normSq value ≤ 1 then
     have square : normSq value ^ 2 ≤ normSq value := by
       calc
         _ = normSq value * normSq value := by ring1
-        _ ≤ normSq value * 1 := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bounded
-          (Gaussian.Basic.Canonical.normSq_nonneg value)
+        _ ≤ normSq value * 1 := Arithmetic.mul_le_mul_of_nonneg_left_direct bounded
+          (normSq_nonneg value)
         _ = _ := by ring1
     have product : (1 / 4 : Coordinate) ≤ normSq parameter * normSq value :=
-      lower.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square
-        (Gaussian.Basic.Canonical.normSq_nonneg parameter))
+      lower.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct square
+        (normSq_nonneg parameter))
     calc
       density / 4 = density * (1 / 4) := by simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]; ring1
       _ ≤ density * (normSq parameter * normSq value) :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct product nonnegative
+        Arithmetic.mul_le_mul_of_nonneg_left_direct product nonnegative
       _ = (density * normSq parameter) * normSq value := by ring1
-      _ ≤ _ := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct valid
-        (Gaussian.Basic.Canonical.normSq_nonneg value)
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_right_direct valid
+        (normSq_nonneg value)
   else
     calc
       density / 4 = density * (1 / 4) := by simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]; ring1
-      _ ≤ density * 1 := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide) nonnegative
+      _ ≤ density * 1 := Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide) nonnegative
       _ = density := by ring1
       _ ≤ normSq numerator := belowNumerator
       _ = normSq numerator * 1 := by ring1
-      _ ≤ _ := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (le_of_not_ge bounded)
-        (Gaussian.Basic.Canonical.normSq_nonneg numerator)
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct (le_of_not_ge bounded)
+        (normSq_nonneg numerator)
 
 end Purelib.Riemann.Normalization.InverseModelDensity.InverseRootPolynomial
 
@@ -91,11 +93,11 @@ open Purelib.Polynomial in
 The query point lies in both certified boxes, which need not be equal; the model's actual residual bound supplies the
 inverse estimate. -/
 theorem densityLower_le_inverseModel {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {coefficients : Geometry.EvaluationLower.GaussianVector genus} (cell :
-      Hyperelliptic.Integration.Energy.Prepared.PreparedEnergy.SurfaceCell curve coefficients) {box : Box}
-    (model : Normalization.InverseRootPolynomial.Model curve.polynomial box) {point : Gaussian}
+    {coefficients : GaussianVector genus} (cell :
+      SurfaceCell curve coefficients) {box : Box}
+    (model : InverseRootPolynomial.Model curve.polynomial box) {point : Gaussian}
     (inside : cell.box.Contains point) (inModel : box.Contains point) :
-    cell.densityLower / 4 ≤ normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point *
+    cell.densityLower / 4 ≤ normSq ((coefficientPolynomial coefficients).eval point *
       model.value.eval point) := by
   have numerator := cell.density_below_numerator point inside
   have valid := cell.density_valid point inside

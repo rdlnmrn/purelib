@@ -51,30 +51,32 @@ open Purelib.Riemann
 The actual shared polynomial pair removes local primitive origins. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus count otherCount : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential other :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count otherCount : Nat} {curve : Basic.HyperellipticCurve genus} {differential other :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
     Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
   {otherPatch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
     (Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {firstCover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {secondCover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.CommonCover firstCover secondCover}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {firstCover : UniformReciprocalCover.Cover data} {secondCover :
+    UniformReciprocalCover.Cover otherData}
+  {regular : RegularBounds.Data cap} {common :
+    UniformReciprocalCommonCover.CommonCover firstCover secondCover}
   {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage depth : Nat} {box otherBox :
     Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {source : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data stage} {otherSource :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive otherData stage}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest regular common target minimum}
-  {evaluated : Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Evaluation request sample
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data stage} {otherSource :
+    UniformReciprocalPrimitives.SourcePrimitive otherData stage}
+  {request : CommonRibbonRequest regular common target minimum}
+  {evaluated : Evaluation request sample
     otherSample source otherSource depth}
 
 /-- Subtracting two readings from one origin gives their original unshifted difference. -/
@@ -85,12 +87,12 @@ private theorem unanchor (first last origin : Gaussian.Basic.Canonical) : (last 
 
 The bound keeps the increment error, common slope and fourth-power interval length at every finite depth. -/
 @[expose] def Evaluation.SharedPair.ConjugateIntervalAreaBound (shared :
-  Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Evaluation.SharedPair evaluated)
-    (entry : Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Entry request sample
+  Evaluation.SharedPair evaluated)
+    (entry : Entry request sample
       otherSample source otherSource depth) (fine : Nat) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
       ((Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource) fine
+      (sourceValues source otherSource) fine
         entry.plan.interval.edge.left.parameter entry.plan.interval.edge.right.parameter).map
           Path.ConjugateIncrementComparison.conjugateFirst) -
       Path.PairedIncrementArea.area ((Path.Dyadic.DyadicPairedPrimitivePaths.increments shared.values fine
@@ -102,13 +104,13 @@ The bound keeps the increment error, common slope and fourth-power interval leng
 /-- All intermediate excursions are included. The error bound is independent
 of the requested spatial subdivision depth and contains no endpoint term. -/
 theorem Evaluation.SharedPair.conjugate_interval_area_bound (shared :
-  Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Evaluation.SharedPair evaluated)
-    (entry : Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Entry request sample
+  Evaluation.SharedPair evaluated)
+    (entry : Entry request sample
       otherSample source otherSource depth) (member : entry ∈ evaluated.entries) (fine : Nat) :
     shared.ConjugateIntervalAreaBound entry fine := open Purelib.Approximation in open Purelib.Data.Rat in by
   have errorNonnegative : 0 ≤ entry.incrementError :=
     (Rational.Geometric.Basic.quarterRadius_nonneg
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularComparison.Data.regularScale_nonnegative entry.plan.first)
+      (RegularComparison.Data.regularScale_nonnegative entry.plan.first)
       stage).trans (Fraction.Order.Basic.le_max_left ..)
   have slopeNonnegative : 0 ≤ entry.incrementSlope :=
     (data.sourceSlope_nonnegative.trans (Fraction.Order.Basic.le_max_left ..)).trans (Fraction.Order.Basic.le_max_left
@@ -118,11 +120,11 @@ theorem Evaluation.SharedPair.conjugate_interval_area_bound (shared :
   have sourceSecond : otherData.sourceSlope ≤ entry.incrementSlope := (Fraction.Order.Basic.le_max_right ..).trans
     (Fraction.Order.Basic.le_max_left ..)
   have capFirst : 2 * (data.sourceSlope + Rational.Geometric.Basic.quarterRadius
-    (Hyperelliptic.Charts.Reciprocal.Disk.RegularComparison.Data.regularScale entry.plan.first) stage) ≤
+    (RegularComparison.Data.regularScale entry.plan.first) stage) ≤
     entry.incrementSlope :=
     (Fraction.Order.Basic.le_max_left ..).trans (Fraction.Order.Basic.le_max_right ..)
   have capSecond : 2 * (otherData.sourceSlope + Rational.Geometric.Basic.quarterRadius
-    (Hyperelliptic.Charts.Reciprocal.Disk.RegularComparison.Data.regularScale entry.plan.second) stage) ≤
+    (RegularComparison.Data.regularScale entry.plan.second) stage) ≤
     entry.incrementSlope :=
     (Fraction.Order.Basic.le_max_right ..).trans (Fraction.Order.Basic.le_max_right ..)
   apply Path.DyadicConjugateIncrementComparison.Bilinear.increments_conjugate_area_difference_bound _ _ errorNonnegative
@@ -138,44 +140,44 @@ theorem Evaluation.SharedPair.conjugate_interval_area_bound (shared :
     have secondScalar := otherSource.increment_bound firstUnit lastUnit
     rw [Gaussian.Norm.Basic.normSq_eq_canonical] at firstScalar secondScalar
     exact ⟨firstScalar.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct sourceFirst
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)),
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct sourceFirst
+        (Arithmetic.sq_nonneg_direct _)),
       secondScalar.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct sourceSecond
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))⟩
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct sourceSecond
+        (Arithmetic.sq_nonneg_direct _))⟩
   · intro first last firstInside lastInside
-    have left := Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.cap_increment_bound source entry.left
+    have left := RegularArea.RegularAlignment.cap_increment_bound source entry.left
       ⟨entry.plan.interval.first.lower.trans firstInside.1, firstInside.2.trans entry.plan.interval.first.upper⟩
       ⟨entry.plan.interval.first.lower.trans lastInside.1, lastInside.2.trans entry.plan.interval.first.upper⟩
-    have right := Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.cap_increment_bound otherSource
+    have right := RegularArea.RegularAlignment.cap_increment_bound otherSource
       entry.right
       ⟨entry.plan.interval.second.lower.trans firstInside.1, firstInside.2.trans entry.plan.interval.second.upper⟩
       ⟨entry.plan.interval.second.lower.trans lastInside.1, lastInside.2.trans entry.plan.interval.second.upper⟩
-    dsimp only [Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue] at left right
+    dsimp only [RegularArea.RegularAlignment.capValue] at left right
     rw [shared.first_owner entry member,
-      Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.unanchor] at left
+      unanchor] at left
     rw [shared.second_owner entry member,
-      Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.unanchor] at right
+      unanchor] at right
     rw [Gaussian.Norm.Basic.normSq_eq_canonical] at left right
-    exact ⟨left.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct capFirst
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)),
-      right.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct capSecond
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))⟩
+    exact ⟨left.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct capFirst
+      (Arithmetic.sq_nonneg_direct _)),
+      right.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct capSecond
+        (Arithmetic.sq_nonneg_direct _))⟩
   · intro first last firstInside lastInside
     have estimates := shared.increment_errors entry member firstInside lastInside
     obtain ⟨left, right⟩ := estimates
     have rearrange (a b c d : Gaussian.Basic.Canonical) : (b - a) - (d - c) = (b - d) - (a - c) := by ring1
     rw [rearrange] at left right
     have firstError : Rational.Geometric.Basic.quarterRadius
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularComparison.Data.regularScale entry.plan.first) stage ≤
+      (RegularComparison.Data.regularScale entry.plan.first) stage ≤
       entry.incrementError := Fraction.Order.Basic.le_max_left ..
     have secondError : Rational.Geometric.Basic.quarterRadius
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularComparison.Data.regularScale entry.plan.second) stage ≤
+      (RegularComparison.Data.regularScale entry.plan.second) stage ≤
       entry.incrementError := Fraction.Order.Basic.le_max_right ..
     rw [Gaussian.Norm.Basic.normSq_eq_canonical] at left right
-    exact ⟨left.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct firstError
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)),
-      right.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct secondError
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))⟩
+    exact ⟨left.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct firstError
+      (Arithmetic.sq_nonneg_direct _)),
+      right.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct secondError
+        (Arithmetic.sq_nonneg_direct _))⟩
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest

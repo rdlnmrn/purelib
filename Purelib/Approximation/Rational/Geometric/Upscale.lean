@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Algebra.NatCast
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -61,13 +63,13 @@ theorem upscaleExponent_lower {lowerSq : Fraction.Rational}
   let inverse : Fraction.Rational := 1 / lowerSq
   let ceiling := Floor.ceilNat inverse
   have inverseNonnegative : 0 ≤ inverse :=
-    (Fraction.Order.Field.div_pos_direct (by decide) positive).le
+    (Field.div_pos_direct (by decide) positive).le
   have inverseLe : inverse ≤ (ceiling : Nat) := by
     exact Floor.le_natCast_ceilNat_of_nonneg
       inverseNonnegative
   have oneLe : 1 ≤ (ceiling : Fraction.Rational) * lowerSq := by
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         inverseLe positive.le
     calc
       1 = inverse * lowerSq := by
@@ -77,7 +79,7 @@ theorem upscaleExponent_lower {lowerSq : Fraction.Rational}
       _ ≤ (ceiling : Fraction.Rational) * lowerSq := scaled
   have ceilingStrict : (ceiling : Fraction.Rational) * lowerSq <
       ((ceiling + 1 : Nat) : Fraction.Rational) * lowerSq := by
-    apply Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    apply Arithmetic.mul_lt_mul_of_pos_right_direct
       _ positive
     exact Fraction.Cast.Order.natCast_lt_direct (Nat.lt_succ_self _)
   have successorLower : 1 <
@@ -89,9 +91,9 @@ theorem upscaleExponent_lower {lowerSq : Fraction.Rational}
   have powerBound : ((ceiling + 1 : Nat) : Fraction.Rational) ≤
       (2 : Fraction.Rational) ^ (ceiling + 1) := by
     have castBound := Fraction.Cast.Order.natCast_le_direct powerBoundNat
-    simpa only [Purelib.Algebra.NatCast.pow, Nat.cast_ofNat] using castBound
+    simpa only [NatCast.pow, Nat.cast_ofNat] using castBound
   have scaledPower :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct powerBound
+    Arithmetic.mul_le_mul_of_nonneg_right_direct powerBound
       positive.le
   dsimp only [upscaleExponent, ceiling]
   exact successorLower.trans_le scaledPower
@@ -103,7 +105,7 @@ theorem upscaledPrefix_lower
       lowerSq := by
   have baseLower := upscaleExponent_lower positive
   have powerOne : (1 : Fraction.Rational) ≤ (2 : Fraction.Rational) ^ priorCount := by
-    have monotone := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have monotone := Arithmetic.pow_le_pow_direct
       (by decide : (0 : Fraction.Rational) ≤ 1)
       (by decide : (1 : Fraction.Rational) ≤ 2) priorCount
     simpa only [one_pow] using monotone
@@ -119,10 +121,10 @@ theorem upscaledPrefix_lower
           (_root_.one_mul _).symm
         _ ≤ (2 : Fraction.Rational) ^ priorCount *
             ((2 : Fraction.Rational) ^ upscaleExponent lowerSq * lowerSq) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             powerOne
-            (Fraction.Order.Arithmetic.mul_nonneg_direct
-              (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) _)
+            (Arithmetic.mul_nonneg_direct
+              (Arithmetic.pow_nonneg_direct (by decide) _)
               positive.le)
     _ = (2 : Fraction.Rational) ^ (priorCount + upscaleExponent lowerSq) *
       lowerSq := by

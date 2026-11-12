@@ -50,13 +50,22 @@ contracts squared diagonal by `4/9`.
 
 namespace Purelib.RootIsolation.Subdivision.Raw.Grid.Elimination
 
-/-- One executable central safe-cut grid. -/
-def safeRawFourGrid
-    {p : CoefficientPolynomial} {ambient : Box} {degreeBound :
-      Nat}
+open Purelib.Polynomial.Clearance.Box.Grid.Four.Basic (ClearFourGrid)
+open Purelib.Polynomial.Clearance.Box.Grid.Four.Elimination (buildClearFourGrid)
+
+/-- Assemble the four contracting raw children from one retained central safe-cut grid.
+
+The supplied scalar equalities identify the original eliminant-safe coordinates.
+Its retained line clearances are consumed directly, so callers can restrict
+already constructed ambient-line certificates without repeating their producers. -/
+def ofClearFourGrid
+    {p : CoefficientPolynomial} {ambient : Box} {degreeBound : Nat}
     (elimination : AxisEliminationCertificate p degreeBound)
-    (state : RawWindingState p ambient) : Subdivision.Raw.Grid.RawFourGrid state := by
-  let grid := Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination state.box state.proper
+    (state : RawWindingState p ambient)
+    (grid : ClearFourGrid p state.box)
+    (xEq : grid.xCut = Elimination.Axis.Cuts.verticalSafeCoordinate elimination state.box state.proper)
+    (yEq : grid.yCut = Elimination.Axis.Cuts.horizontalSafeCoordinate elimination state.box state.proper) :
+    Subdivision.Raw.Grid.RawFourGrid state := by
   let clearances := grid.childClearances state.clearance
   have xSpec := Elimination.Axis.Cuts.verticalSafeCoordinate_spec elimination state.box state.proper
   have ySpec := Elimination.Axis.Cuts.horizontalSafeCoordinate_spec elimination state.box state.proper
@@ -64,6 +73,8 @@ def safeRawFourGrid
     Elimination.Axis.Cuts.verticalSafeCoordinate_contraction elimination state.box state.proper
   have yContract :=
     Elimination.Axis.Cuts.horizontalSafeCoordinate_contraction elimination state.box state.proper
+  rewrite [← xEq] at xSpec xContract
+  rewrite [← yEq] at ySpec yContract
   have lowerLeftContract : grid.lowerLeft.diagonalSq ≤
       (4 / 9 : Fraction.Rational) * state.box.diagonalSq := by
     apply Box.Bounds.Contraction.diagonalSq_le_four_ninths
@@ -131,6 +142,69 @@ def safeRawFourGrid
           contracts := upperRightContract }
       additive := grid.winding_additive }
 
+/-- Compute the two original central cuts and assemble their retained four-child grid. -/
+def safeRawFourGrid
+    {p : CoefficientPolynomial} {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound)
+    (state : RawWindingState p ambient) : Subdivision.Raw.Grid.RawFourGrid state :=
+  ofClearFourGrid elimination state
+    (buildClearFourGrid elimination state.box state.proper) rfl rfl
+
+/-- An exact retained canonical cut grid reproduces the complete original raw grid.
+
+All four child records, boundary-clearance values and parent/refinement fields
+are retained. Only erased scalar equality proofs identify the supplied cuts.
+-/
+theorem ofClearFourGrid_eq {p : CoefficientPolynomial} {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound) (state : RawWindingState p ambient)
+    (grid : ClearFourGrid p state.box)
+    (same : grid = buildClearFourGrid elimination state.box state.proper)
+    (xEq : grid.xCut = Elimination.Axis.Cuts.verticalSafeCoordinate elimination state.box state.proper)
+    (yEq : grid.yCut = Elimination.Axis.Cuts.horizontalSafeCoordinate elimination state.box state.proper) :
+    ofClearFourGrid elimination state grid xEq yEq = safeRawFourGrid elimination state := by
+  cases same
+  rfl
+
+/-- Assembly uses the supplied lower-left child clearance without recomputing its value. -/
+theorem ofClearFourGrid_lowerLeft_clearance
+    {p : CoefficientPolynomial} {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound) (state : RawWindingState p ambient)
+    (grid : ClearFourGrid p state.box)
+    (xEq : grid.xCut = Elimination.Axis.Cuts.verticalSafeCoordinate elimination state.box state.proper)
+    (yEq : grid.yCut = Elimination.Axis.Cuts.horizontalSafeCoordinate elimination state.box state.proper) :
+    (ofClearFourGrid elimination state grid xEq yEq).lowerLeft.clearance =
+      (grid.childClearances state.clearance).1 := rfl
+
+/-- Assembly uses the supplied upper-left child clearance without recomputing its value. -/
+theorem ofClearFourGrid_upperLeft_clearance
+    {p : CoefficientPolynomial} {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound) (state : RawWindingState p ambient)
+    (grid : ClearFourGrid p state.box)
+    (xEq : grid.xCut = Elimination.Axis.Cuts.verticalSafeCoordinate elimination state.box state.proper)
+    (yEq : grid.yCut = Elimination.Axis.Cuts.horizontalSafeCoordinate elimination state.box state.proper) :
+    (ofClearFourGrid elimination state grid xEq yEq).upperLeft.clearance =
+      (grid.childClearances state.clearance).2.1 := rfl
+
+/-- Assembly uses the supplied lower-right child clearance without recomputing its value. -/
+theorem ofClearFourGrid_lowerRight_clearance
+    {p : CoefficientPolynomial} {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound) (state : RawWindingState p ambient)
+    (grid : ClearFourGrid p state.box)
+    (xEq : grid.xCut = Elimination.Axis.Cuts.verticalSafeCoordinate elimination state.box state.proper)
+    (yEq : grid.yCut = Elimination.Axis.Cuts.horizontalSafeCoordinate elimination state.box state.proper) :
+    (ofClearFourGrid elimination state grid xEq yEq).lowerRight.clearance =
+      (grid.childClearances state.clearance).2.2.1 := rfl
+
+/-- Assembly uses the supplied upper-right child clearance without recomputing its value. -/
+theorem ofClearFourGrid_upperRight_clearance
+    {p : CoefficientPolynomial} {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound) (state : RawWindingState p ambient)
+    (grid : ClearFourGrid p state.box)
+    (xEq : grid.xCut = Elimination.Axis.Cuts.verticalSafeCoordinate elimination state.box state.proper)
+    (yEq : grid.yCut = Elimination.Axis.Cuts.horizontalSafeCoordinate elimination state.box state.proper) :
+    (ofClearFourGrid elimination state grid xEq yEq).upperRight.clearance =
+      (grid.childClearances state.clearance).2.2.2 := rfl
+
 /-- The retained lower-left child is exactly the corresponding box of the original eliminant-safe four-grid. -/
 @[simp] theorem safeRawFourGrid_lowerLeft_box
     {p : CoefficientPolynomial} {ambient : Box} {degreeBound :
@@ -138,7 +212,7 @@ def safeRawFourGrid
     (elimination : AxisEliminationCertificate p degreeBound)
     (state : RawWindingState p ambient) :
     (safeRawFourGrid elimination state).lowerLeft.box =
-      (Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination state.box state.proper).lowerLeft := rfl
+      (buildClearFourGrid elimination state.box state.proper).lowerLeft := rfl
 
 /-- The retained upper-left child is exactly the corresponding box of the original eliminant-safe four-grid. -/
 @[simp] theorem safeRawFourGrid_upperLeft_box
@@ -147,7 +221,7 @@ def safeRawFourGrid
     (elimination : AxisEliminationCertificate p degreeBound)
     (state : RawWindingState p ambient) :
     (safeRawFourGrid elimination state).upperLeft.box =
-      (Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination state.box state.proper).upperLeft := rfl
+      (buildClearFourGrid elimination state.box state.proper).upperLeft := rfl
 
 /-- The retained lower-right child is exactly the corresponding box of the original eliminant-safe four-grid. -/
 @[simp] theorem safeRawFourGrid_lowerRight_box
@@ -156,7 +230,7 @@ def safeRawFourGrid
     (elimination : AxisEliminationCertificate p degreeBound)
     (state : RawWindingState p ambient) :
     (safeRawFourGrid elimination state).lowerRight.box =
-      (Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination state.box state.proper).lowerRight := rfl
+      (buildClearFourGrid elimination state.box state.proper).lowerRight := rfl
 
 /-- The retained upper-right child is exactly the corresponding box of the original eliminant-safe four-grid. -/
 @[simp] theorem safeRawFourGrid_upperRight_box
@@ -165,7 +239,7 @@ def safeRawFourGrid
     (elimination : AxisEliminationCertificate p degreeBound)
     (state : RawWindingState p ambient) :
     (safeRawFourGrid elimination state).upperRight.box =
-      (Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination state.box state.proper).upperRight := rfl
+      (buildClearFourGrid elimination state.box state.proper).upperRight := rfl
 end Purelib.RootIsolation.Subdivision.Raw.Grid.Elimination
 
 end

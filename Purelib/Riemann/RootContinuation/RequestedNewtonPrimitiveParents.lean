@@ -92,7 +92,7 @@ The stored value retains an exact signed readback and squared-norm payment again
 structure PrimitiveAreaCharge (primitive numerical : Basic.Canonical) (target : Fraction.Rational) where
   /-- The cached original signed primitive-minus-numerical area difference. -/ value : Basic.Canonical
   /-- The stored value is exactly the specified original signed difference. -/ value_eq : value = primitive - numerical
-  /-- The cached difference satisfies the retained squared-norm target. -/ bounded : Data.Gaussian.Norm.Basic.normSq
+  /-- The cached difference satisfies the retained squared-norm target. -/ bounded : normSq
     value ≤
     target
 
@@ -102,11 +102,11 @@ end Purelib.Riemann.RootContinuation.RequestedNewtonPrimitiveParents
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational} {request : PreparedBandRequest fixed target} {areaTarget :
-    Purelib.Data.Rat.Fraction.Rational}
+  {target : Fraction.Rational} {request : PreparedBandRequest fixed target} {areaTarget :
+    Fraction.Rational}
 
 namespace Purelib.Riemann.RootContinuation.RequestedNewtonPrimitiveParent.RequestedPrimitiveParent
 
@@ -116,7 +116,7 @@ open Purelib.Riemann.RootContinuation in
 @[expose] def AreaCharge
   {parent : CenteredEdge curve differential}
     (prepared : RequestedPrimitiveParent request parent other count areaTarget) :=
-    Purelib.Riemann.RootContinuation.RequestedNewtonPrimitiveParents.PrimitiveAreaCharge
+    RequestedNewtonPrimitiveParents.PrimitiveAreaCharge
       (PairedIncrementArea.area ((prepared.1.primitiveIncrementPairs prepared.2.2.1 prepared.2.2.2.val).map Prod.fst))
       (PairedIncrementArea.area (PreparedNewtonPairedIncrements.PairedBoundaryParent.increments prepared.1)) areaTarget
 
@@ -127,7 +127,7 @@ open Purelib.Riemann.RootContinuation in
 @[expose] def charge
   {parent : CenteredEdge curve differential}
     (prepared : RequestedPrimitiveParent request parent other count areaTarget) : prepared.AreaCharge :=
-  ⟨_, rfl, Eq.mpr (congrArg₂ (fun primitive numerical => Data.Gaussian.Norm.Basic.normSq (primitive - numerical) ≤
+  ⟨_, rfl, Eq.mpr (congrArg₂ (fun primitive numerical => normSq (primitive - numerical) ≤
     areaTarget)
     (prepared.1.primitiveIncrementPairs_area prepared.2.2.1 prepared.2.2.2.val)
     (PairedIncrementArea.area_eq_trace (PreparedNewtonPairedIncrements.PairedBoundaryParent.increments prepared.1)))
@@ -145,7 +145,7 @@ set_option genInjectivity false in
 The exact parent list indexes the ordered bank; every head stores its own comparison and actual cached charge before the
 tail. -/
 inductive RequestedPrimitiveParents (request : PreparedBandRequest fixed target) (other :
-  Differentials.Basic.Differential genus)
+  Differential genus)
     (count : Nat) (areaTarget : Fraction.Rational) : List (CenteredEdge curve differential) → Type 2
   /-- The requested family for the exact empty original parent list. -/ | nil : RequestedPrimitiveParents request other
     count areaTarget []
@@ -183,11 +183,11 @@ open Purelib.Riemann.Paths.PreparedBoundarySegments (ParentOnBoundary)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational} {request : PreparedBandRequest fixed target} {areaTarget :
-    Purelib.Data.Rat.Fraction.Rational}
+  {target : Fraction.Rational} {request : PreparedBandRequest fixed target} {areaTarget :
+    Fraction.Rational}
 
 section
 
@@ -209,10 +209,10 @@ open Purelib.Riemann.Integration in
 
 The retained coverage, boundary memberships and properness witnesses feed each exact parent construction in list order.
 -/
-@[expose] def build (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential genus)
+@[expose] def build (request : PreparedBandRequest fixed target) (other : Differential genus)
     (otherProfile : DifferentialProfile profile other.exponent) (count : Nat)
     (areaTarget : Fraction.Rational) (positive : 0 < areaTarget) :
-    {parents : List (CenteredEdge curve differential)} → Observation.UniformPreparedMesh.CoveredParents count parents →
+    {parents : List (CenteredEdge curve differential)} → CoveredParents count parents →
     (∀ parent ∈ parents, ParentOnBoundary parent request.sample.output.box) →
     PreparedDyadicRefinements.AllParentsProper parents →
       RequestedPrimitiveParents request other count areaTarget parents
@@ -301,7 +301,7 @@ namespace Purelib.Riemann.RootContinuation.RequestedNewtonPrimitiveParents.Reque
 /-- Every original internal error satisfies the shared retained local target. -/
 theorem internalErrors_bounded {parents : List (CenteredEdge curve differential)}
     (prepared : RequestedPrimitiveParents request other count areaTarget parents) :
-    ∀ error ∈ prepared.internalErrors, Data.Gaussian.Norm.Basic.normSq error ≤ areaTarget := by
+    ∀ error ∈ prepared.internalErrors, normSq error ≤ areaTarget := by
   induction prepared with
   | nil => intro error member; cases member
   | cons head charge tail ih =>
@@ -326,17 +326,17 @@ open Purelib.Riemann.RootContinuation in
 /-- The cached original errors sum to primitive internal areas minus numerical internal areas. -/
 theorem internalErrors_sum {parents : List (CenteredEdge curve differential)}
     (prepared : RequestedPrimitiveParents request other count areaTarget parents) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum prepared.internalErrors =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.primitives.primitiveBlocks.map PairedIncrementArea.area) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area) := by
+    gaussianSum prepared.internalErrors =
+      gaussianSum (prepared.primitives.primitiveBlocks.map PairedIncrementArea.area) -
+        gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area) := by
   induction prepared with
   | nil => change (0 : Basic.Canonical) = 0 - 0; ring1
   | cons head charge tail ih =>
-    change charge.value + Data.Gaussian.Norm.Sum.Basic.gaussianSum tail.internalErrors =
+    change charge.value + gaussianSum tail.internalErrors =
       (PairedIncrementArea.area ((head.1.primitiveIncrementPairs head.2.2.1 head.2.2.2.val).map Prod.fst) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.primitives.primitiveBlocks.map PairedIncrementArea.area)) -
+        gaussianSum (tail.primitives.primitiveBlocks.map PairedIncrementArea.area)) -
       (PairedIncrementArea.area (PreparedNewtonPairedIncrements.PairedBoundaryParent.increments head.1) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.bank.incrementBlocks.map PairedIncrementArea.area))
+        gaussianSum (tail.bank.incrementBlocks.map PairedIncrementArea.area))
     exact (congrArg₂ (fun a b : Basic.Canonical => a + b) charge.value_eq ih).trans
       (sum_error_step _ _ _ _)
 
@@ -346,9 +346,9 @@ open Purelib.Integration.Path in
 /-- Bound the original internal-area discrepancy by parent count squared times the local target. -/
 theorem internal_area_error_le {parents : List (CenteredEdge curve differential)}
     (prepared : RequestedPrimitiveParents request other count areaTarget parents) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.primitives.primitiveBlocks.map
+    normSq (gaussianSum (prepared.primitives.primitiveBlocks.map
       PairedIncrementArea.area) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area)) ≤
+      gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area)) ≤
         (parents.length : Fraction.Rational) * ((parents.length : Fraction.Rational) * areaTarget) := by
   rw [← prepared.internalErrors_sum]
   have bounded := Norm.Sum.Bounds.normSq_sum_le prepared.internalErrors areaTarget prepared.internalErrors_bounded
@@ -361,14 +361,14 @@ open Purelib.Integration.Path in
 /-- A retained local target and original requested bank paying a specified total internal-area error.
 
 The exact parent list and actual primitive/numerical block-area sums remain indices of the guarantee. -/
-@[expose] def InternalAreaRequest (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential
+@[expose] def InternalAreaRequest (request : PreparedBandRequest fixed target) (other : Differential
   genus)
     (count : Nat) (parents : List (CenteredEdge curve differential)) (areaTarget : Fraction.Rational) :=
   (localTarget : Fraction.Rational) ×
     { prepared : RequestedPrimitiveParents request other count localTarget parents //
-      Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.primitives.primitiveBlocks.map
+      normSq (gaussianSum (prepared.primitives.primitiveBlocks.map
         PairedIncrementArea.area) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area)) ≤
+        gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area)) ≤
           areaTarget }
 
 open Purelib.Approximation.Rational in
@@ -380,9 +380,9 @@ open Purelib.Riemann.Integration in
 
 The per-term allowance uses the exact retained parent count; original coverage, boundary and properness witnesses
 determine the resulting bank. -/
-@[expose] def acquire (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential genus)
+@[expose] def acquire (request : PreparedBandRequest fixed target) (other : Differential genus)
     (otherProfile : DifferentialProfile profile other.exponent) (count : Nat)
-    {parents : List (CenteredEdge curve differential)} (covered : Observation.UniformPreparedMesh.CoveredParents count
+    {parents : List (CenteredEdge curve differential)} (covered : CoveredParents count
       parents)
     (boundary : ∀ parent ∈ parents, ParentOnBoundary parent request.sample.output.box)
     (proper : PreparedDyadicRefinements.AllParentsProper parents)
@@ -405,7 +405,7 @@ open Purelib.Riemann.Paths in
 
 The same covered parents, endpoint owner and sheet supply the properness and boundary proofs; no replacement coverage is
 introduced. -/
-@[expose] def ofCovered (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential genus)
+@[expose] def ofCovered (request : PreparedBandRequest fixed target) (other : Differential genus)
     (otherProfile : DifferentialProfile profile other.exponent)
     {start finish : Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial request.sample.output.box start finish}

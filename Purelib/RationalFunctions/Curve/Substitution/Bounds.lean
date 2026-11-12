@@ -10,6 +10,8 @@ public import Purelib.Polynomial.Dense.Rational.Bounds.Horner
 import Purelib.RationalFunctions.Curve.Basic
 public import Purelib.RationalFunctions.Curve.Substitution
 
+open Purelib.Polynomial.Dense.Rational.Bounds
+
 open Purelib.Data
 open Purelib.Polynomial
 open Purelib.RationalFunctions
@@ -37,41 +39,41 @@ namespace Purelib.RationalFunctions.Curve.Substitution
 
 The polynomial is read from the retained clearing state without recomputing its denominator power. -/
 @[expose] def denominatorPowerReal
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve) :=
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :=
   Dense.Gaussian.Components.realPart
-    (Curve.clearingState p curve).denominatorPower
+    (clearingState p curve).denominatorPower
 
 /-- Extract the imaginary coordinate polynomial of the retained Horner denominator power.
 
 The polynomial is read from the retained clearing state without recomputing its denominator power. -/
 @[expose] def denominatorPowerImaginary
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve) :=
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :=
   Dense.Gaussian.Components.imagPart
-    (Curve.clearingState p curve).denominatorPower
+    (clearingState p curve).denominatorPower
 
 /-- Compute a positive quadrance majorant for the Horner denominator power on a rational interval.
 
 Add the coefficient-derived squared evaluation bounds for its real and imaginary coordinate polynomials, then add one to
 make the bound strictly positive. -/
 @[expose] def denominatorPowerNormMajorant
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
     (interval : Data.Rat.Interval.Bounds) : Rat.Fraction.Rational :=
-  Dense.Rational.Bounds.Horner.evalSqBound
+  Horner.evalSqBound
       (denominatorPowerReal p curve) interval +
-    Dense.Rational.Bounds.Horner.evalSqBound
+    Horner.evalSqBound
       (denominatorPowerImaginary p curve) interval + 1
 
 /-- The denominator-power quadrance majorant is strictly positive.
 
 Each coordinate contribution is nonnegative, and the retained final unit contribution is strictly positive. -/
 theorem denominatorPowerNormMajorant_pos
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
     (interval : Data.Rat.Interval.Bounds) :
     0 < denominatorPowerNormMajorant p curve interval := by
   apply Rat.Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
   · exact add_nonneg
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
+      (Horner.evalSqBound_nonneg _ _)
+      (Horner.evalSqBound_nonneg _ _)
   · decide
 
 /-- The retained denominator-power evaluation has quadrance at most its interval majorant.
@@ -79,34 +81,34 @@ theorem denominatorPowerNormMajorant_pos
 The rational parameter lies in the displayed interval. The two coordinate Horner bounds sum to the Gaussian quadrance
 bound. -/
 theorem normSq_denominatorPower_eval_le
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
     (interval : Data.Rat.Interval.Bounds) {parameter : Rat.Fraction.Rational}
     (inside : interval.Contains parameter) :
-    Data.Gaussian.Norm.Basic.normSq
-        ((Curve.clearingState p curve).denominatorPower.eval
+    Gaussian.Norm.Basic.normSq
+        ((clearingState p curve).denominatorPower.eval
           (Gaussian.Cast.Path.ofCoordinate parameter)) ≤
       denominatorPowerNormMajorant p curve interval := by
   have componentBound := add_le_add
-    (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
+    (Horner.eval_sq_le_evalSqBound
       (denominatorPowerReal p curve) interval inside)
-    (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
+    (Horner.eval_sq_le_evalSqBound
       (denominatorPowerImaginary p curve) interval inside)
   have normComponentBound :
-      Data.Gaussian.Norm.Basic.normSq
-          ((Curve.clearingState p curve).denominatorPower.eval
+      Gaussian.Norm.Basic.normSq
+          ((clearingState p curve).denominatorPower.eval
             (Gaussian.Cast.Path.ofCoordinate parameter)) ≤
-        Dense.Rational.Bounds.Horner.evalSqBound
+        Horner.evalSqBound
             (denominatorPowerReal p curve) interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
+          Horner.evalSqBound
             (denominatorPowerImaginary p curve) interval := by
     simpa only [denominatorPowerReal, denominatorPowerImaginary,
       Dense.Gaussian.Components.eval_realPart,
-      Dense.Gaussian.Components.eval_imagPart, Data.Gaussian.Norm.Basic.normSq] using
+      Dense.Gaussian.Components.eval_imagPart, Gaussian.Norm.Basic.normSq] using
         componentBound
   have majorantBound :
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
             (denominatorPowerReal p curve) interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
+          Horner.evalSqBound
             (denominatorPowerImaginary p curve) interval ≤
         denominatorPowerNormMajorant p curve interval := by
     unfold denominatorPowerNormMajorant

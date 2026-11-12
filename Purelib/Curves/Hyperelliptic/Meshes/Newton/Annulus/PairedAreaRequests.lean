@@ -61,6 +61,8 @@ import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Branches
@@ -119,7 +121,7 @@ open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original}
@@ -132,43 +134,43 @@ variable {target radius : Rational}
 
 /-- The actual paired outer source polygon satisfies the original pre-grid count budget at sufficient stages for both
 retained differential references. -/
-theorem paired_source_area_accurate (request : NewtonPreparation.AreaRequest preparation target radius)
-    {index : BranchIsolation.Data.Index branches} {annulus : Faces.AnnularFaces request.grid index}
-    {lifted : Meshes.LiftedPuncturedGrid request.grid.punctured} {region : LiftedBoundary.Lifted annulus lifted}
-    {prepared : Lifted.OuterPreparation region} {differential : Fin genus}
-    {domains : DomainBanks.FaceDomainBank lifted.frames request.grid.faces.regulars}
+theorem paired_source_area_accurate (request : AreaRequest preparation target radius)
+    {index : BranchIsolation.Data.Index branches} {annulus : AnnularFaces request.grid index}
+    {lifted : LiftedPuncturedGrid request.grid.punctured} {region : LiftedBoundary.Lifted annulus lifted}
+    {prepared : OuterPreparation region} {differential : Fin genus}
+    {domains : FaceDomainBank lifted.frames request.grid.faces.regulars}
     (comparison : OuterPreparation.Comparison prepared differential domains request.budget.scale)
     {other : Fin genus} (second : OuterPreparation.Comparison prepared other domains request.budget.scale)
     {stage : Nat} (later : comparison.reference.index ≤ stage) (secondLater : second.reference.index ≤ stage)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains}
-    (readings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-    {secondBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential other) stage domains}
-    (secondReadings : TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (prepared.sources.map (fun source =>
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains}
+    (readings : TriangleReadings shared lifted.mesh)
+    {secondBank : FacePrimitiveBank (PeriodMatrix.standardDifferential other) stage domains}
+    (secondReadings : TriangleReadings secondBank lifted.mesh) :
+    Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (prepared.sources.map (fun source =>
       (⟨SourceEdge.increment source readings.values, SourceEdge.increment source secondReadings.values⟩ :
-        Stokes.PrimitivePoint)))) < target := by
-  have count := Fraction.Order.Arithmetic.pow_le_pow_direct
+        PrimitivePoint)))) < target := by
+  have count := Arithmetic.pow_le_pow_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le region.outer.length))
     (Fraction.Cast.Order.natCast_le_direct (request.outer_count region)) 2
   have increment := request.budget.increment_le
   have nonnegative := comparison.reference.bound_nonnegative
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct count increment nonnegative
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (request.count : Fraction.Rational))
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) nonnegative) product 2
+  have product := Arithmetic.mul_le_mul_direct count increment nonnegative
+    (Arithmetic.sq_nonneg_direct (request.count : Rational))
+  have square := Arithmetic.pow_le_pow_direct
+    (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _) nonnegative) product 2
   have bounded := (Comparison.paired_source_area_bound comparison second later secondLater readings
     secondReadings).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide : (0 : Fraction.Rational) ≤ 4))
-  exact bounded.trans_lt ((show 4 * ((request.count : Fraction.Rational) ^ 2 * (4 * request.budget.scale)) ^ 2 =
-    64 * (request.count : Fraction.Rational) ^ 4 * request.budget.scale ^ 2 by ring1).trans_lt request.budget.area_paid)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide : (0 : Rational) ≤ 4))
+  exact bounded.trans_lt ((show 4 * ((request.count : Rational) ^ 2 * (4 * request.budget.scale)) ^ 2 =
+    64 * (request.count : Rational) ^ 4 * request.budget.scale ^ 2 by ring1).trans_lt request.budget.area_paid)
 
 set_option genInjectivity false in
 /-- Both references retain the same prepared tour and one cached late stage. -/
-structure PairedComparison (request : NewtonPreparation.AreaRequest preparation target radius)
-    {index : BranchIsolation.Data.Index branches} {annulus : Faces.AnnularFaces request.grid index}
-    {lifted : Meshes.LiftedPuncturedGrid request.grid.punctured} {region : LiftedBoundary.Lifted annulus lifted}
-    (prepared : Lifted.OuterPreparation region) (first second : Fin genus)
-    (domains : DomainBanks.FaceDomainBank lifted.frames request.grid.faces.regulars) where
+structure PairedComparison (request : AreaRequest preparation target radius)
+    {index : BranchIsolation.Data.Index branches} {annulus : AnnularFaces request.grid index}
+    {lifted : LiftedPuncturedGrid request.grid.punctured} {region : LiftedBoundary.Lifted annulus lifted}
+    (prepared : OuterPreparation region) (first second : Fin genus)
+    (domains : FaceDomainBank lifted.frames request.grid.faces.regulars) where
   /-- The original first-differential comparison on the shared retained outer tour and domains. -/ left :
     OuterPreparation.Comparison prepared first domains request.budget.scale
   /-- The original second-differential comparison on that same retained tour and domain bank. -/ right :
@@ -183,7 +185,7 @@ namespace PairedComparison
 
 variable {request : AreaRequest
   preparation target radius}
-  {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {annulus :
+  {index : BranchIsolation.Data.Index branches} {annulus :
     AnnularFaces request.grid index}
   {lifted : LiftedPuncturedGrid request.grid.punctured} {region :
     Lifted annulus lifted}
@@ -194,9 +196,9 @@ variable {request : AreaRequest
 
 /-- Cache both original differential comparisons on the same retained outer tour and their exact common reference stage.
 -/
-@[expose] def build (prepared : Lifted.OuterPreparation region) (first second : Fin genus)
-    (domains : DomainBanks.FaceDomainBank lifted.frames request.grid.faces.regulars) :
-    Curves.Hyperelliptic.Meshes.Newton.Annulus.PairedAreaRequests.NewtonPreparation.AreaRequest.PairedComparison request
+@[expose] def build (prepared : OuterPreparation region) (first second : Fin genus)
+    (domains : FaceDomainBank lifted.frames request.grid.faces.regulars) :
+    PairedComparison request
       prepared first second domains :=
   let left := request.compare prepared first domains
   let right := request.compare prepared second domains
@@ -205,16 +207,16 @@ variable {request : AreaRequest
 /-- At every stage above the retained common index, the actual paired source polygon satisfies the original area target.
 -/
 theorem area_accurate (comparison :
-  Curves.Hyperelliptic.Meshes.Newton.Annulus.PairedAreaRequests.NewtonPreparation.AreaRequest.PairedComparison request
+  PairedComparison request
   prepared first second domains)
     {stage : Nat} (later : comparison.stage ≤ stage)
-    {firstBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential first) stage domains}
-    {secondBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential second) stage domains}
-    (firstReadings : TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh)
-    (secondReadings : TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (prepared.sources.map (fun source =>
+    {firstBank : FacePrimitiveBank (PeriodMatrix.standardDifferential first) stage domains}
+    {secondBank : FacePrimitiveBank (PeriodMatrix.standardDifferential second) stage domains}
+    (firstReadings : TriangleReadings firstBank lifted.mesh)
+    (secondReadings : TriangleReadings secondBank lifted.mesh) :
+    Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (prepared.sources.map (fun source =>
       (⟨SourceEdge.increment source firstReadings.values, SourceEdge.increment source secondReadings.values⟩ :
-        Stokes.PrimitivePoint)))) < target :=
+        PrimitivePoint)))) < target :=
 
     paired_source_area_accurate
     request comparison.left comparison.right

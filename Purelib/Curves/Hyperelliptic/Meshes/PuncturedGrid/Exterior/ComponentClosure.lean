@@ -85,11 +85,11 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBa
 
 /-- The actual regular primitive paths telescope along the original direct parent chain to its final-minus-initial
 polynomial value. -/
-theorem regularPrimitivePaths_sum (bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers)
-  (value : Normalization.InverseRootPolynomial.Polynomial) (depth : Nat)
+theorem regularPrimitivePaths_sum (bank : SideBank regular covers)
+  (value : InverseRootPolynomial.Polynomial) (depth : Nat)
     (chain : Integration.PreparedDirectDyadicRefinements.DirectPathChain parents (start := first) (finish := last)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.regularPrimitivePaths value depth
+    Gaussian.Norm.Sum.Basic.gaussianSum
+      (RegularSidePrimitive.SideBank.regularPrimitivePaths value depth
       bank).flatten = value.eval last.coordinate⁻¹ - value.eval first.coordinate⁻¹ := by
   induction chain with
   | nil => cases bank; exact (Gaussian.Basic.sub_self _).symm
@@ -98,7 +98,7 @@ theorem regularPrimitivePaths_sum (bank : Hyperelliptic.Charts.Reciprocal.Disk.P
       | cons head tail =>
           rw [Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.regularPrimitivePaths.eq_def,
             List.flatten_cons, Path.IncrementArea.sum_append,
-            Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.Preparation.regularPrimitivePath,
+            RegularSidePrimitive.Preparation.regularPrimitivePath,
             Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements_sum, ih tail,
             parent.edge.point_zero, parent.edge.point_one]
           ring1
@@ -110,14 +110,14 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularWitnesses
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank in
 /-- The retained regular primitive increments have zero total on the same closed original parent chain. -/
 theorem total_closed {index depth : Nat} {box : Rational.Box}
-    {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-    {paths : List (List Normalization.InverseRootPolynomial.Gaussian)} (witnesses :
+    {sample : Cap.Primitives.Sample cap differential index box} {bank :
+      ParentJoins.SideBank regular covers}
+    {paths : List (List InverseRootPolynomial.Gaussian)} (witnesses :
       RegularWitnesses sample depth bank paths) (links :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Links bank)
+      Links bank)
     (chain : Integration.PreparedDirectDyadicRefinements.DirectPathChain parents (start := first) (finish := last))
       (closed : first.coordinate = last.coordinate) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum paths.flatten = 0 := by
+    Gaussian.Norm.Sum.Basic.gaussianSum paths.flatten = 0 := by
   rw [witnesses.paths_eq witnesses.primitive (witnesses.shared links), bank.regularPrimitivePaths_sum _ _ chain, closed]
   exact Gaussian.Basic.sub_self _
 
@@ -143,36 +143,36 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {index depth readingIndex : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-  {localTarget localArea : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {localTarget localArea : InverseRootPolynomial.Coordinate} {floor : Nat}
 
 namespace ComponentSamples.SampledComponent
 
 /-- In even degree, the actual cached cap total of each original exterior component is zero. -/
 theorem total_zero
-    (group : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent (regular := regular) sample
+    (group : SampledComponent (regular := regular) sample
       shared depth readingIndex localTarget localArea floor)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) : group.cap.total = 0 := by
   obtain ⟨paths, pathsEq, witnesses⟩ :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
+    SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
     group.values degree
   rw [group.occurrences_eq] at witnesses
   obtain ⟨witnesses⟩ := witnesses
   let joined :=
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.JoinedCap.build
+    SurfacePreparation.JoinedCap.build
     group.component.prepared
-  have links : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Links
-    (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+  have links : Charts.Reciprocal.Disk.ParentJoins.SideBank.Links
+    (SurfaceOccurrence.capSpine
     group.component.prepared.occurrences).bank := by
     rw [← joined.spine_eq]
     exact joined.links
@@ -185,12 +185,12 @@ theorem total_zero
 /-- This cancellation uses certified zero component totals; the complete
 internal areas are retained as the sum on the right. -/
 theorem groups_area
-    (groups : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent (regular := regular)
+    (groups : List (SampledComponent (regular := regular)
       sample shared depth readingIndex localTarget localArea floor))
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
     Path.IncrementArea.pathArea (((groups.map
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent.values).flatten).map
-      (fun value => value.evaluated.capPath)).flatten = Data.Gaussian.Norm.Sum.Basic.gaussianSum (groups.map (fun group
+      SampledComponent.values).flatten).map
+      (fun value => value.evaluated.capPath)).flatten = Gaussian.Norm.Sum.Basic.gaussianSum (groups.map (fun group
         => group.cap.area)) := by
   induction groups with
   | nil => rfl
@@ -204,9 +204,9 @@ theorem groups_area
 end ComponentSamples.SampledComponent
 
 variable {prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
-  regular domains differential} {target areaTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared target
+  AllSurfacePreparation
+  regular domains differential} {target areaTarget : InverseRootPolynomial.Coordinate}
+  {request : SurfaceRequests.AllSurfacePreparation.Request prepared target
     areaTarget floor}
 
 namespace SurfaceRequests.AllSurfacePreparation.Request.Evaluation
@@ -215,19 +215,19 @@ namespace SurfaceRequests.AllSurfacePreparation.Request.Evaluation
 assembled from its exact sample partition. -/
 theorem
   cap_area_components
-    (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation
+    (evaluated : Evaluation
       request sample shared depth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
-    evaluated.cap.area = Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.components.groups.map (fun group =>
+    evaluated.cap.area = Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.components.groups.map (fun group =>
       group.cap.area)) := by
   rw [evaluated.cap.area_eq, evaluated.pairs_eq, Map.map_map]
   change Path.IncrementArea.pathArea (evaluated.samples.values.map (fun value => value.evaluated.capPath)).flatten = _
   have same := congrArg (fun values : List
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry (regular := regular)
+    (SampledEntry (regular := regular)
     sample shared depth readingIndex request.localTarget request.budget.areaTarget floor) =>
     Path.IncrementArea.pathArea (values.map (fun value => value.evaluated.capPath)).flatten)
       evaluated.components.values_eq
-  exact same.symm.trans (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent.groups_area
+  exact same.symm.trans (ComponentSamples.SampledComponent.groups_area
     evaluated.components.groups degree)
 
 end SurfaceRequests.AllSurfacePreparation.Request.Evaluation

@@ -23,6 +23,8 @@ import Purelib.Data.Vector.Dependent
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation
+
 open Purelib.Curves
 
 open Purelib.Riemann
@@ -34,15 +36,15 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Synch
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -52,12 +54,12 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 namespace ParentRunSchedules.SourceStage
 
-variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
+variable {retained : Preparation.CommonBasisPreparation prepared}
   {index laterIndex : Nat} {inputs : retained.Inputs index}
-  {capacities : Fin prepared.occurrences.length → Nat} {requested : Normalization.InverseRootPolynomial.Coordinate}
+  {capacities : Fin prepared.occurrences.length → Nat} {requested : InverseRootPolynomial.Coordinate}
     {minimum : Nat}
   {schedules :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
+    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
     retained inputs capacities requested minimum}
   (selected :
     RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage
@@ -70,7 +72,7 @@ def RequestsReadback (laterInputs : retained.Inputs laterIndex)
       RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
       retained laterInputs capacities requested minimum) : Prop :=
   requests =
-    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage.atInputs
+    ParentRunSchedules.SourceStage.atInputs
     selected laterInputs later
 
 set_option genInjectivity false in
@@ -79,9 +81,9 @@ bank. Their defining equalities certify precisely this acquisition. -/
 structure Acquisition where
   /-- The actual numerical input bank acquired at the supplied later stage. -/ inputs : retained.Inputs laterIndex
   /-- The stored inputs are exactly the original preparation acquired at that stage. -/ inputs_eq : inputs =
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation.inputs retained laterIndex
+    Preparation.CommonBasisPreparation.inputs retained laterIndex
   /-- The original computed requests transported to the exact acquired input bank. -/ requests :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
+    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
     retained inputs capacities requested minimum
   /-- The stored requests are exactly the certified source-stage transport of the original schedule vector. -/
     requests_eq :
@@ -95,49 +97,49 @@ The old request calculations are retained through the source-cover readbacks. -/
 def acquire :
   Acquisition
   selected later :=
-  let inputs := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation.inputs retained
+  let inputs := Preparation.CommonBasisPreparation.inputs retained
     laterIndex
   let requests :=
-    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage.atInputs
+    ParentRunSchedules.SourceStage.atInputs
     selected inputs later
   ⟨inputs, rfl, requests, rfl⟩
 
 namespace Acquisition
 variable {selected later} (acquired :
-  SourceStage.Acquisition
+  Acquisition
   selected later)
 
 /-- Every retained acquired request threshold is paid by the acquisition stage. -/
 theorem source_paid (outer : Fin prepared.occurrences.length) :
     (acquired.requests.get outer).sourceIndex ≤ laterIndex :=
   (congrArg (fun requests :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
+    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
     retained acquired.inputs capacities requested minimum =>
     (requests.get outer).sourceIndex) acquired.requests_eq).trans_le
 
-        (RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage.atInputs_source_paid
+        (ParentRunSchedules.SourceStage.atInputs_source_paid
         selected acquired.inputs later outer)
 
 /-- Acquisition preserves each original occurrence refinement depth. -/
 theorem depth_readback (outer : Fin prepared.occurrences.length) :
     (acquired.requests.get outer).depth = (schedules.get outer).depth :=
   (congrArg (fun requests :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
+    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
     retained acquired.inputs capacities requested minimum =>
     (requests.get outer).depth) acquired.requests_eq).trans
 
-        (RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage.atInputs_depth
+        (ParentRunSchedules.SourceStage.atInputs_depth
         selected acquired.inputs later outer)
 
 /-- Acquisition preserves each original occurrence source magnitude. -/
 theorem magnitude_readback (outer : Fin prepared.occurrences.length) :
     (acquired.requests.get outer).magnitude = (schedules.get outer).magnitude :=
   (congrArg (fun requests :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
+    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
     retained acquired.inputs capacities requested minimum =>
     (requests.get outer).magnitude) acquired.requests_eq).trans
 
-        (RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage.atInputs_magnitude
+        (ParentRunSchedules.SourceStage.atInputs_magnitude
         selected acquired.inputs later outer)
 
 end Acquisition

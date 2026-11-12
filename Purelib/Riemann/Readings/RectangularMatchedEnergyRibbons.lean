@@ -54,8 +54,8 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
 variable {polynomial numerator : Polynomial} {ambient : Box} {clearance : RegionClearance polynomial ambient}
   {bounds : PrimitiveOverlapBounds clearance numerator} {columns rows : Nat} {target : Coordinate}
   {geometry : Geometry columns rows} {bank : Bank polynomial geometry}
-  {transitions : Transitions (bank.refine index)} {gauge : Purelib.Topology.Grid.Signs.Gauge transitions.flatGrid}
-  {primitives : Primitives (Purelib.Riemann.Branches.RectangularSheetGauge.Transitions.oriented transitions gauge)
+  {transitions : Transitions (bank.refine index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
+  {primitives : Primitives (Branches.RectangularSheetGauge.Transitions.oriented transitions gauge)
     numerator}
   {cuts : GridCuts geometry} {leftBox rightBox : Box}
   {left : ObservationMesh cuts leftBox} {right : ObservationMesh cuts rightBox} {depth : Nat}
@@ -74,7 +74,7 @@ open Purelib.LinearAlgebra in
 
 The original vertex sequence fixes the ribbon count and preserves all endpoint and owner-junction terms. -/
 def energyRibbon (trace : side.Trace depth) (anchors : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) : Path.BoundaryRibbon.Ribbon trace.vertices.rest.length :=
+    (offsets : Grid.Offsets anchors.edges) : BoundaryRibbon.Ribbon trace.vertices.rest.length :=
   BoundaryRibbon.Ribbon.build (trace.leftReadings anchors offsets).values (trace.rightReadings anchors offsets).values
 
 open Purelib.Algebra in
@@ -87,10 +87,10 @@ open Purelib.Topology in
 
 The exact finite trace retains zero-length physical owner junctions and both actual endpoint readings. -/
 theorem energyRibbon_difference (trace : side.Trace depth) (anchors : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) :
-    let values := fun column row point => (⟨Data.Gaussian.Basic.conj (anchors.alignedValue offsets column row point),
+    (offsets : Grid.Offsets anchors.edges) :
+    let values := fun column row point => (⟨Basic.conj (anchors.alignedValue offsets column row point),
       anchors.alignedValue offsets column row point⟩ : Polygon.Stokes.PrimitivePoint)
-    let ribbon := Trace.energyRibbon trace anchors offsets
+    let ribbon := energyRibbon trace anchors offsets
     ribbon.difference = Periods.CenteredBilinearPath.area
         (fun vertex => trace.leftValue values (trace.vertices.indexed vertex)) -
       Periods.CenteredBilinearPath.area (fun vertex => trace.rightValue values (trace.vertices.indexed vertex)) -
@@ -98,7 +98,7 @@ theorem energyRibbon_difference (trace : side.Trace depth) (anchors : PrimitiveA
         trace.vertices.rest.length)) -
         Path.BoundaryRibbon.area (ribbon.right 0) (ribbon.left 0)) := by
   dsimp only
-  let ribbon := Trace.energyRibbon trace anchors offsets
+  let ribbon := energyRibbon trace anchors offsets
   rw [ribbon.difference_eq, ribbon.leftArea_eq, ribbon.rightArea_eq, ribbon.endpointCorrection_eq,
     ribbon.errors_eq, ribbon.errors_eq, Path.BoundaryRibbon.area_sub_self_right,
       Path.BoundaryRibbon.area_sub_self_right]
@@ -132,20 +132,20 @@ theorem energyRibbon_bound (request : GridPrimitiveAccuracy bounds columns targe
     {transitions : Transitions (bank.refine request.index)} {gauge : Grid.Signs.Gauge transitions.flatGrid}
     {primitives : Primitives (Transitions.oriented transitions gauge) numerator}
     (trace : side.Trace depth) (anchors : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
+    (offsets : Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
       ambient)
     (small : request.globalBound ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (Trace.energyRibbon trace anchors offsets).difference ≤
+    normSq (energyRibbon trace anchors offsets).difference ≤
       512 * request.globalBound *
         (2 * (boundarySlope bounds + (left.boundaryColumns : Coordinate) ^ 2 * (2 * (4 + boundarySlope bounds))) +
           request.globalBound) *
         (trace.vertices.rest.length : Coordinate) ^ 2 := by
-  let ribbon := Trace.energyRibbon trace anchors offsets
-  have errors (vertex : Fin (trace.vertices.rest.length + 1)) : Data.Gaussian.Norm.Basic.normSq (ribbon.errors vertex)
+  let ribbon := energyRibbon trace anchors offsets
+  have errors (vertex : Fin (trace.vertices.rest.length + 1)) : normSq (ribbon.errors vertex)
     ≤ 4 *
     request.globalBound := by
     rw [ribbon.errors_eq]
-    change Data.Gaussian.Norm.Basic.normSq ((trace.leftReadings anchors offsets).values vertex - (trace.rightReadings
+    change normSq ((trace.leftReadings anchors offsets).values vertex - (trace.rightReadings
       anchors
       offsets).values vertex) ≤ _
     rw [trace.leftReadings_value, trace.rightReadings_value]
@@ -154,11 +154,11 @@ theorem energyRibbon_bound (request : GridPrimitiveAccuracy bounds columns targe
         vertex)).contains
     simpa only [Basic.normSq_eq_canonical, Trace.leftOwner,
       Trace.rightOwner] using scalar
-  have centered (vertex : Fin (trace.vertices.rest.length + 1)) : Data.Gaussian.Norm.Basic.normSq (ribbon.right vertex -
+  have centered (vertex : Fin (trace.vertices.rest.length + 1)) : normSq (ribbon.right vertex -
     ribbon.right 0) ≤
       2 * (boundarySlope bounds + (left.boundaryColumns : Coordinate) ^ 2 * (2 * (4 + boundarySlope bounds))) :=
     by
-      change Data.Gaussian.Norm.Basic.normSq
+      change normSq
         ((trace.rightReadings anchors offsets).values vertex - (trace.rightReadings anchors offsets).values 0) ≤ _
       have scalar := Integration.RectangularWholeSideMagnitude.matched_readings_magnitude
         request anchors offsets refines small trace vertex
@@ -179,7 +179,7 @@ open Purelib.LinearAlgebra in
 
 The original vertex sequence fixes the ribbon count and preserves all endpoint and owner-junction terms. -/
 def energyRibbon (trace : side.Trace depth) (anchors : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) : Path.BoundaryRibbon.Ribbon trace.vertices.rest.length :=
+    (offsets : Grid.Offsets anchors.edges) : BoundaryRibbon.Ribbon trace.vertices.rest.length :=
   BoundaryRibbon.Ribbon.build (trace.leftReadings anchors offsets).values (trace.rightReadings anchors offsets).values
 
 open Purelib.Algebra in
@@ -195,10 +195,10 @@ open Purelib.Topology in
 
 The exact finite trace retains zero-length physical owner junctions and both actual endpoint readings. -/
 theorem energyRibbon_difference (trace : side.Trace depth) (anchors : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) :
-    let values := fun column row point => (⟨Data.Gaussian.Basic.conj (anchors.alignedValue offsets column row point),
+    (offsets : Grid.Offsets anchors.edges) :
+    let values := fun column row point => (⟨Basic.conj (anchors.alignedValue offsets column row point),
       anchors.alignedValue offsets column row point⟩ : Polygon.Stokes.PrimitivePoint)
-    let ribbon := Trace.energyRibbon trace anchors offsets
+    let ribbon := energyRibbon trace anchors offsets
     ribbon.difference = Periods.CenteredBilinearPath.area
         (fun vertex => trace.leftValue values (trace.vertices.indexed vertex)) -
       Periods.CenteredBilinearPath.area (fun vertex => trace.rightValue values (trace.vertices.indexed vertex)) -
@@ -206,7 +206,7 @@ theorem energyRibbon_difference (trace : side.Trace depth) (anchors : PrimitiveA
         trace.vertices.rest.length)) -
         Path.BoundaryRibbon.area (ribbon.right 0) (ribbon.left 0)) := by
   dsimp only
-  let ribbon := Trace.energyRibbon trace anchors offsets
+  let ribbon := energyRibbon trace anchors offsets
   rw [ribbon.difference_eq, ribbon.leftArea_eq, ribbon.rightArea_eq, ribbon.endpointCorrection_eq,
     ribbon.errors_eq, ribbon.errors_eq, Path.BoundaryRibbon.area_sub_self_right,
       Path.BoundaryRibbon.area_sub_self_right]
@@ -243,20 +243,20 @@ theorem energyRibbon_bound (request : GridPrimitiveAccuracy bounds columns targe
     {transitions : Transitions (bank.refine request.index)} {gauge : Grid.Signs.Gauge transitions.flatGrid}
     {primitives : Primitives (Transitions.oriented transitions gauge) numerator}
     (trace : side.Trace depth) (anchors : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
+    (offsets : Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
       ambient)
     (small : request.globalBound ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (Trace.energyRibbon trace anchors offsets).difference ≤
+    normSq (energyRibbon trace anchors offsets).difference ≤
       512 * request.globalBound *
         (2 * (boundarySlope bounds + (left.boundaryRows : Coordinate) ^ 2 * (2 * (4 + boundarySlope bounds))) +
           request.globalBound) *
         (trace.vertices.rest.length : Coordinate) ^ 2 := by
-  let ribbon := Trace.energyRibbon trace anchors offsets
-  have errors (vertex : Fin (trace.vertices.rest.length + 1)) : Data.Gaussian.Norm.Basic.normSq (ribbon.errors vertex)
+  let ribbon := energyRibbon trace anchors offsets
+  have errors (vertex : Fin (trace.vertices.rest.length + 1)) : normSq (ribbon.errors vertex)
     ≤ 4 *
     request.globalBound := by
     rw [ribbon.errors_eq]
-    change Data.Gaussian.Norm.Basic.normSq ((trace.leftReadings anchors offsets).values vertex - (trace.rightReadings
+    change normSq ((trace.leftReadings anchors offsets).values vertex - (trace.rightReadings
       anchors
       offsets).values vertex) ≤ _
     rw [trace.leftReadings_value, trace.rightReadings_value]
@@ -265,11 +265,11 @@ theorem energyRibbon_bound (request : GridPrimitiveAccuracy bounds columns targe
         vertex)).contains
     simpa only [Basic.normSq_eq_canonical, Trace.leftOwner,
       Trace.rightOwner] using scalar
-  have centered (vertex : Fin (trace.vertices.rest.length + 1)) : Data.Gaussian.Norm.Basic.normSq (ribbon.right vertex -
+  have centered (vertex : Fin (trace.vertices.rest.length + 1)) : normSq (ribbon.right vertex -
     ribbon.right 0) ≤
       2 * (boundarySlope bounds + (left.boundaryRows : Coordinate) ^ 2 * (2 * (4 + boundarySlope bounds))) :=
     by
-      change Data.Gaussian.Norm.Basic.normSq
+      change normSq
         ((trace.rightReadings anchors offsets).values vertex - (trace.rightReadings anchors offsets).values 0) ≤ _
       have scalar := Integration.RectangularWholeVerticalSideMagnitude.matched_vertical_readings_magnitude
         request anchors offsets refines small trace vertex

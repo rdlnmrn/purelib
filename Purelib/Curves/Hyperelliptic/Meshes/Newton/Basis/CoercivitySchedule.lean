@@ -74,67 +74,67 @@ open Purelib.Data.Rat
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {gridTarget radius :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation gridTarget radius}
   {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {firstIndex : Fin genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
   {component :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+    PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
     regular domains (Periods.PeriodMatrix.standardDifferential firstIndex)}
 
 section SourceSurfaceAcquisition
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation component.prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {energyTarget coefficientTarget requested : Normalization.InverseRootPolynomial.Coordinate} {traceFloor floor
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation component.prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {energyTarget coefficientTarget requested : InverseRootPolynomial.Coordinate} {traceFloor floor
     seedIndex minimum : Nat}
   {seedInputs : retained.Inputs seedIndex}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original}
   {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {preparations : Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular domains}
+  {preparations : PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular domains}
   (shared : Branches.NewtonSharedExteriorCuts.SharedExteriorCuts partitions preparations)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {meshTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {meshRequest : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains
+    PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
+  {meshTarget : InverseRootPolynomial.Coordinate}
+  {meshRequest : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains
       (shared.source.select firstIndex).cuts sheet coarseDepth) fixed meshTarget}
-  {seedSchedules : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+  {seedSchedules : PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
     (shared.source.select firstIndex) meshRequest retained seedInputs requested minimum}
   {pieceDepth : Nat} {surfaceFixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights
     domains sheet}
-  {error : Normalization.InverseRootPolynomial.Coordinate}
+  {error : InverseRootPolynomial.Coordinate}
   {initialSurface : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-    (fun sheet => Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+    (fun sheet => Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
       sheet pieceDepth) surfaceFixed error}
   (acquired : SourceSurfaceAcquisition
     seedSchedules initialSurface basis energyTarget coefficientTarget traceFloor floor)
 
   (vertices : (outer : Fin component.prepared.occurrences.length) →
-    Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities
+    Fin (PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities
       (shared.source.select firstIndex) acquired.geometry.spatial.refined outer) → Nat)
   (energyFloor faceFloor : Nat)
 
-  (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
+  (excision : AllHoles.Excision.AllHoleExcision grid lifted)
 
-  (compatible : Hyperelliptic.Meshes.Newton.Surface.PartitionBankCompatibility.Compatible partitions) (allowance :
-    Normalization.InverseRootPolynomial.Coordinate)
+  (compatible : Surface.PartitionBankCompatibility.Compatible partitions) (allowance :
+    InverseRootPolynomial.Coordinate)
 
 set_option genInjectivity false in
 /-- Retain all coefficient-independent requests before choosing a numerical face stage. -/
 structure CoercivitySchedule where
   /-- The cached reciprocal basis polynomials acquired at the retained source index and collar box. -/ polynomials :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap acquired.index collar.box
+    PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap acquired.index collar.box
   /-- The computed root-source readings and radial fans using these exact polynomial samples. -/ roots :
-    Hyperelliptic.Meshes.Newton.Basis.SourceRootReadings.RequestedSurfaceRuns.SourceSurfaceAcquisition.RootReadings
+    SourceRootReadings.RequestedSurfaceRuns.SourceSurfaceAcquisition.RootReadings
     acquired (polynomials.get firstIndex) polynomials energyFloor
   /-- The shared physical and observation owner schedule for the acquired geometry. -/ numerical :
     NumericalAcquisition
@@ -148,7 +148,7 @@ structure CoercivitySchedule where
     (Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces.build acquired.geometry.surface)
       allowance faceFloor
   /-- The retained remaining-boundary request on the original excision and perimeter traces. -/ remaining :
-    Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest excision
+    Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest excision
     (Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces.build acquired.geometry.surface)
     faceFloor
   /-- The common face stage paying the floor and all retained numerical requests. -/ index : Nat
@@ -165,12 +165,12 @@ namespace CoercivitySchedule
 The common face stage is their finite maximum. Every later coefficient evaluation consumes these exact cached polynomial
 and request banks. -/
 @[expose] def build (positive : 0 < allowance) (branch :
-  Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+  Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
     CoercivitySchedule shared acquired
       vertices energyFloor faceFloor excision compatible allowance :=
-  let polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  let polynomials : PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
     acquired.index collar.box := Data.Vector.DependentVector.ofFn fun row =>
-    Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample.build cap (Periods.PeriodMatrix.standardDifferential row)
+    Charts.Reciprocal.Cap.Primitives.Sample.build cap (Periods.PeriodMatrix.standardDifferential row)
       acquired.index collar.box
   let roots :=
     SourceRootReadings.RequestedSurfaceRuns.SourceSurfaceAcquisition.RootReadings.build
@@ -185,7 +185,7 @@ and request banks. -/
   let contacts := RootContinuation.NewtonGlobalContactRequest.SynchronizedSurfaceRequests.GlobalContactRequest.build
     acquired.geometry.surface compatible lifted.mesh traces allowance positive faceFloor
   let remaining :=
-    Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest.build excision
+    Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest.build excision
     traces faceFloor
   ⟨polynomials, roots, numerical, energy, contacts, remaining,
     max faceFloor (max numerical.index (max energy.index (max contacts.index remaining.index))), rfl⟩

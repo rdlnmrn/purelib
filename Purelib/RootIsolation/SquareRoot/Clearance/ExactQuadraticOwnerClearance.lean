@@ -68,6 +68,16 @@ import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Polynomial.Clearance.Box
+
+open Purelib.RootIsolation.Power.Clearance.Box
+
+open Purelib.Polynomial.Dense.Rational.Bounds
+
+open Purelib.Polynomial.Dense.Gaussian
+
+open Purelib.Riemann.RootContinuation
+
 open Purelib.Data.Rat.Interval.Bounds (Refines)
 open Purelib.Polynomial.Clearance.Box.Boundary.Basic (BoundaryClearance)
 open Purelib.Polynomial.Clearance.Box.Line.Basic (HorizontalLineClearance VerticalLineClearance)
@@ -136,17 +146,17 @@ namespace AmbientClearanceDominance
 /-- A move smaller than the boundary clearance is automatically smaller than
 all four ambient-line clearances when the owner carries the dominance
 invariant. -/
-theorem ambientSmallness {source target : Gaussian} {owner : ExactQuadraticOwnerClearance.Owner source}
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+theorem ambientSmallness {source target : Gaussian} {owner : Owner source}
+    (dominance : AmbientClearanceDominance owner)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) :
-    Data.Gaussian.Norm.Basic.normSq (source - target) <
+    Gaussian.Norm.Basic.normSq (source - target) <
         owner.track.initial.ambientLeftClearance.bound /\
-      Data.Gaussian.Norm.Basic.normSq (source - target) <
+      Gaussian.Norm.Basic.normSq (source - target) <
           owner.track.initial.ambientRightClearance.bound /\
-        Data.Gaussian.Norm.Basic.normSq (source - target) <
+        Gaussian.Norm.Basic.normSq (source - target) <
             owner.track.initial.ambientBottomClearance.bound /\
-          Data.Gaussian.Norm.Basic.normSq (source - target) <
+          Gaussian.Norm.Basic.normSq (source - target) <
             owner.track.initial.ambientTopClearance.bound :=
   ⟨small.trans_le dominance.left, small.trans_le dominance.right,
     small.trans_le dominance.bottom, small.trans_le dominance.top⟩
@@ -155,8 +165,8 @@ end AmbientClearanceDominance
 
 /-- The original quadratic polynomial Z² minus the displayed Gaussian parameter. -/
 @[expose] def rootPolynomial (parameter : Gaussian) : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-    Riemann.RootContinuation.SquareRootDegree.degreeTwo
+  Power.Gaussian.rootPolynomial parameter
+    SquareRootDegree.degreeTwo
 
 section QuadraticPathCoefficients
 
@@ -170,9 +180,9 @@ private theorem quadratic_add_constant
     {leading : Gaussian} (middle trailing constantTerm : Gaussian)
     (leadingNonzero : leading ≠ 0) :
     (⟨[leading, middle, trailing]⟩ : GaussianPolynomial) +
-        DensePolynomial.constant constantTerm =
+        constant constantTerm =
       ⟨[leading, middle, trailing + constantTerm]⟩ := by
-  apply DensePolynomial.ext
+  apply ext
   change [leading + 0, middle + 0, trailing + constantTerm].dropWhile
       (fun value => decide (value = 0)) = [leading, middle, trailing + constantTerm]
   rw [Gaussian.Basic.add_zero, Gaussian.Basic.add_zero]
@@ -188,35 +198,35 @@ private theorem mulLine_two_coeffs
     (originNonzero : origin ≠ 0) (directionNonzero : direction ≠ 0)
     (leadingNonzero : a ≠ 0) (polynomial : GaussianPolynomial)
     (coefficients : polynomial.coeffs = [a, b]) :
-    (Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.mulLine origin direction polynomial).coeffs =
+    (Substitution.Affine.mulLine origin direction polynomial).coeffs =
       [direction * a, direction * b + origin * a, origin * b] := by
-  unfold Dense.Gaussian.Substitution.Affine.mulLine
+  unfold Substitution.Affine.mulLine
   have normalized : polynomial.normalize.coeffs = [a, b] := by
-    rw [DensePolynomial.normalize_coeffs, coefficients]
+    rw [normalize_coeffs, coefficients]
     exact DropWhile.cons_of_false (fun value => decide (value = 0))
       a [b] (decide_eq_false leadingNonzero)
   let originScaled : GaussianPolynomial := ⟨[origin * a, origin * b]⟩
   let directionScaled : GaussianPolynomial := ⟨[direction * a, direction * b]⟩
-  have originScaleEq : DensePolynomial.scale origin polynomial = originScaled := by
-    apply DensePolynomial.ext
-    rw [DensePolynomial.scale_coeffs_of_ne_zero originNonzero, normalized]
+  have originScaleEq : scale origin polynomial = originScaled := by
+    apply ext
+    rw [scale_coeffs_of_ne_zero originNonzero, normalized]
     rfl
-  have directionScaleEq : DensePolynomial.scale direction polynomial = directionScaled := by
-    apply DensePolynomial.ext
-    rw [DensePolynomial.scale_coeffs_of_ne_zero directionNonzero, normalized]
+  have directionScaleEq : scale direction polynomial = directionScaled := by
+    apply ext
+    rw [scale_coeffs_of_ne_zero directionNonzero, normalized]
     rfl
   rw [originScaleEq, directionScaleEq]
   have leadingProductNonzero : direction * a ≠ 0 :=
     Gaussian.Field.mul_ne_zero_direct directionNonzero leadingNonzero
   have directionScaledNormalized : directionScaled.normalize = directionScaled :=
-    DensePolynomial.normalize_linear_of_leading_ne_zero leadingProductNonzero
+    normalize_linear_of_leading_ne_zero leadingProductNonzero
   have directionScaledNotZero : directionScaled.isZero = false := by
     change directionScaled.normalize.coeffs.isEmpty = false
     rw [directionScaledNormalized]
     rfl
-  have shifted : DensePolynomial.shift 1 directionScaled =
+  have shifted : shift 1 directionScaled =
       ⟨[direction * a, direction * b, 0]⟩ := by
-    unfold DensePolynomial.shift
+    unfold shift
     rw [if_neg]
     · rw [directionScaledNormalized]
       rfl
@@ -241,42 +251,42 @@ nonzero origin and direction preserve its intermediate linear normalization. -/
 private theorem composeLine_quadratic
     (parameter origin direction : Gaussian)
     (originNonzero : origin ≠ 0) (directionNonzero : direction ≠ 0) :
-    Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.composeLine
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Substitution.Affine.composeLine
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         origin direction =
       ⟨[direction * direction,
         direction * origin + origin * direction,
         origin * origin - parameter]⟩ := by
-  unfold Dense.Gaussian.Substitution.Affine.composeLine
-    Dense.Gaussian.Substitution.Affine.composeLineCoeffs
+  unfold Substitution.Affine.composeLine
+    Substitution.Affine.composeLineCoeffs
     Power.Gaussian.rootPolynomial
-    Riemann.RootContinuation.SquareRootDegree.degreeTwo
+    SquareRootDegree.degreeTwo
   simp only [List.replicate_succ, List.replicate_zero, List.nil_append,
     List.cons_append, List.foldl_cons, List.foldl_nil]
-  rw [Dense.Gaussian.Substitution.Affine.mulLine_zero, DensePolynomial.zero_add_normalize,
-    DensePolynomial.normalize_constant_of_ne one_ne_zero]
-  have first : Dense.Gaussian.Substitution.Affine.mulLine origin direction (DensePolynomial.constant 1) =
+  rw [Substitution.Affine.mulLine_zero, zero_add_normalize,
+    normalize_constant_of_ne one_ne_zero]
+  have first : Substitution.Affine.mulLine origin direction (constant 1) =
       (⟨[direction, origin]⟩ : GaussianPolynomial) := by
-    rw [Dense.Gaussian.Substitution.Affine.mulLine, DensePolynomial.scale_constant,
-      DensePolynomial.scale_constant,
+    rw [Substitution.Affine.mulLine, scale_constant,
+      scale_constant,
       Gaussian.Basic.mul_one,
       Gaussian.Basic.mul_one,
-      DensePolynomial.normalize_constant_of_ne directionNonzero,
-      DensePolynomial.shift_one_constant_of_ne directionNonzero,
-      DensePolynomial.normalize_constant_of_ne originNonzero,
-      DensePolynomial.constant_add_linear origin directionNonzero]
+      normalize_constant_of_ne directionNonzero,
+      shift_one_constant_of_ne directionNonzero,
+      normalize_constant_of_ne originNonzero,
+      constant_add_linear origin directionNonzero]
   have linearNormalized :
       (⟨[direction, origin]⟩ : GaussianPolynomial).normalize =
         ⟨[direction, origin]⟩ := by
-    exact DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero
-  rw [first, DensePolynomial.add_constant_zero, linearNormalized]
+    exact normalize_linear_of_leading_ne_zero directionNonzero
+  rw [first, add_constant_zero, linearNormalized]
   have secondMul :
-      Dense.Gaussian.Substitution.Affine.mulLine origin direction
+      Substitution.Affine.mulLine origin direction
           (⟨[direction, origin]⟩ : GaussianPolynomial) =
         ⟨[direction * direction, direction * origin + origin * direction,
           origin * origin]⟩ := by
-    apply DensePolynomial.ext
+    apply ext
     exact mulLine_two_coeffs origin direction direction origin
       originNonzero directionNonzero directionNonzero
         ⟨[direction, origin]⟩ rfl
@@ -295,51 +305,51 @@ The original zero-origin scale and retained nonzero squared direction fix the se
 exact original three-coefficient table. -/
 private theorem composeLine_quadratic_zero
     (parameter direction : Gaussian) (directionNonzero : direction ≠ 0) :
-    Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.composeLine
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Substitution.Affine.composeLine
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         0 direction =
       ⟨[direction * direction, 0, -parameter]⟩ := by
-  have first : Dense.Gaussian.Substitution.Affine.mulLine 0 direction (DensePolynomial.constant 1) =
+  have first : Substitution.Affine.mulLine 0 direction (constant 1) =
       (⟨[direction, 0]⟩ : GaussianPolynomial) := by
-    unfold Dense.Gaussian.Substitution.Affine.mulLine
-    rw [DensePolynomial.scale_zero_left, DensePolynomial.scale_constant,
+    unfold Substitution.Affine.mulLine
+    rw [scale_zero_left, scale_constant,
       Gaussian.Basic.mul_one,
-      DensePolynomial.normalize_constant_of_ne directionNonzero,
-      DensePolynomial.shift_one_constant_of_ne directionNonzero,
-        DensePolynomial.zero_add_normalize,
+      normalize_constant_of_ne directionNonzero,
+      shift_one_constant_of_ne directionNonzero,
+        zero_add_normalize,
       ]
-    exact DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero
+    exact normalize_linear_of_leading_ne_zero directionNonzero
   have firstNormalized :
       (⟨[direction, 0]⟩ : GaussianPolynomial).normalize =
         ⟨[direction, 0]⟩ := by
-    exact DensePolynomial.normalize_linear_of_leading_ne_zero directionNonzero
+    exact normalize_linear_of_leading_ne_zero directionNonzero
   have directionSqNonzero : direction * direction ≠ 0 :=
     Gaussian.Field.mul_ne_zero_direct directionNonzero
       directionNonzero
-  have directionScaled : DensePolynomial.scale direction
+  have directionScaled : scale direction
       (⟨[direction, 0]⟩ : GaussianPolynomial) =
         ⟨[direction * direction, 0]⟩ := by
-    apply DensePolynomial.ext
-    rw [DensePolynomial.scale_coeffs_of_ne_zero directionNonzero,
-      congrArg DensePolynomial.coeffs
+    apply ext
+    rw [scale_coeffs_of_ne_zero directionNonzero,
+      congrArg coeffs
         firstNormalized]
     rw [List.map_cons, List.map_cons, List.map_nil, Gaussian.Basic.mul_zero]
-  have second : Dense.Gaussian.Substitution.Affine.mulLine 0 direction
+  have second : Substitution.Affine.mulLine 0 direction
       (⟨[direction, 0]⟩ : GaussianPolynomial) =
         ⟨[direction * direction, 0, 0]⟩ := by
-    unfold Dense.Gaussian.Substitution.Affine.mulLine
-    rw [DensePolynomial.scale_zero_left, directionScaled, DensePolynomial.zero_add_normalize,
-      DensePolynomial.normalize_shift]
+    unfold Substitution.Affine.mulLine
+    rw [scale_zero_left, directionScaled, zero_add_normalize,
+      normalize_shift]
     have normalized :
         (⟨[direction * direction, 0]⟩ : GaussianPolynomial).normalize =
           ⟨[direction * direction, 0]⟩ :=
-      DensePolynomial.normalize_linear_of_leading_ne_zero directionSqNonzero
+      normalize_linear_of_leading_ne_zero directionSqNonzero
     have notZero : (⟨[direction * direction, 0]⟩ : GaussianPolynomial).isZero = false := by
       change (⟨[direction * direction, 0]⟩ : GaussianPolynomial).normalize.coeffs.isEmpty = false
       rw [normalized]
       rfl
-    unfold DensePolynomial.shift
+    unfold shift
     rw [if_neg]
     · rw [normalized]
       rfl
@@ -347,15 +357,15 @@ private theorem composeLine_quadratic_zero
       change (⟨[direction * direction, 0]⟩ : GaussianPolynomial).isZero = true at empty
       have impossible : false = true := notZero.symm.trans empty
       cases impossible
-  unfold Dense.Gaussian.Substitution.Affine.composeLine
-    Dense.Gaussian.Substitution.Affine.composeLineCoeffs
+  unfold Substitution.Affine.composeLine
+    Substitution.Affine.composeLineCoeffs
     Power.Gaussian.rootPolynomial
-    Riemann.RootContinuation.SquareRootDegree.degreeTwo
+    SquareRootDegree.degreeTwo
   simp only [List.replicate_succ, List.replicate_zero, List.nil_append,
     List.cons_append, List.foldl_cons, List.foldl_nil]
-  rw [Dense.Gaussian.Substitution.Affine.mulLine_zero, DensePolynomial.zero_add_normalize,
-    DensePolynomial.normalize_constant_of_ne one_ne_zero, first,
-      DensePolynomial.add_constant_zero,
+  rw [Substitution.Affine.mulLine_zero, zero_add_normalize,
+    normalize_constant_of_ne one_ne_zero, first,
+      add_constant_zero,
     firstNormalized, second,
     quadratic_add_constant 0 0 (-parameter) directionSqNonzero]
   rw [Gaussian.Basic.zero_add]
@@ -364,15 +374,15 @@ private theorem composeLine_quadratic_zero
 line.  This is the compact Horner cache used by explicit transport bounds. -/
 theorem quadraticVerticalPathReal (parameter : Gaussian) (x : Coordinate)
     (xNonzero : x ≠ 0) :
-    Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit =
       (⟨[-1, 0, x ^ 2 - parameter.re]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathReal
+  unfold Path.Components.pathReal
   rw [composeLine_quadratic]
-  · apply DensePolynomial.ext
-    simp only [Dense.Gaussian.Components.realPart, List.map_cons, List.map_nil,
+  · apply ext
+    simp only [Components.realPart, List.map_cons, List.map_nil,
       Gaussian.Basic.mul_re,
       Gaussian.Basic.add_re,
       Gaussian.Basic.sub_re,
@@ -389,15 +399,15 @@ theorem quadraticVerticalPathReal (parameter : Gaussian) (x : Coordinate)
 vertical line. -/
 theorem quadraticVerticalPathImag (parameter : Gaussian) (x : Coordinate)
     (xNonzero : x ≠ 0) :
-    Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit =
       (⟨[0, 2 * x, -parameter.im]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathImag
+  unfold Path.Components.pathImag
   rw [composeLine_quadratic]
-  · apply DensePolynomial.ext
-    simp only [Dense.Gaussian.Components.imagPart, List.map_cons, List.map_nil,
+  · apply ext
+    simp only [Components.imagPart, List.map_cons, List.map_nil,
       Gaussian.Basic.mul_im,
       Gaussian.Basic.add_im,
       Gaussian.Basic.sub_im,
@@ -412,17 +422,17 @@ theorem quadraticVerticalPathImag (parameter : Gaussian) (x : Coordinate)
 
 /-- Exact real coefficients on the vertical axis. -/
 theorem quadraticVerticalPathReal_zero (parameter : Gaussian) :
-    Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase 0) Gaussian.Constants.imaginaryUnit =
       (⟨[-1, 0, -parameter.re]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathReal
+  unfold Path.Components.pathReal
   rw [show Gaussian.Cast.Winding.verticalBase 0 = (0 : Gaussian) by rfl,
     composeLine_quadratic_zero parameter Gaussian.Constants.imaginaryUnit
       (by decide)]
-  apply DensePolynomial.ext
-  simp only [Dense.Gaussian.Components.realPart, List.map_cons, List.map_nil,
+  apply ext
+  simp only [Components.realPart, List.map_cons, List.map_nil,
     Gaussian.Basic.mul_re,
     Gaussian.Basic.neg_re,
     Gaussian.Constants.imaginaryUnit]
@@ -430,17 +440,17 @@ theorem quadraticVerticalPathReal_zero (parameter : Gaussian) :
 
 /-- Exact imaginary coefficients on the vertical axis. -/
 theorem quadraticVerticalPathImag_zero (parameter : Gaussian) :
-    Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase 0) Gaussian.Constants.imaginaryUnit =
       (⟨[0, 0, -parameter.im]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathImag
+  unfold Path.Components.pathImag
   rw [show Gaussian.Cast.Winding.verticalBase 0 = (0 : Gaussian) by rfl,
     composeLine_quadratic_zero parameter Gaussian.Constants.imaginaryUnit
       (by decide)]
-  apply DensePolynomial.ext
-  simp only [Dense.Gaussian.Components.imagPart, List.map_cons, List.map_nil,
+  apply ext
+  simp only [Components.imagPart, List.map_cons, List.map_nil,
     Gaussian.Basic.mul_im,
     Gaussian.Basic.neg_im,
     Gaussian.Constants.imaginaryUnit]
@@ -448,9 +458,9 @@ theorem quadraticVerticalPathImag_zero (parameter : Gaussian) :
 
 /-- Exact vertical real coefficients, including the normalized axis case. -/
 theorem quadraticVerticalPathReal_all (parameter : Gaussian) (x : Coordinate) :
-    Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit =
       (⟨[-1, 0, x ^ 2 - parameter.re]⟩ : Polynomial) := by
   by_cases xZero : x = 0
@@ -462,9 +472,9 @@ theorem quadraticVerticalPathReal_all (parameter : Gaussian) (x : Coordinate) :
 /-- Exact vertical imaginary coefficients, including the normalized axis
 case. -/
 theorem quadraticVerticalPathImag_all (parameter : Gaussian) (x : Coordinate) :
-    Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit =
       (⟨[0, 2 * x, -parameter.im]⟩ : Polynomial) := by
   by_cases xZero : x = 0
@@ -477,15 +487,15 @@ theorem quadraticVerticalPathImag_all (parameter : Gaussian) (x : Coordinate) :
 line. -/
 theorem quadraticHorizontalPathReal (parameter : Gaussian) (y : Coordinate)
     (yNonzero : y ≠ 0) :
-    Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection =
       (⟨[1, 0, -(y ^ 2) - parameter.re]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathReal
+  unfold Path.Components.pathReal
   rw [composeLine_quadratic]
-  · apply DensePolynomial.ext
-    simp only [Dense.Gaussian.Components.realPart, List.map_cons, List.map_nil,
+  · apply ext
+    simp only [Components.realPart, List.map_cons, List.map_nil,
       Gaussian.Basic.mul_re,
       Gaussian.Basic.add_re,
       Gaussian.Basic.sub_re,
@@ -500,17 +510,17 @@ theorem quadraticHorizontalPathReal (parameter : Gaussian) (y : Coordinate)
 
 /-- Exact real coefficients on the horizontal axis. -/
 theorem quadraticHorizontalPathReal_zero (parameter : Gaussian) :
-    Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase 0) Gaussian.Constants.horizontalDirection =
       (⟨[1, 0, -parameter.re]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathReal
+  unfold Path.Components.pathReal
   rw [show Gaussian.Cast.Imaginary.horizontalBase 0 = (0 : Gaussian) by rfl,
     composeLine_quadratic_zero parameter
       Gaussian.Constants.horizontalDirection (by decide)]
-  apply DensePolynomial.ext
-  simp only [Dense.Gaussian.Components.realPart, List.map_cons, List.map_nil,
+  apply ext
+  simp only [Components.realPart, List.map_cons, List.map_nil,
     Gaussian.Basic.mul_re,
     Gaussian.Basic.neg_re,
     Gaussian.Constants.horizontalDirection]
@@ -520,15 +530,15 @@ theorem quadraticHorizontalPathReal_zero (parameter : Gaussian) :
 horizontal line. -/
 theorem quadraticHorizontalPathImag (parameter : Gaussian) (y : Coordinate)
     (yNonzero : y ≠ 0) :
-    Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection =
       (⟨[0, 2 * y, -parameter.im]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathImag
+  unfold Path.Components.pathImag
   rw [composeLine_quadratic]
-  · apply DensePolynomial.ext
-    simp only [Dense.Gaussian.Components.imagPart, List.map_cons, List.map_nil,
+  · apply ext
+    simp only [Components.imagPart, List.map_cons, List.map_nil,
       Gaussian.Basic.mul_im,
       Gaussian.Basic.add_im,
       Gaussian.Basic.sub_im,
@@ -543,17 +553,17 @@ theorem quadraticHorizontalPathImag (parameter : Gaussian) (y : Coordinate)
 
 /-- Exact imaginary coefficients on the horizontal axis. -/
 theorem quadraticHorizontalPathImag_zero (parameter : Gaussian) :
-    Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase 0) Gaussian.Constants.horizontalDirection =
       (⟨[0, 0, -parameter.im]⟩ : Polynomial) := by
-  unfold Dense.Gaussian.Path.Components.pathImag
+  unfold Path.Components.pathImag
   rw [show Gaussian.Cast.Imaginary.horizontalBase 0 = (0 : Gaussian) by rfl,
     composeLine_quadratic_zero parameter
       Gaussian.Constants.horizontalDirection (by decide)]
-  apply DensePolynomial.ext
-  simp only [Dense.Gaussian.Components.imagPart, List.map_cons, List.map_nil,
+  apply ext
+  simp only [Components.imagPart, List.map_cons, List.map_nil,
     Gaussian.Basic.mul_im,
     Gaussian.Basic.neg_im,
     Gaussian.Constants.horizontalDirection]
@@ -562,9 +572,9 @@ theorem quadraticHorizontalPathImag_zero (parameter : Gaussian) :
 /-- Exact horizontal real coefficients, including the normalized axis case. -/
 theorem quadraticHorizontalPathReal_all (parameter : Gaussian)
     (y : Coordinate) :
-    Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection =
       (⟨[1, 0, -(y ^ 2) - parameter.re]⟩ : Polynomial) := by
   by_cases yZero : y = 0
@@ -577,9 +587,9 @@ theorem quadraticHorizontalPathReal_all (parameter : Gaussian)
 case. -/
 theorem quadraticHorizontalPathImag_all (parameter : Gaussian)
     (y : Coordinate) :
-    Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection =
       (⟨[0, 2 * y, -parameter.im]⟩ : Polynomial) := by
   by_cases yZero : y = 0
@@ -595,15 +605,15 @@ interval bounds. -/
 private theorem threeCoefficientHorner_le
     (polynomial : Polynomial) (a b c : Coordinate)
     (coefficients : polynomial.coeffs = [a, b, c])
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (radiusLe : interval.squareBound ≤ 16)
     (aSqLe : a ^ 2 ≤ 1) (bSqLe : b ^ 2 ≤ 64)
     (cSqLe : c ^ 2 ≤ 1024) :
-    Purelib.Polynomial.Dense.Rational.Bounds.Horner.evalSqBound polynomial interval ≤ 8192 := by
+    Horner.evalSqBound polynomial interval ≤ 8192 := by
   calc
-    Dense.Rational.Bounds.Horner.evalSqBound polynomial interval ≤
+    Horner.evalSqBound polynomial interval ≤
         2 * ((2 * ((2 * (1 : Coordinate)) * 16 + 64)) * 16 + 1024) :=
-      Dense.Rational.Bounds.Horner.evalSqBound_three_le polynomial a b c coefficients
+      Horner.evalSqBound_three_le polynomial a b c coefficients
         interval 16 1 64 1024
         (Fraction.Cast.Order.natCast_pos_direct
           (n := 16) (by decide)).le
@@ -624,15 +634,15 @@ private theorem coordinateSquare_add_component_sq_le
     (componentSqLe : component ^ 2 ≤ 256) :
     (coordinate ^ 2 + component) ^ 2 ≤ 1024 := by
   have coordinateFourthLe : (coordinate ^ 2) ^ 2 ≤ (16 : Coordinate) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct coordinate)
+    Arithmetic.pow_le_pow_direct
+      (Arithmetic.sq_nonneg_direct coordinate)
       coordinateSqLe 2
   calc
     (coordinate ^ 2 + component) ^ 2 ≤
         2 * ((coordinate ^ 2) ^ 2 + component ^ 2) :=
       Bounds.Square.add_sq_le_two _ _
     _ ≤ 2 * ((16 : Coordinate) ^ 2 + 256) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add coordinateFourthLe componentSqLe) (by decide)
     _ = 1024 := by ring1
 
@@ -643,7 +653,7 @@ private theorem doubledCoordinate_sq_le
   calc
     (2 * coordinate) ^ 2 = 4 * coordinate ^ 2 := by ring1
     _ ≤ 4 * 16 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         coordinateSqLe (by decide)
     _ = 64 := by ring1
 
@@ -655,23 +665,23 @@ The displayed parameter-square and box-coordinate bounds control both retained r
 Their original rational majorant at one preserves the stated uniform threshold. -/
 theorem quadraticVerticalBoundarySideMajorant_le_16384
     (parameter : Gaussian) (x : Coordinate)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 16)
     (xSqLe : x ^ 2 ≤ 16)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 256) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 256) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit
         interval ≤ 16384 := by
   have parameterRealSqLe : parameter.re ^ 2 ≤ 256 :=
     (le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.im)).trans
+      (Arithmetic.sq_nonneg_direct parameter.im)).trans
         parameterNormSqLe
   have parameterImagSqLe : parameter.im ^ 2 ≤ 256 :=
     (le_add_of_nonneg_left
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.re)).trans
+      (Arithmetic.sq_nonneg_direct parameter.re)).trans
         parameterNormSqLe
   have realConstantSqLe : (x ^ 2 - parameter.re) ^ 2 ≤ 1024 := by
     rw [show x ^ 2 - parameter.re = x ^ 2 + (-parameter.re) by ring1]
@@ -684,49 +694,49 @@ theorem quadraticVerticalBoundarySideMajorant_le_16384
       _ ≤ 1024 := by
         change ((256 : Nat) : Coordinate) ≤ ((1024 : Nat) : Coordinate)
         exact Fraction.Cast.Order.natCast_le_direct (by decide)
-  have realLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have realLe : Horner.evalSqBound
+      (Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
       interval ≤ 8192 := by
     rw [quadraticVerticalPathReal_all parameter x]
     apply threeCoefficientHorner_le _ (-1) 0 (x ^ 2 - parameter.re) rfl
       interval intervalSqLe
     · rw [show (-1 : Coordinate) ^ 2 = 1 by ring1]
-    · exact (Fraction.Order.Arithmetic.sq_nonneg_direct 0).trans
+    · exact (Arithmetic.sq_nonneg_direct 0).trans
         (Fraction.Cast.Order.natCast_pos_direct
           (n := 64) (by decide)).le
     · exact realConstantSqLe
-  have imaginaryLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have imaginaryLe : Horner.evalSqBound
+      (Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
       interval ≤ 8192 := by
     rw [quadraticVerticalPathImag_all parameter x]
     apply threeCoefficientHorner_le _ 0 (2 * x) (-parameter.im) rfl
       interval intervalSqLe
-    · exact (Fraction.Order.Arithmetic.sq_nonneg_direct 0).trans
+    · exact (Arithmetic.sq_nonneg_direct 0).trans
         (Fraction.Cast.Order.natCast_pos_direct
           (n := 1) (by decide)).le
     · exact doubledCoordinate_sq_le x xSqLe
     · exact imagConstantSqLe
-  unfold Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
+  unfold Bounds.Path.Majorant.boundarySideMajorant
   apply Basic.max_le
   · change ((1 : Nat) : Coordinate) ≤ ((16384 : Nat) : Coordinate)
     exact Fraction.Cast.Order.natCast_le_direct (by decide)
   · calc
-      Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathReal
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Horner.evalSqBound
+            (Path.Components.pathReal
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
             interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathImag
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+          Horner.evalSqBound
+            (Path.Components.pathImag
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
             interval ≤ 8192 + 8192 := add_le_add realLe imaginaryLe
       _ = 16384 := by ring1
@@ -734,14 +744,14 @@ theorem quadraticVerticalBoundarySideMajorant_le_16384
 /-- Compatibility weakening of the sharp finite vertical-side budget. -/
 theorem quadraticVerticalBoundarySideMajorant_le
     (parameter : Gaussian) (x : Coordinate)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 16)
     (xSqLe : x ^ 2 ≤ 16)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 256) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 256) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit
         interval ≤ 65536 :=
   (quadraticVerticalBoundarySideMajorant_le_16384 parameter x
@@ -755,23 +765,23 @@ The displayed parameter-square and box-coordinate bounds control both retained r
 Their original rational majorant at one preserves the stated uniform threshold. -/
 theorem quadraticHorizontalBoundarySideMajorant_le_16384
     (parameter : Gaussian) (y : Coordinate)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 16)
     (ySqLe : y ^ 2 ≤ 16)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 256) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 256) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection
         interval ≤ 16384 := by
   have parameterRealSqLe : parameter.re ^ 2 ≤ 256 :=
     (le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.im)).trans
+      (Arithmetic.sq_nonneg_direct parameter.im)).trans
         parameterNormSqLe
   have parameterImagSqLe : parameter.im ^ 2 ≤ 256 :=
     (le_add_of_nonneg_left
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.re)).trans
+      (Arithmetic.sq_nonneg_direct parameter.re)).trans
         parameterNormSqLe
   have realConstantSqLe : (-(y ^ 2) - parameter.re) ^ 2 ≤ 1024 := by
     rw [show (-(y ^ 2) - parameter.re) ^ 2 =
@@ -785,50 +795,50 @@ theorem quadraticHorizontalBoundarySideMajorant_le_16384
       _ ≤ 1024 := by
         change ((256 : Nat) : Coordinate) ≤ ((1024 : Nat) : Coordinate)
         exact Fraction.Cast.Order.natCast_le_direct (by decide)
-  have realLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have realLe : Horner.evalSqBound
+      (Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection)
       interval ≤ 8192 := by
     rw [quadraticHorizontalPathReal_all parameter y]
     apply threeCoefficientHorner_le _ 1 0 (-(y ^ 2) - parameter.re) rfl
       interval intervalSqLe
     · rw [show (1 : Coordinate) ^ 2 = 1 by ring1]
-    · exact (Fraction.Order.Arithmetic.sq_nonneg_direct 0).trans
+    · exact (Arithmetic.sq_nonneg_direct 0).trans
         (Fraction.Cast.Order.natCast_pos_direct
           (n := 64) (by decide)).le
     · exact realConstantSqLe
-  have imaginaryLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have imaginaryLe : Horner.evalSqBound
+      (Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection)
       interval ≤ 8192 := by
     rw [quadraticHorizontalPathImag_all parameter y]
     apply threeCoefficientHorner_le _ 0 (2 * y) (-parameter.im) rfl
       interval intervalSqLe
-    · exact (Fraction.Order.Arithmetic.sq_nonneg_direct 0).trans
+    · exact (Arithmetic.sq_nonneg_direct 0).trans
         (Fraction.Cast.Order.natCast_pos_direct
           (n := 1) (by decide)).le
     · exact doubledCoordinate_sq_le y ySqLe
     · exact imagConstantSqLe
-  unfold Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
+  unfold Bounds.Path.Majorant.boundarySideMajorant
   apply Basic.max_le
   · change ((1 : Nat) : Coordinate) ≤ ((16384 : Nat) : Coordinate)
     exact Fraction.Cast.Order.natCast_le_direct (by decide)
   · calc
-      Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathReal
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Horner.evalSqBound
+            (Path.Components.pathReal
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Imaginary.horizontalBase y)
                 Gaussian.Constants.horizontalDirection)
             interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathImag
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+          Horner.evalSqBound
+            (Path.Components.pathImag
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Imaginary.horizontalBase y)
                 Gaussian.Constants.horizontalDirection)
             interval ≤ 8192 + 8192 := add_le_add realLe imaginaryLe
@@ -837,14 +847,14 @@ theorem quadraticHorizontalBoundarySideMajorant_le_16384
 /-- Compatibility weakening of the sharp finite horizontal-side budget. -/
 theorem quadraticHorizontalBoundarySideMajorant_le
     (parameter : Gaussian) (y : Coordinate)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 16)
     (ySqLe : y ^ 2 ≤ 16)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 256) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 256) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection
         interval ≤ 65536 :=
   (quadraticHorizontalBoundarySideMajorant_le_16384 parameter y
@@ -859,27 +869,27 @@ The displayed parameter-square and box-coordinate bounds control both retained r
 Their original rational majorant at one preserves the stated uniform threshold. -/
 theorem quadraticVerticalBoundarySideMajorant_le_256
     (parameter : Gaussian) (x : Coordinate) (xNonzero : x ≠ 0)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 4)
     (xSqLe : x ^ 2 ≤ 1)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 4) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 4) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit
         interval ≤ 256 := by
   have parameterRealSqLe : parameter.re ^ 2 ≤ 4 :=
     (le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.im)).trans
+      (Arithmetic.sq_nonneg_direct parameter.im)).trans
         parameterNormSqLe
   have parameterImagSqLe : parameter.im ^ 2 ≤ 4 :=
     (le_add_of_nonneg_left
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.re)).trans
+      (Arithmetic.sq_nonneg_direct parameter.re)).trans
         parameterNormSqLe
   have xFourthLe : (x ^ 2) ^ 2 ≤ (1 : Coordinate) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct x) xSqLe 2
+    Arithmetic.pow_le_pow_direct
+      (Arithmetic.sq_nonneg_direct x) xSqLe 2
   have realConstantSqLe : (x ^ 2 - parameter.re) ^ 2 ≤ 10 := by
     rw [show x ^ 2 - parameter.re = x ^ 2 + (-parameter.re) by ring1]
     calc
@@ -887,7 +897,7 @@ theorem quadraticVerticalBoundarySideMajorant_le_256
           2 * ((x ^ 2) ^ 2 + (-parameter.re) ^ 2) :=
         Bounds.Square.add_sq_le_two _ _
       _ ≤ 2 * ((1 : Coordinate) ^ 2 + 4) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add xFourthLe (by exact (show (-parameter.re) ^ 2 = parameter.re ^ 2 by ring1).symm ▸
             parameterRealSqLe))
             (by decide)
@@ -896,58 +906,58 @@ theorem quadraticVerticalBoundarySideMajorant_le_256
     calc
       (2 * x) ^ 2 = 4 * x ^ 2 := by ring1
       _ ≤ 4 * 1 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct xSqLe
+        Arithmetic.mul_le_mul_of_nonneg_left_direct xSqLe
           (by decide)
       _ = 4 := by ring1
-  have realLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have realLe : Horner.evalSqBound
+      (Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
       interval ≤ 148 := by
     rw [quadraticVerticalPathReal parameter x xNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[-1, 0, x ^ 2 - parameter.re]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (1 : Coordinate)) * 4 + 0)) * 4 + 10) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ (-1) 0
+        Horner.evalSqBound_three_le _ (-1) 0
           (x ^ 2 - parameter.re) rfl interval 4 1 0 10
             (by decide) (by decide) le_rfl intervalSqLe
               (by rw [show (-1 : Coordinate) ^ 2 = 1 by ring1])
                 (by rw [zero_pow (by omega : 2 ≠ 0)]) realConstantSqLe
       _ = 148 := by ring1
-  have imaginaryLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have imaginaryLe : Horner.evalSqBound
+      (Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
       interval ≤ 72 := by
     rw [quadraticVerticalPathImag parameter x xNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[0, 2 * x, -parameter.im]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (0 : Coordinate)) * 4 + 4)) * 4 + 4) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ 0 (2 * x)
+        Horner.evalSqBound_three_le _ 0 (2 * x)
           (-parameter.im) rfl interval 4 0 4 4
             (by decide) le_rfl (by decide) intervalSqLe
               (by rw [zero_pow (by omega : 2 ≠ 0)]) doubledXSqLe
                 (by exact (show (-parameter.im) ^ 2 = parameter.im ^ 2 by ring1).symm ▸ parameterImagSqLe)
       _ = 72 := by ring1
-  unfold Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
+  unfold Bounds.Path.Majorant.boundarySideMajorant
   apply Basic.max_le
   · exact Fraction.Cast.Order.natCast_le_direct
       (m := 1) (n := 256) (by omega)
   · calc
-      Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathReal
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Horner.evalSqBound
+            (Path.Components.pathReal
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
             interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathImag
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+          Horner.evalSqBound
+            (Path.Components.pathImag
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
             interval ≤ 148 + 72 := add_le_add realLe imaginaryLe
       _ = 220 := by ring1
@@ -960,27 +970,27 @@ The displayed parameter-square and box-coordinate bounds control both retained r
 Their original rational majorant at one preserves the stated uniform threshold. -/
 theorem quadraticHorizontalBoundarySideMajorant_le_256
     (parameter : Gaussian) (y : Coordinate) (yNonzero : y ≠ 0)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 1)
     (ySqLe : y ^ 2 ≤ 4)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 4) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 4) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection
         interval ≤ 256 := by
   have parameterRealSqLe : parameter.re ^ 2 ≤ 4 :=
     (le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.im)).trans
+      (Arithmetic.sq_nonneg_direct parameter.im)).trans
         parameterNormSqLe
   have parameterImagSqLe : parameter.im ^ 2 ≤ 4 :=
     (le_add_of_nonneg_left
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.re)).trans
+      (Arithmetic.sq_nonneg_direct parameter.re)).trans
         parameterNormSqLe
   have yFourthLe : (y ^ 2) ^ 2 ≤ (4 : Coordinate) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct y) ySqLe 2
+    Arithmetic.pow_le_pow_direct
+      (Arithmetic.sq_nonneg_direct y) ySqLe 2
   have realConstantSqLe : (-(y ^ 2) - parameter.re) ^ 2 ≤ 40 := by
     rw [show (-(y ^ 2) - parameter.re) ^ 2 =
       (y ^ 2 + parameter.re) ^ 2 by ring1]
@@ -988,66 +998,66 @@ theorem quadraticHorizontalBoundarySideMajorant_le_256
       (y ^ 2 + parameter.re) ^ 2 ≤
           2 * ((y ^ 2) ^ 2 + parameter.re ^ 2) := Bounds.Square.add_sq_le_two _ _
       _ ≤ 2 * ((4 : Coordinate) ^ 2 + 4) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add yFourthLe parameterRealSqLe) (by decide)
       _ = 40 := by ring1
   have doubledYSqLe : (2 * y) ^ 2 ≤ 16 := by
     calc
       (2 * y) ^ 2 = 4 * y ^ 2 := by ring1
       _ ≤ 4 * 4 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ySqLe
+        Arithmetic.mul_le_mul_of_nonneg_left_direct ySqLe
           (by decide)
       _ = 16 := by ring1
-  have realLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have realLe : Horner.evalSqBound
+      (Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection)
       interval ≤ 88 := by
     rw [quadraticHorizontalPathReal parameter y yNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[1, 0, -(y ^ 2) - parameter.re]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (1 : Coordinate)) * 1 + 0)) * 1 + 40) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ 1 0
+        Horner.evalSqBound_three_le _ 1 0
           (-(y ^ 2) - parameter.re) rfl interval 1 1 0 40
             (by decide) (by decide) le_rfl intervalSqLe
               (by rw [one_pow]) (by rw [zero_pow (by omega : 2 ≠ 0)])
                 realConstantSqLe
       _ = 88 := by ring1
-  have imaginaryLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have imaginaryLe : Horner.evalSqBound
+      (Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection)
       interval ≤ 72 := by
     rw [quadraticHorizontalPathImag parameter y yNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[0, 2 * y, -parameter.im]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (0 : Coordinate)) * 1 + 16)) * 1 + 4) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ 0 (2 * y)
+        Horner.evalSqBound_three_le _ 0 (2 * y)
           (-parameter.im) rfl interval 1 0 16 4
             (by decide) le_rfl (by decide) intervalSqLe
               (by rw [zero_pow (by omega : 2 ≠ 0)]) doubledYSqLe
                 (by exact (show (-parameter.im) ^ 2 = parameter.im ^ 2 by ring1).symm ▸ parameterImagSqLe)
       _ = 72 := by ring1
-  unfold Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
+  unfold Bounds.Path.Majorant.boundarySideMajorant
   apply Basic.max_le
   · exact Fraction.Cast.Order.natCast_le_direct
       (m := 1) (n := 256) (by omega)
   · calc
-      Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathReal
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Horner.evalSqBound
+            (Path.Components.pathReal
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Imaginary.horizontalBase y)
                 Gaussian.Constants.horizontalDirection)
             interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathImag
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+          Horner.evalSqBound
+            (Path.Components.pathImag
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Imaginary.horizontalBase y)
                 Gaussian.Constants.horizontalDirection)
             interval ≤ 88 + 72 := add_le_add realLe imaginaryLe
@@ -1064,27 +1074,27 @@ The displayed parameter-square and box-coordinate bounds control both retained r
 Their original rational majorant at one preserves the stated uniform threshold. -/
 theorem quadraticVerticalBoundarySideMajorant_le_1024
     (parameter : Gaussian) (x : Coordinate) (xNonzero : x ≠ 0)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 6)
     (xSqLe : x ^ 2 ≤ 1)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 4) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 4) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit
         interval ≤ 1024 := by
   have parameterRealSqLe : parameter.re ^ 2 ≤ 4 :=
     (le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.im)).trans
+      (Arithmetic.sq_nonneg_direct parameter.im)).trans
         parameterNormSqLe
   have parameterImagSqLe : parameter.im ^ 2 ≤ 4 :=
     (le_add_of_nonneg_left
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.re)).trans
+      (Arithmetic.sq_nonneg_direct parameter.re)).trans
         parameterNormSqLe
   have xFourthLe : (x ^ 2) ^ 2 ≤ (1 : Coordinate) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct x) xSqLe 2
+    Arithmetic.pow_le_pow_direct
+      (Arithmetic.sq_nonneg_direct x) xSqLe 2
   have realConstantSqLe : (x ^ 2 - parameter.re) ^ 2 ≤ 10 := by
     rw [show x ^ 2 - parameter.re = x ^ 2 + (-parameter.re) by ring1]
     calc
@@ -1092,7 +1102,7 @@ theorem quadraticVerticalBoundarySideMajorant_le_1024
           2 * ((x ^ 2) ^ 2 + (-parameter.re) ^ 2) :=
         Bounds.Square.add_sq_le_two _ _
       _ ≤ 2 * ((1 : Coordinate) ^ 2 + 4) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add xFourthLe (by exact (show (-parameter.re) ^ 2 = parameter.re ^ 2 by ring1).symm ▸
             parameterRealSqLe))
             (by decide)
@@ -1101,58 +1111,58 @@ theorem quadraticVerticalBoundarySideMajorant_le_1024
     calc
       (2 * x) ^ 2 = 4 * x ^ 2 := by ring1
       _ ≤ 4 * 1 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct xSqLe
+        Arithmetic.mul_le_mul_of_nonneg_left_direct xSqLe
           (by decide)
       _ = 4 := by ring1
-  have realLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have realLe : Horner.evalSqBound
+      (Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
       interval ≤ 308 := by
     rw [quadraticVerticalPathReal parameter x xNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[-1, 0, x ^ 2 - parameter.re]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (1 : Coordinate)) * 6 + 0)) * 6 + 10) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ (-1) 0
+        Horner.evalSqBound_three_le _ (-1) 0
           (x ^ 2 - parameter.re) rfl interval 6 1 0 10
             (by decide) (by decide) le_rfl intervalSqLe
               (by rw [show (-1 : Coordinate) ^ 2 = 1 by ring1])
                 (by rw [zero_pow (by omega : 2 ≠ 0)]) realConstantSqLe
       _ = 308 := by ring1
-  have imaginaryLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have imaginaryLe : Horner.evalSqBound
+      (Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
       interval ≤ 104 := by
     rw [quadraticVerticalPathImag parameter x xNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[0, 2 * x, -parameter.im]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (0 : Coordinate)) * 6 + 4)) * 6 + 4) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ 0 (2 * x)
+        Horner.evalSqBound_three_le _ 0 (2 * x)
           (-parameter.im) rfl interval 6 0 4 4
             (by decide) le_rfl (by decide) intervalSqLe
               (by rw [zero_pow (by omega : 2 ≠ 0)]) doubledXSqLe
                 (by exact (show (-parameter.im) ^ 2 = parameter.im ^ 2 by ring1).symm ▸ parameterImagSqLe)
       _ = 104 := by ring1
-  unfold Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
+  unfold Bounds.Path.Majorant.boundarySideMajorant
   apply Basic.max_le
   · exact Fraction.Cast.Order.natCast_le_direct
       (m := 1) (n := 1024) (by omega)
   · calc
-      Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathReal
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Horner.evalSqBound
+            (Path.Components.pathReal
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
             interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathImag
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+          Horner.evalSqBound
+            (Path.Components.pathImag
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
             interval ≤ 308 + 104 := add_le_add realLe imaginaryLe
       _ = 412 := by ring1
@@ -1167,27 +1177,27 @@ The displayed parameter-square and box-coordinate bounds control both retained r
 Their original rational majorant at one preserves the stated uniform threshold. -/
 theorem quadraticHorizontalBoundarySideMajorant_le_1024
     (parameter : Gaussian) (y : Coordinate) (yNonzero : y ≠ 0)
-    (interval : Data.Rat.Interval.Bounds)
+    (interval : Interval.Bounds)
     (intervalSqLe : interval.squareBound ≤ 1)
     (ySqLe : y ^ 2 ≤ 6)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 4) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Gaussian.Norm.Basic.normSq parameter ≤ 4) :
+    Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection
         interval ≤ 1024 := by
   have parameterRealSqLe : parameter.re ^ 2 ≤ 4 :=
     (le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.im)).trans
+      (Arithmetic.sq_nonneg_direct parameter.im)).trans
         parameterNormSqLe
   have parameterImagSqLe : parameter.im ^ 2 ≤ 4 :=
     (le_add_of_nonneg_left
-      (Fraction.Order.Arithmetic.sq_nonneg_direct parameter.re)).trans
+      (Arithmetic.sq_nonneg_direct parameter.re)).trans
         parameterNormSqLe
   have yFourthLe : (y ^ 2) ^ 2 ≤ (6 : Coordinate) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct y) ySqLe 2
+    Arithmetic.pow_le_pow_direct
+      (Arithmetic.sq_nonneg_direct y) ySqLe 2
   have realConstantSqLe : (-(y ^ 2) - parameter.re) ^ 2 ≤ 80 := by
     rw [show (-(y ^ 2) - parameter.re) ^ 2 =
       (y ^ 2 + parameter.re) ^ 2 by ring1]
@@ -1195,66 +1205,66 @@ theorem quadraticHorizontalBoundarySideMajorant_le_1024
       (y ^ 2 + parameter.re) ^ 2 ≤
           2 * ((y ^ 2) ^ 2 + parameter.re ^ 2) := Bounds.Square.add_sq_le_two _ _
       _ ≤ 2 * ((6 : Coordinate) ^ 2 + 4) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add yFourthLe parameterRealSqLe) (by decide)
       _ = 80 := by ring1
   have doubledYSqLe : (2 * y) ^ 2 ≤ 24 := by
     calc
       (2 * y) ^ 2 = 4 * y ^ 2 := by ring1
       _ ≤ 4 * 6 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ySqLe
+        Arithmetic.mul_le_mul_of_nonneg_left_direct ySqLe
           (by decide)
       _ = 24 := by ring1
-  have realLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathReal
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have realLe : Horner.evalSqBound
+      (Path.Components.pathReal
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection)
       interval ≤ 168 := by
     rw [quadraticHorizontalPathReal parameter y yNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[1, 0, -(y ^ 2) - parameter.re]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (1 : Coordinate)) * 1 + 0)) * 1 + 80) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ 1 0
+        Horner.evalSqBound_three_le _ 1 0
           (-(y ^ 2) - parameter.re) rfl interval 1 1 0 80
             (by decide) (by decide) le_rfl intervalSqLe
               (by rw [one_pow]) (by rw [zero_pow (by omega : 2 ≠ 0)])
                 realConstantSqLe
       _ = 168 := by ring1
-  have imaginaryLe : Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.Gaussian.Path.Components.pathImag
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  have imaginaryLe : Horner.evalSqBound
+      (Path.Components.pathImag
+        (Power.Gaussian.rootPolynomial parameter
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection)
       interval ≤ 104 := by
     rw [quadraticHorizontalPathImag parameter y yNonzero]
     calc
-      Dense.Rational.Bounds.Horner.evalSqBound
+      Horner.evalSqBound
           (⟨[0, 2 * y, -parameter.im]⟩ : Polynomial) interval ≤
           2 * ((2 * ((2 * (0 : Coordinate)) * 1 + 24)) * 1 + 4) :=
-        Dense.Rational.Bounds.Horner.evalSqBound_three_le _ 0 (2 * y)
+        Horner.evalSqBound_three_le _ 0 (2 * y)
           (-parameter.im) rfl interval 1 0 24 4
             (by decide) le_rfl (by decide) intervalSqLe
               (by rw [zero_pow (by omega : 2 ≠ 0)]) doubledYSqLe
                 (by exact (show (-parameter.im) ^ 2 = parameter.im ^ 2 by ring1).symm ▸ parameterImagSqLe)
       _ = 104 := by ring1
-  unfold Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
+  unfold Bounds.Path.Majorant.boundarySideMajorant
   apply Basic.max_le
   · exact Fraction.Cast.Order.natCast_le_direct
       (m := 1) (n := 1024) (by omega)
   · calc
-      Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathReal
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Horner.evalSqBound
+            (Path.Components.pathReal
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Imaginary.horizontalBase y)
                 Gaussian.Constants.horizontalDirection)
             interval +
-          Dense.Rational.Bounds.Horner.evalSqBound
-            (Dense.Gaussian.Path.Components.pathImag
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-                Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+          Horner.evalSqBound
+            (Path.Components.pathImag
+              (Power.Gaussian.rootPolynomial parameter
+                SquareRootDegree.degreeTwo)
               (Gaussian.Cast.Imaginary.horizontalBase y)
                 Gaussian.Constants.horizontalDirection)
             interval ≤ 168 + 104 := add_le_add realLe imaginaryLe
@@ -1266,52 +1276,52 @@ theorem quadraticHorizontalBoundarySideMajorant_le_1024
 resultants. -/
 @[expose] def directBoundaryClearance (parameter : Gaussian) (box : QuadraticBox)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0) :
     BoundaryClearance (rootPolynomial parameter) box :=
-  Clearance.Box.Boundary.Lines.boundaryOfLines
-    (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearance parameter box
+  Boundary.Lines.boundaryOfLines
+    (directVerticalClearance parameter box
       box.xLower leftNonzero)
-    (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearance parameter box
+    (directVerticalClearance parameter box
       box.xUpper rightNonzero)
-    (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearance parameter box
+    (directHorizontalClearance parameter box
       box.yLower bottomNonzero)
-    (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearance parameter box
+    (directHorizontalClearance parameter box
       box.yUpper topNonzero)
 
 /-- The retained direct quadratic boundary bound is exactly the minimum of its four original resultant side bounds. -/
 @[simp] theorem directBoundaryClearance_bound
     (parameter : Gaussian) (box : QuadraticBox)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0) :
     (directBoundaryClearance parameter box leftNonzero rightNonzero
       bottomNonzero topNonzero).bound =
-      min (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+      min (directVerticalClearanceBound
         parameter box box.xLower)
-        (min (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+        (min (directVerticalClearanceBound
           parameter box box.xUpper)
-          (min (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+          (min (directHorizontalClearanceBound
             parameter box box.yLower)
-            (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+            (directHorizontalClearanceBound
               parameter box box.yUpper))) := rfl
 
 /-- A displayed rational value below all four direct side bounds is below the
@@ -1319,29 +1329,29 @@ cached quadratic boundary clearance. -/
 theorem le_directBoundaryClearance_bound
     (parameter : Gaussian) (box : QuadraticBox)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (lower : Coordinate)
     (leftLe : lower ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound parameter
+      directVerticalClearanceBound parameter
       box box.xLower)
     (rightLe : lower ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound parameter
+      directVerticalClearanceBound parameter
       box box.xUpper)
     (bottomLe :
-      lower ≤ SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+      lower ≤ directHorizontalClearanceBound
         parameter box box.yLower)
     (topLe : lower ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound parameter
+      directHorizontalClearanceBound parameter
       box box.yUpper) :
     lower ≤ (directBoundaryClearance parameter box leftNonzero rightNonzero
       bottomNonzero topNonzero).bound := by
@@ -1354,16 +1364,16 @@ and reuse it through preparation and transport. -/
 structure DirectBoundaryBounds (parameter : Gaussian) (box : QuadraticBox)
     (lower upper : Coordinate) where
   /-- The exact left side resultant of the retained quadratic box is nonzero. -/ leftNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xLower ≠ 0
   /-- The exact right side resultant of the retained quadratic box is nonzero. -/ rightNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xUpper ≠ 0
   /-- The exact bottom side resultant of the retained quadratic box is nonzero. -/ bottomNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yLower ≠ 0
   /-- The exact top side resultant of the retained quadratic box is nonzero. -/ topNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yUpper ≠ 0
   /-- The supplied lower bound is no larger than the retained four-resultant clearance. -/ lower_le : lower ≤
     (directBoundaryClearance parameter box leftNonzero rightNonzero
@@ -1377,37 +1387,37 @@ one upper comparison of their minimum. -/
 theorem directBoundaryBoundsOfSideChecks
     (parameter : Gaussian) (box : QuadraticBox) (lower upper : Coordinate)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (leftLower : lower ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound parameter
+      directVerticalClearanceBound parameter
         box box.xLower)
     (rightLower : lower ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound parameter
+      directVerticalClearanceBound parameter
         box box.xUpper)
     (bottomLower : lower ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound parameter
+      directHorizontalClearanceBound parameter
         box box.yLower)
     (topLower : lower ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound parameter
+      directHorizontalClearanceBound parameter
         box box.yUpper)
     (upperBound :
-      min (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+      min (directVerticalClearanceBound
         parameter box box.xLower)
-        (min (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+        (min (directVerticalClearanceBound
           parameter box box.xUpper)
-          (min (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+          (min (directHorizontalClearanceBound
             parameter box box.yLower)
-            (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+            (directHorizontalClearanceBound
               parameter box box.yUpper))) ≤
         upper) :
     DirectBoundaryBounds parameter box lower upper := by
@@ -1434,17 +1444,17 @@ theorem midpoint_strict {lower upper : Coordinate}
     lower < midpoint lower upper ∧ midpoint lower upper <
       upper := by
   constructor
-  · apply (Fraction.Order.Field.lt_div_iff_pos
+  · apply (Field.lt_div_iff_pos
       (by decide : (0 : Coordinate) < 2)).2
     calc
       lower * 2 = lower + lower := by ring1
       _ < lower + upper :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct proper lower
-  · apply (Fraction.Order.Field.div_lt_iff_pos
+        Arithmetic.add_lt_add_left_direct proper lower
+  · apply (Field.div_lt_iff_pos
       (by decide : (0 : Coordinate) < 2)).2
     calc
       lower + upper < upper + upper :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct proper upper
+        Arithmetic.add_lt_add_right_direct proper upper
       _ = upper * 2 := by ring1
 
 /-- The rational point one sixteenth of the interval width above its lower endpoint. -/
@@ -1545,10 +1555,10 @@ translations give the cached proper box and strict interior witness. -/
     (current : WindingOneState
       (rootPolynomial parameter) ambient) : StrictInsetData
         current := by
-  let safeRadius := Clearance.Box.ProtectedRadius.protectedBoundaryRadius
+  let safeRadius := ProtectedRadius.protectedBoundaryRadius
     (rootPolynomial parameter) current.box current.clearance
   have safeRadiusPositive : 0 < safeRadius :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos
+    ProtectedRadius.protectedBoundaryRadius_pos
       (rootPolynomial parameter) current.clearance current.proper
   let rho := Approximation.Rational.Geometric.Basic.quarterRadius 1
     (Approximation.Rational.Geometric.Search.firstQuarterBelow 1 0 safeRadius)
@@ -1558,52 +1568,52 @@ translations give the cached proper box and strict interior witness. -/
     exact (Approximation.Rational.Geometric.Search.firstQuarterBelow_accurate 1 (by decide) 0
       safeRadius safeRadiusPositive).le
   have widthBounds :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius_le_widths
+    ProtectedRadius.protectedBoundaryRadius_le_widths
       (rootPolynomial parameter) current.box current.clearance
   have safeScaledX : safeRadius * 16 ≤ current.box.widthX :=
-    (Fraction.Order.Field.le_div_iff_pos
+    (Field.le_div_iff_pos
       (show (0 : Coordinate) < 16 by decide)).mp widthBounds.1
   have safeScaledY : safeRadius * 16 ≤ current.box.widthY :=
-    (Fraction.Order.Field.le_div_iff_pos
+    (Field.le_div_iff_pos
       (show (0 : Coordinate) < 16 by decide)).mp widthBounds.2
   have scaledX : rho * 16 ≤ current.box.widthX :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
       rhoLeSafeRadius (by decide)).trans safeScaledX
   have scaledY : rho * 16 ≤ current.box.widthY :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
       rhoLeSafeRadius (by decide)).trans safeScaledY
   have twiceX : 2 * rho < current.box.widthX := by
     calc
       2 * rho < 16 * rho :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           (by decide) rhoPositive
       _ = rho * 16 := by ring1
       _ ≤ current.box.widthX := scaledX
   have twiceY : 2 * rho < current.box.widthY := by
     calc
       2 * rho < 16 * rho :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           (by decide) rhoPositive
       _ = rho * 16 := by ring1
       _ ≤ current.box.widthY := scaledY
   have xProper : current.box.xLower + rho < current.box.xUpper - rho := by
-    apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct (c := rho)
+    apply Arithmetic.lt_of_add_lt_add_right_direct (c := rho)
     calc
       current.box.xLower + rho + rho =
           current.box.xLower + 2 * rho := by ring1
       _ < current.box.xLower + current.box.widthX :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct twiceX _
+        Arithmetic.add_lt_add_left_direct twiceX _
       _ = current.box.xUpper := by
         unfold Box.widthX
         ring1
       _ = current.box.xUpper - rho + rho := by ring1
   have yProper : current.box.yLower + rho < current.box.yUpper - rho := by
-    apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct (c := rho)
+    apply Arithmetic.lt_of_add_lt_add_right_direct (c := rho)
     calc
       current.box.yLower + rho + rho =
           current.box.yLower + 2 * rho := by ring1
       _ < current.box.yLower + current.box.widthY :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct twiceY _
+        Arithmetic.add_lt_add_left_direct twiceY _
       _ = current.box.yUpper := by
         unfold Box.widthY
         ring1
@@ -1617,23 +1627,23 @@ translations give the cached proper box and strict interior witness. -/
       y_valid := yProper.le }
   have left : current.box.xLower < box.xLower := by
     change current.box.xLower < current.box.xLower + rho
-    have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct rhoPositive current.box.xLower
+    have translated := Arithmetic.add_lt_add_left_direct rhoPositive current.box.xLower
     rw [_root_.add_zero] at translated
     exact translated
   have right : box.xUpper < current.box.xUpper := by
     change current.box.xUpper - rho < current.box.xUpper
-    have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct rhoPositive current.box.xUpper
+    have translated := Arithmetic.sub_lt_sub_left_direct rhoPositive current.box.xUpper
     have zeroSub : current.box.xUpper - (0 : Coordinate) = current.box.xUpper := by ring1
     rw [zeroSub] at translated
     exact translated
   have bottom : current.box.yLower < box.yLower := by
     change current.box.yLower < current.box.yLower + rho
-    have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct rhoPositive current.box.yLower
+    have translated := Arithmetic.add_lt_add_left_direct rhoPositive current.box.yLower
     rw [_root_.add_zero] at translated
     exact translated
   have top : box.yUpper < current.box.yUpper := by
     change current.box.yUpper - rho < current.box.yUpper
-    have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct rhoPositive current.box.yUpper
+    have translated := Arithmetic.sub_lt_sub_left_direct rhoPositive current.box.yUpper
     have zeroSub : current.box.yUpper - (0 : Coordinate) = current.box.yUpper := by ring1
     rw [zeroSub] at translated
     exact translated
@@ -1679,7 +1689,7 @@ theorem fastRefinementTarget_positive {parameter : Gaussian}
     {epsilon : Coordinate} (positive : 0 < epsilon) :
     0 < fastRefinementTarget current epsilon := by
   unfold fastRefinementTarget
-  exact Fraction.Order.Arithmetic.pow_pos_direct positive 2
+  exact Arithmetic.pow_pos_direct positive 2
 
 set_option genInjectivity false in
 /-- A retained nonzero-winding raw state strictly inside the original winding-one box.
@@ -1704,23 +1714,23 @@ root-free and its winding is the selected quadratic occurrence. -/
     Option (StrictRawInset current) := by
   let box := inset.box
   if leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0 then
     if rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter box.xUpper ≠ 0 then
       if bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             parameter box.yLower ≠ 0 then
         if topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               parameter box.yUpper ≠ 0 then
           if windingFour : Winding.Box.Basic.quadrupledBoxWinding
               (rootPolynomial parameter) box = 4 then
             exact some
               { state :=
                   { box := box
-                    refinesAmbient := (Geometry.Rational.Box.Refinement.StrictInterior.refines inset.strict).trans
+                    refinesAmbient := (Box.Refinement.StrictInterior.refines inset.strict).trans
                       current.refinesAmbient
                     proper := inset.proper
                     clearance := directBoundaryClearance parameter box
@@ -1763,16 +1773,16 @@ track-state interface. -/
     (accurate : candidate.box.diagonalSq ≤ epsilon ^ 2) :
     Option (FastRefinement current epsilon) := by
   if leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter candidate.box.xLower ≠ 0 then
     if rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter candidate.box.xUpper ≠ 0 then
       if bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             parameter candidate.box.yLower ≠ 0 then
         if topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               parameter candidate.box.yUpper ≠ 0 then
           if windingFour : Winding.Box.Basic.quadrupledBoxWinding
               (rootPolynomial parameter) candidate.box = 4 then
@@ -1786,24 +1796,24 @@ track-state interface. -/
                 clearance := clearance
                 rawWindingFour := windingFour
                 ambientLeftClearance :=
-                  SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearance
+                  directVerticalClearance
                     parameter ambient
                     candidate.box.xLower leftNonzero
                 ambientRightClearance :=
-                  SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearance
+                  directVerticalClearance
                     parameter ambient
                     candidate.box.xUpper rightNonzero
                 ambientBottomClearance :=
-                  SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearance
+                  directHorizontalClearance
                     parameter ambient
                     candidate.box.yLower bottomNonzero
                 ambientTopClearance :=
-                  SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearance
+                  directHorizontalClearance
                     parameter ambient
                     candidate.box.yUpper topNonzero }
             exact some
               { state := state
-                nested := (Geometry.Rational.Box.Refinement.StrictInterior.refines strict)
+                nested := (Box.Refinement.StrictInterior.refines strict)
                 strict := strict
                 accurate := accurate }
           else exact none
@@ -1824,10 +1834,10 @@ same full interface as the generic extractor. -/
   let initial := current.raw
   let target := fastRefinementTarget current epsilon
   let candidate := Subdivision.Raw.Request.refineTo
-    (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination parameter) initial target
+    (QuadraticAxisElimination.quadraticAxisElimination parameter) initial target
   have candidateAccurate : candidate.box.diagonalSq ≤ epsilon ^ 2 :=
     Subdivision.Raw.Request.refineTo_diagonalSq_le
-      (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination parameter) initial
+      (QuadraticAxisElimination.quadraticAxisElimination parameter) initial
       (fastRefinementTarget_positive current positive)
   if strict : candidate.box.StrictInterior current.box then
     exact checkedFastRefinement? current epsilon candidate strict
@@ -1837,15 +1847,15 @@ same full interface as the generic extractor. -/
     | none => exact none
     | some inset =>
         let insetCandidate := Subdivision.Raw.Request.refineTo
-          (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination parameter) inset.state target
+          (QuadraticAxisElimination.quadraticAxisElimination parameter) inset.state target
         have insetRefines : insetCandidate.box.Refines inset.state.box :=
           Subdivision.Raw.Request.refineTo_refines
-            (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination parameter) inset.state target
+            (QuadraticAxisElimination.quadraticAxisElimination parameter) inset.state target
         have insetStrict : insetCandidate.box.StrictInterior current.box :=
-          (Geometry.Rational.Box.Refinement.StrictInterior.of_refines inset.strict) insetRefines
+          (Box.Refinement.StrictInterior.of_refines inset.strict) insetRefines
         have insetAccurate : insetCandidate.box.diagonalSq ≤ epsilon ^ 2 :=
           Subdivision.Raw.Request.refineTo_diagonalSq_le
-            (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination parameter) inset.state
+            (QuadraticAxisElimination.quadraticAxisElimination parameter) inset.state
             (fastRefinementTarget_positive current positive)
         exact checkedFastRefinement? current epsilon insetCandidate insetStrict
           insetAccurate
@@ -1858,12 +1868,12 @@ existing direct quadratic path; no convergence hypothesis is supplied. -/
       (rootPolynomial parameter) ambient)
     (epsilon : Coordinate) (positive : 0 < epsilon) :
     Option (FastRefinement current epsilon) :=
-  match Newton.Search.Attempt.attempt (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination parameter)
+  match Newton.Search.Attempt.attempt (QuadraticAxisElimination.quadraticAxisElimination parameter)
       current.raw epsilon
-      (SquareRoot.Clearance.QuadraticLineClearance.Owner.quadraticAxisClearances parameter) with
+      (QuadraticLineClearance.Owner.quadraticAxisClearances parameter) with
   | some accepted => some
       { state := accepted.state
-        nested := (Geometry.Rational.Box.Refinement.StrictInterior.refines accepted.strict)
+        nested := (Box.Refinement.StrictInterior.refines accepted.strict)
         strict := accepted.strict
         accurate := accepted.accurate }
   | none => subdivisionRefinement? current epsilon positive
@@ -1891,13 +1901,13 @@ extractor supplies the same winding-one interface. -/
       Track.Newton.Refinement.refineState
         (by
           unfold rootPolynomial
-          rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
-          exact Riemann.RootContinuation.SquareRootDegree.degreeTwo_atLeastTwo)
+          rw [Power.Gaussian.rootPolynomial_degree]
+          exact SquareRootDegree.degreeTwo_atLeastTwo)
         (by
           unfold rootPolynomial
           exact Power.Gaussian.Squarefree.squarefree parameterNonzero
-            Riemann.RootContinuation.SquareRootDegree.degreeTwo)
-        (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination parameter)
+            SquareRootDegree.degreeTwo)
+        (QuadraticAxisElimination.quadraticAxisElimination parameter)
         current epsilon positive
 
 /-- Every branch of deferred quadratic refinement stays inside the original state box. -/
@@ -2008,16 +2018,16 @@ resultant formula from the outset. -/
 @[expose] def directOwnerOfBox (parameter : Gaussian) (parameterNonzero : parameter ≠ 0)
     (box : QuadraticBox) (proper : box.Proper)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (windingFour : Winding.Box.Basic.quadrupledBoxWinding
       (rootPolynomial parameter) box = 4) : Owner parameter :=
@@ -2030,10 +2040,10 @@ resultant formula from the outset. -/
       proper := proper
       clearance := clearance
       rawWindingFour := windingFour
-      ambientLeftClearance := Clearance.Box.Boundary.Lines.leftOfBoundary clearance
-      ambientRightClearance := Clearance.Box.Boundary.Lines.rightOfBoundary clearance
-      ambientBottomClearance := Clearance.Box.Boundary.Lines.bottomOfBoundary clearance
-      ambientTopClearance := Clearance.Box.Boundary.Lines.topOfBoundary clearance }
+      ambientLeftClearance := Boundary.Lines.leftOfBoundary clearance
+      ambientRightClearance := Boundary.Lines.rightOfBoundary clearance
+      ambientBottomClearance := Boundary.Lines.bottomOfBoundary clearance
+      ambientTopClearance := Boundary.Lines.topOfBoundary clearance }
   { parameterNonzero := parameterNonzero
     ambient := box
     track := deferredTrack parameterNonzero initial }
@@ -2043,16 +2053,16 @@ resultant formula from the outset. -/
     (parameter : Gaussian) (parameterNonzero : parameter ≠ 0)
     (box : QuadraticBox) (proper : box.Proper)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (windingFour : Winding.Box.Basic.quadrupledBoxWinding
       (rootPolynomial parameter) box = 4) :
@@ -2065,16 +2075,16 @@ resultant formula from the outset. -/
     (parameter : Gaussian) (parameterNonzero : parameter ≠ 0)
     (box : QuadraticBox) (proper : box.Proper)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (windingFour : Winding.Box.Basic.quadrupledBoxWinding
       (rootPolynomial parameter) box = 4) :
@@ -2086,16 +2096,16 @@ resultant formula from the outset. -/
     (parameter : Gaussian) (parameterNonzero : parameter ≠ 0)
     (box : QuadraticBox) (proper : box.Proper)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (windingFour : Winding.Box.Basic.quadrupledBoxWinding
       (rootPolynomial parameter) box = 4) :
@@ -2110,16 +2120,16 @@ theorem directOwnerOfBox_ambientClearanceDominance
     (parameter : Gaussian) (parameterNonzero : parameter ≠ 0)
     (box : QuadraticBox) (proper : box.Proper)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (windingFour : Winding.Box.Basic.quadrupledBoxWinding
       (rootPolynomial parameter) box = 4) :
@@ -2133,22 +2143,22 @@ Sylvester eliminant construction. -/
 @[expose] def midpointGrid (parameter : Gaussian) (box : QuadraticBox)
     (proper : box.Proper)
     (verticalNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter (midpoint box.xLower box.xUpper) ≠ 0)
     (horizontalNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter (midpoint box.yLower box.yUpper) ≠ 0) :
-    Clearance.Box.Grid.Four.Basic.ClearFourGrid (rootPolynomial parameter) box where
+    Grid.Four.Basic.ClearFourGrid (rootPolynomial parameter) box where
   xCut := midpoint box.xLower box.xUpper
   yCut := midpoint box.yLower box.yUpper
   xInside := ⟨(midpoint_strict proper.1).1.le,
     (midpoint_strict proper.1).2.le⟩
   yInside := ⟨(midpoint_strict proper.2).1.le,
     (midpoint_strict proper.2).2.le⟩
-  verticalClearance := SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearance
+  verticalClearance := directVerticalClearance
     parameter box _ verticalNonzero
   horizontalClearance :=
-    SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearance parameter box _
+    directHorizontalClearance parameter box _
       horizontalNonzero
 
 /-- Retain the original lower endpoint of the left-shifted interval. -/
@@ -2278,16 +2288,16 @@ structure DirectBoxOwner (parameter : Gaussian) (box : QuadraticBox) where
   /-- The retained owner's boundary bound controls every ambient-line bound. -/ dominance :
     AmbientClearanceDominance owner
   /-- The exact left side resultant of the retained quadratic box is nonzero. -/ leftNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xLower ≠ 0
   /-- The exact right side resultant of the retained quadratic box is nonzero. -/ rightNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xUpper ≠ 0
   /-- The exact bottom side resultant of the retained quadratic box is nonzero. -/ bottomNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yLower ≠ 0
   /-- The exact top side resultant of the retained quadratic box is nonzero. -/ topNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yUpper ≠ 0
   /-- The retained initial boundary bound equals the exact four-resultant minimum. -/ initialClearanceBound :
     owner.track.initial.clearance.bound =
@@ -2308,16 +2318,16 @@ owner. -/
     (parameterNonzero : parameter ≠ 0) (box : QuadraticBox) (proper : box.Proper) :
     Option (DirectBoxOwner parameter box) :=
   if leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0 then
     if rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter box.xUpper ≠ 0 then
       if bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             parameter box.yLower ≠ 0 then
         if topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               parameter box.yUpper ≠ 0 then
           if windingFour : (Winding.Box.Basic.quadrupledBoxWinding
               (rootPolynomial parameter) box = 4) then
@@ -2370,10 +2380,10 @@ winding-four child as a freshly centred quadratic owner. -/
   let xCut := midpoint box.xLower box.xUpper
   let yCut := midpoint box.yLower box.yUpper
   if xNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter xCut ≠ 0 then
     if yNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter yCut ≠ 0 then
       let grid := midpointGrid parameter box proper xNonzero yNonzero
       if lowerLeftWinding : (Winding.Box.Basic.quadrupledBoxWinding
@@ -2483,8 +2493,8 @@ candidate owner. -/
     Option (MovingCandidateData parameter sourceBox child) := by
   let radius := sourceBox.widthX / 2
   have radiusPositive : 0 < radius := by
-    exact Fraction.Order.Field.div_pos_direct
-      (Fraction.Order.Arithmetic.sub_pos_direct sourceProper.1) (by decide)
+    exact Field.div_pos_direct
+      (Arithmetic.sub_pos_direct sourceProper.1) (by decide)
   let candidate := Box.Square.Centered.Affine.centeredSquare
     (gentleCenter sourceBox child) radius radiusPositive.le
   if childStrict : child.StrictInterior candidate then
@@ -2535,16 +2545,16 @@ structure MovingRecenter (parameter : Gaussian) (source : Owner parameter) where
     bridgeOwner.track.initial.box.StrictInterior
     owner.track.initial.box
   /-- The exact left side resultant on the retained replacement box is nonzero. -/ ownerLeftNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter ownerBox.xLower ≠ 0
   /-- The exact right side resultant on the retained replacement box is nonzero. -/ ownerRightNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter ownerBox.xUpper ≠ 0
   /-- The exact bottom side resultant on the retained replacement box is nonzero. -/ ownerBottomNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter ownerBox.yLower ≠ 0
   /-- The exact top side resultant on the retained replacement box is nonzero. -/ ownerTopNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter ownerBox.yUpper ≠ 0
   /-- The replacement boundary bound equals its exact retained four-resultant clearance. -/ ownerDirectClearanceBound :
     owner.track.initial.clearance.bound =
@@ -2605,10 +2615,10 @@ checked for winding four, and carries a bridge that witnesses the same root. -/
   let xCut := midpoint box.xLower box.xUpper
   let yCut := midpoint box.yLower box.yUpper
   if xNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter xCut ≠ 0 then
     if yNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter yCut ≠ 0 then
       let grid := midpointGrid parameter box proper xNonzero yNonzero
       if lowerLeftWinding : (Winding.Box.Basic.quadrupledBoxWinding
@@ -2620,9 +2630,9 @@ checked for winding four, and carries a bridge that witnesses the same root. -/
           ⟨(midpoint_strict proper.1).1, (midpoint_strict
             proper.2).1⟩
           childClearances.1 lowerLeftWinding
-          (Clearance.Box.Boundary.Lines.leftOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.leftOfBoundary source.track.initial.clearance)
           grid.verticalClearance
-          (Clearance.Box.Boundary.Lines.bottomOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.bottomOfBoundary source.track.initial.clearance)
           grid.horizontalClearance
         let bridgeOwner := ownerOfState source.parameterNonzero bridgeState
         exact movingCandidate? source grid.lowerLeft grid.lowerLeft_refines
@@ -2636,9 +2646,9 @@ checked for winding four, and carries a bridge that witnesses the same root. -/
           ⟨(midpoint_strict proper.1).1, (midpoint_strict
             proper.2).2⟩
           childClearances.2.1 upperLeftWinding
-          (Clearance.Box.Boundary.Lines.leftOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.leftOfBoundary source.track.initial.clearance)
           grid.verticalClearance grid.horizontalClearance
-          (Clearance.Box.Boundary.Lines.topOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.topOfBoundary source.track.initial.clearance)
         let bridgeOwner := ownerOfState source.parameterNonzero bridgeState
         exact movingCandidate? source grid.upperLeft grid.upperLeft_refines
           bridgeOwner rfl
@@ -2651,8 +2661,8 @@ checked for winding four, and carries a bridge that witnesses the same root. -/
           ⟨(midpoint_strict proper.1).2, (midpoint_strict
             proper.2).1⟩
           childClearances.2.2.1 lowerRightWinding grid.verticalClearance
-          (Clearance.Box.Boundary.Lines.rightOfBoundary source.track.initial.clearance)
-          (Clearance.Box.Boundary.Lines.bottomOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.rightOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.bottomOfBoundary source.track.initial.clearance)
           grid.horizontalClearance
         let bridgeOwner := ownerOfState source.parameterNonzero bridgeState
         exact movingCandidate? source grid.lowerRight grid.lowerRight_refines
@@ -2666,9 +2676,9 @@ checked for winding four, and carries a bridge that witnesses the same root. -/
           ⟨(midpoint_strict proper.1).2, (midpoint_strict
             proper.2).2⟩
           childClearances.2.2.2 upperRightWinding grid.verticalClearance
-          (Clearance.Box.Boundary.Lines.rightOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.rightOfBoundary source.track.initial.clearance)
           grid.horizontalClearance
-          (Clearance.Box.Boundary.Lines.topOfBoundary source.track.initial.clearance)
+          (Boundary.Lines.topOfBoundary source.track.initial.clearance)
         let bridgeOwner := ownerOfState source.parameterNonzero bridgeState
         exact movingCandidate? source grid.upperRight grid.upperRight_refines
           bridgeOwner rfl
@@ -2684,10 +2694,10 @@ and properness proof instead of reducing an entire transported owner. -/
   let xCut := midpoint box.xLower box.xUpper
   let yCut := midpoint box.yLower box.yUpper
   if xNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter xCut ≠ 0 then
     if yNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter yCut ≠ 0 then
       let grid := midpointGrid parameter box proper xNonzero yNonzero
       if lowerLeftWinding : (Winding.Box.Basic.quadrupledBoxWinding
@@ -2715,10 +2725,10 @@ theorem movingRecenterBox?_eq_some_of_lowerLeft
     (parameter : Gaussian) (parameterNonzero : parameter ≠ 0)
     (box : QuadraticBox) (proper : box.Proper) (target : QuadraticBox)
     (xNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter (midpoint box.xLower box.xUpper) ≠ 0)
     (yNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter (midpoint box.yLower box.yUpper) ≠ 0)
     (lowerLeftWinding : Winding.Box.Basic.quadrupledBoxWinding
       (rootPolynomial parameter)
@@ -2736,10 +2746,10 @@ theorem movingRecenterBox?_eq_some_of_upperLeft
     (parameter : Gaussian) (parameterNonzero : parameter ≠ 0)
     (box : QuadraticBox) (proper : box.Proper) (target : QuadraticBox)
     (xNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter (midpoint box.xLower box.xUpper) ≠ 0)
     (yNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter (midpoint box.yLower box.yUpper) ≠ 0)
     (lowerLeftWinding : Winding.Box.Basic.quadrupledBoxWinding
       (rootPolynomial parameter)
@@ -2810,23 +2820,23 @@ fallback when the cheaper transported ambient clearances do not all carry the
 requested move. -/
 @[expose] def resultantReservedTransport {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate) :
     Owner target :=
   let box := owner.track.initial.box
-  let carried := Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+  let carried := SquareRootContinuation.transportedOwner
     owner.track.initial small
   if leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         target box.xLower ≠ 0 then
     if rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           target box.xUpper ≠ 0 then
       if bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             target box.yLower ≠ 0 then
         if topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               target box.yUpper ≠ 0 then
           if _reserveSmall : reserve <
               (directBoundaryClearance target box leftNonzero rightNonzero
@@ -2848,7 +2858,7 @@ descendant, so its initial box always refines the source box. -/
 private theorem resultantReservedTransport_initial_box_refines
     {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate) :
     (resultantReservedTransport owner targetNonzero small
       reserve).track.initial.box.Refines
@@ -2856,19 +2866,19 @@ private theorem resultantReservedTransport_initial_box_refines
   unfold resultantReservedTransport
   dsimp only
   by_cases leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         target owner.track.initial.box.xLower ≠ 0
   · rw [dif_pos leftNonzero]
     by_cases rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           target owner.track.initial.box.xUpper ≠ 0
     · rw [dif_pos rightNonzero]
       by_cases bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             target owner.track.initial.box.yLower ≠ 0
       · rw [dif_pos bottomNonzero]
         by_cases topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               target owner.track.initial.box.yUpper ≠ 0
         · rw [dif_pos topNonzero]
           by_cases reserveSmall : reserve <
@@ -2879,7 +2889,7 @@ private theorem resultantReservedTransport_initial_box_refines
           · rw [dif_neg reserveSmall]
             generalize recenteredEq : midpointRecenter? target targetNonzero
               owner.track.initial.box
-              (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+              (SquareRootContinuation.transportedOwner
                 owner.track.initial small).proper = recentered
             cases recentered with
             | none =>
@@ -2906,7 +2916,7 @@ The original source and target owners remain separate; the retained relation ide
 and original clearance-bounded move. -/
 structure DirectPresentationRelation {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (result : Owner target) where
   /-- The retained target owner serving as the common parent for the two presentations. -/ parent :
@@ -2923,7 +2933,7 @@ constructive_injectivity DirectPresentationRelation
 @[expose] def resultantReservedTransport_generic_relation
     {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate) :
     PSum
       (resultantReservedTransport owner targetNonzero small reserve =
@@ -2933,19 +2943,19 @@ constructive_injectivity DirectPresentationRelation
   unfold resultantReservedTransport
   dsimp only
   by_cases leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         target owner.track.initial.box.xLower ≠ 0
   · rw [dif_pos leftNonzero]
     by_cases rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           target owner.track.initial.box.xUpper ≠ 0
     · rw [dif_pos rightNonzero]
       by_cases bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             target owner.track.initial.box.yLower ≠ 0
       · rw [dif_pos bottomNonzero]
         by_cases topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               target owner.track.initial.box.yUpper ≠ 0
         · rw [dif_pos topNonzero]
           by_cases reserveSmall : reserve <
@@ -2955,15 +2965,15 @@ constructive_injectivity DirectPresentationRelation
             exact PSum.inr
               { parent := directOwnerOfBox target targetNonzero
                   owner.track.initial.box
-                  (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+                  (SquareRootContinuation.transportedOwner
                     owner.track.initial small).proper
                   leftNonzero rightNonzero bottomNonzero topNonzero
-                  (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+                  (SquareRootContinuation.transportedOwner
                     owner.track.initial small).rawWindingFour
                 genericStrictParent := by
                   change (owner.advance targetNonzero small).track.initial.box
                     |>.StrictInterior owner.track.initial.box
-                  exact Riemann.RootContinuation.SquareRootContinuation.continuedTrack_initial_strict_source
+                  exact SquareRootContinuation.continuedTrack_initial_strict_source
                     targetNonzero owner.track.initial small
                 resultRefinesParent := by
                   change owner.track.initial.box.Refines owner.track.initial.box
@@ -2971,7 +2981,7 @@ constructive_injectivity DirectPresentationRelation
           · rw [dif_neg reserveSmall]
             generalize recenteredEq : midpointRecenter? target targetNonzero
               owner.track.initial.box
-              (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+              (SquareRootContinuation.transportedOwner
                 owner.track.initial small).proper = recentered
             cases recentered with
             | none =>
@@ -2986,16 +2996,16 @@ constructive_injectivity DirectPresentationRelation
                 exact PSum.inr
                   { parent := directOwnerOfBox target targetNonzero
                       owner.track.initial.box
-                      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+                      (SquareRootContinuation.transportedOwner
                         owner.track.initial small).proper
                       leftNonzero rightNonzero bottomNonzero topNonzero
-                      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+                      (SquareRootContinuation.transportedOwner
                         owner.track.initial small).rawWindingFour
                     genericStrictParent := by
                       change
                         (owner.advance targetNonzero small).track.initial.box
                           |>.StrictInterior owner.track.initial.box
-                      exact Riemann.RootContinuation.SquareRootContinuation.continuedTrack_initial_strict_source
+                      exact SquareRootContinuation.continuedTrack_initial_strict_source
                         targetNonzero owner.track.initial small
                     resultRefinesParent := centered.refines }
         · rw [dif_neg topNonzero]
@@ -3011,10 +3021,10 @@ constructive_injectivity DirectPresentationRelation
 quadratic parameter. -/
 @[expose] def ambientLeftAfterMove {source target : Gaussian}
     (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound) :=
-  Power.Clearance.Box.Transport.verticalClearanceAfterMove
-    (target := target) Riemann.RootContinuation.SquareRootDegree.degreeTwo
+  Transport.verticalClearanceAfterMove
+    (target := target) SquareRootDegree.degreeTwo
       owner.track.initial.ambientLeftClearance leftSmall
 
 /-- A transported left-side clearance is bounded by one quarter of the
@@ -3025,103 +3035,103 @@ The original transported left-boundary certificate retains the smaller positive 
 by the displayed quarter-square threshold. -/
 theorem ambientLeftAfterMove_bound_le_quarter_sq
     {source target : Gaussian} (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound) :
     (ambientLeftAfterMove owner leftSmall).bound ≤
       owner.track.initial.ambientLeftClearance.bound ^ 2 / 4 := by
   rw [ambientLeftAfterMove,
-    Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+    Transport.verticalClearanceAfterMove_bound]
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   let clearance := owner.track.initial.ambientLeftClearance.bound
   let majorant := max 1
-    (Dense.Rational.Bounds.Horner.evalSqBound
-        (Dense.Gaussian.Path.Components.pathReal
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-            Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    (Horner.evalSqBound
+        (Path.Components.pathReal
+          (Power.Gaussian.rootPolynomial source
+            SquareRootDegree.degreeTwo)
           (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xLower)
           Gaussian.Constants.imaginaryUnit)
         (Box.Intervals.verticalInterval owner.ambient) +
-      Dense.Rational.Bounds.Horner.evalSqBound
-        (Dense.Gaussian.Path.Components.pathImag
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-            Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Horner.evalSqBound
+        (Path.Components.pathImag
+          (Power.Gaussian.rootPolynomial source
+            SquareRootDegree.degreeTwo)
           (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xLower)
           Gaussian.Constants.imaginaryUnit)
         (Box.Intervals.verticalInterval owner.ambient))
   have displacementNonnegative : 0 ≤ displacement :=
     Gaussian.Norm.Basic.normSq_nonneg _
   have marginNonnegative : 0 ≤ clearance - displacement :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct leftSmall.le
+    Arithmetic.sub_nonneg_direct leftSmall.le
   have marginLe : clearance - displacement ≤ clearance := by
     calc
       clearance - displacement ≤ clearance - 0 :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct
+        Arithmetic.sub_le_sub_left_direct
           displacementNonnegative clearance
       _ = clearance := by ring1
   have squareLe : (clearance - displacement) ^ 2 ≤ clearance ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct marginNonnegative marginLe 2
+    Arithmetic.pow_le_pow_direct marginNonnegative marginLe 2
   have denominatorLe : (4 : Coordinate) ≤ 4 * majorant := by
     calc
       (4 : Coordinate) = 4 * 1 := by ring1
       _ ≤ 4 * majorant :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (Basic.le_max_left _ _) (by decide)
   calc
     (clearance - displacement) ^ 2 / (4 * majorant) ≤
         (clearance - displacement) ^ 2 / 4 :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct
           (clearance - displacement)) (by decide) denominatorLe
     _ ≤ clearance ^ 2 / 4 := by
       change (clearance - displacement) ^ 2 * (4 : Coordinate)⁻¹ ≤
         clearance ^ 2 * (4 : Coordinate)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         squareLe
-        (Fraction.Order.Field.inv_pos_direct (by decide)).le
+        (Field.inv_pos_direct (by decide)).le
 
 /-- Transport the source owner's right ambient-line clearance. -/
 @[expose] def ambientRightAfterMove {source target : Gaussian}
     (owner : Owner source)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound) :=
-  Power.Clearance.Box.Transport.verticalClearanceAfterMove
-    (target := target) Riemann.RootContinuation.SquareRootDegree.degreeTwo
+  Transport.verticalClearanceAfterMove
+    (target := target) SquareRootDegree.degreeTwo
       owner.track.initial.ambientRightClearance rightSmall
 
 /-- Transport the source owner's bottom ambient-line clearance. -/
 @[expose] def ambientBottomAfterMove {source target : Gaussian}
     (owner : Owner source)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound) :=
-  Power.Clearance.Box.Transport.horizontalClearanceAfterMove
-    (target := target) Riemann.RootContinuation.SquareRootDegree.degreeTwo
+  Transport.horizontalClearanceAfterMove
+    (target := target) SquareRootDegree.degreeTwo
       owner.track.initial.ambientBottomClearance bottomSmall
 
 /-- Transport the source owner's top ambient-line clearance. -/
 @[expose] def ambientTopAfterMove {source target : Gaussian}
     (owner : Owner source)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :=
-  Power.Clearance.Box.Transport.horizontalClearanceAfterMove
-    (target := target) Riemann.RootContinuation.SquareRootDegree.degreeTwo
+  Transport.horizontalClearanceAfterMove
+    (target := target) SquareRootDegree.degreeTwo
       owner.track.initial.ambientTopClearance topSmall
 
 /-- Assemble the transported boundary clearance from the four transported
 ambient-line certificates restricted to the displayed owner box. -/
 @[expose] def ambientAfterMoveClearance {source target : Gaussian}
     (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     BoundaryClearance (rootPolynomial target)
       owner.track.initial.box :=
-  Clearance.Box.Boundary.Lines.boundaryOfLines
+  Boundary.Lines.boundaryOfLines
     ((ambientLeftAfterMove owner leftSmall).restrict
       owner.track.initial.refinesAmbient)
     ((ambientRightAfterMove owner rightSmall).restrict
@@ -3134,13 +3144,13 @@ ambient-line certificates restricted to the displayed owner box. -/
 /-- The cached rational calculation underlying ambient Rouché transport. -/
 @[simp] theorem ambientAfterMoveClearance_bound {source target : Gaussian}
     (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
         topSmall).bound =
@@ -3149,7 +3159,7 @@ ambient-line certificates restricted to the displayed owner box. -/
           (min (ambientBottomAfterMove owner bottomSmall).bound
             (ambientTopAfterMove owner topSmall).bound)) := by
   unfold ambientAfterMoveClearance
-  rw [Clearance.Box.Boundary.Lines.boundaryOfLines_bound,
+  rw [Boundary.Lines.boundaryOfLines_bound,
     VerticalLineClearance.restrict_bound,
     VerticalLineClearance.restrict_bound,
     HorizontalLineClearance.restrict_bound,
@@ -3159,18 +3169,18 @@ ambient-line certificates restricted to the displayed owner box. -/
 the same four ambient-line transports retained in the state. -/
 @[expose] def ambientRoucheState {source target : Gaussian}
     (owner : Owner source) (_targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     WindingOneState (rootPolynomial target) owner.ambient := by
-  let carried := Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+  let carried := SquareRootContinuation.transportedOwner
     owner.track.initial small
   exact
     { box := owner.track.initial.box
@@ -3189,15 +3199,15 @@ Rouché estimates.  Unlike the resultant fallback, this only subtracts the
 displayed squared displacement from five rational clearance bounds. -/
 @[expose] def ambientRoucheTransport {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) : Owner target :=
   ownerOfState targetNonzero
     (ambientRoucheState owner targetNonzero small leftSmall rightSmall
@@ -3206,15 +3216,15 @@ displayed squared displacement from five rational clearance bounds. -/
 /-- Ambient Rouché transport keeps the original owner's initial box exactly. -/
 theorem ambientRoucheTransport_initial_box {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     (ambientRoucheTransport owner targetNonzero small leftSmall rightSmall
       bottomSmall topSmall).track.initial.box = owner.track.initial.box := rfl
@@ -3222,15 +3232,15 @@ theorem ambientRoucheTransport_initial_box {source target : Gaussian}
 /-- Ambient Rouché transport keeps the original owner's ambient box exactly. -/
 private theorem ambientRoucheTransport_ambient {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     (ambientRoucheTransport owner targetNonzero small leftSmall rightSmall
       bottomSmall topSmall).ambient = owner.ambient := rfl
@@ -3238,13 +3248,13 @@ private theorem ambientRoucheTransport_ambient {source target : Gaussian}
 /-- The transported boundary-clearance minimum is no larger than the retained left ambient-line bound. -/
 private theorem ambientAfterMoveClearance_le_left
     {source target : Gaussian} (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
       topSmall).bound <= (ambientLeftAfterMove owner leftSmall).bound := by
@@ -3256,23 +3266,23 @@ private theorem ambientAfterMoveClearance_le_left
   calc
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
         topSmall).bound =
-        (Clearance.Box.Boundary.Lines.boundaryOfLines (left.restrict refines)
+        (Boundary.Lines.boundaryOfLines (left.restrict refines)
           (right.restrict refines) (bottom.restrict refines)
           (top.restrict refines)).bound := rfl
     _ <= (left.restrict refines).bound :=
-      Clearance.Box.Boundary.Lines.boundaryOfLines_bound_le_left _ _ _ _
+      Boundary.Lines.boundaryOfLines_bound_le_left _ _ _ _
     _ = left.bound := VerticalLineClearance.restrict_bound _ _
 
 /-- The transported boundary-clearance minimum is no larger than the retained right ambient-line bound. -/
 private theorem ambientAfterMoveClearance_le_right
     {source target : Gaussian} (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
       topSmall).bound <= (ambientRightAfterMove owner rightSmall).bound := by
@@ -3284,23 +3294,23 @@ private theorem ambientAfterMoveClearance_le_right
   calc
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
         topSmall).bound =
-        (Clearance.Box.Boundary.Lines.boundaryOfLines (left.restrict refines)
+        (Boundary.Lines.boundaryOfLines (left.restrict refines)
           (right.restrict refines) (bottom.restrict refines)
           (top.restrict refines)).bound := rfl
     _ <= (right.restrict refines).bound :=
-      Clearance.Box.Boundary.Lines.boundaryOfLines_bound_le_right _ _ _ _
+      Boundary.Lines.boundaryOfLines_bound_le_right _ _ _ _
     _ = right.bound := VerticalLineClearance.restrict_bound _ _
 
 /-- The transported boundary-clearance minimum is no larger than the retained bottom ambient-line bound. -/
 private theorem ambientAfterMoveClearance_le_bottom
     {source target : Gaussian} (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
       topSmall).bound <= (ambientBottomAfterMove owner bottomSmall).bound := by
@@ -3312,24 +3322,24 @@ private theorem ambientAfterMoveClearance_le_bottom
   calc
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
         topSmall).bound =
-        (Clearance.Box.Boundary.Lines.boundaryOfLines (left.restrict refines)
+        (Boundary.Lines.boundaryOfLines (left.restrict refines)
           (right.restrict refines) (bottom.restrict refines)
           (top.restrict refines)).bound := rfl
     _ <= (bottom.restrict refines).bound :=
-      Clearance.Box.Boundary.Lines.boundaryOfLines_bound_le_bottom _ _ _ _
+      Boundary.Lines.boundaryOfLines_bound_le_bottom _ _ _ _
     _ = bottom.bound :=
       HorizontalLineClearance.restrict_bound _ _
 
 /-- The transported boundary-clearance minimum is no larger than the retained top ambient-line bound. -/
 private theorem ambientAfterMoveClearance_le_top
     {source target : Gaussian} (owner : Owner source)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) :
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
       topSmall).bound <= (ambientTopAfterMove owner topSmall).bound := by
@@ -3341,11 +3351,11 @@ private theorem ambientAfterMoveClearance_le_top
   calc
     (ambientAfterMoveClearance owner leftSmall rightSmall bottomSmall
         topSmall).bound =
-        (Clearance.Box.Boundary.Lines.boundaryOfLines (left.restrict refines)
+        (Boundary.Lines.boundaryOfLines (left.restrict refines)
           (right.restrict refines) (bottom.restrict refines)
           (top.restrict refines)).bound := rfl
     _ <= (top.restrict refines).bound :=
-      Clearance.Box.Boundary.Lines.boundaryOfLines_bound_le_top _ _ _ _
+      Boundary.Lines.boundaryOfLines_bound_le_top _ _ _ _
     _ = top.bound :=
       HorizontalLineClearance.restrict_bound _ _
 
@@ -3354,14 +3364,14 @@ The inexpensive transported-clearance branch is tried first; exact
 resultants and finite Newton recentering remain a total fallback. -/
 @[expose] def reservedTransport {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate) :
     Owner target :=
   if same : source = target then
     same ▸ owner
   else
     let displacement :=
-      Data.Gaussian.Norm.Basic.normSq (source - target)
+      Gaussian.Norm.Basic.normSq (source - target)
     if leftSmall : displacement <
         owner.track.initial.ambientLeftClearance.bound then
       if rightSmall : displacement <
@@ -3370,7 +3380,7 @@ resultants and finite Newton recentering remain a total fallback. -/
             owner.track.initial.ambientBottomClearance.bound then
           if topSmall : displacement <
               owner.track.initial.ambientTopClearance.bound then
-            let carried := Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+            let carried := SquareRootContinuation.transportedOwner
               owner.track.initial small
             if _reserveSmall : reserve < carried.clearance.bound then
               ambientRoucheTransport owner targetNonzero small leftSmall
@@ -3388,9 +3398,9 @@ theorem reservedTransport_congr_owner
     {source target : Gaussian} {left right : Owner source}
     (same : left = right)
     (leftTargetNonzero rightTargetNonzero : target ≠ 0)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       left.track.initial.clearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       right.track.initial.clearance.bound)
     (reserve : Coordinate) :
     reservedTransport left leftTargetNonzero leftSmall reserve =
@@ -3404,15 +3414,15 @@ and the fact that its boundary clearance controls every ambient line without
 reopening the nested branch search. -/
 structure AmbientReservedTransportCache {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound) where
   /-- The selected original transport keeps the source initial box exactly. -/ initialBox :
     (reservedTransport owner targetNonzero small reserve).track.initial.box =
@@ -3472,19 +3482,19 @@ structure AmbientReservedTransportCache {source target : Gaussian}
 comparisons. -/
 theorem reservedTransportAmbientCache {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate)
     (different : source ≠ target)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound)
-    (bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound)
-    (topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound)
     (reserveSmall : reserve <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound) :
     AmbientReservedTransportCache owner targetNonzero small reserve leftSmall
       rightSmall bottomSmall topSmall := by
@@ -3553,15 +3563,15 @@ boundary-to-ambient dominance invariant. -/
 theorem AmbientReservedTransportCache.ambientClearanceDominance
     {source target : Gaussian} {owner : Owner source}
     {targetNonzero : target ≠ 0}
-    {small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    {small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound} {reserve : Coordinate}
-    {leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    {leftSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientLeftClearance.bound}
-    {rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    {rightSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientRightClearance.bound}
-    {bottomSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    {bottomSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientBottomClearance.bound}
-    {topSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    {topSmall : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.ambientTopClearance.bound}
     (cache : AmbientReservedTransportCache owner targetNonzero small reserve
       leftSmall rightSmall bottomSmall topSmall) :
@@ -3576,7 +3586,7 @@ stable under the inexpensive same-box transport. -/
 structure QuadraticAmbientBudget {parameter : Gaussian}
     (owner : Owner parameter) : Prop where
   /-- The original Gaussian parameter's squared norm is at most 256. -/ parameterNormSqLe :
-    Data.Gaussian.Norm.Basic.normSq parameter ≤ 256
+    Gaussian.Norm.Basic.normSq parameter ≤ 256
   /-- The original ambient vertical interval's square bound is at most 16. -/ verticalIntervalSqLe :
     (Box.Intervals.verticalInterval owner.ambient).squareBound ≤ 16
   /-- The original ambient horizontal interval's square bound is at most 16. -/ horizontalIntervalSqLe :
@@ -3600,7 +3610,7 @@ theorem quadraticAmbientBudget_of_box_all {parameter : Gaussian}
     (initialBox : owner.track.initial.box = box)
     (ambientBox : owner.ambient = box)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 256)
+      Gaussian.Norm.Basic.normSq parameter ≤ 256)
     (leftSqLe : box.xLower ^ 2 ≤ 16)
     (rightSqLe : box.xUpper ^ 2 ≤ 16)
     (bottomSqLe : box.yLower ^ 2 ≤ 16)
@@ -3615,8 +3625,10 @@ theorem quadraticAmbientBudget_of_box_all {parameter : Gaussian}
       bottomSqLe := ?_
       topSqLe := ?_ }
   · rw [ambientBox]
+    rewrite [Interval.Bounds.squareBound_eq]
     exact Basic.max_le bottomSqLe topSqLe
   · rw [ambientBox]
+    rewrite [Interval.Bounds.squareBound_eq]
     exact Basic.max_le leftSqLe rightSqLe
   · rw [initialBox]
     exact leftSqLe
@@ -3634,7 +3646,7 @@ theorem quadraticAmbientBudget_of_box {parameter : Gaussian}
     (initialBox : owner.track.initial.box = box)
     (ambientBox : owner.ambient = box)
     (parameterNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq parameter ≤ 256)
+      Gaussian.Norm.Basic.normSq parameter ≤ 256)
     (_leftNonzero : box.xLower ≠ 0) (_rightNonzero : box.xUpper ≠ 0)
     (_bottomNonzero : box.yLower ≠ 0) (_topNonzero : box.yUpper ≠ 0)
     (leftSqLe : box.xLower ^ 2 ≤ 16)
@@ -3668,9 +3680,9 @@ theorem quadraticAmbientTransportFloorAt_pos (margin : Coordinate)
     (positive : 0 < margin) :
     0 < quadraticAmbientTransportFloorAt margin := by
   unfold quadraticAmbientTransportFloorAt
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.pow_pos_direct positive 2)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  exact Field.div_pos_direct
+    (Arithmetic.pow_pos_direct positive 2)
+    (Arithmetic.mul_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 65536) (by decide)))
 
@@ -3678,10 +3690,10 @@ theorem quadraticAmbientTransportFloorAt_pos (margin : Coordinate)
 theorem quadraticAmbientTransportFloor_pos :
     0 < quadraticAmbientTransportFloor := by
   unfold quadraticAmbientTransportFloor
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.pow_pos_direct
-      (Fraction.Order.Field.div_pos_direct (by decide) (by decide)) 2)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  exact Field.div_pos_direct
+    (Arithmetic.pow_pos_direct
+      (Field.div_pos_direct (by decide) (by decide)) 2)
+    (Arithmetic.mul_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 65536) (by decide)))
 
@@ -3692,30 +3704,30 @@ private theorem quadraticAmbientTransportFloor_le_side
     (majorantOne : 1 ≤ majorant) (majorantLe : majorant ≤ 65536) :
     quadraticAmbientTransportFloor ≤ margin ^ 2 / (4 * majorant) := by
   have halfPositive : (0 : Coordinate) < 1 / 2 :=
-    Fraction.Order.Field.div_pos_direct (by decide) (by decide)
+    Field.div_pos_direct (by decide) (by decide)
   have marginNonnegative : 0 ≤ margin := halfPositive.le.trans marginLower
   have numeratorLe : ((1 : Coordinate) / 2) ^ 2 ≤ margin ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct halfPositive.le marginLower 2
+    Arithmetic.pow_le_pow_direct halfPositive.le marginLower 2
   have majorantPositive : (0 : Coordinate) < majorant :=
     (show (0 : Coordinate) < 1 by decide).trans_le majorantOne
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive
+    Arithmetic.mul_pos_direct (by decide) majorantPositive
   have denominatorLe : 4 * majorant ≤ (4 : Coordinate) * 65536 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
       (by decide)
   calc
     quadraticAmbientTransportFloor =
         ((1 : Coordinate) / 2) ^ 2 / (4 * 65536) := rfl
     _ ≤ ((1 : Coordinate) / 2) ^ 2 / (4 * majorant) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct ((1 : Coordinate) / 2))
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct ((1 : Coordinate) / 2))
         denominatorPositive denominatorLe
     _ ≤ margin ^ 2 / (4 * majorant) := by
       change ((1 : Coordinate) / 2) ^ 2 * (4 * majorant)⁻¹ ≤
         margin ^ 2 * (4 * majorant)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         numeratorLe
-        (Fraction.Order.Field.inv_pos_direct denominatorPositive).le
+        (Field.inv_pos_direct denominatorPositive).le
 
 /-- A nonnegative retained margin floor bounds the side transport when its majorant lies between 1 and 65536. -/
 private theorem quadraticAmbientTransportFloorAt_le_side
@@ -3726,27 +3738,27 @@ private theorem quadraticAmbientTransportFloorAt_le_side
       margin ^ 2 / (4 * majorant) := by
   have marginNonnegative : 0 ≤ margin := floorNonnegative.trans floorLe
   have numeratorLe : floor ^ 2 ≤ margin ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct floorNonnegative floorLe 2
+    Arithmetic.pow_le_pow_direct floorNonnegative floorLe 2
   have majorantPositive : (0 : Coordinate) < majorant :=
     (show (0 : Coordinate) < 1 by decide).trans_le majorantOne
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive
+    Arithmetic.mul_pos_direct (by decide) majorantPositive
   have denominatorLe : 4 * majorant ≤ (4 : Coordinate) * 65536 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
       (by decide)
   calc
     quadraticAmbientTransportFloorAt floor =
         floor ^ 2 / (4 * 65536) := rfl
     _ ≤ floor ^ 2 / (4 * majorant) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct floor)
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct floor)
         denominatorPositive denominatorLe
     _ ≤ margin ^ 2 / (4 * majorant) := by
       change floor ^ 2 * (4 * majorant)⁻¹ ≤
         margin ^ 2 * (4 * majorant)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         numeratorLe
-        (Fraction.Order.Field.inv_pos_direct denominatorPositive).le
+        (Field.inv_pos_direct denominatorPositive).le
 
 /-- A generated residual and exact cached side majorant can retain an
 independently chosen transport floor.  The final rational `tradeoff` is the
@@ -3762,28 +3774,28 @@ theorem retainedQuadraticAmbientTransportFloor_le_side
     quadraticAmbientTransportFloorAt retainedFloor ≤
       margin ^ 2 / (4 * majorant) := by
   have numeratorLe : residualFloor ^ 2 ≤ margin ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct residualFloorPositive.le
+    Arithmetic.pow_le_pow_direct residualFloorPositive.le
       residualFloorLe 2
   have majorantPositive : (0 : Coordinate) < majorant :=
     (show (0 : Coordinate) < 1 by decide).trans_le majorantOne
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive
+    Arithmetic.mul_pos_direct (by decide) majorantPositive
   have denominatorLe : 4 * majorant ≤ 4 * sideUpper :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
       (by decide)
   calc
     quadraticAmbientTransportFloorAt retainedFloor ≤
         residualFloor ^ 2 / (4 * sideUpper) := tradeoff
     _ ≤ residualFloor ^ 2 / (4 * majorant) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct residualFloor)
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct residualFloor)
         denominatorPositive denominatorLe
     _ ≤ margin ^ 2 / (4 * majorant) := by
       change residualFloor ^ 2 * (4 * majorant)⁻¹ ≤
         margin ^ 2 * (4 * majorant)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         numeratorLe
-        (Fraction.Order.Field.inv_pos_direct denominatorPositive).le
+        (Field.inv_pos_direct denominatorPositive).le
 
 /-- The sharp `16384` side budget trades fourfold denominator slack for a
 twofold smaller residual margin while preserving the existing eighth-unit
@@ -3795,18 +3807,18 @@ private theorem eighthTransportFloor_le_side_of_sixteenthMargin
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       margin ^ 2 / (4 * majorant) := by
   have sixteenthPositive : (0 : Coordinate) < 1 / 16 :=
-    Fraction.Order.Field.div_pos_direct (by decide) (by decide)
+    Field.div_pos_direct (by decide) (by decide)
   have marginNonnegative : 0 ≤ margin :=
     sixteenthPositive.le.trans marginLower
   have numeratorLe : ((1 : Coordinate) / 16) ^ 2 ≤ margin ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct sixteenthPositive.le
+    Arithmetic.pow_le_pow_direct sixteenthPositive.le
       marginLower 2
   have majorantPositive : (0 : Coordinate) < majorant :=
     (show (0 : Coordinate) < 1 by decide).trans_le majorantOne
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive
+    Arithmetic.mul_pos_direct (by decide) majorantPositive
   have denominatorLe : 4 * majorant ≤ (4 : Coordinate) * 16384 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
       (by decide)
   calc
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) =
@@ -3815,24 +3827,24 @@ private theorem eighthTransportFloor_le_side_of_sixteenthMargin
       have oneEighth : (1 / 8 : Coordinate) = 2 * (1 / 16) := by
         decide
       apply Fraction.Field.div_eq_div_of_cross_mul
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+        (Arithmetic.mul_pos_direct (by decide)
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 65536) (by decide))).ne'
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+        (Arithmetic.mul_pos_direct (by decide)
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 16384) (by decide))).ne'
       rw [oneEighth]
       ring1
     _ ≤ ((1 : Coordinate) / 16) ^ 2 / (4 * majorant) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct
           ((1 : Coordinate) / 16)) denominatorPositive denominatorLe
     _ ≤ margin ^ 2 / (4 * majorant) := by
       change ((1 : Coordinate) / 16) ^ 2 * (4 * majorant)⁻¹ ≤
         margin ^ 2 * (4 * majorant)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         numeratorLe
-        (Fraction.Order.Field.inv_pos_direct denominatorPositive).le
+        (Field.inv_pos_direct denominatorPositive).le
 
 /-- An exact side majorant below `256` lets an eighth-unit transport floor
 survive from only a one-hundred-twenty-eighth-unit residual margin.
@@ -3846,18 +3858,18 @@ private theorem eighthTransportFloor_le_side_of_oneTwentyEighthMargin
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       margin ^ 2 / (4 * majorant) := by
   have floorPositive : (0 : Coordinate) < 1 / 128 :=
-    Fraction.Order.Field.div_pos_direct
+    Field.div_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
       (Fraction.Cast.Order.natCast_pos_direct (n := 128) (by omega))
   have numeratorLe : ((1 : Coordinate) / 128) ^ 2 ≤ margin ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct floorPositive.le
+    Arithmetic.pow_le_pow_direct floorPositive.le
       marginLower 2
   have majorantPositive : (0 : Coordinate) < majorant :=
     (show (0 : Coordinate) < 1 by decide).trans_le majorantOne
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive
+    Arithmetic.mul_pos_direct (by decide) majorantPositive
   have denominatorLe : 4 * majorant ≤ (4 : Coordinate) * 256 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
       (by decide)
   calc
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) =
@@ -3877,22 +3889,22 @@ private theorem eighthTransportFloor_le_side_of_oneTwentyEighthMargin
               Fraction.Field.div_eq_mul_inv_direct,
               Fraction.Field.one_mul]
       apply Fraction.Field.div_eq_div_of_cross_mul
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+        (Arithmetic.mul_pos_direct (by decide)
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 65536) (by decide))).ne'
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+        (Arithmetic.mul_pos_direct (by decide)
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 256) (by decide))).ne'
       rw [oneEighth]
       ring1
     _ ≤ ((1 : Coordinate) / 128) ^ 2 / (4 * majorant) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct
           ((1 : Coordinate) / 128)) denominatorPositive denominatorLe
     _ ≤ margin ^ 2 / (4 * majorant) := by
       change _ * (4 * majorant)⁻¹ ≤ _ * (4 * majorant)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe
-        (Fraction.Order.Field.inv_pos_direct denominatorPositive).le
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe
+        (Field.inv_pos_direct denominatorPositive).le
 
 /-- A three-two-hundred-fifty-sixths residual supports the same eighth-unit
 transport floor for exact side majorants bounded by `512`.
@@ -3906,18 +3918,18 @@ private theorem eighthTransportFloor_le_side_of_threeTwoFiftySixthMargin
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       margin ^ 2 / (4 * majorant) := by
   have residualPositive : (0 : Coordinate) < 3 / 256 :=
-    Fraction.Order.Field.div_pos_direct
+    Field.div_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 3) (by omega))
       (Fraction.Cast.Order.natCast_pos_direct (n := 256) (by omega))
   have numeratorLe : ((3 : Coordinate) / 256) ^ 2 ≤ margin ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct residualPositive.le
+    Arithmetic.pow_le_pow_direct residualPositive.le
       marginLower 2
   have majorantPositive : (0 : Coordinate) < majorant :=
     (show (0 : Coordinate) < 1 by decide).trans_le majorantOne
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive
+    Arithmetic.mul_pos_direct (by decide) majorantPositive
   have denominatorLe : 4 * majorant ≤ (4 : Coordinate) * 512 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
       (by decide)
   have baseline :
       quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
@@ -3996,23 +4008,23 @@ private theorem eighthTransportFloor_le_side_of_threeTwoFiftySixthMargin
             (n := 134217728) (by omega)).ne'
         ring1]
     simp only [Fraction.Field.div_eq_mul_inv_direct]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       (Fraction.Cast.Order.natCast_le_direct
         (m := 8) (n := 9) (by omega))
-      (Fraction.Order.Field.inv_pos_direct
+      (Field.inv_pos_direct
         (Fraction.Cast.Order.natCast_pos_direct
           (n := 134217728) (by omega))).le
   calc
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
         ((3 : Coordinate) / 256) ^ 2 / (4 * 512) := baseline
     _ ≤ ((3 : Coordinate) / 256) ^ 2 / (4 * majorant) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct
           ((3 : Coordinate) / 256)) denominatorPositive denominatorLe
     _ ≤ margin ^ 2 / (4 * majorant) := by
       change _ * (4 * majorant)⁻¹ ≤ _ * (4 * majorant)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe
-        (Fraction.Order.Field.inv_pos_direct denominatorPositive).le
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe
+        (Field.inv_pos_direct denominatorPositive).le
 
 /-- An exact side majorant below `1024` lets an eighth-unit transport floor
 survive from a one-sixty-fourth-unit residual margin.
@@ -4026,18 +4038,18 @@ private theorem eighthTransportFloor_le_side_of_sixtyFourthMargin
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       margin ^ 2 / (4 * majorant) := by
   have floorPositive : (0 : Coordinate) < 1 / 64 :=
-    Fraction.Order.Field.div_pos_direct
+    Field.div_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
       (Fraction.Cast.Order.natCast_pos_direct (n := 64) (by omega))
   have numeratorLe : ((1 : Coordinate) / 64) ^ 2 ≤ margin ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct floorPositive.le
+    Arithmetic.pow_le_pow_direct floorPositive.le
       marginLower 2
   have majorantPositive : (0 : Coordinate) < majorant :=
     (show (0 : Coordinate) < 1 by decide).trans_le majorantOne
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive
+    Arithmetic.mul_pos_direct (by decide) majorantPositive
   have denominatorLe : 4 * majorant ≤ (4 : Coordinate) * 1024 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct majorantLe
       (by decide)
   calc
     quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) =
@@ -4057,51 +4069,51 @@ private theorem eighthTransportFloor_le_side_of_sixtyFourthMargin
               Fraction.Field.div_eq_mul_inv_direct,
               Fraction.Field.one_mul]
       apply Fraction.Field.div_eq_div_of_cross_mul
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+        (Arithmetic.mul_pos_direct (by decide)
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 65536) (by decide))).ne'
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+        (Arithmetic.mul_pos_direct (by decide)
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 1024) (by decide))).ne'
       rw [oneEighth]
       ring1
     _ ≤ ((1 : Coordinate) / 64) ^ 2 / (4 * majorant) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.sq_nonneg_direct
           ((1 : Coordinate) / 64)) denominatorPositive denominatorLe
     _ ≤ margin ^ 2 / (4 * majorant) := by
       change _ * (4 * majorant)⁻¹ ≤ _ * (4 * majorant)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe
-        (Fraction.Order.Field.inv_pos_direct denominatorPositive).le
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe
+        (Field.inv_pos_direct denominatorPositive).le
 
 /-- Exact quadratic side-majorant data cached on the current owner geometry. -/
 structure QuadraticAmbientSideMajorantBounds {parameter : Gaussian}
     (owner : Owner parameter) (bound : Coordinate) : Prop where
   /-- The actual quadratic left side majorant on the original owner's ambient interval is at most the supplied bound. -/
-    left : Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    left : Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xLower)
       Gaussian.Constants.imaginaryUnit
       (Box.Intervals.verticalInterval owner.ambient) ≤ bound
   /-- The actual quadratic right side majorant on the original owner's ambient interval is at most the supplied bound.
-  -/ right : Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  -/ right : Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xUpper)
       Gaussian.Constants.imaginaryUnit
       (Box.Intervals.verticalInterval owner.ambient) ≤ bound
   /-- The actual quadratic bottom side majorant on the original owner's ambient interval is at most the supplied bound.
-  -/ bottom : Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+  -/ bottom : Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yLower)
       Gaussian.Constants.horizontalDirection
       (Box.Intervals.horizontalInterval owner.ambient) ≤ bound
   /-- The actual quadratic top side majorant on the original owner's ambient interval is at most the supplied bound. -/
-    top : Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    top : Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yUpper)
       Gaussian.Constants.horizontalDirection
       (Box.Intervals.horizontalInterval owner.ambient) ≤ bound
@@ -4110,30 +4122,30 @@ structure QuadraticAmbientSideMajorantBounds {parameter : Gaussian}
 structure QuadraticBoxSideMajorantBounds (parameter : Gaussian)
     (box : QuadraticBox) (bound : Coordinate) : Prop where
   /-- The actual quadratic left side majorant on the exact retained box interval is at most the supplied bound. -/ left
-    : Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    : Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Winding.verticalBase box.xLower)
       Gaussian.Constants.imaginaryUnit
       (Box.Intervals.verticalInterval box) ≤ bound
   /-- The actual quadratic right side majorant on the exact retained box interval is at most the supplied bound. -/
-    right : Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    right : Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Winding.verticalBase box.xUpper)
       Gaussian.Constants.imaginaryUnit
       (Box.Intervals.verticalInterval box) ≤ bound
   /-- The actual quadratic bottom side majorant on the exact retained box interval is at most the supplied bound. -/
-    bottom : Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    bottom : Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Imaginary.horizontalBase box.yLower)
       Gaussian.Constants.horizontalDirection
       (Box.Intervals.horizontalInterval box) ≤ bound
   /-- The actual quadratic top side majorant on the exact retained box interval is at most the supplied bound. -/ top :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+    Bounds.Path.Majorant.boundarySideMajorant
+      (Power.Gaussian.rootPolynomial parameter
+        SquareRootDegree.degreeTwo)
       (Gaussian.Cast.Imaginary.horizontalBase box.yUpper)
       Gaussian.Constants.horizontalDirection
       (Box.Intervals.horizontalInterval box) ≤ bound
@@ -4145,17 +4157,17 @@ The same two finite real and imaginary Horner bounds decrease with the supplied 
 summed rational floor at one preserves that comparison. -/
 theorem boundarySideMajorant_le_of_intervalRefines
     (polynomial : GaussianPolynomial) (base direction : Gaussian)
-    {interval root : Data.Rat.Interval.Bounds}
+    {interval root : Interval.Bounds}
     (refines : interval.Refines root) :
-    Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant polynomial base direction
+    Bounds.Path.Majorant.boundarySideMajorant polynomial base direction
         interval ≤
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant polynomial base direction
+      Bounds.Path.Majorant.boundarySideMajorant polynomial base direction
         root := by
-  unfold Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
+  unfold Bounds.Path.Majorant.boundarySideMajorant
   apply Basic.max_le (Basic.le_max_left _ _)
-  exact (Fraction.Order.Arithmetic.add_le_add_direct
-    (Dense.Rational.Bounds.Horner.evalSqBound_le_of_refines _ refines)
-    (Dense.Rational.Bounds.Horner.evalSqBound_le_of_refines _ refines)).trans
+  exact (Arithmetic.add_le_add_direct
+    (Horner.evalSqBound_le_of_refines _ refines)
+    (Horner.evalSqBound_le_of_refines _ refines)).trans
       (Basic.le_max_right _ _)
 
 /-- Restrict an explicit box-side cache to an owner whose box agrees and
@@ -4191,7 +4203,7 @@ theorem quadraticAmbientSideMajorantBounds_of_box
 positive cached residual margin. -/
 structure ParametricQuadraticAmbientTransportCache {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (marginFloor : Coordinate) where
   /-- The actual zero-reserve transport retains the original source box. -/ initialBox :
@@ -4226,57 +4238,57 @@ The exact source owner, target parameter and supplied quantitative bounds retain
 side clearances and selected transport floor in this cache. -/
 theorem parametricQuadraticAmbientTransportCache {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (different : source ≠ target)
     (dominance : AmbientClearanceDominance owner)
     (marginFloor : Coordinate) (marginFloorPositive : 0 < marginFloor)
     (marginLower : marginFloor ≤
       owner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq (source - target))
+        Gaussian.Norm.Basic.normSq (source - target))
     (budget : QuadraticAmbientBudget owner)
     (targetNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq target ≤ 256) :
+      Gaussian.Norm.Basic.normSq target ≤ 256) :
     ParametricQuadraticAmbientTransportCache owner targetNonzero small
       marginFloor := by
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   have ambientSmall := dominance.ambientSmallness small
   have leftSmall := ambientSmall.1
   have rightSmall := ambientSmall.2.1
   have bottomSmall := ambientSmall.2.2.1
   have topSmall := ambientSmall.2.2.2
   have reserveSmall : (0 : Coordinate) <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound :=
-    (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+    (SquareRootContinuation.transportedOwner
       owner.track.initial small).clearance.positive
   let ambientCache := reservedTransportAmbientCache owner targetNonzero small 0
     different leftSmall rightSmall bottomSmall topSmall reserveSmall
   have leftMargin : marginFloor ≤
       owner.track.initial.ambientLeftClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.left
+      (Arithmetic.sub_le_sub_right_direct dominance.left
         displacement)
   have rightMargin : marginFloor ≤
       owner.track.initial.ambientRightClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.right
+      (Arithmetic.sub_le_sub_right_direct dominance.right
         displacement)
   have bottomMargin : marginFloor ≤
       owner.track.initial.ambientBottomClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.bottom
+      (Arithmetic.sub_le_sub_right_direct dominance.bottom
         displacement)
   have topMargin : marginFloor ≤
       owner.track.initial.ambientTopClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.top
+      (Arithmetic.sub_le_sub_right_direct dominance.top
         displacement)
   have leftMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xLower)
         Gaussian.Constants.imaginaryUnit
         (Box.Intervals.verticalInterval owner.ambient) ≤ 65536 :=
@@ -4285,9 +4297,9 @@ theorem parametricQuadraticAmbientTransportCache {source target : Gaussian}
       (Box.Intervals.verticalInterval owner.ambient)
       budget.verticalIntervalSqLe budget.leftSqLe budget.parameterNormSqLe
   have rightMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xUpper)
         Gaussian.Constants.imaginaryUnit
         (Box.Intervals.verticalInterval owner.ambient) ≤ 65536 :=
@@ -4296,9 +4308,9 @@ theorem parametricQuadraticAmbientTransportCache {source target : Gaussian}
       (Box.Intervals.verticalInterval owner.ambient)
       budget.verticalIntervalSqLe budget.rightSqLe budget.parameterNormSqLe
   have bottomMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yLower)
         Gaussian.Constants.horizontalDirection
         (Box.Intervals.horizontalInterval owner.ambient) ≤ 65536 :=
@@ -4307,9 +4319,9 @@ theorem parametricQuadraticAmbientTransportCache {source target : Gaussian}
       (Box.Intervals.horizontalInterval owner.ambient)
       budget.horizontalIntervalSqLe budget.bottomSqLe budget.parameterNormSqLe
   have topMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yUpper)
         Gaussian.Constants.horizontalDirection
         (Box.Intervals.horizontalInterval owner.ambient) ≤ 65536 :=
@@ -4320,25 +4332,25 @@ theorem parametricQuadraticAmbientTransportCache {source target : Gaussian}
   have leftFloor : quadraticAmbientTransportFloorAt marginFloor ≤
       (ambientLeftAfterMove owner leftSmall).bound := by
     rw [ambientLeftAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloorAt_le_side _ _ _
       marginFloorPositive.le leftMargin (Basic.le_max_left _ _) leftMajorantLe
   have rightFloor : quadraticAmbientTransportFloorAt marginFloor ≤
       (ambientRightAfterMove owner rightSmall).bound := by
     rw [ambientRightAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloorAt_le_side _ _ _
       marginFloorPositive.le rightMargin (Basic.le_max_left _ _) rightMajorantLe
   have bottomFloor : quadraticAmbientTransportFloorAt marginFloor ≤
       (ambientBottomAfterMove owner bottomSmall).bound := by
     rw [ambientBottomAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloorAt_le_side _ _ _
       marginFloorPositive.le bottomMargin (Basic.le_max_left _ _) bottomMajorantLe
   have topFloor : quadraticAmbientTransportFloorAt marginFloor ≤
       (ambientTopAfterMove owner topSmall).bound := by
     rw [ambientTopAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloorAt_le_side _ _ _
       marginFloorPositive.le topMargin (Basic.le_max_left _ _) topMajorantLe
   refine
@@ -4386,7 +4398,7 @@ side clearances and selected transport floor in this cache. -/
 theorem retainedFloorQuadraticAmbientTransportCache
     {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (different : source ≠ target)
     (dominance : AmbientClearanceDominance owner)
@@ -4394,74 +4406,74 @@ theorem retainedFloorQuadraticAmbientTransportCache
     (residualFloorPositive : 0 < residualFloor)
     (marginLower : residualFloor ≤
       owner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq (source - target))
+        Gaussian.Norm.Basic.normSq (source - target))
     (sideBounds : QuadraticAmbientSideMajorantBounds owner sideUpper)
     (tradeoff : quadraticAmbientTransportFloorAt retainedFloor ≤
       residualFloor ^ 2 / (4 * sideUpper))
     (budget : QuadraticAmbientBudget owner)
     (targetNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq target ≤ 256) :
+      Gaussian.Norm.Basic.normSq target ≤ 256) :
     ParametricQuadraticAmbientTransportCache owner targetNonzero small
       retainedFloor := by
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   have ambientSmall := dominance.ambientSmallness small
   have leftSmall := ambientSmall.1
   have rightSmall := ambientSmall.2.1
   have bottomSmall := ambientSmall.2.2.1
   have topSmall := ambientSmall.2.2.2
   have reserveSmall : (0 : Coordinate) <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound :=
-    (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+    (SquareRootContinuation.transportedOwner
       owner.track.initial small).clearance.positive
   let ambientCache := reservedTransportAmbientCache owner targetNonzero small 0
     different leftSmall rightSmall bottomSmall topSmall reserveSmall
   have leftMargin : residualFloor ≤
       owner.track.initial.ambientLeftClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.left
+      (Arithmetic.sub_le_sub_right_direct dominance.left
         displacement)
   have rightMargin : residualFloor ≤
       owner.track.initial.ambientRightClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.right
+      (Arithmetic.sub_le_sub_right_direct dominance.right
         displacement)
   have bottomMargin : residualFloor ≤
       owner.track.initial.ambientBottomClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.bottom
+      (Arithmetic.sub_le_sub_right_direct dominance.bottom
         displacement)
   have topMargin : residualFloor ≤
       owner.track.initial.ambientTopClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.top
+      (Arithmetic.sub_le_sub_right_direct dominance.top
         displacement)
   have leftFloor : quadraticAmbientTransportFloorAt retainedFloor ≤
       (ambientLeftAfterMove owner leftSmall).bound := by
     rw [ambientLeftAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact retainedQuadraticAmbientTransportFloor_le_side retainedFloor
       residualFloor _ _ sideUpper residualFloorPositive leftMargin
         (Basic.le_max_left _ _) sideBounds.left tradeoff
   have rightFloor : quadraticAmbientTransportFloorAt retainedFloor ≤
       (ambientRightAfterMove owner rightSmall).bound := by
     rw [ambientRightAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact retainedQuadraticAmbientTransportFloor_le_side retainedFloor
       residualFloor _ _ sideUpper residualFloorPositive rightMargin
         (Basic.le_max_left _ _) sideBounds.right tradeoff
   have bottomFloor : quadraticAmbientTransportFloorAt retainedFloor ≤
       (ambientBottomAfterMove owner bottomSmall).bound := by
     rw [ambientBottomAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact retainedQuadraticAmbientTransportFloor_le_side retainedFloor
       residualFloor _ _ sideUpper residualFloorPositive bottomMargin
         (Basic.le_max_left _ _) sideBounds.bottom tradeoff
   have topFloor : quadraticAmbientTransportFloorAt retainedFloor ≤
       (ambientTopAfterMove owner topSmall).bound := by
     rw [ambientTopAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact retainedQuadraticAmbientTransportFloor_le_side retainedFloor
       residualFloor _ _ sideUpper residualFloorPositive topMargin
         (Basic.le_max_left _ _) sideBounds.top tradeoff
@@ -4510,56 +4522,56 @@ same positive eighth-floor comparison. -/
 theorem eighthFloorQuadraticAmbientTransportCache_of_sixteenthMargin
     {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (different : source ≠ target)
     (dominance : AmbientClearanceDominance owner)
     (marginLower : (1 : Coordinate) / 16 ≤
       owner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq (source - target))
+        Gaussian.Norm.Basic.normSq (source - target))
     (budget : QuadraticAmbientBudget owner)
     (targetNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq target ≤ 256) :
+      Gaussian.Norm.Basic.normSq target ≤ 256) :
     ParametricQuadraticAmbientTransportCache owner targetNonzero small
       (1 / 8 : Coordinate) := by
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   have ambientSmall := dominance.ambientSmallness small
   have leftSmall := ambientSmall.1
   have rightSmall := ambientSmall.2.1
   have bottomSmall := ambientSmall.2.2.1
   have topSmall := ambientSmall.2.2.2
   have reserveSmall : (0 : Coordinate) <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound :=
-    (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+    (SquareRootContinuation.transportedOwner
       owner.track.initial small).clearance.positive
   let ambientCache := reservedTransportAmbientCache owner targetNonzero small 0
     different leftSmall rightSmall bottomSmall topSmall reserveSmall
   have leftMargin : (1 : Coordinate) / 16 ≤
       owner.track.initial.ambientLeftClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.left
+      (Arithmetic.sub_le_sub_right_direct dominance.left
         displacement)
   have rightMargin : (1 : Coordinate) / 16 ≤
       owner.track.initial.ambientRightClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.right
+      (Arithmetic.sub_le_sub_right_direct dominance.right
         displacement)
   have bottomMargin : (1 : Coordinate) / 16 ≤
       owner.track.initial.ambientBottomClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.bottom
+      (Arithmetic.sub_le_sub_right_direct dominance.bottom
         displacement)
   have topMargin : (1 : Coordinate) / 16 ≤
       owner.track.initial.ambientTopClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.top
+      (Arithmetic.sub_le_sub_right_direct dominance.top
         displacement)
   have leftMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xLower)
         Gaussian.Constants.imaginaryUnit
         (Box.Intervals.verticalInterval owner.ambient) ≤ 16384 :=
@@ -4568,9 +4580,9 @@ theorem eighthFloorQuadraticAmbientTransportCache_of_sixteenthMargin
       (Box.Intervals.verticalInterval owner.ambient)
       budget.verticalIntervalSqLe budget.leftSqLe budget.parameterNormSqLe
   have rightMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xUpper)
         Gaussian.Constants.imaginaryUnit
         (Box.Intervals.verticalInterval owner.ambient) ≤ 16384 :=
@@ -4579,9 +4591,9 @@ theorem eighthFloorQuadraticAmbientTransportCache_of_sixteenthMargin
       (Box.Intervals.verticalInterval owner.ambient)
       budget.verticalIntervalSqLe budget.rightSqLe budget.parameterNormSqLe
   have bottomMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yLower)
         Gaussian.Constants.horizontalDirection
         (Box.Intervals.horizontalInterval owner.ambient) ≤ 16384 :=
@@ -4590,9 +4602,9 @@ theorem eighthFloorQuadraticAmbientTransportCache_of_sixteenthMargin
       (Box.Intervals.horizontalInterval owner.ambient)
       budget.horizontalIntervalSqLe budget.bottomSqLe budget.parameterNormSqLe
   have topMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yUpper)
         Gaussian.Constants.horizontalDirection
         (Box.Intervals.horizontalInterval owner.ambient) ≤ 16384 :=
@@ -4603,25 +4615,25 @@ theorem eighthFloorQuadraticAmbientTransportCache_of_sixteenthMargin
   have leftFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientLeftAfterMove owner leftSmall).bound := by
     rw [ambientLeftAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixteenthMargin _ _ leftMargin
       (Basic.le_max_left _ _) leftMajorantLe
   have rightFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientRightAfterMove owner rightSmall).bound := by
     rw [ambientRightAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixteenthMargin _ _ rightMargin
       (Basic.le_max_left _ _) rightMajorantLe
   have bottomFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientBottomAfterMove owner bottomSmall).bound := by
     rw [ambientBottomAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixteenthMargin _ _ bottomMargin
       (Basic.le_max_left _ _) bottomMajorantLe
   have topFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientTopAfterMove owner topSmall).bound := by
     rw [ambientTopAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixteenthMargin _ _ topMargin
       (Basic.le_max_left _ _) topMajorantLe
   refine
@@ -4668,75 +4680,75 @@ same positive eighth-floor comparison. -/
 theorem eighthFloorQuadraticAmbientTransportCache_of_oneTwentyEighthMargin
     {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (different : source ≠ target)
     (dominance : AmbientClearanceDominance owner)
     (marginLower : (1 : Coordinate) / 128 ≤
       owner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq (source - target))
+        Gaussian.Norm.Basic.normSq (source - target))
     (sideBounds : QuadraticAmbientSideMajorantBounds owner 256)
     (budget : QuadraticAmbientBudget owner)
     (targetNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq target ≤ 256) :
+      Gaussian.Norm.Basic.normSq target ≤ 256) :
     ParametricQuadraticAmbientTransportCache owner targetNonzero small
       (1 / 8 : Coordinate) := by
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   have ambientSmall := dominance.ambientSmallness small
   have leftSmall := ambientSmall.1
   have rightSmall := ambientSmall.2.1
   have bottomSmall := ambientSmall.2.2.1
   have topSmall := ambientSmall.2.2.2
   have reserveSmall : (0 : Coordinate) <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound :=
-    (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+    (SquareRootContinuation.transportedOwner
       owner.track.initial small).clearance.positive
   let ambientCache := reservedTransportAmbientCache owner targetNonzero small 0
     different leftSmall rightSmall bottomSmall topSmall reserveSmall
   have leftMargin : (1 : Coordinate) / 128 ≤
       owner.track.initial.ambientLeftClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.left
+      (Arithmetic.sub_le_sub_right_direct dominance.left
         displacement)
   have rightMargin : (1 : Coordinate) / 128 ≤
       owner.track.initial.ambientRightClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.right
+      (Arithmetic.sub_le_sub_right_direct dominance.right
         displacement)
   have bottomMargin : (1 : Coordinate) / 128 ≤
       owner.track.initial.ambientBottomClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.bottom
+      (Arithmetic.sub_le_sub_right_direct dominance.bottom
         displacement)
   have topMargin : (1 : Coordinate) / 128 ≤
       owner.track.initial.ambientTopClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.top
+      (Arithmetic.sub_le_sub_right_direct dominance.top
         displacement)
   have leftFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientLeftAfterMove owner leftSmall).bound := by
     rw [ambientLeftAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_oneTwentyEighthMargin _ _ leftMargin
       (Basic.le_max_left _ _) sideBounds.left
   have rightFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientRightAfterMove owner rightSmall).bound := by
     rw [ambientRightAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_oneTwentyEighthMargin _ _ rightMargin
       (Basic.le_max_left _ _) sideBounds.right
   have bottomFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientBottomAfterMove owner bottomSmall).bound := by
     rw [ambientBottomAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_oneTwentyEighthMargin _ _ bottomMargin
       (Basic.le_max_left _ _) sideBounds.bottom
   have topFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientTopAfterMove owner topSmall).bound := by
     rw [ambientTopAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_oneTwentyEighthMargin _ _ topMargin
       (Basic.le_max_left _ _) sideBounds.top
   refine
@@ -4783,75 +4795,75 @@ same positive eighth-floor comparison. -/
 theorem eighthFloorQuadraticAmbientTransportCache_of_threeTwoFiftySixthMargin
     {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (different : source ≠ target)
     (dominance : AmbientClearanceDominance owner)
     (marginLower : (3 : Coordinate) / 256 ≤
       owner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq (source - target))
+        Gaussian.Norm.Basic.normSq (source - target))
     (sideBounds : QuadraticAmbientSideMajorantBounds owner 512)
     (budget : QuadraticAmbientBudget owner)
     (targetNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq target ≤ 256) :
+      Gaussian.Norm.Basic.normSq target ≤ 256) :
     ParametricQuadraticAmbientTransportCache owner targetNonzero small
       (1 / 8 : Coordinate) := by
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   have ambientSmall := dominance.ambientSmallness small
   have leftSmall := ambientSmall.1
   have rightSmall := ambientSmall.2.1
   have bottomSmall := ambientSmall.2.2.1
   have topSmall := ambientSmall.2.2.2
   have reserveSmall : (0 : Coordinate) <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound :=
-    (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+    (SquareRootContinuation.transportedOwner
       owner.track.initial small).clearance.positive
   let ambientCache := reservedTransportAmbientCache owner targetNonzero small 0
     different leftSmall rightSmall bottomSmall topSmall reserveSmall
   have leftMargin : (3 : Coordinate) / 256 ≤
       owner.track.initial.ambientLeftClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.left
+      (Arithmetic.sub_le_sub_right_direct dominance.left
         displacement)
   have rightMargin : (3 : Coordinate) / 256 ≤
       owner.track.initial.ambientRightClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.right
+      (Arithmetic.sub_le_sub_right_direct dominance.right
         displacement)
   have bottomMargin : (3 : Coordinate) / 256 ≤
       owner.track.initial.ambientBottomClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.bottom
+      (Arithmetic.sub_le_sub_right_direct dominance.bottom
         displacement)
   have topMargin : (3 : Coordinate) / 256 ≤
       owner.track.initial.ambientTopClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.top
+      (Arithmetic.sub_le_sub_right_direct dominance.top
         displacement)
   have leftFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientLeftAfterMove owner leftSmall).bound := by
     rw [ambientLeftAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_threeTwoFiftySixthMargin _ _ leftMargin
       (Basic.le_max_left _ _) sideBounds.left
   have rightFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientRightAfterMove owner rightSmall).bound := by
     rw [ambientRightAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_threeTwoFiftySixthMargin _ _ rightMargin
       (Basic.le_max_left _ _) sideBounds.right
   have bottomFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientBottomAfterMove owner bottomSmall).bound := by
     rw [ambientBottomAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_threeTwoFiftySixthMargin _ _ bottomMargin
       (Basic.le_max_left _ _) sideBounds.bottom
   have topFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientTopAfterMove owner topSmall).bound := by
     rw [ambientTopAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_threeTwoFiftySixthMargin _ _ topMargin
       (Basic.le_max_left _ _) sideBounds.top
   refine
@@ -4898,75 +4910,75 @@ same positive eighth-floor comparison. -/
 theorem eighthFloorQuadraticAmbientTransportCache_of_sixtyFourthMargin
     {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (different : source ≠ target)
     (dominance : AmbientClearanceDominance owner)
     (marginLower : (1 : Coordinate) / 64 ≤
       owner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq (source - target))
+        Gaussian.Norm.Basic.normSq (source - target))
     (sideBounds : QuadraticAmbientSideMajorantBounds owner 1024)
     (budget : QuadraticAmbientBudget owner)
     (targetNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq target ≤ 256) :
+      Gaussian.Norm.Basic.normSq target ≤ 256) :
     ParametricQuadraticAmbientTransportCache owner targetNonzero small
       (1 / 8 : Coordinate) := by
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   have ambientSmall := dominance.ambientSmallness small
   have leftSmall := ambientSmall.1
   have rightSmall := ambientSmall.2.1
   have bottomSmall := ambientSmall.2.2.1
   have topSmall := ambientSmall.2.2.2
   have reserveSmall : (0 : Coordinate) <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound :=
-    (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+    (SquareRootContinuation.transportedOwner
       owner.track.initial small).clearance.positive
   let ambientCache := reservedTransportAmbientCache owner targetNonzero small 0
     different leftSmall rightSmall bottomSmall topSmall reserveSmall
   have leftMargin : (1 : Coordinate) / 64 ≤
       owner.track.initial.ambientLeftClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.left
+      (Arithmetic.sub_le_sub_right_direct dominance.left
         displacement)
   have rightMargin : (1 : Coordinate) / 64 ≤
       owner.track.initial.ambientRightClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.right
+      (Arithmetic.sub_le_sub_right_direct dominance.right
         displacement)
   have bottomMargin : (1 : Coordinate) / 64 ≤
       owner.track.initial.ambientBottomClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.bottom
+      (Arithmetic.sub_le_sub_right_direct dominance.bottom
         displacement)
   have topMargin : (1 : Coordinate) / 64 ≤
       owner.track.initial.ambientTopClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.top
+      (Arithmetic.sub_le_sub_right_direct dominance.top
         displacement)
   have leftFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientLeftAfterMove owner leftSmall).bound := by
     rw [ambientLeftAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixtyFourthMargin _ _ leftMargin
       (Basic.le_max_left _ _) sideBounds.left
   have rightFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientRightAfterMove owner rightSmall).bound := by
     rw [ambientRightAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixtyFourthMargin _ _ rightMargin
       (Basic.le_max_left _ _) sideBounds.right
   have bottomFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientBottomAfterMove owner bottomSmall).bound := by
     rw [ambientBottomAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixtyFourthMargin _ _ bottomMargin
       (Basic.le_max_left _ _) sideBounds.bottom
   have topFloor : quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
       (ambientTopAfterMove owner topSmall).bound := by
     rw [ambientTopAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact eighthTransportFloor_le_side_of_sixtyFourthMargin _ _ topMargin
       (Basic.le_max_left _ _) sideBounds.top
   refine
@@ -5010,7 +5022,7 @@ transport.  This cache is deliberately independent of the proof witnesses
 used by the nested executable branch selection. -/
 structure QuadraticAmbientTransportCache {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) where
   /-- The actual zero-reserve transport retains the original source box. -/ initialBox :
     (reservedTransport owner targetNonzero small 0).track.initial.box =
@@ -5044,55 +5056,55 @@ The exact source owner, target parameter and supplied quantitative bounds retain
 side clearances and selected transport floor in this cache. -/
 theorem quadraticAmbientTransportCache {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (different : source ≠ target)
     (dominance : AmbientClearanceDominance owner)
     (marginLower : (1 : Coordinate) / 2 ≤
       owner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq (source - target))
+        Gaussian.Norm.Basic.normSq (source - target))
     (budget : QuadraticAmbientBudget owner)
     (targetNormSqLe :
-      Data.Gaussian.Norm.Basic.normSq target ≤ 256) :
+      Gaussian.Norm.Basic.normSq target ≤ 256) :
     QuadraticAmbientTransportCache owner targetNonzero small := by
   let displacement :=
-    Data.Gaussian.Norm.Basic.normSq (source - target)
+    Gaussian.Norm.Basic.normSq (source - target)
   have ambientSmall := dominance.ambientSmallness small
   have leftSmall := ambientSmall.1
   have rightSmall := ambientSmall.2.1
   have bottomSmall := ambientSmall.2.2.1
   have topSmall := ambientSmall.2.2.2
   have reserveSmall : (0 : Coordinate) <
-      (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+      (SquareRootContinuation.transportedOwner
         owner.track.initial small).clearance.bound :=
-    (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+    (SquareRootContinuation.transportedOwner
       owner.track.initial small).clearance.positive
   let ambientCache := reservedTransportAmbientCache owner targetNonzero small 0
     different leftSmall rightSmall bottomSmall topSmall reserveSmall
   have leftMargin : (1 : Coordinate) / 2 ≤
       owner.track.initial.ambientLeftClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.left
+      (Arithmetic.sub_le_sub_right_direct dominance.left
         displacement)
   have rightMargin : (1 : Coordinate) / 2 ≤
       owner.track.initial.ambientRightClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.right
+      (Arithmetic.sub_le_sub_right_direct dominance.right
         displacement)
   have bottomMargin : (1 : Coordinate) / 2 ≤
       owner.track.initial.ambientBottomClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.bottom
+      (Arithmetic.sub_le_sub_right_direct dominance.bottom
         displacement)
   have topMargin : (1 : Coordinate) / 2 ≤
       owner.track.initial.ambientTopClearance.bound - displacement :=
     marginLower.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct dominance.top
+      (Arithmetic.sub_le_sub_right_direct dominance.top
         displacement)
   have leftMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xLower)
         Gaussian.Constants.imaginaryUnit
         (Box.Intervals.verticalInterval owner.ambient) ≤ 65536 :=
@@ -5101,9 +5113,9 @@ theorem quadraticAmbientTransportCache {source target : Gaussian}
       (Box.Intervals.verticalInterval owner.ambient)
       budget.verticalIntervalSqLe budget.leftSqLe budget.parameterNormSqLe
   have rightMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Winding.verticalBase owner.track.initial.box.xUpper)
         Gaussian.Constants.imaginaryUnit
         (Box.Intervals.verticalInterval owner.ambient) ≤ 65536 :=
@@ -5112,9 +5124,9 @@ theorem quadraticAmbientTransportCache {source target : Gaussian}
       (Box.Intervals.verticalInterval owner.ambient)
       budget.verticalIntervalSqLe budget.rightSqLe budget.parameterNormSqLe
   have bottomMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yLower)
         Gaussian.Constants.horizontalDirection
         (Box.Intervals.horizontalInterval owner.ambient) ≤ 65536 :=
@@ -5123,9 +5135,9 @@ theorem quadraticAmbientTransportCache {source target : Gaussian}
       (Box.Intervals.horizontalInterval owner.ambient)
       budget.horizontalIntervalSqLe budget.bottomSqLe budget.parameterNormSqLe
   have topMajorantLe :
-      Dense.Gaussian.Bounds.Path.Majorant.boundarySideMajorant
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-          Riemann.RootContinuation.SquareRootDegree.degreeTwo)
+      Bounds.Path.Majorant.boundarySideMajorant
+        (Power.Gaussian.rootPolynomial source
+          SquareRootDegree.degreeTwo)
         (Gaussian.Cast.Imaginary.horizontalBase owner.track.initial.box.yUpper)
         Gaussian.Constants.horizontalDirection
         (Box.Intervals.horizontalInterval owner.ambient) ≤ 65536 :=
@@ -5136,25 +5148,25 @@ theorem quadraticAmbientTransportCache {source target : Gaussian}
   have leftFloor : quadraticAmbientTransportFloor ≤
       (ambientLeftAfterMove owner leftSmall).bound := by
     rw [ambientLeftAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloor_le_side _ _ leftMargin
       (Basic.le_max_left _ _) leftMajorantLe
   have rightFloor : quadraticAmbientTransportFloor ≤
       (ambientRightAfterMove owner rightSmall).bound := by
     rw [ambientRightAfterMove,
-      Power.Clearance.Box.Transport.verticalClearanceAfterMove_bound]
+      Transport.verticalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloor_le_side _ _ rightMargin
       (Basic.le_max_left _ _) rightMajorantLe
   have bottomFloor : quadraticAmbientTransportFloor ≤
       (ambientBottomAfterMove owner bottomSmall).bound := by
     rw [ambientBottomAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloor_le_side _ _ bottomMargin
       (Basic.le_max_left _ _) bottomMajorantLe
   have topFloor : quadraticAmbientTransportFloor ≤
       (ambientTopAfterMove owner topSmall).bound := by
     rw [ambientTopAfterMove,
-      Power.Clearance.Box.Transport.horizontalClearanceAfterMove_bound]
+      Transport.horizontalClearanceAfterMove_bound]
     exact quadraticAmbientTransportFloor_le_side _ _ topMargin
       (Basic.le_max_left _ _) topMajorantLe
   refine
@@ -5197,7 +5209,7 @@ theorem quadraticAmbientTransportCache {source target : Gaussian}
 strict descendant. -/
 theorem reservedTransport_initial_box_refines {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate) :
     (reservedTransport owner targetNonzero small reserve).track.initial.box.Refines
       owner.track.initial.box := by
@@ -5209,23 +5221,23 @@ theorem reservedTransport_initial_box_refines {source target : Gaussian}
   · rw [dif_neg same]
     dsimp only
     by_cases leftSmall :
-        Data.Gaussian.Norm.Basic.normSq (source - target) <
+        Gaussian.Norm.Basic.normSq (source - target) <
           owner.track.initial.ambientLeftClearance.bound
     · rw [dif_pos leftSmall]
       by_cases rightSmall :
-          Data.Gaussian.Norm.Basic.normSq (source - target) <
+          Gaussian.Norm.Basic.normSq (source - target) <
             owner.track.initial.ambientRightClearance.bound
       · rw [dif_pos rightSmall]
         by_cases bottomSmall :
-            Data.Gaussian.Norm.Basic.normSq (source - target) <
+            Gaussian.Norm.Basic.normSq (source - target) <
               owner.track.initial.ambientBottomClearance.bound
         · rw [dif_pos bottomSmall]
           by_cases topSmall :
-              Data.Gaussian.Norm.Basic.normSq (source - target) <
+              Gaussian.Norm.Basic.normSq (source - target) <
                 owner.track.initial.ambientTopClearance.bound
           · rw [dif_pos topSmall]
             by_cases reserveSmall : reserve <
-                (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+                (SquareRootContinuation.transportedOwner
                   owner.track.initial small).clearance.bound
             · rw [dif_pos reserveSmall]
               rw [ambientRoucheTransport_initial_box]
@@ -5250,7 +5262,7 @@ theorem reservedTransport_initial_box_refines {source target : Gaussian}
 target occurrence as generic Newton continuation. -/
 @[expose] def reservedTransport_generic_relation {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) (reserve : Coordinate) :
     PSum
       (reservedTransport owner targetNonzero small reserve =
@@ -5264,29 +5276,29 @@ target occurrence as generic Newton continuation. -/
     exact PSum.inr
       { parent := owner
         genericStrictParent :=
-          Riemann.RootContinuation.SquareRootContinuation.continuedTrack_initial_strict_source
+          SquareRootContinuation.continuedTrack_initial_strict_source
             targetNonzero owner.track.initial small
         resultRefinesParent := Box.refines_refl _ }
   · rw [dif_neg same]
     dsimp only
     by_cases leftSmall :
-        Data.Gaussian.Norm.Basic.normSq (source - target) <
+        Gaussian.Norm.Basic.normSq (source - target) <
           owner.track.initial.ambientLeftClearance.bound
     · rw [dif_pos leftSmall]
       by_cases rightSmall :
-          Data.Gaussian.Norm.Basic.normSq (source - target) <
+          Gaussian.Norm.Basic.normSq (source - target) <
             owner.track.initial.ambientRightClearance.bound
       · rw [dif_pos rightSmall]
         by_cases bottomSmall :
-            Data.Gaussian.Norm.Basic.normSq (source - target) <
+            Gaussian.Norm.Basic.normSq (source - target) <
               owner.track.initial.ambientBottomClearance.bound
         · rw [dif_pos bottomSmall]
           by_cases topSmall :
-              Data.Gaussian.Norm.Basic.normSq (source - target) <
+              Gaussian.Norm.Basic.normSq (source - target) <
                 owner.track.initial.ambientTopClearance.bound
           · rw [dif_pos topSmall]
             by_cases reserveSmall : reserve <
-                (Riemann.RootContinuation.SquareRootContinuation.transportedOwner
+                (SquareRootContinuation.transportedOwner
                   owner.track.initial small).clearance.bound
             · rw [dif_pos reserveSmall]
               exact PSum.inr
@@ -5294,7 +5306,7 @@ target occurrence as generic Newton continuation. -/
                     leftSmall rightSmall bottomSmall topSmall
                   genericStrictParent := by
                     rw [ambientRoucheTransport_initial_box]
-                    exact Riemann.RootContinuation.SquareRootContinuation.continuedTrack_initial_strict_source
+                    exact SquareRootContinuation.continuedTrack_initial_strict_source
                       targetNonzero owner.track.initial small
                   resultRefinesParent := Box.refines_refl _ }
             · rw [dif_neg reserveSmall]
@@ -5318,14 +5330,14 @@ boundary clearance is positive, this takes the direct branch whenever all
 four side resultants are nonzero. -/
 @[expose] def directTransport {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) : Owner target :=
   reservedTransport owner targetNonzero small 0
 
 /-- Direct quadratic transport retains a box refining the original source owner's initial box. -/
 theorem directTransport_initial_box_refines {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) :
     (directTransport owner targetNonzero small).track.initial.box.Refines
       owner.track.initial.box := by
@@ -5336,7 +5348,7 @@ or the generic Newton band is a strict descendant of its same-box direct
 presentation. -/
 @[expose] def directTransport_generic_relation {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) :
     PSum
       (directTransport owner targetNonzero small =
@@ -5370,16 +5382,16 @@ private def strengthenQuadraticOwnerImpl {parameter : Gaussian}
     (owner : Owner parameter) : Owner parameter :=
   let box := owner.track.initial.box
   if leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
           parameter box.xLower ≠ 0 then
     if rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
             parameter box.xUpper ≠ 0 then
       if bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
               parameter box.yLower ≠ 0 then
         if topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
                 parameter box.yUpper ≠ 0 then
           let direct := directBoundaryClearance parameter box leftNonzero
             rightNonzero bottomNonzero topNonzero
@@ -5393,13 +5405,13 @@ private def strengthenQuadraticOwnerImpl {parameter : Gaussian}
               clearance := clearance
               rawWindingFour := owner.track.initial.rawWindingFour
               ambientLeftClearance :=
-                Clearance.Box.Boundary.Lines.leftOfBoundary clearance
+                Boundary.Lines.leftOfBoundary clearance
               ambientRightClearance :=
-                Clearance.Box.Boundary.Lines.rightOfBoundary clearance
+                Boundary.Lines.rightOfBoundary clearance
               ambientBottomClearance :=
-                Clearance.Box.Boundary.Lines.bottomOfBoundary clearance
+                Boundary.Lines.bottomOfBoundary clearance
               ambientTopClearance :=
-                Clearance.Box.Boundary.Lines.topOfBoundary clearance }
+                Boundary.Lines.topOfBoundary clearance }
           { parameterNonzero := owner.parameterNonzero
             ambient := box
             track := deferredTrack owner.parameterNonzero initial }
@@ -5416,19 +5428,19 @@ private theorem strengthenQuadraticOwnerImpl_initial_box {parameter : Gaussian}
   unfold strengthenQuadraticOwnerImpl
   dsimp only
   by_cases leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0
   · rw [dif_pos leftNonzero]
     by_cases rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter owner.track.initial.box.xUpper ≠ 0
     · rw [dif_pos rightNonzero]
       by_cases bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             parameter owner.track.initial.box.yLower ≠ 0
       · rw [dif_pos bottomNonzero]
         by_cases topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               parameter owner.track.initial.box.yUpper ≠ 0
         · rw [dif_pos topNonzero]
           rfl
@@ -5444,19 +5456,19 @@ private theorem strengthenQuadraticOwnerImpl_ambient_refines
   unfold strengthenQuadraticOwnerImpl
   dsimp only
   by_cases leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0
   · rw [dif_pos leftNonzero]
     by_cases rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter owner.track.initial.box.xUpper ≠ 0
     · rw [dif_pos rightNonzero]
       by_cases bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             parameter owner.track.initial.box.yLower ≠ 0
       · rw [dif_pos bottomNonzero]
         by_cases topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               parameter owner.track.initial.box.yUpper ≠ 0
         · rw [dif_pos topNonzero]
           exact owner.track.initial.refinesAmbient
@@ -5480,19 +5492,19 @@ private theorem strengthenQuadraticOwnerImpl_clearance_le
   unfold strengthenQuadraticOwnerImpl
   dsimp only
   by_cases leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0
   · rw [dif_pos leftNonzero]
     by_cases rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter owner.track.initial.box.xUpper ≠ 0
     · rw [dif_pos rightNonzero]
       by_cases bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             parameter owner.track.initial.box.yLower ≠ 0
       · rw [dif_pos bottomNonzero]
         by_cases topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               parameter owner.track.initial.box.yUpper ≠ 0
         · rw [dif_pos topNonzero]
           exact Basic.le_max_left _ _
@@ -5509,16 +5521,16 @@ dominates the exact-resultant boundary clearance. -/
 private theorem strengthenQuadraticOwnerImpl_direct_clearance_le
     {parameter : Gaussian} (owner : Owner parameter)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yUpper ≠ 0) :
     (directBoundaryClearance parameter owner.track.initial.box leftNonzero
         rightNonzero bottomNonzero topNonzero).bound ≤
@@ -5533,16 +5545,16 @@ private theorem strengthenQuadraticOwnerImpl_direct_clearance_le
 private theorem strengthenQuadraticOwnerImpl_clearance_eq_max
     {parameter : Gaussian} (owner : Owner parameter)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yUpper ≠ 0) :
     (strengthenQuadraticOwnerImpl owner).track.initial.clearance.bound =
       max owner.track.initial.clearance.bound
@@ -5558,16 +5570,16 @@ private theorem strengthenQuadraticOwnerImpl_clearance_eq_max
 private theorem strengthenQuadraticOwnerImpl_ambient_clearance_eq
     {parameter : Gaussian} (owner : Owner parameter)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yUpper ≠ 0) :
     let strengthened := strengthenQuadraticOwnerImpl owner
     strengthened.track.initial.ambientLeftClearance.bound =
@@ -5593,19 +5605,19 @@ private theorem strengthenQuadraticOwnerImpl_ambientClearanceDominance
   unfold strengthenQuadraticOwnerImpl
   dsimp only
   by_cases leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0
   · rw [dif_pos leftNonzero]
     by_cases rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter owner.track.initial.box.xUpper ≠ 0
     · rw [dif_pos rightNonzero]
       by_cases bottomNonzero :
-          SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+          QuadraticAxisElimination.horizontalDeterminant
             parameter owner.track.initial.box.yLower ≠ 0
       · rw [dif_pos bottomNonzero]
         by_cases topNonzero :
-            SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+            QuadraticAxisElimination.horizontalDeterminant
               parameter owner.track.initial.box.yUpper ≠ 0
         · rw [dif_pos topNonzero]
           exact ⟨le_rfl, le_rfl, le_rfl, le_rfl⟩
@@ -5628,13 +5640,13 @@ private theorem strengthenQuadraticOwnerImpl_source_or_deferred {parameter : Gau
         (rootPolynomial parameter) ambient),
         strengthenQuadraticOwnerImpl owner = ownerOfState
           owner.parameterNonzero initial := by
-  by_cases leftNonzero : SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+  by_cases leftNonzero : QuadraticAxisElimination.verticalDeterminant
       parameter owner.track.initial.box.xLower ≠ 0
-  · by_cases rightNonzero : SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+  · by_cases rightNonzero : QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0
-    · by_cases bottomNonzero : SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    · by_cases bottomNonzero : QuadraticAxisElimination.horizontalDeterminant
           parameter owner.track.initial.box.yLower ≠ 0
-      · by_cases topNonzero : SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      · by_cases topNonzero : QuadraticAxisElimination.horizontalDeterminant
             parameter owner.track.initial.box.yUpper ≠ 0
         · refine Or.inr ⟨(strengthenQuadraticOwnerImpl owner).ambient,
             (strengthenQuadraticOwnerImpl owner).track.initial, ?_⟩
@@ -5686,16 +5698,16 @@ private structure Strengthening {parameter : Gaussian}
     directClearanceLe :
     forall
       (leftNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter original.track.initial.box.xLower ≠ 0)
       (rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter original.track.initial.box.xUpper ≠ 0)
       (bottomNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter original.track.initial.box.yLower ≠ 0)
       (topNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter original.track.initial.box.yUpper ≠ 0),
       (directBoundaryClearance parameter original.track.initial.box
           leftNonzero rightNonzero bottomNonzero topNonzero).bound ≤
@@ -5704,16 +5716,16 @@ private structure Strengthening {parameter : Gaussian}
   -/ clearanceEqMax :
     forall
       (leftNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter original.track.initial.box.xLower ≠ 0)
       (rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter original.track.initial.box.xUpper ≠ 0)
       (bottomNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter original.track.initial.box.yLower ≠ 0)
       (topNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter original.track.initial.box.yUpper ≠ 0),
       value.track.initial.clearance.bound =
         max original.track.initial.clearance.bound
@@ -5723,16 +5735,16 @@ private structure Strengthening {parameter : Gaussian}
     ambientClearanceEq :
     forall
       (_leftNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter original.track.initial.box.xLower ≠ 0)
       (_rightNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+        QuadraticAxisElimination.verticalDeterminant
           parameter original.track.initial.box.xUpper ≠ 0)
       (_bottomNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter original.track.initial.box.yLower ≠ 0)
       (_topNonzero :
-        SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+        QuadraticAxisElimination.horizontalDeterminant
           parameter original.track.initial.box.yUpper ≠ 0),
       value.track.initial.ambientLeftClearance.bound =
           value.track.initial.clearance.bound ∧
@@ -5825,10 +5837,10 @@ theorem strengthenQuadraticOwner_quadraticAmbientBudget
   refine
     { parameterNormSqLe := budget.parameterNormSqLe
       verticalIntervalSqLe :=
-        (Data.Rat.Interval.Bounds.squareBound_le_of_refines
+        (Interval.Bounds.squareBound_le_of_refines
           verticalRefines).trans budget.verticalIntervalSqLe
       horizontalIntervalSqLe :=
-        (Data.Rat.Interval.Bounds.squareBound_le_of_refines
+        (Interval.Bounds.squareBound_le_of_refines
           horizontalRefines).trans budget.horizontalIntervalSqLe
       leftSqLe := ?_
       rightSqLe := ?_
@@ -5865,16 +5877,16 @@ implementation merely to use its quantitative improvement. -/
 theorem directBoundaryClearance_le_strengthenQuadraticOwner
     {parameter : Gaussian} (owner : Owner parameter)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yUpper ≠ 0) :
     (directBoundaryClearance parameter owner.track.initial.box leftNonzero
         rightNonzero bottomNonzero topNonzero).bound ≤
@@ -5886,16 +5898,16 @@ theorem directBoundaryClearance_le_strengthenQuadraticOwner
 theorem strengthenQuadraticOwner_clearance_eq_max
     {parameter : Gaussian} (owner : Owner parameter)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yUpper ≠ 0) :
     (strengthenQuadraticOwner owner).track.initial.clearance.bound =
       max owner.track.initial.clearance.bound
@@ -5911,16 +5923,16 @@ implementation. -/
 theorem strengthenQuadraticOwner_ambient_clearance_eq
     {parameter : Gaussian} (owner : Owner parameter)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yUpper ≠ 0) :
     let strengthened := strengthenQuadraticOwner owner
     strengthened.track.initial.ambientLeftClearance.bound =
@@ -5941,16 +5953,16 @@ ambient certificates. -/
 theorem strengthenQuadraticOwner_ambientClearanceDominance
     {parameter : Gaussian} (owner : Owner parameter)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter owner.track.initial.box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter owner.track.initial.box.yUpper ≠ 0) :
     AmbientClearanceDominance (strengthenQuadraticOwner owner)
       := by

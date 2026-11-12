@@ -12,6 +12,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -45,13 +47,13 @@ theorem powerSlope_nonnegative {radiusSq :
     0 <= powerSlope radiusSq exponent
   | 0 => le_rfl
   | exponent + 1 =>
-      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             (powerSlope_nonnegative radiusNonnegative
               exponent)
             radiusNonnegative)
-          (Fraction.Order.Arithmetic.pow_nonneg_direct radiusNonnegative
+          (Arithmetic.pow_nonneg_direct radiusNonnegative
             exponent))
 
 /-- Endpoint squared norms bounded by a nonnegative radius give the retained power-slope bound on displacement of their
@@ -59,24 +61,24 @@ powers. -/
 theorem normSq_pow_sub_pow_le {radiusSq :
   Fraction.Rational}
     (radiusNonnegative : 0 <= radiusSq) : forall (exponent : Nat)
-    {left right : Basic.Canonical}, Data.Gaussian.Norm.Basic.normSq left <= radiusSq ->
-    Data.Gaussian.Norm.Basic.normSq right <= radiusSq ->
-    Data.Gaussian.Norm.Basic.normSq (left ^ exponent - right ^ exponent) <=
-      powerSlope radiusSq exponent * Data.Gaussian.Norm.Basic.normSq (left -
+    {left right : Basic.Canonical}, Norm.Basic.normSq left <= radiusSq ->
+    Norm.Basic.normSq right <= radiusSq ->
+    Norm.Basic.normSq (left ^ exponent - right ^ exponent) <=
+      powerSlope radiusSq exponent * Norm.Basic.normSq (left -
         right)
   | 0, left, right, leftBound, rightBound => by
       rw [pow_zero, pow_zero, _root_.sub_self, Norm.Basic.normSq_zero]
-      exact Fraction.Order.Arithmetic.mul_nonneg_direct
+      exact Arithmetic.mul_nonneg_direct
         (powerSlope_nonnegative radiusNonnegative 0)
         (Norm.Basic.normSq_nonneg (left - right))
   | exponent + 1, left, right, leftBound, rightBound => by
       have previous := normSq_pow_sub_pow_le
         radiusNonnegative exponent
         leftBound rightBound
-      have rightPowerBound : Data.Gaussian.Norm.Basic.normSq (right ^ exponent) <=
+      have rightPowerBound : Norm.Basic.normSq (right ^ exponent) <=
           radiusSq ^ exponent := by
-        rw [Power.normSq_pow]
-        exact Fraction.Order.Arithmetic.pow_le_pow_direct
+        rw [normSq_pow]
+        exact Arithmetic.pow_le_pow_direct
           (Norm.Basic.normSq_nonneg right) rightBound exponent
       have identity :
           left ^ (exponent + 1) - right ^ (exponent + 1) =
@@ -88,36 +90,36 @@ theorem normSq_pow_sub_pow_le {radiusSq :
           ring1
       rw [identity]
       calc
-        Data.Gaussian.Norm.Basic.normSq ((left ^ exponent - right ^ exponent) * left +
+        Norm.Basic.normSq ((left ^ exponent - right ^ exponent) * left +
             right ^ exponent * (left - right)) <=
             2 *
-              (Data.Gaussian.Norm.Basic.normSq ((left ^ exponent - right ^ exponent) * left) +
-                Data.Gaussian.Norm.Basic.normSq (right ^ exponent * (left - right))) :=
+              (Norm.Basic.normSq ((left ^ exponent - right ^ exponent) * left) +
+                Norm.Basic.normSq (right ^ exponent * (left - right))) :=
           Norm.Bounds.normSq_add_le_two _ _
         _ = 2 *
-              (Data.Gaussian.Norm.Basic.normSq (left ^ exponent - right ^ exponent) * Data.Gaussian.Norm.Basic.normSq
+              (Norm.Basic.normSq (left ^ exponent - right ^ exponent) * Norm.Basic.normSq
                 left +
-                Data.Gaussian.Norm.Basic.normSq (right ^ exponent) * Data.Gaussian.Norm.Basic.normSq (left - right)) :=
+                Norm.Basic.normSq (right ^ exponent) * Norm.Basic.normSq (left - right)) :=
                   by
           rw [Norm.Basic.normSq_mul, Norm.Basic.normSq_mul]
         _ <= 2 *
               ((powerSlope radiusSq exponent *
-                Data.Gaussian.Norm.Basic.normSq
+                Norm.Basic.normSq
                 (left - right)) *
                   radiusSq +
-                radiusSq ^ exponent * Data.Gaussian.Norm.Basic.normSq (left - right)) := by
-          apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                radiusSq ^ exponent * Norm.Basic.normSq (left - right)) := by
+          apply Arithmetic.mul_le_mul_of_nonneg_left_direct
           · exact add_le_add
-              (Fraction.Order.Arithmetic.mul_le_mul_direct previous leftBound
+              (Arithmetic.mul_le_mul_direct previous leftBound
                 (Norm.Basic.normSq_nonneg left)
-                (Fraction.Order.Arithmetic.mul_nonneg_direct
+                (Arithmetic.mul_nonneg_direct
                   (powerSlope_nonnegative radiusNonnegative exponent)
                   (Norm.Basic.normSq_nonneg (left - right))))
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+              (Arithmetic.mul_le_mul_of_nonneg_right_direct
                 rightPowerBound (Norm.Basic.normSq_nonneg (left - right)))
           · decide
         _ = powerSlope radiusSq (exponent + 1) *
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
           (left - right) := by
           simp only [powerSlope]
           ring1
@@ -145,7 +147,7 @@ Start at zero. At a successor exponent, double the sum of the preceding slope ti
 radius power; the same recurrence controls squared displacement of natural powers. -/
 abbrev powerSlope (radiusSq : Fraction.Rational)
   (exponent : Nat) : Fraction.Rational :=
-  Purelib.Data.Gaussian.Power.Bounds.ApproximationQuotientVariation.powerSlope radiusSq exponent
+  ApproximationQuotientVariation.powerSlope radiusSq exponent
 
 open Purelib.Data.Gaussian
 open Purelib.Data.Rat
@@ -154,7 +156,7 @@ theorem powerSlope_nonnegative {radiusSq :
   Fraction.Rational}
     (radiusNonnegative : 0 <= radiusSq) (exponent : Nat) :
     0 <= powerSlope radiusSq exponent :=
-  Power.Bounds.ApproximationQuotientVariation.powerSlope_nonnegative
+  ApproximationQuotientVariation.powerSlope_nonnegative
     radiusNonnegative exponent
 
 /-- Endpoint squared norms bounded by a nonnegative radius give the retained power-slope bound on displacement of their
@@ -162,13 +164,13 @@ powers. -/
 theorem normSq_pow_sub_pow_le {radiusSq :
   Fraction.Rational}
     (radiusNonnegative : 0 <= radiusSq) (exponent : Nat)
-    {left right : Basic.Canonical} (leftBound : Data.Gaussian.Norm.Basic.normSq left <= radiusSq)
-    (rightBound : Data.Gaussian.Norm.Basic.normSq right <= radiusSq) :
-    Data.Gaussian.Norm.Basic.normSq (left ^ exponent - right ^ exponent) <=
-      powerSlope radiusSq exponent * Data.Gaussian.Norm.Basic.normSq (left -
+    {left right : Basic.Canonical} (leftBound : Norm.Basic.normSq left <= radiusSq)
+    (rightBound : Norm.Basic.normSq right <= radiusSq) :
+    Norm.Basic.normSq (left ^ exponent - right ^ exponent) <=
+      powerSlope radiusSq exponent * Norm.Basic.normSq (left -
         right)
         :=
-  Power.Bounds.ApproximationQuotientVariation.normSq_pow_sub_pow_le
+  ApproximationQuotientVariation.normSq_pow_sub_pow_le
     radiusNonnegative exponent leftBound rightBound
 end Purelib.Data.Gaussian.Power.Bounds.IntegrationQuotientVariation
 

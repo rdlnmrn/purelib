@@ -87,25 +87,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest (TwoSheetRequest)
 open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List
-    (Purelib.Riemann.Meshes.PuncturedGridFaces.RegularFace bank)}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
-  {coarse : (sheet : Fin 2) → Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes
+    (RegularFace bank)}
+  {domains : FaceDomainBank frames faces}
+  {coarse : (sheet : Fin 2) → RegularMeshes
     domains sheet}
   {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational} {stage : Nat}
+    Preflights domains sheet}
+    {target : Rational} {stage : Nat}
 
 namespace ConjugateFacePerimeters
 
 /-- The aligned basis-pair values on one actual face and sheet, conjugating the first component. -/
-def conjugateFaceValues (cache : RegularMeshes.Numerics domains stage) (first second : Fin genus)
+def conjugateFaceValues (cache : Numerics domains stage) (first second : Fin genus)
     (position : Fin faces.length) (sheet : Fin 2) :=
-  fun (column row : Fin (((domains.get position).domain sheet).steps + 1)) (point : Data.Gaussian.Basic.Canonical) =>
+  fun (column row : Fin (((domains.get position).domain sheet).steps + 1)) (point : Gaussian) =>
     ConjugateIncrementComparison.conjugateFirst
       ⟨(cache.atDomain position sheet first).anchors.alignedValue
           (cache.atDomain position sheet first).offsets column row point,
@@ -119,15 +119,15 @@ set_option genInjectivity false in
 
 Both basis components come from the same supplied primitive cache, and the dependent vectors preserve every face and
 sheet owner. -/
-structure ConjugateFacePerimeters (request : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target)
-    (cache : RegularMeshes.Numerics domains stage) (first second : Fin genus) where
+structure ConjugateFacePerimeters (request : TwoSheetRequest coarse fixed target)
+    (cache : Numerics domains stage) (first second : Fin genus) where
   /-- The retained conjugate clipped assembly for every actual face and sheet. -/ assemblies :
-    Data.Vector.DependentVector (fun position : Fin faces.length => Data.Vector.DependentVector (fun sheet : Fin 2 =>
-    ObservationMesh.ClippedAssembly ((request.entries.get sheet).meshes.entries.get position)
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateFacePerimeters.conjugateFaceValues cache first second position
+    DependentVector (fun position : Fin faces.length => DependentVector (fun sheet : Fin 2 =>
+    ClippedAssembly ((request.entries.get sheet).meshes.entries.get position)
+      (ConjugateFacePerimeters.conjugateFaceValues cache first second position
         sheet)))
-  /-- The cached perimeter of each retained conjugate assembly. -/ perimeters : Data.Vector.DependentVector (fun
-    position : Fin faces.length => Data.Vector.DependentVector (fun sheet : Fin 2 =>
+  /-- The cached perimeter of each retained conjugate assembly. -/ perimeters : DependentVector (fun
+    position : Fin faces.length => DependentVector (fun sheet : Fin 2 =>
     ((assemblies.get position).get sheet).Perimeter))
 
 constructive_injectivity ConjugateFacePerimeters
@@ -135,25 +135,25 @@ constructive_injectivity ConjugateFacePerimeters
 namespace ConjugateFacePerimeters
 
 /-- Cache all conjugate face assemblies and their perimeters from the supplied shared numerical bank. -/
-def build (request : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target) (cache : RegularMeshes.Numerics
+def build (request : TwoSheetRequest coarse fixed target) (cache : Numerics
   domains stage) (first second : Fin genus) :
     ConjugateFacePerimeters request cache first second
       :=
   let assemblies := DependentVector.ofFn fun position => DependentVector.ofFn fun sheet =>
     ClippedAssembly.build ((request.entries.get sheet).meshes.entries.get position)
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateFacePerimeters.conjugateFaceValues cache first second position
+      (ConjugateFacePerimeters.conjugateFaceValues cache first second position
         sheet)
   ⟨assemblies, DependentVector.ofFn fun position => DependentVector.ofFn fun sheet =>
     Perimeter.build ((assemblies.get position).get sheet)⟩
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse
-  fixed target} {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+variable {request : TwoSheetRequest coarse
+  fixed target} {cache : Numerics
   domains stage} {first second : Fin genus}
 
 /-- Read the selected oriented side from the retained conjugate face perimeter. -/
 def area (retained : ConjugateFacePerimeters request
   cache first second)
-    (position : Fin faces.length) (sheet : Fin 2) : GridLiftedDualSteps.GridSide → Data.Gaussian.Basic.Canonical
+    (position : Fin faces.length) (sheet : Fin 2) : GridSide → Gaussian
   | .bottom => ((retained.perimeters.get position).get sheet).bottom
   | .right => ((retained.perimeters.get position).get sheet).right
   | .top => ((retained.perimeters.get position).get sheet).top

@@ -17,6 +17,8 @@ public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 public import Purelib.Data.Rat.Fraction.Literal
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat.Fraction.Literal (rationalLiteral rationalLiteral_mul_denominator)
 
 open Purelib.Data.Rat
@@ -97,10 +99,10 @@ public theorem cubic_positive
     exact clearedPositive
   have denominatorPositive :
       0 < (denominator : Fraction.Rational) ^ 3 :=
-    Fraction.Order.Arithmetic.pow_pos_direct
+    Arithmetic.pow_pos_direct
       (Fraction.Cast.Order.natCast_lt_direct positive) 3
-  exact Fraction.Order.Arithmetic.pos_of_mul_pos_right_direct
-    (by simpa only [mul_comm] using productPositive) (Fraction.Order.Arithmetic.le_of_lt_direct denominatorPositive)
+  exact Arithmetic.pos_of_mul_pos_right_direct
+    (by simpa only [mul_comm] using productPositive) (Arithmetic.le_of_lt_direct denominatorPositive)
 
 /-- A negative cleared numerator certifies negative cubic value at the displayed fraction with positive denominator. -/
 public theorem cubic_negative
@@ -117,7 +119,7 @@ public theorem cubic_negative
     exact clearedNegative
   have denominatorPositive :
       0 < (denominator : Fraction.Rational) ^ 3 :=
-    Fraction.Order.Arithmetic.pow_pos_direct
+    Arithmetic.pow_pos_direct
       (Fraction.Cast.Order.natCast_lt_direct positive) 3
   have negatedProductPositive :
       0 < (denominator : Fraction.Rational) ^ 3 *
@@ -128,7 +130,7 @@ public theorem cubic_negative
           -(cubic (rationalLiteral
             numerator denominator positive) *
             (denominator : Fraction.Rational) ^ 3) := by
-        have positive := Fraction.Order.Arithmetic.neg_lt_neg_direct productNegative
+        have positive := Arithmetic.neg_lt_neg_direct productNegative
         rewrite [neg_zero] at positive
         exact positive
       _ = (denominator : Fraction.Rational) ^ 3 *
@@ -136,9 +138,9 @@ public theorem cubic_negative
             numerator denominator positive)) := by
         ring1
   have negatedPositive :=
-    Fraction.Order.Arithmetic.pos_of_mul_pos_right_direct
-      negatedProductPositive (Fraction.Order.Arithmetic.le_of_lt_direct denominatorPositive)
-  have negative := Fraction.Order.Arithmetic.neg_lt_neg_direct negatedPositive
+    Arithmetic.pos_of_mul_pos_right_direct
+      negatedProductPositive (Arithmetic.le_of_lt_direct denominatorPositive)
+  have negative := Arithmetic.neg_lt_neg_direct negatedPositive
   rewrite [neg_neg, neg_zero] at negative
   exact negative
 

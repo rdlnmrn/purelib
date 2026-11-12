@@ -80,7 +80,7 @@ namespace CommonSplit
 fully certified three-way split. -/
 def commonSplit
     (left right : Factor)
-    (common : Dense.Gaussian.Coprime.Decision.NonconstantCommonDivisor
+    (common : Coprime.Decision.NonconstantCommonDivisor
       left.polynomial right.polynomial) :
     CommonSplit left right := by
   let divisor := common.divisor
@@ -88,28 +88,28 @@ def commonSplit
   let rightRemainder := common.rightFactor
   have leftFactorization :
       ProductIdentity left.polynomial divisor leftRemainder := by
-    apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+    apply Factorization.Identity.factorizationOfCandidateEvals
     intro point _
     exact common.leftIdentity point
   have rightFactorization :
       ProductIdentity right.polynomial divisor rightRemainder := by
-    apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+    apply Factorization.Identity.factorizationOfCandidateEvals
     intro point _
     exact common.rightIdentity point
   have leftRemainderNonzero : leftRemainder.isZero = false :=
-    Dense.Gaussian.Factorization.Identity.right_isZero_false
+    Factorization.Identity.right_isZero_false
       left.nonzero left.normalized leftFactorization
   have rightRemainderNonzero : rightRemainder.isZero = false :=
-    Dense.Gaussian.Factorization.Identity.right_isZero_false
+    Factorization.Identity.right_isZero_false
       right.nonzero right.normalized rightFactorization
   have divisorSquarefree : SquarefreeCertificate divisor :=
-    Dense.Gaussian.Squarefree.Factors.leftFactorSquarefree
+    Squarefree.Factors.leftFactorSquarefree
       left.squarefree common.nonzero leftFactorization
   have leftRemainderSquarefree : SquarefreeCertificate leftRemainder :=
-    Dense.Gaussian.Squarefree.Factors.rightFactorSquarefree
+    Squarefree.Factors.rightFactorSquarefree
       left.squarefree leftRemainderNonzero leftFactorization
   have rightRemainderSquarefree : SquarefreeCertificate rightRemainder :=
-    Dense.Gaussian.Squarefree.Factors.rightFactorSquarefree
+    Squarefree.Factors.rightFactorSquarefree
       right.squarefree rightRemainderNonzero rightFactorization
   let commonFactor : Factor :=
     { polynomial := divisor
@@ -129,15 +129,15 @@ def commonSplit
       squarefree := rightRemainderSquarefree }
   have commonLeftCoprime :
       CoprimeCertificate divisor leftRemainder :=
-    Dense.Gaussian.Coprime.Factors.factorsCoprime
+    Coprime.Factors.factorsCoprime
       left.squarefree common.nonzero leftFactorization
   have commonRightCoprime :
       CoprimeCertificate divisor rightRemainder :=
-    Dense.Gaussian.Coprime.Factors.factorsCoprime
+    Coprime.Factors.factorsCoprime
       right.squarefree common.nonzero rightFactorization
   have remaindersCoprime :
       CoprimeCertificate leftRemainder rightRemainder :=
-    Dense.Gaussian.Coprime.Evaluation.coprimeCertificateOfIdentity
+    Coprime.Evaluation.coprimeCertificateOfIdentity
       leftRemainder rightRemainder (Or.inl leftRemainderNonzero)
         common.result.factorLeft common.result.factorRight
           common.result.factorIdentity
@@ -151,11 +151,11 @@ def commonSplit
       commonRightCoprime := commonRightCoprime
       remaindersCoprime := remaindersCoprime
       leftDegreeSum :=
-        Dense.Gaussian.Factorization.Identity.factor_natDegree_add
+        Factorization.Identity.factor_natDegree_add
           left.nonzero left.normalized common.nonzero leftRemainderNonzero
             leftFactorization
       rightDegreeSum :=
-        Dense.Gaussian.Factorization.Identity.factor_natDegree_add
+        Factorization.Identity.factor_natDegree_add
           right.nonzero right.normalized common.nonzero rightRemainderNonzero
             rightFactorization }
 

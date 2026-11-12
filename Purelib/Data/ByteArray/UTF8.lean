@@ -588,11 +588,12 @@ public theorem valid {bytes : _root_.ByteArray} (decoded : Decoded bytes) : byte
 The structural scalar decoder retains the supplied list. Its exact byte check
 then succeeds on the same original encoding; the checked equality is proof data. -/
 private theorem decode_encoded (characters : List Char) :
-    ∃ decoded : Decoded (encode characters), decode? (encode characters) = some decoded := by
+    ∃ decoded : Decoded (encode characters),
+      decode? (encode characters) = some decoded ∧ decoded.val = characters := by
   cases checked : Purelib.Data.ByteArray.decEq (encode characters) (encode characters) with
   | isFalse different => exact False.elim (different rfl)
   | isTrue same =>
-      refine ⟨⟨characters, same.trans (encode_eq_utf8Encode characters)⟩, ?_⟩
+      refine ⟨⟨characters, same.trans (encode_eq_utf8Encode characters)⟩, ?_, rfl⟩
       unfold decode?
       have readback : (encode characters).data.toList =
           characters.flatMap _root_.String.utf8EncodeChar :=
@@ -600,6 +601,19 @@ private theorem decode_encoded (characters : List Char) :
       rw [readback, decode_characters]
       dsimp only
       rw [checked]
+
+/-- Decoding an original character-list encoding returns that same complete list.
+
+The checked decoder retains every original Unicode scalar, occurrence and order.
+Mapping its certified result to the stored list discards only the encoding proof;
+no alternate character enumeration or Core String decoder supplies this readback. -/
+public theorem decode_utf8Encode (characters : List Char) :
+    (decode? characters.utf8Encode).map (fun decoded => decoded.val) = some characters := by
+  obtain ⟨decoded, accepted, retained⟩ := decode_encoded characters
+  change (decode? (encode characters)).map (fun decoded => decoded.val) = some characters
+  rw [accepted]
+  change some decoded.val = some characters
+  exact congrArg some retained
 
 /-- Every input carrying the original UTF8 validity predicate succeeds.
 
@@ -611,7 +625,8 @@ public theorem decode_of_valid {bytes : _root_.ByteArray} (retained : bytes.IsVa
   | intro characters same =>
       have exactEncoding : bytes = encode characters := same.trans (encode_eq_utf8Encode characters).symm
       cases exactEncoding
-      exact decode_encoded characters
+      obtain ⟨decoded, accepted, _⟩ := decode_encoded characters
+      exact ⟨decoded, accepted⟩
 
 /-- Certified-decoder failure is exactly original UTF8 invalidity.
 
@@ -629,5 +644,17 @@ public theorem decode_none_iff (bytes : _root_.ByteArray) :
     cases result : decode? bytes with
     | none => rfl
     | some decoded => exact False.elim (invalid (valid decoded))
+
+/-- Decide original-byte UTF8 validity without retaining decoded characters in the result.
+
+Kernel computation consumes the same certified decoder: success supplies its
+original validity witness and failure supplies its proved invalidity. Native
+execution borrows the original bytes for the runtime's strict UTF8 validator;
+both decision constructors erase only their proofs. -/
+@[extern "lean_string_validate_utf8"] public def decValid
+    (bytes : @& _root_.ByteArray) : Decidable bytes.IsValidUTF8 :=
+  match decoded : decode? bytes with
+  | none => .isFalse ((decode_none_iff bytes).mp decoded)
+  | some witness => .isTrue (valid witness)
 
 end Purelib.Data.ByteArray.UTF8

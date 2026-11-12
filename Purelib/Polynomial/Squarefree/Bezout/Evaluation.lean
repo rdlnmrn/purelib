@@ -21,6 +21,8 @@ import Mathlib.Algebra.NeZero
 import Mathlib.Algebra.GroupWithZero.NeZero
 import Mathlib.Algebra.Order.IsBotOne
 
+open Purelib.Polynomial.Dense.Basic
+
 /-!
 # Squarefree certificates from finite Bézout evaluation
 
@@ -55,12 +57,12 @@ checked on the finite candidate list of the displayed difference polynomial. -/
       let cofactor :=
         left * common.leftFactor + right * common.rightFactor
       have factorization : Dense.Gaussian.Factorization.Identity.ProductIdentity
-          (Dense.Basic.DensePolynomial.constant 1) common.divisor cofactor := by
+          (DensePolynomial.constant 1) common.divisor cofactor := by
         apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
         intro point _member
         dsimp only [cofactor]
-        rw [Dense.Basic.DensePolynomial.eval_constant, Dense.Basic.DensePolynomial.eval_add,
-          Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_mul]
+        rw [DensePolynomial.eval_constant, DensePolynomial.eval_add,
+          DensePolynomial.eval_mul, DensePolynomial.eval_mul]
         calc
           1 = left.eval point * polynomial.eval point +
                 right.eval point *
@@ -72,11 +74,11 @@ checked on the finite candidate list of the displayed difference polynomial. -/
             rw [common.leftIdentity point, common.rightIdentity point]
             ring1
       have oneNormalized :
-          (Dense.Basic.DensePolynomial.constant (1 : Canonical)).normalize = Dense.Basic.DensePolynomial.constant 1 :=
+          (DensePolynomial.constant (1 : Canonical)).normalize = DensePolynomial.constant 1 :=
             by
-        exact Dense.Basic.DensePolynomial.normalize_constant_of_ne (by decide)
-      have oneNonzero : (Dense.Basic.DensePolynomial.constant (1 : Canonical)).isZero = false := by
-        change (Dense.Basic.DensePolynomial.constant (1 : Canonical)).normalize.coeffs.isEmpty = false
+        exact DensePolynomial.normalize_constant_of_ne (by decide)
+      have oneNonzero : (DensePolynomial.constant (1 : Canonical)).isZero = false := by
+        change (DensePolynomial.constant (1 : Canonical)).normalize.coeffs.isEmpty = false
         rw [oneNormalized]
         rfl
       have cofactorNonzero : cofactor.isZero = false :=
@@ -84,8 +86,8 @@ checked on the finite candidate list of the displayed difference polynomial. -/
           factorization
       have degreeBalance := Dense.Gaussian.Factorization.Identity.factor_natDegree_add
         oneNonzero oneNormalized common.nonzero cofactorNonzero factorization
-      have degreeZero : (Dense.Basic.DensePolynomial.constant (1 : Canonical)).natDegree = 0 := by
-        change (Dense.Basic.DensePolynomial.constant (1 : Canonical)).normalize.coeffs.length - 1 = 0
+      have degreeZero : (DensePolynomial.constant (1 : Canonical)).natDegree = 0 := by
+        change (DensePolynomial.constant (1 : Canonical)).normalize.coeffs.length - 1 = 0
         rw [oneNormalized]
         rfl
       rw [degreeZero] at degreeBalance

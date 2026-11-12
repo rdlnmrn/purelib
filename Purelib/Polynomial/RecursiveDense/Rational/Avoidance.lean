@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Rational
+
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
 
 open Purelib
@@ -47,23 +49,23 @@ theorem exists_rational_not_root_of_product
     (left right : Basic.DensePolynomial)
     (leftNonzero : left.isZero = false)
     (rightNonzero : right.isZero = false) :
-    ∃ point ∈ Dense.Rational.Extensionality.rationalPoints (left * right).degreeCount,
+    ∃ point ∈ Extensionality.rationalPoints (left * right).degreeCount,
       left.eval point ≠ 0 ∧ right.eval point ≠ 0 := by
   have productNonzero : (left * right).isZero = false :=
     DensePolynomial.isZero_mul_eq_false leftNonzero rightNonzero
   have notAllProductZero :
-      ¬ ∀ point ∈ Dense.Rational.Extensionality.rationalPoints (left * right).degreeCount,
+      ¬ ∀ point ∈ Extensionality.rationalPoints (left * right).degreeCount,
         (left * right).eval point = 0 := by
     intro allProductZero
-    have tooMany := Dense.Rational.Roots.FiniteBound.nodup_zeros_length_lt_degreeCount
+    have tooMany := Roots.FiniteBound.nodup_zeros_length_lt_degreeCount
       (left * right) productNonzero
-      (Dense.Rational.Extensionality.rationalPoints (left * right).degreeCount)
-      (Dense.Rational.Extensionality.rationalPoints_nodup _) allProductZero
-    rw [Dense.Rational.Extensionality.rationalPoints_length] at tooMany
+      (Extensionality.rationalPoints (left * right).degreeCount)
+      (Extensionality.rationalPoints_nodup _) allProductZero
+    rw [Extensionality.rationalPoints_length] at tooMany
     exact Nat.lt_irrefl _ tooMany
   obtain ⟨point, member, productValueNonzero⟩ :=
     Data.List.Search.exists_member_ne_zero_of_not_all_zero
-      (Dense.Rational.Extensionality.rationalPoints (left * right).degreeCount)
+      (Extensionality.rationalPoints (left * right).degreeCount)
       (fun value => (left * right).eval value) notAllProductZero
   refine ⟨point, member, ?_, ?_⟩
   · intro leftZero
@@ -93,12 +95,12 @@ theorem exists_common_nonzero :
           have leftNe : left ≠ 0 := by
             intro leftZero
             subst left
-            change decide ((0 : Purelib.Data.Rat.Fraction.Rational) = 0) = false at leftNonzero
+            change decide ((0 : Data.Rat.Fraction.Rational) = 0) = false at leftNonzero
             exact Bool.noConfusion leftNonzero
           have rightNe : right ≠ 0 := by
             intro rightZero
             subst right
-            change decide ((0 : Purelib.Data.Rat.Fraction.Rational) = 0) = false at rightNonzero
+            change decide ((0 : Data.Rat.Fraction.Rational) = 0) = false at rightNonzero
             exact Bool.noConfusion rightNonzero
           exact ⟨(), leftNe, rightNe⟩
   | succ arity inductionHypothesis =>

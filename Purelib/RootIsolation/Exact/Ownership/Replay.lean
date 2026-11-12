@@ -1,4 +1,5 @@
 module
+import Purelib.RootIsolation.Refinement.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.RootIsolation.Exact.Basic
@@ -11,7 +12,8 @@ import Purelib.RootIsolation.Exact.Partition.Location
 import Purelib.RootIsolation.Exact.Partition.Margin
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.State.WindingOne.Count
-import Purelib.RootIsolation.State.WindingOne.Interior
+import Purelib.RootIsolation.State.Raw.Interior
+public import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.RootIsolation.Track.Basic
 import Mathlib.Algebra.Ring.Defs
 import Mathlib.Data.Nat.Basic
@@ -61,56 +63,26 @@ abbrev Refined := {state :
 Locate the saved state's anchor in the original partition and retain strict owner containment; the source track, radius
 and refined state remain linked by the saved equality. -/
 def restore (saved : Refined output track) :
-  Exact.Ownership.Basic.OwnerSelection output track := by
+    Exact.Ownership.Basic.OwnerSelection output track :=
   let radius := Exact.Ownership.Radius.assignmentRadius p ambient output
-  let radiusPositive := Exact.Ownership.Radius.assignmentRadius_pos p ambient output
-  let refined := saved.val
-  have refinedEq : refined = track.refine track.initial radius radiusPositive := saved.property
-  have refinedSupport : refined.box.Refines output.support :=
-    by
-    rw [refinedEq]
-    exact (track.nested track.initial radius radiusPositive).trans supported
-  have anchorSupport : output.support.Contains refined.box.anchor :=
-    refinedSupport.contains refined.box.contains_anchor
-  let location := Exact.Partition.Location.locatePartition output refined.box.anchor anchorSupport
-  have anchorCell : location.box.Contains refined.box.anchor :=
-    Exact.Partition.Location.locatePartition_contains output refined.box.anchor anchorSupport
-  have diagonal : refined.box.diagonalSq ≤ radius ^ 2 :=
-by
-    rw [refinedEq]
-    exact track.accurate track.initial radius radiusPositive
-  have degreePositive : 0 < p.natDegree :=
-    (show (0 : Nat) < 2 by decide).trans_le degreeAtLeastTwo
-  cases locationEq : location with
-  | track index =>
-      have anchorTrack : (output.tracks.get index).initial.box.Contains
-          refined.box.anchor := by
-        simpa only [locationEq, Exact.Partition.Location.PartitionLocation.box] using anchorCell
-      have strict : refined.box.StrictInterior
-          (output.tracks.get index).initial.box :=
-        State.WindingOne.Interior.strictInterior_of_anchor_mem_of_dominates p refined degreePositive
-          (output.tracks.get index).initial.refinesAmbient
-          (output.tracks.get index).initial.clearance anchorTrack
-          (Exact.Ownership.Radius.assignment_dominates p ambient output refined diagonal
-            (Exact.Partition.Margin.partitionMargin_le_track output index))
-      exact ⟨index, by
-        change (track.refine track.initial radius radiusPositive).box.StrictInterior _
-        rw [← refinedEq]
-        exact strict⟩
-  | remainder index =>
-      let region := output.remainder.get index
-      have anchorRegion : region.box.Contains refined.box.anchor := by
-        simpa only [region, locationEq, Exact.Partition.Location.PartitionLocation.box] using anchorCell
-      have strict : refined.box.StrictInterior region.box :=
-        State.WindingOne.Interior.strictInterior_of_anchor_mem_of_dominates p refined degreePositive
-          region.refinesAmbient region.clearance anchorRegion
-          (Exact.Ownership.Radius.assignment_dominates p ambient output refined diagonal
-            (Exact.Partition.Margin.partitionMargin_le_remainder output index))
-      have atLeastFour := State.WindingOne.Count.region_rawWinding_ge_four_of_strictInterior
-        degreeAtLeastTwo squarefree elimination refined region strict
-      have zero := output.remainder_rawWinding_zero region
-        (List.get_mem output.remainder index)
-      exact (by omega : False).elim
+  let positive := Exact.Ownership.Radius.assignmentRadius_pos p ambient output
+  let refined : Refinement track.initial.raw radius :=
+    { state := saved.val
+      strict := by
+        rewrite [saved.property]
+        exact track.strict track.initial radius positive
+      accurate := by
+        rewrite [saved.property]
+        exact track.accurate track.initial radius positive }
+  let assigned := Exact.Ownership.Prepare.fromRefinement degreeAtLeastTwo squarefree elimination
+    output track supported refined
+  { owner := assigned.owner
+    refined := saved.val
+    refined_eq := saved.property
+    strict :=
+      (congrArg (fun current : State.WindingOne.Basic.WindingOneState p ambient =>
+        current.box.StrictInterior (output.tracks.get assigned.owner).initial.box) saved.property).mp
+        assigned.strict }
 
 /-- Restoring the checked refinement cache returns exactly the original deterministic owner selection. -/
 theorem restore_eq (saved : Refined output
@@ -120,6 +92,31 @@ theorem restore_eq (saved : Refined output
   rcases saved with ⟨state, same⟩
   cases same
   rfl
+
+/-- Restore the original owner selection using exact retained partition and track readbacks.
+
+The cached output retains the complete original track and remainder partition.
+The cached source track and its actual assignment-radius state are consumed
+by the original restoration operation; the original nominal owners remain
+indices of the returned complete selection certificate.
+-/
+def fromReadbacks (cachedOutput : Exact.Basic.Output p ambient count) (sameOutput : cachedOutput = output)
+    (cachedTrack : Track.Basic.WindingOneTrack p ambient) (sameTrack : cachedTrack = track)
+    (saved : Refined cachedOutput cachedTrack) : Exact.Ownership.Basic.OwnerSelection output track := by
+  subst output
+  subst track
+  exact restore degreeAtLeastTwo squarefree elimination cachedOutput cachedTrack supported saved
+
+/-- Complete partition, track and refinement readbacks retain the original deterministic owner selection. -/
+theorem fromReadbacks_eq (cachedOutput : Exact.Basic.Output p ambient count) (sameOutput : cachedOutput = output)
+    (cachedTrack : Track.Basic.WindingOneTrack p ambient) (sameTrack : cachedTrack = track)
+    (saved : Refined cachedOutput cachedTrack) :
+    fromReadbacks degreeAtLeastTwo squarefree elimination output track supported cachedOutput sameOutput
+      cachedTrack sameTrack saved =
+      Exact.Ownership.Prepare.selectOutputOwner degreeAtLeastTwo squarefree elimination output track supported := by
+  cases sameOutput
+  cases sameTrack
+  exact restore_eq degreeAtLeastTwo squarefree elimination output track supported saved
 
 end Purelib.RootIsolation.Exact.Ownership.Replay
 

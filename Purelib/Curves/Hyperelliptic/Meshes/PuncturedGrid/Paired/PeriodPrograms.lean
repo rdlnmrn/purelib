@@ -58,6 +58,7 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.RootIsolation.SquareRoot.Grid.Walk.Vertex
 
+import Purelib.Riemann.Meshes.GridLiftedFaces
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -86,17 +87,20 @@ physical hole, exterior and regular-face contributions.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank
+  (anchor)
+
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
 
 set_option genInjectivity false in
 /-- Materialize both the operational preparation and its shared-mesh face
 assignment. The dependent index retains the exact ordered A pair and B shear. -/
-structure PeriodRow (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered) (index : Fin
+structure PeriodRow (paired : OrderedBranchPairs.Ordered.Paired ordered) (index : Fin
   genus) where
   /-- The original A-pair and corrected B-walk preparation for this exact ordered row. -/ prepared : (paired.row
     index).row.Prepared (Periods.PeriodMatrix.standardDifferential index)
@@ -107,8 +111,8 @@ constructive_injectivity PeriodRow
 namespace PeriodRow
 
 /-- Materialize the original ordered row's period preparation and the exact face assignments of its retained parents. -/
-@[expose] def build (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered) (index : Fin
-  genus) : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.PeriodRow paired index :=
+@[expose] def build (paired : OrderedBranchPairs.Ordered.Paired ordered) (index : Fin
+  genus) : PeriodRow paired index :=
   let prepared := (paired.row index).row.prepare (Periods.PeriodMatrix.standardDifferential index)
   ⟨prepared, prepared.faces⟩
 
@@ -118,25 +122,25 @@ set_option genInjectivity false in
 /-- A cached finite family, with no preparation hidden in a differential
 lookup. Every row uses its own standard differential as the source chart;
 all other differential entries recast the same stored parents. -/
-structure Prepared (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered) where
+structure Prepared (paired : OrderedBranchPairs.Ordered.Paired ordered) where
   /-- The original dependent cache of prepared period rows and their face assignments. -/ rows :
-    Data.Vector.DependentVector (fun index : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.PeriodRow paired index)
+    Vector.DependentVector (fun index : Fin genus =>
+    PeriodRow paired index)
 
 constructive_injectivity Prepared
 
 /-- Prepare every original ordered A/B row once and retain the complete dependent finite family. -/
-@[expose] def prepare (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered) :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired :=
-  ⟨Data.Vector.DependentVector.ofFn (Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.PeriodRow.build paired)⟩
+@[expose] def prepare (paired : OrderedBranchPairs.Ordered.Paired ordered) :
+  Prepared paired :=
+  ⟨Vector.DependentVector.ofFn (PeriodRow.build paired)⟩
 
 namespace Prepared
 
-variable {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} (prepared :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+variable {paired : OrderedBranchPairs.Ordered.Paired ordered} (prepared :
+  Prepared paired)
 
 /-- Read the exact retained original prepared row at its finite index. -/
-@[expose] def row (index : Fin genus) : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.PeriodRow paired index
+@[expose] def row (index : Fin genus) : PeriodRow paired index
   := prepared.rows.get index
 
 /-- Read the original prepared A period of the retained row. -/
@@ -199,6 +203,34 @@ theorem aWord_eq (index : Fin genus) : prepared.aWord index = (paired.row index)
 theorem bWord_eq (index : Fin genus) : prepared.bWord index = (paired.row index).row.corrected.indexed :=
   (prepared.row index).faces.b_indexed
 
+/-- The stored A word is the original prepared A walk on its actual retained starting vertex sheet.
+
+Both equalities come from whole original VertexWalk and PeriodWalk
+factories. The sheet is read from that original vertex; no coordinate or
+label equality identifies an independently prepared root Owner.
+-/
+theorem aWord_walk (index : Fin genus) : prepared.aWord index =
+    lifted.edges.indexedEdges lifted.vertices (prepared.aWalk index).closed.walk
+      (lifted.vertices.sheet (anchor lifted sheet)) :=
+  (prepared.aWord_eq index).trans ((paired.row index).row.a.closed.indexed_eq.trans
+    (congrArg (fun walk => lifted.edges.indexedEdges lifted.vertices walk
+      (lifted.vertices.sheet (anchor lifted sheet)))
+      (prepared.a_walk_eq index).symm))
+
+/-- The stored B word is the WHOLE original corrected-B prepared walk on its actual retained starting sheet.
+
+The actual corrected VertexWalk factory retains every signed earlier-A
+occurrence. No replacement by a reference bridge or independent cycle
+identification is used in this reading law.
+-/
+theorem bWord_walk (index : Fin genus) : prepared.bWord index =
+    lifted.edges.indexedEdges lifted.vertices (prepared.bWalk index).closed.walk
+      (lifted.vertices.sheet (anchor lifted sheet)) :=
+  (prepared.bWord_eq index).trans ((paired.row index).row.corrected.indexed_eq.trans
+    (congrArg (fun walk => lifted.edges.indexedEdges lifted.vertices walk
+      (lifted.vertices.sheet (anchor lifted sheet)))
+      (prepared.b_walk_eq index).symm))
+
 /-- Sum the actual boundary-ribbon areas of the retained A and corrected B word values over all original rows. -/
 @[expose] def pairing (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
   Gaussian.Basic.Canonical :=
@@ -229,22 +261,22 @@ theorem area_formula (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertic
   exact paired.area_formula value anti
 
 /-- Prepare differential comparisons using the exact retained A parents and supplied original domain bank. -/
-@[expose] def aComparisons (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+@[expose] def aComparisons (domains : Face.DomainBanks.FaceDomainBank lifted.frames
   base.faces.regulars)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (index : Fin genus) :=
+    (differential : Differentials.Basic.Differential genus) (index : Fin genus) :=
   (prepared.row index).faces.a.comparisons domains differential
 
 /-- Prepare differential comparisons using the exact corrected B parents and supplied original domain bank. -/
-@[expose] def bComparisons (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+@[expose] def bComparisons (domains : Face.DomainBanks.FaceDomainBank lifted.frames
   base.faces.regulars)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (index : Fin genus) :=
+    (differential : Differentials.Basic.Differential genus) (index : Fin genus) :=
   (prepared.row index).faces.bComparisons domains differential
 
 /-- These are the exact initial recast parents of the displayed A program. -/
-theorem aComparisons_parents (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+theorem aComparisons_parents (domains : Face.DomainBanks.FaceDomainBank lifted.frames
   base.faces.regulars)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (index : Fin genus) :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.parents differential 0
+    (differential : Differentials.Basic.Differential genus) (index : Fin genus) :
+    Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.parents differential 0
       ((prepared.row index).faces.a.geometry.assign (prepared.row index).faces.a.segments.pieces)
       (prepared.aComparisons domains differential index) =
       (prepared.aWalk index).initial.state.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge
@@ -253,10 +285,10 @@ theorem aComparisons_parents (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.
 
 /-- These are the exact initial recast parents of the corrected B program,
 including its complete preceding A prefix. -/
-theorem bComparisons_parents (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+theorem bComparisons_parents (domains : Face.DomainBanks.FaceDomainBank lifted.frames
   base.faces.regulars)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (index : Fin genus) :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.parents differential 0
+    (differential : Differentials.Basic.Differential genus) (index : Fin genus) :
+    Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.parents differential 0
       ((prepared.row index).faces.b.assign (prepared.row index).faces.bSegments.pieces)
       (prepared.bComparisons domains differential index) =
       (prepared.bWalk index).initial.state.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge

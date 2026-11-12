@@ -44,8 +44,8 @@ open Purelib.Data in
 open Purelib.Data.Rat in
 /-- The retained initial enclosure radius-squared budget is strictly positive. -/
 theorem initialRadiusSq_pos : 0 <
-  CCL.Transducer.Emission.Initial.Budget.initialRadiusSq := by
-  unfold CCL.Transducer.Emission.Initial.Budget.initialRadiusSq
+  initialRadiusSq := by
+  unfold initialRadiusSq
   exact Fraction.Order.Field.div_pos_direct
     (Fraction.Order.Field.div_pos_direct
       (Fraction.Order.Field.div_pos_direct
@@ -56,8 +56,8 @@ open Purelib.Approximation.Gaussian in
 open Purelib.Data in
 /-- The initial radius-squared budget is strictly below the uniform sector budget. -/
 theorem initialRadiusSq_lt_uniform :
-    CCL.Transducer.Emission.Initial.Budget.initialRadiusSq < Enclosure.Sector.Budget.uniformRadiusSq := by
-  unfold CCL.Transducer.Emission.Initial.Budget.initialRadiusSq Enclosure.Sector.Budget.uniformRadiusSq
+    initialRadiusSq < Enclosure.Sector.Budget.uniformRadiusSq := by
+  unfold initialRadiusSq Enclosure.Sector.Budget.uniformRadiusSq
     Enclosure.Sector.Budget.allowance
   decide
 
@@ -66,7 +66,7 @@ open Purelib.Data in
 open Purelib.Data.Rat in
 /-- The initial radius-squared budget is strictly below one tenth of the uniform sector budget. -/
 private theorem initialRadiusSq_lt_uniform_tenth :
-    CCL.Transducer.Emission.Initial.Budget.initialRadiusSq <
+    initialRadiusSq <
       Enclosure.Sector.Budget.uniformRadiusSq / 10 := by
   let first := Enclosure.Sector.Budget.uniformRadiusSq / 10
   let second := first / 10
@@ -114,11 +114,11 @@ open Purelib.Data in
 open Purelib.Data.Rat in
 /-- Sixteen times the initial radius-squared budget is strictly below one tenth of the sector allowance. -/
 public theorem sixteen_mul_initial_lt_allowance_tenth :
-    16 * CCL.Transducer.Emission.Initial.Budget.initialRadiusSq <
+    16 * initialRadiusSq <
       Enclosure.Sector.Budget.allowance / 10 := by
   exact (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-    (by decide) CCL.Transducer.Emission.Initial.Budget.initialRadiusSq_lt_uniform_tenth).trans_eq
-      CCL.Transducer.Emission.Initial.Budget.sixteen_mul_uniform_tenth
+    (by decide) initialRadiusSq_lt_uniform_tenth).trans_eq
+      sixteen_mul_uniform_tenth
 
 open Purelib.Approximation.Gaussian in
 open Purelib.Data.Rat in

@@ -5,13 +5,14 @@ policy, ordered roots, private inventory validation and complete dirty records.
 IR-only code can be inventoried separately for diagnosis; it is not kernel-audited.
 """
 from functools import cmp_to_key
+from copy import copy
 from pathlib import Path
 from .importer import Graph
 from .observations import Observations,name_observer,query_observer,name_cmp,name_hash
 from .paths import parse_name,render_name
 from .contracts import dumps
 from .audit_metadata import RootMetadata,audit_root
-from .typed import InvalidArtifact
+from .typed import InvalidArtifact, TypedDecoder
 
 CANONICAL = (
  'Purelib.Data.Fin',
@@ -25,14 +26,14 @@ CANONICAL = (
  'Purelib.Data.Rat.Fraction.Order',
  'Purelib.Data.Rat.Fraction.Field',
  'Purelib.Data.Rat.Fraction',
- 'Test.Data.Rat.Fraction.Regression',
+ 'TestPurelib.Data.Rat.Fraction.Regression',
  'Purelib.Data.Rat.Fraction.Compatibility',
  'Purelib.Data.Gaussian.Basic',
- 'Test.Data.Gaussian.Regression',
+ 'TestPurelib.Data.Gaussian.Regression',
  'Purelib.Polynomial.Dense.Gaussian.Basic',
- 'Test.Polynomial.Dense.Gaussian.Regression',
+ 'TestPurelib.Polynomial.Dense.Gaussian.Regression',
  'Purelib.Polynomial.Dense.Gaussian.Residual.GaussianDenominator',
- 'Test.Polynomial.Evaluation.Gaussian.NewtonResidual',
+ 'TestPurelib.Polynomial.Evaluation.Gaussian.NewtonResidual',
  'Purelib.Data.Gaussian.Constants',
  'Purelib.Data.Gaussian.Field',
  'Purelib.Data.Gaussian.Norm.Basic',
@@ -76,12 +77,12 @@ SUPPORT = ('Purelib.Data.Gaussian.Basic','Purelib.Data.Nat.GCD.Coprime',
  'Purelib.Polynomial.Dense.Gaussian.Residual.GaussianDenominator',
  'Lean.Util.CollectAxioms','Lean.Util.FoldConsts','Lean.Elab.Command','Lean.Compiler.MetaAttr',
  'Lean.Compiler.CSimpAttr','Lean.DeclarationRange','Purelib.Data.Fin',
- 'Test.Data.Rat.Fraction.Regression','Purelib.Data.Rat.Fraction.Compatibility',
- 'Purelib.Data.Nat.LCM','Test.Data.Gaussian.Regression','Test.Polynomial.Dense.Gaussian.Regression',
- 'Test.Polynomial.Evaluation.Gaussian.NewtonResidual')
+ 'TestPurelib.Data.Rat.Fraction.Regression','Purelib.Data.Rat.Fraction.Compatibility',
+ 'Purelib.Data.Nat.LCM','TestPurelib.Data.Gaussian.Regression','TestPurelib.Polynomial.Dense.Gaussian.Regression',
+ 'TestPurelib.Polynomial.Evaluation.Gaussian.NewtonResidual')
 # Preserve the original first-owner import order and extend it from the single strict inventory.
 SUPPORT = tuple(dict.fromkeys((*SUPPORT, *CANONICAL)))
-REGRESSION_MODULE = 'Test.Data.Rat.Fraction.RegressionMain'
+REGRESSION_MODULE = 'TestPurelib.Data.Rat.Fraction.RegressionMain'
 
 
 
@@ -94,11 +95,68 @@ class AuditObservation(Observations):
         for key,ref in self.constants.items():
             name=name_observer(ref.d,ref.name);self.by_name[name]=ref;self.names[key]=name
         for key,owner in self.graph.owners.items():self.owners[self.graph.owner_names[key]]=owner
+        self.dependency_projections={}
+
+    def project_dependencies(self, ref, mode):
+        """Validate one complete expression graph, retaining only its name edges.
+
+        Pointer interpretation and typed validation use the original module's
+        complete bound parts. Temporary expression nodes and equality caches
+        are discarded together; the original import environment, first owners,
+        persisted axiom tables and collectAxioms traversal remain unchanged.
+        """
+        key=ref,mode
+        if key not in self.dependency_projections:
+            view=copy(ref);view.d=TypedDecoder([]);view.d.parts=ref.d.parts
+            view.name=view.d.decode('Name',ref.base[0])
+            operation=Observations.axiom_dependencies if mode=='axioms' else Observations.used
+            names=operation(self,view)
+            # Reuse the environment's actual name observations where present,
+            # including their cached hash, rather than copied component tuples.
+            projected=[]
+            for name in names:
+                owner=self.by_name.get(name)
+                projected.append(self.names[owner.key] if owner is not None else name)
+            self.dependency_projections[key]=tuple(projected)
+        return self.dependency_projections[key]
+
+    def axiom_dependencies(self,ref):
+        """Retain ordered collectAxioms edges without retaining decoded proofs."""
+        return self.project_dependencies(ref,'axioms')
+
+    def used(self,ref):
+        """Retain the distinct dirty-trace dependency observation."""
+        return set(self.project_dependencies(ref,'used'))
+
+    def seal_inventory(self):
+        """Finish root metadata observation and discard its temporary decoder indexes.
+
+        Retain the exact selected references, complete original module parts,
+        names, first owners and persisted axiom tables. Closure observations use
+        those retained references and fresh expression decoders; they do not need
+        the import decoder's structural/equality indexes or entry caches again.
+        """
+        import gc
+        owners=set()
+        for name,owner in self.owners.items():
+            if owner not in owners:
+                self.persisted_axioms(name);owners.add(owner)
+        modules=[*self.graph.modules.values(),*(m for m in self.graph.ir.values() if m is not None)]
+        for decoder in [self.graph.nodes,*(m.d for m in modules)]:
+            for field in ('cache','active','nodes','identities','eq_ids','eq_identities',
+                          'name_payload_ids','name_payloads'):
+                getattr(decoder,field).clear()
+        for module in modules:
+            module.rows.clear();module.refs.clear();module.indices.clear()
+        self.inventory_sealed=True
+        gc.collect()
     @staticmethod
     def text(name):return render_name(name[1])
     @staticmethod
     def query_parts(parts):return name_hash(parts),parts
     def inventory(self,module):
+        if getattr(self,'inventory_sealed',False):
+            raise InvalidArtifact('root inventory is already sealed for closure checking')
         mod=self.state[module]['module']
         if mod is None:raise InvalidArtifact('axiom audit has no module data for: '+module)
         rows=mod.entries(True);names=[]
@@ -112,8 +170,9 @@ class AuditObservation(Observations):
 
 
 def audit(project, assigned, canonical, result, search, report_ir_only=False, imports=None,
-          all_helpers=False):
+          all_helpers=False, cores=1):
     """Audit source roots or all helpers, always with complete transitive closures."""
+    if cores < 1:raise ValueError('axiom query cores must be positive')
     project_set=set(project);assigned_set=set(assigned)
     outside=[m for m in assigned if m not in project_set]
     if outside:raise InvalidArtifact('project axiom audit received non-project modules: '+repr(outside))
@@ -124,7 +183,7 @@ def audit(project, assigned, canonical, result, search, report_ir_only=False, im
     if missing:raise InvalidArtifact('project axiom audit did not import: '+repr(missing))
     metadata=RootMetadata(obs);modules=list(assigned)
     if canonical:modules.extend(m for m in CANONICAL if m not in assigned_set)
-    records=[];resultlines=[];failures=[];traversal=[];checked=0;canonical_checked=0;ir=[]
+    records=[];resultlines=[];failures=[];traversal=[];checked=0;canonical_checked=0;ir=[];requests=[]
     for module in modules:
         audit_project=module in assigned_set;audit_canonical=canonical and module in CANONICAL
         names,ir_only=obs.inventory(module)
@@ -136,15 +195,19 @@ def audit(project, assigned, canonical, result, search, report_ir_only=False, im
             if ref is None:continue
             root=all_helpers or audit_root(name,ref,metadata)
             if audit_canonical or audit_project and root:
-                axioms=obs.axioms(name)
                 if audit_project and root:checked+=1;module_checked+=1
                 if audit_canonical:canonical_checked+=1
-                row={'kind':'root','owner':obs.owners.get(name),'scanned_module':module,
-                     'name':obs.text(name),'canonical':audit_canonical,'axioms':[obs.text(n)for n in axioms]}
-                row['all_helpers']=all_helpers and audit_project
-                records.append(row)
-                if axioms:failures.append((module,name,axioms));traversal.append(name)
+                requests.append((module,name,audit_canonical,all_helpers and audit_project))
         if audit_project:resultlines.append('project\t'+module+'\t'+str(module_checked))
+    from .audit_workers import closures
+    if cores>1:obs.seal_inventory()
+    checked_closures=closures(obs,[name for _,name,_,_ in requests],cores)
+    for (module,name,audit_canonical,helpers),axioms in zip(requests,checked_closures,strict=True):
+        row={'kind':'root','owner':obs.owners.get(name),'scanned_module':module,
+             'name':obs.text(name),'canonical':audit_canonical,'axioms':[obs.text(n)for n in axioms],
+             'all_helpers':helpers}
+        records.append(row)
+        if axioms:failures.append((module,name,axioms));traversal.append(name)
     visited=set();index=0
     while index<len(traversal):
         current=traversal[index];index+=1

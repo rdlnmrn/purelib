@@ -42,6 +42,10 @@ import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Riemann.Meshes.PuncturedGridFaces
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces
+
 public section
 
 /-! All regular face exteriors split into paired crossings and retained physical sides. -/
@@ -56,27 +60,27 @@ open Purelib.Riemann
 open Purelib.RootIsolation
 open Purelib
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {faces : PuncturedFaces bank} {domains :
+    Face.DomainBanks.FaceDomainBank frames faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+variable {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+  RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
   target}
 
 variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor stage : Nat}
   {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
 
-variable {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 
 namespace FacePerimeters
 
@@ -93,44 +97,44 @@ namespace FacePerimeters
 /-- The signed total of original side contributions adjacent to regular faces. -/
 @[expose] def regularPerimeter (perimeters : Matched.FacePerimeters
   (request := request) cache i j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) : Gaussian.Basic.Canonical :=
+    (neighbors : PuncturedFaces.NeighborBank faces) : Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun p =>
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
-    (neighbors.entries.get p).right (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum
+    SideNeighbor.regularValue
+    (neighbors.entries.get p).right (FacePerimeters.sideSum
     perimeters .right p)) -
     FiniteSum.Fin.sumFin (fun p =>
-      Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
-      (neighbors.entries.get p).left (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum
+      SideNeighbor.regularValue
+      (neighbors.entries.get p).left (FacePerimeters.sideSum
       perimeters .left p)) -
     (FiniteSum.Fin.sumFin (fun p =>
-      Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
-      (neighbors.entries.get p).top (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum
+      SideNeighbor.regularValue
+      (neighbors.entries.get p).top (FacePerimeters.sideSum
       perimeters .top p)) -
       FiniteSum.Fin.sumFin (fun p =>
-        Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
+        SideNeighbor.regularValue
         (neighbors.entries.get p).bottom
-        (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .bottom p)))
+        (FacePerimeters.sideSum perimeters .bottom p)))
 
 /-- The signed total of original side contributions facing holes or the physical exterior. -/
 @[expose] def physicalPerimeter (perimeters : Matched.FacePerimeters
   (request := request) cache i j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) : Gaussian.Basic.Canonical :=
+    (neighbors : PuncturedFaces.NeighborBank faces) : Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun p =>
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
-    (neighbors.entries.get p).right (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum
+    SideNeighbor.physicalValue
+    (neighbors.entries.get p).right (FacePerimeters.sideSum
     perimeters .right p)) -
     FiniteSum.Fin.sumFin (fun p =>
-      Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
-      (neighbors.entries.get p).left (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum
+      SideNeighbor.physicalValue
+      (neighbors.entries.get p).left (FacePerimeters.sideSum
       perimeters .left p)) -
     (FiniteSum.Fin.sumFin (fun p =>
-      Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
-      (neighbors.entries.get p).top (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum
+      SideNeighbor.physicalValue
+      (neighbors.entries.get p).top (FacePerimeters.sideSum
       perimeters .top p)) -
       FiniteSum.Fin.sumFin (fun p =>
-        NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
+        SideNeighbor.physicalValue
         (neighbors.entries.get p).bottom
-        (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .bottom p)))
+        (FacePerimeters.sideSum perimeters .bottom p)))
 
 /-- The sum of all retained regular-face exterior values over both sheets. -/
 @[expose] def exteriorTotal (perimeters : Matched.FacePerimeters
@@ -140,47 +144,47 @@ namespace FacePerimeters
 /-- The complete retained exterior total splits exactly into regular-neighbor and physical-boundary contributions. -/
 theorem exterior_split (perimeters : Matched.FacePerimeters (request
   := request) cache i j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) :
-    Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal perimeters =
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.regularPerimeter perimeters neighbors +
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors
+    (neighbors : PuncturedFaces.NeighborBank faces) :
+    FacePerimeters.exteriorTotal perimeters =
+      FacePerimeters.regularPerimeter perimeters neighbors +
+      FacePerimeters.physicalPerimeter perimeters neighbors
       := by
   have face_eq : ∀ p : Fin faces.regulars.length,
       FiniteSum.Fin.sumFin (fun sheet => ((perimeters.assemblies.get p).get sheet).exterior) =
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .bottom p +
-        Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .right p -
-        Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .top p -
-          Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .left p := by
+      FacePerimeters.sideSum perimeters .bottom p +
+        FacePerimeters.sideSum perimeters .right p -
+        FacePerimeters.sideSum perimeters .top p -
+          FacePerimeters.sideSum perimeters .left p := by
     intro p
     rw [FiniteSum.Fin.sumFin_congr (fun sheet => ((perimeters.perimeters.get p).get sheet).exterior_eq)]
     simp only [FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_sub,
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum, -eq_self, -iff_self]
+      FacePerimeters.sideSum, -eq_self, -iff_self]
     rfl
   have split (side : Meshes.GridLiftedDualSteps.GridSide) : FiniteSum.Fin.sumFin
-    (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters side) =
+    (FacePerimeters.sideSum perimeters side) =
       FiniteSum.Fin.sumFin (fun p =>
-        Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
-        (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+        SideNeighbor.regularValue
+        (FaceNeighbors.at
           (neighbors.entries.get p) side)
-        (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters side p)) +
+        (FacePerimeters.sideSum perimeters side p)) +
         FiniteSum.Fin.sumFin (fun p =>
-          NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
-          (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+          SideNeighbor.physicalValue
+          (FaceNeighbors.at
             (neighbors.entries.get p) side)
-          (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters side p)) := by
+          (FacePerimeters.sideSum perimeters side p)) := by
       rw [FiniteSum.Fin.sumFin_congr (fun p =>
-        Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.value_split
-        (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+        SideNeighbor.value_split
+        (FaceNeighbors.at
           (neighbors.entries.get p) side)
-        (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters side p)),
+        (FacePerimeters.sideSum perimeters side p)),
           FiniteSum.Fin.sumFin_add]
-  unfold Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal
+  unfold FacePerimeters.exteriorTotal
   rw [FiniteSum.Fin.sumFin_congr face_eq]
   simp only [FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_sub, -eq_self, -iff_self]
   rw [split .bottom, split .right, split .top, split .left]
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.regularPerimeter,
-    Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter,
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at, -eq_self,
+  simp only [FacePerimeters.regularPerimeter,
+    FacePerimeters.physicalPerimeter,
+    FaceNeighbors.at, -eq_self,
       -iff_self]
   ring1
 
@@ -192,48 +196,48 @@ theorem CrossingBank.pairedPerimeter_eq_regular (retained :
   Matched.CrossingBank request mesh)
     (perimeters : Matched.FacePerimeters (request := request) cache i
       j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) :
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained perimeters =
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.regularPerimeter perimeters neighbors :=
+    (neighbors : PuncturedFaces.NeighborBank faces) :
+    Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained perimeters =
+      FacePerimeters.regularPerimeter perimeters neighbors :=
       by
   have horizontal : ∀ firstPosition : Fin faces.regulars.length,
       FiniteSum.Fin.sumFin (fun sheet => FiniteSum.Fin.sumFin (fun nextPosition =>
-        Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.HorizontalOutcome.perimeterDifference perimeters
+        Matched.FacePerimeters.HorizontalOutcome.perimeterDifference perimeters
         (((retained.horizontal.get firstPosition).get sheet).get nextPosition))) =
       FiniteSum.Fin.sumFin (fun nextPosition => if Meshes.GridLiftedDualSteps.GridSide.Matches .top
         faces.regulars[firstPosition.val].cell.box
         faces.regulars[nextPosition.val].cell.box then
-          Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .top
-            firstPosition - Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters
+          FacePerimeters.sideSum perimeters .top
+            firstPosition - FacePerimeters.sideSum perimeters
             .bottom nextPosition else 0) := by
     intro firstPosition
     rw [FiniteSum.Fin.sumFin_swap]
     exact FiniteSum.Fin.sumFin_congr (fun nextPosition =>
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingPairSums.CrossingBank.horizontal_pair_sum
+      CrossingPairSums.CrossingBank.horizontal_pair_sum
         retained perimeters firstPosition nextPosition)
   have vertical : ∀ firstPosition : Fin faces.regulars.length,
       FiniteSum.Fin.sumFin (fun sheet => FiniteSum.Fin.sumFin (fun nextPosition =>
-        Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.VerticalOutcome.perimeterDifference perimeters
+        Matched.FacePerimeters.VerticalOutcome.perimeterDifference perimeters
         (((retained.vertical.get firstPosition).get sheet).get nextPosition))) =
       FiniteSum.Fin.sumFin (fun nextPosition => if Meshes.GridLiftedDualSteps.GridSide.Matches .right
         faces.regulars[firstPosition.val].cell.box
         faces.regulars[nextPosition.val].cell.box then
-          Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .right
-            firstPosition - Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters
+          FacePerimeters.sideSum perimeters .right
+            firstPosition - FacePerimeters.sideSum perimeters
             .left nextPosition else 0) := by
     intro firstPosition
     rw [FiniteSum.Fin.sumFin_swap]
     exact FiniteSum.Fin.sumFin_congr (fun nextPosition =>
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingPairSums.CrossingBank.vertical_pair_sum
+      CrossingPairSums.CrossingBank.vertical_pair_sum
         retained perimeters firstPosition nextPosition)
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.CrossingRequests.pairedPerimeter
+  unfold Matched.FacePerimeters.CrossingRequests.pairedPerimeter
   rw [FiniteSum.Fin.sumFin_congr vertical, FiniteSum.Fin.sumFin_congr horizontal]
-  rw [Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.NeighborBank.pair_sum
-    neighbors .right (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters
-    .right) (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .left),
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.NeighborBank.pair_sum
-      neighbors .top (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .top)
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .bottom)]
+  rw [NeighborBank.pair_sum
+    neighbors .right (FacePerimeters.sideSum perimeters
+    .right) (FacePerimeters.sideSum perimeters .left),
+    NeighborBank.pair_sum
+      neighbors .top (FacePerimeters.sideSum perimeters .top)
+      (FacePerimeters.sideSum perimeters .bottom)]
   rfl
 
 /-- The complete original exterior total is the paired crossing perimeter plus its retained physical-boundary
@@ -242,14 +246,14 @@ theorem CrossingBank.exterior_eq_paired_add_physical (retained :
   Matched.CrossingBank request mesh)
     (perimeters : Matched.FacePerimeters (request := request) cache i
       j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) :
-    Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal perimeters =
-      Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained perimeters +
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors
+    (neighbors : PuncturedFaces.NeighborBank faces) :
+    FacePerimeters.exteriorTotal perimeters =
+      Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained perimeters +
+      FacePerimeters.physicalPerimeter perimeters neighbors
       := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.CrossingBank.pairedPerimeter_eq_regular retained
+  rw [CrossingBank.pairedPerimeter_eq_regular retained
     perimeters neighbors]
-  exact Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exterior_split perimeters neighbors
+  exact FacePerimeters.exterior_split perimeters neighbors
 
 namespace CrossingRequests
 
@@ -257,26 +261,26 @@ namespace CrossingRequests
 every sufficient stage. -/
 theorem TotalRequest.exterior_bound {retained : Matched.CrossingBank
   request mesh} {target : Fraction.Rational}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
+    (total : Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
       firstParent secondParent target floor)
-    {samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
-      cache} (accounting : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingAccounting.CrossingRequests.Accounting
+    {samples : Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+      cache} (accounting : Matched.CrossingAccounting.CrossingRequests.Accounting
       samples)
     (perimeters : Matched.FacePerimeters (request := request) cache i
       j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) (later : total.allocated.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal perimeters -
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors -
+    (neighbors : PuncturedFaces.NeighborBank faces) (later : total.allocated.index ≤ stage) :
+    Gaussian.Norm.Basic.normSq
+      (FacePerimeters.exteriorTotal perimeters -
+      FacePerimeters.physicalPerimeter perimeters neighbors -
       accounting.endpoints) ≤ target := by
-  have equal : Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal perimeters -
-    Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors =
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained perimeters := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.CrossingBank.exterior_eq_paired_add_physical retained
+  have equal : FacePerimeters.exteriorTotal perimeters -
+    FacePerimeters.physicalPerimeter perimeters neighbors =
+    Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained perimeters := by
+    rw [CrossingBank.exterior_eq_paired_add_physical retained
       perimeters neighbors]
     ring1
   rw [equal]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest.pairedPerimeter_bound
+  exact Matched.CrossingTotal.CrossingRequests.TotalRequest.pairedPerimeter_bound
     total accounting perimeters later
 
 end CrossingRequests

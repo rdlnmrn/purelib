@@ -23,24 +23,46 @@ namespace Purelib.Approximation.Gaussian.Acquisition.Expression.Basic
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 set_option genInjectivity false in
-/-- Finite arithmetic syntax retaining atom indices and displayed square-root sheets.
+/-- The total or checked evaluation discipline of finite acquisition syntax. -/
+inductive Mode where
+  /-- The original everywhere-defined arithmetic and displayed root language. -/
+  | total
+  /-- Arithmetic retaining total base regions and checked reciprocal nodes. -/
+  | checked
+  deriving @[expose] DecidableEq
 
-Expressions use Gaussian rational constants, indexed opaque atoms and explicit negation, addition, subtraction and
-multiplication; syntactic identity is decidable. -/
-inductive Expr (arity : Nat) where
-  /-- Refer to one of the original finitely indexed input atoms. -/ | atom (index : Fin arity)
-  /-- Retain an exact Gaussian rational constant. -/ | rational (value : Data.Gaussian.Basic.Canonical)
-  /-- Retain a displayed square-root parameter and one of its two sheets. -/ | root (parameter :
-    Data.Gaussian.Basic.Canonical) (sheet : Fin 2)
-  /-- Negate a retained expression. -/ | neg (input : Expr
-    arity)
-  /-- Add two retained expressions. -/ | add (left right :
-    Expr arity)
-  /-- Subtract two retained expressions. -/ | sub (left right :
-    Expr arity)
-  /-- Multiply two retained expressions. -/ | mul (left right :
-    Expr arity)
-  deriving DecidableEq
+constructive_injectivity Mode
+
+set_option genInjectivity false in
+/-- Finite arithmetic syntax retaining original atom indices, root sheets and total base regions.
+
+The default index is the original total grammar. The checked index retains total
+base regions and adds natural powers, conjugation and partial reciprocals;
+negation, addition, subtraction and multiplication use the same constructors. -/
+inductive Expr (arity : Nat) : (mode : optParam Mode .total) → Type where
+  /-- Refer to one of the original finitely indexed input atoms. -/
+  | atom (index : Fin arity) : Expr arity .total
+  /-- Retain an exact Gaussian rational constant. -/
+  | rational (value : Canonical) : Expr arity .total
+  /-- Retain a displayed square-root parameter and one of its two sheets. -/
+  | root (parameter : Canonical) (sheet : Fin 2) : Expr arity .total
+  /-- Negate a retained expression in its original discipline. -/
+  | neg {mode : Mode} (input : Expr arity mode) : Expr arity mode
+  /-- Add two retained expressions in their original discipline. -/
+  | add {mode : Mode} (left right : Expr arity mode) : Expr arity mode
+  /-- Subtract two retained expressions in their original discipline. -/
+  | sub {mode : Mode} (left right : Expr arity mode) : Expr arity mode
+  /-- Multiply two retained expressions in their original discipline. -/
+  | mul {mode : Mode} (left right : Expr arity mode) : Expr arity mode
+  /-- Retain an entire original total region for its unchanged cached compiler. -/
+  | base (expression : Expr arity .total) : Expr arity .checked
+  /-- Raise a checked child to its displayed finite natural power. -/
+  | pow (input : Expr arity .checked) (exponent : Nat) : Expr arity .checked
+  /-- Conjugate a retained checked child. -/
+  | conj (input : Expr arity .checked) : Expr arity .checked
+  /-- Prepare a checked child before constructing its partial reciprocal. -/
+  | inverse (input : Expr arity .checked) : Expr arity .checked
+  deriving @[expose] DecidableEq
 
 constructive_injectivity Expr
 

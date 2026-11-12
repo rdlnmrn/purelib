@@ -74,21 +74,21 @@ open Purelib
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    Face.DomainBanks.FaceDomainBank frames faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+variable {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+  RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
   target}
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
@@ -96,27 +96,27 @@ open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor stage : Nat}
   {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
 
-variable {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 
 /-- The negative original corner values for the two differentials on a retained face and sheet. -/
 @[expose] def faceNormalizationOffset (cache :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i j : Fin genus)
+  RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i j : Fin genus)
     (position : Fin faces.regulars.length) (sheet : Fin 2) : PrimitivePoint :=
   ⟨-(cache.atDomain position sheet i).corners.values 0, -(cache.atDomain position sheet j).corners.values 0⟩
 
 /-- Normalizing the cached primitives translates each face reading by its retained corner offset. -/
-theorem faceValues_normalize (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+theorem faceValues_normalize (cache : RegularDomainMeshes.RegularMeshes.Numerics
   domains stage) (i j : Fin genus)
     (position : Fin faces.regulars.length) (sheet : Fin 2) (column row : _) (point : Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache.normalize i j position sheet column row
+    Matched.FacePerimeters.faceValues cache.normalize i j position sheet column row
       point =
-      (Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache i j position sheet column row
-        point).add (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.faceNormalizationOffset cache i j position
+      (Matched.FacePerimeters.faceValues cache i j position sheet column row
+        point).add (NormalizedFaceAreas.faceNormalizationOffset cache i j position
         sheet) := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues
+  unfold Matched.FacePerimeters.faceValues
   rw [cache.normalize_atDomain, cache.normalize_atDomain,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.normalize_alignedValue,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.normalize_alignedValue]
+    Face.PrimitiveData.DomainPrimitives.normalize_alignedValue,
+    Face.PrimitiveData.DomainPrimitives.normalize_alignedValue]
   rfl
 
 namespace FacePerimeters
@@ -133,10 +133,10 @@ theorem normalized_localTotal_eq
     ((original.assemblies.get position).get sheet).localTotal_eq]
   exact Meshes.RectangularObservationMesh.ObservationPieces.localBoundary_eq_of_translation
     ((request.entries.get sheet).meshes.entries.get position).pieces
-    (Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache i j position sheet)
-      (Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache.normalize i j position sheet)
-    (fun _ _ => Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.faceNormalizationOffset cache i j position sheet)
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.faceValues_normalize cache i j position sheet) _
+    (Matched.FacePerimeters.faceValues cache i j position sheet)
+      (Matched.FacePerimeters.faceValues cache.normalize i j position sheet)
+    (fun _ _ => NormalizedFaceAreas.faceNormalizationOffset cache i j position sheet)
+    (NormalizedFaceAreas.faceValues_normalize cache i j position sheet) _
 
 /-- The normalized exterior, seam and corner terms sum to the original local face total. -/
 theorem normalized_corrected_exterior_eq
@@ -149,7 +149,7 @@ theorem normalized_corrected_exterior_eq
       ((normalized.assemblies.get position).get sheet).cornerTotal =
         ((original.assemblies.get position).get sheet).localTotal :=
   ((normalized.assemblies.get position).get sheet).decomposition.symm.trans
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.normalized_localTotal_eq
+    (FacePerimeters.normalized_localTotal_eq
       original normalized position sheet)
 
 /-- Sum all retained local face totals over their original positions and both sheets. -/
@@ -175,10 +175,10 @@ theorem normalized_localTotalSum_eq
     (original : Matched.FacePerimeters (request := request) cache i j)
     (normalized : Matched.FacePerimeters (request := request)
       cache.normalize i j) :
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum normalized =
-      Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original :=
+    FacePerimeters.localTotalSum normalized =
+      FacePerimeters.localTotalSum original :=
   FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.normalized_localTotal_eq
+    FacePerimeters.normalized_localTotal_eq
       original normalized position sheet))
 
 /-- The original local-total sum decomposes into the normalized exterior total and all normalized seam and corner
@@ -187,18 +187,18 @@ theorem normalized_total_decomposition
     (original : Matched.FacePerimeters (request := request) cache i j)
     (normalized : Matched.FacePerimeters (request := request)
       cache.normalize i j) :
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original =
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal normalized +
-        Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.seamTotalSum normalized +
-        Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.cornerTotalSum normalized := by
+    FacePerimeters.localTotalSum original =
+      GlobalPerimeterIdentity.FacePerimeters.exteriorTotal normalized +
+        FacePerimeters.seamTotalSum normalized +
+        FacePerimeters.cornerTotalSum normalized := by
   have equal := FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.normalized_corrected_exterior_eq
+    (fun sheet => FacePerimeters.normalized_corrected_exterior_eq
       original normalized position sheet))
   simpa only [FiniteSum.Fin.sumFin_add,
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum,
-    Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal,
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.seamTotalSum,
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.cornerTotalSum, -eq_self, -iff_self] using
+    FacePerimeters.localTotalSum,
+    GlobalPerimeterIdentity.FacePerimeters.exteriorTotal,
+    FacePerimeters.seamTotalSum,
+    FacePerimeters.cornerTotalSum, -eq_self, -iff_self] using
       equal.symm
 
 end FacePerimeters
@@ -210,30 +210,30 @@ The expression retains the normalized seam and corner corrections, physical peri
 same sufficient stage. -/
 theorem TotalRequest.original_local_jump_bound {retained :
   Matched.CrossingBank request mesh} {target : Fraction.Rational}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
+    (total : Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
       firstParent secondParent (target / 4) floor)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (samples : Matched.CrossingSamples.CrossingRequests.Samples total.allocated
       cache.normalize)
     (original : Matched.FacePerimeters (request := request) cache i j)
     (normalized : Matched.FacePerimeters (request := request)
       cache.normalize i j)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) (later : total.allocated.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-      Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.seamTotalSum normalized -
-      Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.cornerTotalSum normalized -
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
+    Gaussian.Norm.Basic.normSq
+      (FacePerimeters.localTotalSum original -
+      FacePerimeters.seamTotalSum normalized -
+      FacePerimeters.cornerTotalSum normalized -
+      GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
       samples.endpointJump) ≤ target := by
-  have equal : Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-      Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.seamTotalSum normalized -
-      Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.cornerTotalSum normalized =
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.exteriorTotal normalized := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.normalized_total_decomposition
+  have equal : FacePerimeters.localTotalSum original -
+      FacePerimeters.seamTotalSum normalized -
+      FacePerimeters.cornerTotalSum normalized =
+      GlobalPerimeterIdentity.FacePerimeters.exteriorTotal normalized := by
+    rw [FacePerimeters.normalized_total_decomposition
       original normalized]
     ring1
   rw [equal]
   exact
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedGlobalJump.CrossingRequests.TotalRequest.normalized_exterior_jump_bound
+    NormalizedGlobalJump.CrossingRequests.TotalRequest.normalized_exterior_jump_bound
     total samples normalized neighbors later
 
 end CrossingRequests

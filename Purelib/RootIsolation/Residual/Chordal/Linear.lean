@@ -34,6 +34,12 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.RootIsolation.State.WindingOne.Region
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian
+
+open Purelib.Polynomial.Dense.Gaussian.Derivative.Separation
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts (AxisEliminationCertificate)
@@ -73,9 +79,9 @@ def linearResidualScale
     (squarefree : SquarefreeCertificate p)
     (current : WindingOneState p ambient) : Fraction.Rational :=
   min
-    (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin
+    (Squarefree.derivativeMargin
       squarefree current.box)
-    (2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound
+    (2 * Bounds.Box.denseLipschitzBound
       p current.box)
 
 /-- The common derivative and source-variation residual scale is positive. -/
@@ -84,11 +90,11 @@ theorem linearResidualScale_pos
     (squarefree : SquarefreeCertificate p)
     (current : WindingOneState p ambient) :
     0 < linearResidualScale squarefree current := by
-  exact Fraction.Order.Basic.lt_min
-    (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin_pos
+  exact Basic.lt_min
+    (Squarefree.derivativeMargin_pos
       squarefree current.box)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos
+    (Arithmetic.mul_pos_direct (by decide)
+      (Bounds.Box.denseLipschitzBound_pos
         p current.box))
 
 /-- The reference radius contains all geometric, derivative, and Taylor caps.
@@ -100,7 +106,7 @@ def linearReferenceRadius
     (current : WindingOneState p ambient)
     (sample : Canonical) : Fraction.Rational :=
   Newton.Restart.Anchored.Budget.anchoredRadius
-    squarefree (Residual.Chordal.Basic.protectedAmbient current) sample 1
+    squarefree (Basic.protectedAmbient current) sample 1
 
 /-- A strict interior sample has a positive safe reference radius. -/
 theorem linearReferenceRadius_pos
@@ -110,7 +116,7 @@ theorem linearReferenceRadius_pos
     (sample : Canonical) (strict : current.box.StrictContains sample) :
     0 < linearReferenceRadius squarefree current sample := by
   exact Newton.Restart.Anchored.Budget.anchoredRadius_pos
-    squarefree (Residual.Chordal.Basic.protectedAmbient current) sample strict (by decide)
+    squarefree (Basic.protectedAmbient current) sample strict (by decide)
 
 /-- Positive local smallness threshold for the residual-linear theorem.
 The first term puts `R / mu` below one.  The second puts the factor-four
@@ -136,10 +142,10 @@ theorem linearResidualThreshold_pos
   have muPositive : 0 < mu := linearResidualScale_pos squarefree current
   have safePositive : 0 < safe :=
     linearReferenceRadius_pos squarefree current sample strict
-  exact Fraction.Order.Basic.lt_min muPositive
-    (Fraction.Order.Field.div_pos_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct muPositive
-        (Fraction.Order.Arithmetic.pow_pos_direct safePositive 2))
+  exact Basic.lt_min muPositive
+    (Field.div_pos_direct
+      (Arithmetic.mul_pos_direct muPositive
+        (Arithmetic.pow_pos_direct safePositive 2))
       (by decide))
 
 set_option genInjectivity false in
@@ -156,26 +162,26 @@ structure LinearResidualChordalResult
   /-- The retained selected dyadic radius is positive. -/ radiusPositive : 0 < radius
   /-- The selected radius squared strictly exceeds the original residual divided by its positive scale. -/
     residualOverScale_lt_radiusSq :
-    Data.Gaussian.Norm.Basic.normSq (p.eval sample) / linearResidualScale squarefree current
+    Gaussian.Norm.Basic.normSq (p.eval sample) / linearResidualScale squarefree current
       <
       radius ^ 2
   /-- The selected radius squared is at most four times the original scaled residual. -/
     radiusSq_le_fourResidualOverScale :
     radius ^ 2 <=
-      4 * (Data.Gaussian.Norm.Basic.normSq (p.eval sample) / linearResidualScale squarefree
+      4 * (Gaussian.Norm.Basic.normSq (p.eval sample) / linearResidualScale squarefree
         current)
   /-- The original residual-to-track construction at the same selected radius. -/ construction :
-    Residual.Chordal.Basic.ResidualChordalResult squarefree elimination current sample radius
+    Basic.ResidualChordalResult squarefree elimination current sample radius
   /-- Every point in the retained box has squared chordal distance bounded by seventy-two times the original residual
     divided by its scale. -/ chordalLinear : forall z, construction.state.box.Contains z ->
     Geometry.Projective.Chordal.Affine.affineChordalSq sample z <=
       (72 / linearResidualScale squarefree current) *
-        Data.Gaussian.Norm.Basic.normSq (p.eval sample)
+        Gaussian.Norm.Basic.normSq (p.eval sample)
   /-- The retained box's squared diagonal is bounded by one hundred twenty-eight times the original residual divided by
     its scale. -/ diagonalLinear :
     construction.state.box.diagonalSq <=
       (128 / linearResidualScale squarefree current) *
-        Data.Gaussian.Norm.Basic.normSq (p.eval sample)
+        Gaussian.Norm.Basic.normSq (p.eval sample)
 
 constructive_injectivity LinearResidualChordalResult
 
@@ -206,10 +212,10 @@ def ofPositiveLinearResidual
     (current : WindingOneState p ambient)
     (sample : Canonical) (strict : current.box.StrictContains sample)
     (evaluationNonzero : p.eval sample ≠ 0)
-    (residualSmall : Data.Gaussian.Norm.Basic.normSq (p.eval sample) <
+    (residualSmall : Gaussian.Norm.Basic.normSq (p.eval sample) <
       linearResidualThreshold squarefree current sample) :
     LinearResidualChordalResult squarefree elimination current sample := by
-  let residual := Data.Gaussian.Norm.Basic.normSq (p.eval sample)
+  let residual := Gaussian.Norm.Basic.normSq (p.eval sample)
   let mu := linearResidualScale squarefree current
   let safe := linearReferenceRadius squarefree current sample
   have residualPositive : 0 < residual := Gaussian.Norm.Basic.normSq_pos evaluationNonzero
@@ -217,26 +223,26 @@ def ofPositiveLinearResidual
   have safePositive : 0 < safe :=
     linearReferenceRadius_pos squarefree current sample strict
   have residualLtMu : residual < mu := by
-    exact residualSmall.trans_le (Fraction.Order.Basic.min_le_left _ _)
+    exact residualSmall.trans_le (Basic.min_le_left _ _)
   let target := residual / mu
   have targetPositive : 0 < target :=
-    Fraction.Order.Field.div_pos_direct residualPositive muPositive
+    Field.div_pos_direct residualPositive muPositive
   have targetLtOne : target < 1 := by
-    apply (Fraction.Order.Field.div_lt_iff_pos muPositive).2
+    apply (Field.div_lt_iff_pos muPositive).2
     simpa only [Fraction.Field.one_mul] using residualLtMu
   let bracket := Approximation.Rational.SquareBracket.Dyadic.select target targetPositive
     targetLtOne
   have residualLtSafeBudget : residual < mu * safe ^ 2 / 4 := by
-    exact residualSmall.trans_le (Fraction.Order.Basic.min_le_right _ _)
+    exact residualSmall.trans_le (Basic.min_le_right _ _)
   have targetLtQuarterSafe : target < safe ^ 2 / 4 := by
-    apply (Fraction.Order.Field.div_lt_iff_pos muPositive).2
+    apply (Field.div_lt_iff_pos muPositive).2
     calc
       residual < mu * safe ^ 2 / 4 := residualLtSafeBudget
       _ = (safe ^ 2 / 4) * mu := by
         change (mu * safe ^ 2) * (4 : Fraction.Rational)⁻¹ = (safe ^ 2 * (4 : Fraction.Rational)⁻¹) * mu
         ring1
   have fourTargetLtSafeSq : 4 * target < safe ^ 2 := by
-    have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
       (show (0 : Fraction.Rational) < 4 by decide) targetLtQuarterSafe
     calc
       4 * target < 4 * (safe ^ 2 / 4) := scaled
@@ -249,58 +255,58 @@ def ofPositiveLinearResidual
   have radiusSqLtSafeSq : bracket.radius ^ 2 < safe ^ 2 :=
     bracket.square_le_four_target.trans_lt fourTargetLtSafeSq
   have radiusLtSafe : bracket.radius < safe :=
-    Data.Rat.Bounds.Square.lt_of_sq_lt_sq_of_nonneg
+    Bounds.Square.lt_of_sq_lt_sq_of_nonneg
       safePositive.le radiusSqLtSafeSq
   have radiusIdentity :
       Newton.Restart.Anchored.Budget.anchoredRadius
-          squarefree (Residual.Chordal.Basic.protectedAmbient current) sample bracket.radius =
+          squarefree (Basic.protectedAmbient current) sample bracket.radius =
         bracket.radius :=
     Newton.Restart.Anchored.Budget.anchoredRadius_eq_cap_of_le_reference
-      squarefree (Residual.Chordal.Basic.protectedAmbient current) sample radiusLtSafe.le
+      squarefree (Basic.protectedAmbient current) sample radiusLtSafe.le
   have scaleLeMargin : mu <=
-      Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin
-        squarefree current.box := Fraction.Order.Basic.min_le_left _ _
+      Squarefree.derivativeMargin
+        squarefree current.box := Basic.min_le_left _ _
   have scaleLeTwiceLipschitz : mu <=
-      2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound
-        p current.box := Fraction.Order.Basic.min_le_right _ _
+      2 * Bounds.Box.denseLipschitzBound
+        p current.box := Basic.min_le_right _ _
   have residualLtScaledRadius : residual < bracket.radius ^ 2 * mu := by
-    exact (Fraction.Order.Field.div_lt_iff_pos muPositive).1
+    exact (Field.div_lt_iff_pos muPositive).1
       bracket.target_lt_square
   have residualLtSource : residual <
-      Dense.Gaussian.Bounds.Box.denseLipschitzBound p current.box *
+      Bounds.Box.denseLipschitzBound p current.box *
         (2 * bracket.radius ^ 2) := by
     calc
       residual < bracket.radius ^ 2 * mu := residualLtScaledRadius
       _ <= bracket.radius ^ 2 *
-          (2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound
+          (2 * Bounds.Box.denseLipschitzBound
             p current.box) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           scaleLeTwiceLipschitz
-          (Fraction.Order.Arithmetic.pow_nonneg_direct
+          (Arithmetic.pow_nonneg_direct
             bracket.radiusPositive.le 2)
-      _ = Dense.Gaussian.Bounds.Box.denseLipschitzBound
+      _ = Bounds.Box.denseLipschitzBound
           p current.box * (2 * bracket.radius ^ 2) := by ring1
   have residualLtDisplacement : residual <
-      Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin
+      Squarefree.derivativeMargin
         squarefree current.box * bracket.radius ^ 2 := by
     calc
       residual < bracket.radius ^ 2 * mu := residualLtScaledRadius
       _ <= bracket.radius ^ 2 *
-          Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin
+          Squarefree.derivativeMargin
             squarefree current.box :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           scaleLeMargin
-          (Fraction.Order.Arithmetic.pow_nonneg_direct
+          (Arithmetic.pow_nonneg_direct
             bracket.radiusPositive.le 2)
-      _ = Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin
+      _ = Squarefree.derivativeMargin
           squarefree current.box * bracket.radius ^ 2 := by ring1
   have constructorTarget : residual <
-      Residual.Chordal.Basic.residualTarget squarefree current sample bracket.radius := by
-    rw [Residual.Chordal.Basic.residualTarget, Newton.Restart.Anchored.Budget.anchoredResidualTarget,
-      Residual.Chordal.Basic.protectedAmbient,
+      Basic.residualTarget squarefree current sample bracket.radius := by
+    rw [Basic.residualTarget, Newton.Restart.Anchored.Budget.anchoredResidualTarget,
+      Basic.protectedAmbient,
       radiusIdentity]
-    exact Fraction.Order.Basic.lt_min residualLtSource residualLtDisplacement
-  let construction := Residual.Chordal.Basic.ofResidual degreeAtLeastTwo squarefree elimination
+    exact Basic.lt_min residualLtSource residualLtDisplacement
+  let construction := Basic.ofResidual degreeAtLeastTwo squarefree elimination
     current sample strict bracket.radiusPositive constructorTarget
   have chordalLinear : forall z, construction.state.box.Contains z ->
       Geometry.Projective.Chordal.Affine.affineChordalSq sample z <=
@@ -310,7 +316,7 @@ def ofPositiveLinearResidual
       Geometry.Projective.Chordal.Affine.affineChordalSq sample z <=
           18 * bracket.radius ^ 2 := construction.chordalBound z inside
       _ <= 18 * (4 * target) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           bracket.square_le_four_target (by decide)
       _ = (72 / mu) * residual := by
         dsimp only [target]
@@ -318,16 +324,16 @@ def ofPositiveLinearResidual
           18 * (4 * (residual / mu)) =
               (18 * 4) * (residual / mu) :=
             (Fraction.Field.mul_assoc _ _ _).symm
-          _ = 72 * (residual / mu) := by rw [Purelib.Data.Rat.Fraction.Constants.eighteen_mul_four]
+          _ = 72 * (residual / mu) := by rw [Fraction.Constants.eighteen_mul_four]
           _ = (72 / mu) * residual :=
-            Purelib.Data.Rat.Fraction.Compatibility.mul_div_reassociate 72 residual mu
+            Fraction.Compatibility.mul_div_reassociate 72 residual mu
   have diagonalLinear : construction.state.box.diagonalSq <=
       (128 / mu) * residual := by
     calc
       construction.state.box.diagonalSq <= 32 * bracket.radius ^ 2 :=
         construction.diagonalBound
       _ <= 32 * (4 * target) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           bracket.square_le_four_target
             (Fraction.Cast.Order.natCast_pos_direct
               (n := 32) (by decide)).le
@@ -337,9 +343,9 @@ def ofPositiveLinearResidual
           32 * (4 * (residual / mu)) =
               (32 * 4) * (residual / mu) :=
             (Fraction.Field.mul_assoc _ _ _).symm
-          _ = 128 * (residual / mu) := by rw [Purelib.Data.Rat.Fraction.Constants.thirtyTwo_mul_four]
+          _ = 128 * (residual / mu) := by rw [Fraction.Constants.thirtyTwo_mul_four]
           _ = (128 / mu) * residual :=
-            Purelib.Data.Rat.Fraction.Compatibility.mul_div_reassociate 128 residual mu
+            Fraction.Compatibility.mul_div_reassociate 128 residual mu
   exact
     { radius := bracket.radius
       radiusPositive := bracket.radiusPositive
@@ -363,7 +369,7 @@ def observeOfLinearResidual
     (elimination : AxisEliminationCertificate p degreeBound)
     (current : WindingOneState p ambient)
     (sample : Canonical) (strict : current.box.StrictContains sample)
-    (residualSmall : Data.Gaussian.Norm.Basic.normSq (p.eval sample) <
+    (residualSmall : Gaussian.Norm.Basic.normSq (p.eval sample) <
       linearResidualThreshold squarefree current sample) :
     LinearResidualChordalObservation squarefree elimination current sample :=
   if evaluation : p.eval sample = 0 then

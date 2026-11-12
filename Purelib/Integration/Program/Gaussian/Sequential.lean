@@ -18,6 +18,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Scale (quarterRadius_four_mul quarterRadius_four_mul_succ)
 
 public section
@@ -58,7 +60,7 @@ structure SequentialCompatibleConstantRefinementProgram where
   /-- The original initial model allowance is at most four times the step scale. -/ initialAllowance_le :
     (model 0).aggregateAllowance <= 4 * stepScale
   /-- Each retained step comparison meets its exact step-scale quarter radius. -/ comparisonAllowance_le : forall index,
-    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (steps index)) <=
+    (CompatibleConstantPathRefinement.comparisonAllowance (steps index)) <=
       Geometric.Basic.quarterRadius stepScale index
 
 constructive_injectivity SequentialCompatibleConstantRefinementProgram
@@ -66,32 +68,32 @@ constructive_injectivity SequentialCompatibleConstantRefinementProgram
 namespace SequentialCompatibleConstantRefinementProgram
 
 /-- Four times the original nonnegative step scale. -/
-@[expose] def errorScale (program : Sequential.SequentialCompatibleConstantRefinementProgram) :
+@[expose] def errorScale (program : SequentialCompatibleConstantRefinementProgram) :
     Fraction.Rational :=
   4 * program.stepScale
 
 /-- The retained error scale is nonnegative. -/
 theorem errorScale_nonneg
-    (program : Sequential.SequentialCompatibleConstantRefinementProgram) :
+    (program : SequentialCompatibleConstantRefinementProgram) :
     0 <= program.errorScale :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  Arithmetic.mul_nonneg_direct (by decide)
     program.stepScale_nonneg
 
 /-- Every exact retained model allowance meets its error-scale quarter radius. -/
 theorem modelAllowance_le
-    (program : Sequential.SequentialCompatibleConstantRefinementProgram) (index : Nat) :
+    (program : SequentialCompatibleConstantRefinementProgram) (index : Nat) :
     (program.model index).aggregateAllowance <=
       Geometric.Basic.quarterRadius program.errorScale index := by
   cases index with
   | zero =>
-      simpa only [Sequential.SequentialCompatibleConstantRefinementProgram.errorScale,
+      simpa only [errorScale,
         Geometric.Basic.quarterRadius_eq_mul_pow,
         pow_zero, Fraction.Field.mul_one_direct] using
         program.initialAllowance_le
   | succ index =>
       calc
         (program.model (index + 1)).aggregateAllowance <=
-            (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (program.steps index))
+            (CompatibleConstantPathRefinement.comparisonAllowance (program.steps index))
               :=
 
             (
@@ -106,21 +108,21 @@ theorem modelAllowance_le
 
 /-- Consecutive retained integral samples meet the original step-scale quarter-radius bound. -/
 theorem step_difference_le
-    (program : Sequential.SequentialCompatibleConstantRefinementProgram) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    (program : SequentialCompatibleConstantRefinementProgram) (index : Nat) :
+    Norm.Basic.normSq
         ((program.model (index + 1)).integralSample -
           (program.model index).integralSample) <=
       Geometric.Basic.quarterRadius program.stepScale index := by
   exact (Norm.Basic.normSq_eq_canonical _).trans_le
-    ((CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.integral_difference_le (program.steps
+    ((CompatibleConstantPathRefinement.integral_difference_le (program.steps
       index)).trans
       (program.comparisonAllowance_le index))
 
 /-- A finite sequence of retained refinement steps bounds the final-minus-initial sample by the earlier error radius. -/
 private theorem later_difference_le_extra
-    (program : Sequential.SequentialCompatibleConstantRefinementProgram) :
+    (program : SequentialCompatibleConstantRefinementProgram) :
     forall (extra earlier : Nat),
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((program.model (earlier + extra)).integralSample -
             (program.model earlier).integralSample) <=
         Geometric.Basic.quarterRadius program.errorScale earlier
@@ -137,7 +139,7 @@ private theorem later_difference_le_extra
       have indexEqual : earlier + (extra + 1) = (earlier + 1) + extra := by
         omega
       have tailBound :
-          Data.Gaussian.Norm.Basic.normSq (laterSample - nextSample) <=
+          Norm.Basic.normSq (laterSample - nextSample) <=
             Geometric.Basic.quarterRadius program.errorScale
               (earlier + 1) := by
         simpa only [laterSample, nextSample, indexEqual] using
@@ -145,7 +147,7 @@ private theorem later_difference_le_extra
             later_difference_le_extra
             program extra (earlier + 1)
       have headBound :
-          Data.Gaussian.Norm.Basic.normSq (nextSample - earlierSample) <=
+          Norm.Basic.normSq (nextSample - earlierSample) <=
             Geometric.Basic.quarterRadius program.stepScale earlier := by
         simpa only [nextSample, earlierSample] using
           program.step_difference_le earlier
@@ -158,18 +160,18 @@ private theorem later_difference_le_extra
             Basic.add_im] <;> ring1
       rw [decomposition]
       calc
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
             ((laterSample - nextSample) +
               (nextSample - earlierSample)) <=
-            2 * (Data.Gaussian.Norm.Basic.normSq (laterSample - nextSample) +
-              Data.Gaussian.Norm.Basic.normSq (nextSample - earlierSample)) :=
+            2 * (Norm.Basic.normSq (laterSample - nextSample) +
+              Norm.Basic.normSq (nextSample - earlierSample)) :=
           Norm.Bounds.normSq_add_le_two _ _
         _ <= 2 *
             (Geometric.Basic.quarterRadius program.errorScale
                 (earlier + 1) +
               Geometric.Basic.quarterRadius program.stepScale earlier) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-            (Fraction.Order.Arithmetic.add_le_add_direct tailBound headBound) (by decide)
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (Arithmetic.add_le_add_direct tailBound headBound) (by decide)
         _ = Geometric.Basic.quarterRadius program.errorScale earlier := by
           rw [show program.errorScale = 4 * program.stepScale from rfl,
             quarterRadius_four_mul_succ,
@@ -180,38 +182,38 @@ private theorem later_difference_le_extra
 
 The retained weak stage bound supplies the explicit finite difference between the two indices. Its index equality
 transports the finite consecutive-step estimate to the original later model. -/
-theorem later_close (program : Sequential.SequentialCompatibleConstantRefinementProgram)
+theorem later_close (program : SequentialCompatibleConstantRefinementProgram)
     {earlier later : Nat} (order : earlier <= later) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((program.model later).integralSample -
           (program.model earlier).integralSample) <=
       Geometric.Basic.quarterRadius program.errorScale earlier := by
   have readback : earlier + (later - earlier) = later := by omega0
-  have bounded := Sequential.SequentialCompatibleConstantRefinementProgram.later_difference_le_extra
+  have bounded := later_difference_le_extra
     program (later - earlier) earlier
   rewrite [readback] at bounded
   exact bounded
 
 /-- Twice the sum of the original initial sample's squared norm and retained error scale. -/
-@[expose] def centerBound (program : Sequential.SequentialCompatibleConstantRefinementProgram) :
+@[expose] def centerBound (program : SequentialCompatibleConstantRefinementProgram) :
     Fraction.Rational :=
-  2 * (Data.Gaussian.Norm.Basic.normSq (program.model 0).integralSample + program.errorScale)
+  2 * (Norm.Basic.normSq (program.model 0).integralSample + program.errorScale)
 
 /-- The retained uniform sample bound is nonnegative. -/
 theorem centerBound_nonneg
-    (program : Sequential.SequentialCompatibleConstantRefinementProgram) :
+    (program : SequentialCompatibleConstantRefinementProgram) :
     0 <= program.centerBound := by
-  unfold Sequential.SequentialCompatibleConstantRefinementProgram.centerBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  unfold centerBound
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg (Norm.Basic.normSq_nonneg _) program.errorScale_nonneg)
 
 /-- Every retained model sample meets the original initial-sample-based uniform bound. -/
 theorem sample_bounded
-    (program : Sequential.SequentialCompatibleConstantRefinementProgram) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (program.model index).integralSample <= program.centerBound := by
+    (program : SequentialCompatibleConstantRefinementProgram) (index : Nat) :
+    Norm.Basic.normSq (program.model index).integralSample <= program.centerBound := by
   let current := (program.model index).integralSample
   let initial := (program.model 0).integralSample
-  have movement : Data.Gaussian.Norm.Basic.normSq (current - initial) <= program.errorScale :=
+  have movement : Norm.Basic.normSq (current - initial) <= program.errorScale :=
     (program.later_close (Nat.zero_le index)).trans
       (Geometric.Basic.quarterRadius_le_scale
         program.errorScale_nonneg 0)
@@ -226,17 +228,17 @@ theorem sample_bounded
       (current - initial) initial
   rw [identity] at sumBound
   exact sumBound.trans (by
-    apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+    apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
       (show (0 : Fraction.Rational) <= 2 by decide)
     calc
-      Data.Gaussian.Norm.Basic.normSq (current - initial) + Data.Gaussian.Norm.Basic.normSq initial <=
-          program.errorScale + Data.Gaussian.Norm.Basic.normSq initial :=
-        Fraction.Order.Arithmetic.add_le_add_direct movement (Fraction.Order.Basic.le_refl _)
-      _ = Data.Gaussian.Norm.Basic.normSq initial + program.errorScale := by ring1)
+      Norm.Basic.normSq (current - initial) + Norm.Basic.normSq initial <=
+          program.errorScale + Norm.Basic.normSq initial :=
+        Arithmetic.add_le_add_direct movement (Basic.le_refl _)
+      _ = Norm.Basic.normSq initial + program.errorScale := by ring1)
 
 /-- Retain the original exact models as a refinement program with certified geometric errors and bounded samples. -/
 @[expose] def toRefinementProgram
-    (program : Sequential.SequentialCompatibleConstantRefinementProgram) :
+    (program : SequentialCompatibleConstantRefinementProgram) :
     Basic.RefinementProgram where
   model := program.model
   errorScale := program.errorScale

@@ -4,6 +4,8 @@ import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.Factorization.Identity
 public import Purelib.RationalFunctions.Reduction.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Factorization
+
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
@@ -28,29 +30,29 @@ open Purelib.RationalFunctions
 /-- The normalized numerator is the product of the retained common factor and numerator cofactor. -/
 private theorem numerator_factorization
     {numerator denominator : CoefficientPolynomial}
-    (reduced : Reduction.Basic.ReducedPair numerator denominator) :
-    Dense.Gaussian.Factorization.Identity.ProductIdentity numerator.normalize
+    (reduced : ReducedPair numerator denominator) :
+    Identity.ProductIdentity numerator.normalize
       reduced.common reduced.numeratorReduced := by
-  apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+  apply Identity.factorizationOfCandidateEvals
   intro point _
   exact reduced.euclid.pIdentity point
 
 /-- The normalized denominator is the product of the retained common factor and denominator cofactor. -/
 private theorem denominator_factorization
     {numerator denominator : CoefficientPolynomial}
-    (reduced : Reduction.Basic.ReducedPair numerator denominator) :
-    Dense.Gaussian.Factorization.Identity.ProductIdentity denominator.normalize
+    (reduced : ReducedPair numerator denominator) :
+    Identity.ProductIdentity denominator.normalize
       reduced.common reduced.denominatorReduced := by
-  apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+  apply Identity.factorizationOfCandidateEvals
   intro point _
   exact reduced.euclid.qIdentity point
 
 /-- The retained reduced denominator is nonzero. -/
 theorem denominatorReduced_nonzero
     {numerator denominator : CoefficientPolynomial}
-    (reduced : Reduction.Basic.ReducedPair numerator denominator) :
+    (reduced : ReducedPair numerator denominator) :
     reduced.denominatorReduced.isZero = false := by
-  apply Dense.Gaussian.Factorization.Identity.right_isZero_false
+  apply Identity.right_isZero_false
     (p := denominator.normalize) (left := reduced.common)
   · simpa only [DensePolynomial.isZero_normalize] using reduced.denominatorNonzero
   · exact DensePolynomial.normalize_normalize denominator
@@ -59,10 +61,10 @@ theorem denominatorReduced_nonzero
 /-- A nonzero original numerator has a nonzero retained numerator cofactor. -/
 theorem numeratorReduced_nonzero
     {numerator denominator : CoefficientPolynomial}
-    (reduced : Reduction.Basic.ReducedPair numerator denominator)
+    (reduced : ReducedPair numerator denominator)
     (numeratorNonzero : numerator.isZero = false) :
     reduced.numeratorReduced.isZero = false := by
-  apply Dense.Gaussian.Factorization.Identity.right_isZero_false
+  apply Identity.right_isZero_false
     (p := numerator.normalize) (left := reduced.common)
   · simpa only [DensePolynomial.isZero_normalize] using numeratorNonzero
   · exact DensePolynomial.normalize_normalize numerator
@@ -71,11 +73,11 @@ theorem numeratorReduced_nonzero
 /-- For a nonzero numerator, its degree is the sum of the common-factor and reduced-numerator degrees. -/
 theorem numerator_degree_balance
     {numerator denominator : CoefficientPolynomial}
-    (reduced : Reduction.Basic.ReducedPair numerator denominator)
+    (reduced : ReducedPair numerator denominator)
     (numeratorNonzero : numerator.isZero = false) :
     reduced.common.natDegree + reduced.numeratorReduced.natDegree =
       numerator.natDegree := by
-  have balance := Dense.Gaussian.Factorization.Identity.factor_natDegree_add
+  have balance := Identity.factor_natDegree_add
     (p := numerator.normalize) (left := reduced.common)
     (right := reduced.numeratorReduced)
     (by simpa only [DensePolynomial.isZero_normalize] using numeratorNonzero)
@@ -87,10 +89,10 @@ theorem numerator_degree_balance
 /-- The denominator degree is the sum of the common-factor and reduced-denominator degrees. -/
 theorem denominator_degree_balance
     {numerator denominator : CoefficientPolynomial}
-    (reduced : Reduction.Basic.ReducedPair numerator denominator) :
+    (reduced : ReducedPair numerator denominator) :
     reduced.common.natDegree + reduced.denominatorReduced.natDegree =
       denominator.natDegree := by
-  have balance := Dense.Gaussian.Factorization.Identity.factor_natDegree_add
+  have balance := Identity.factor_natDegree_add
     (p := denominator.normalize) (left := reduced.common)
     (right := reduced.denominatorReduced)
     (by simpa only [DensePolynomial.isZero_normalize] using reduced.denominatorNonzero)

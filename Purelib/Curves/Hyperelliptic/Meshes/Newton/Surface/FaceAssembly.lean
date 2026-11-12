@@ -128,50 +128,50 @@ open Purelib.Riemann.RootContinuation.NewtonProtectedObservations (ProtectedObse
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDomainBank)
 open Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy (SurfacePartitions SurfaceMeshes SurfaceRequest)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {sheet : Fin 2}
-  {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
-    Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
-  {fixed : Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {energyTarget :
-    Purelib.Data.Rat.Fraction.Rational}
-  {energy : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed energyTarget}
-    {stage : Nat} {cache : Purelib.Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains
+  {partitions : SurfacePartitions observations grid} {coarse :
+    SurfaceMeshes partitions domains sheet}
+  {fixed : Preflights domains sheet} {energyTarget :
+    Rational}
+  {energy : SurfaceRequest partitions coarse fixed energyTarget}
+    {stage : Nat} {cache : Numerics domains
     stage}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace FaceAssembly
 
 /-- The dependent perimeter cache for every actual observation piece on every original regular face. -/
-@[expose] def Perimeters (assemblies : ExteriorRequest.Assemblies energy cache coefficients) :=
-  Data.Vector.DependentVector (fun position => Data.Vector.DependentVector (fun piece : Fin (partitions.get
+@[expose] def Perimeters (assemblies : Assemblies energy cache coefficients) :=
+  DependentVector (fun position => DependentVector (fun piece : Fin (partitions.get
     position).cuts.boxes.length =>
     ((assemblies.get position).get piece).Perimeter))
 
 /-- Acquire each actual clipped piece perimeter while preserving the original face and piece indices. -/
-@[expose] def perimeters (assemblies : ExteriorRequest.Assemblies energy cache coefficients) :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters assemblies :=
+@[expose] def perimeters (assemblies : Assemblies energy cache coefficients) :
+  Perimeters assemblies :=
   DependentVector.ofFn fun position => DependentVector.ofFn fun piece =>
     Perimeter.build ((assemblies.get position).get piece)
 
 end FaceAssembly
 
-variable {assemblies : ExteriorRequest.Assemblies
+variable {assemblies : Assemblies
   energy cache coefficients}
 
 namespace FaceAssembly.Perimeters
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly in
 /-- The exact Cartesian side grid read from the retained original piece perimeters. -/
-@[expose] def faceSides (perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters
+@[expose] def faceSides (perimeters : Perimeters
   assemblies) (position : Fin grid.faces.regulars.length) :
     Assembly.SideGrid (PieceIndices.columns (partitions.get position)) (PieceIndices.rows (partitions.get position)) :=
   fun column row =>
@@ -184,7 +184,7 @@ namespace FaceAssembly
 
 /-- Each corner reads the owner at the endpoint of the corresponding cached piece perimeter, including when a model-grid
 cut meets an observation cut. -/
-@[expose] def faceCorners (assemblies : ExteriorRequest.Assemblies energy cache coefficients) (position : Fin
+@[expose] def faceCorners (assemblies : Assemblies energy cache coefficients) (position : Fin
   grid.faces.regulars.length)
     (column : Fin ((PieceIndices.columns (partitions.get position)) + 1)) (row : Fin ((PieceIndices.rows (partitions.get
       position)) + 1)) :
@@ -203,9 +203,9 @@ namespace FaceAssembly.Perimeters
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly in
 /-- The retained Cartesian side-grid boundary equals the complete original piece exterior sum. -/
-theorem localBoundary_eq (perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters
+theorem localBoundary_eq (perimeters : Perimeters
   assemblies) (position : Fin grid.faces.regulars.length) :
-    Assembly.localBoundary (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides perimeters
+    Assembly.localBoundary (Perimeters.faceSides perimeters
       position) =
       FiniteSum.Fin.sumFin (fun piece => ((assemblies.get position).get piece).exterior) := by
   rw [PieceIndices.sum_pieces (partitions.get position)]
@@ -221,24 +221,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly in
 set_option genInjectivity false in
 /-- Cached face exterior and the exact internal defect, with every side and corner tied to the original piece
 assemblies. -/
-structure FaceAssembly (perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters assemblies)
+structure FaceAssembly (perimeters : Perimeters assemblies)
   (position : Fin grid.faces.regulars.length) where
   /-- The cached Cartesian corner values of the original piece assemblies. -/ corners : BilinearGridBoundary.Values
     (PieceIndices.columns (partitions.get position)) (PieceIndices.rows (partitions.get position))
   /-- Each cached corner reads exactly the original retained piece corner at its Cartesian index. -/ corners_eq : ∀
-    column row, corners column row = Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.faceCorners assemblies
+    column row, corners column row = FaceAssembly.faceCorners assemblies
     position column row
   /-- The cached whole-face exterior, including all actual observation-cut joining edges. -/ exterior :
-    Data.Gaussian.Basic.Canonical
+    Gaussian
   /-- The cached face exterior is exactly its retained outer sides plus all original exterior joins. -/ exterior_eq :
-    exterior = Assembly.exteriorSides (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides
+    exterior = Assembly.exteriorSides (Perimeters.faceSides
     perimeters position) +
     BilinearGridBoundary.exteriorJoins corners
-  /-- The cached complete corrected internal seam sum. -/ seams : Data.Gaussian.Basic.Canonical
+  /-- The cached complete corrected internal seam sum. -/ seams : Gaussian
   /-- The seam cache is exactly the corrected sum for the original sides and retained corners. -/ seams_eq : seams =
-    BilinearGridBoundary.correctedSeamSum (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides
+    BilinearGridBoundary.correctedSeamSum (Perimeters.faceSides
     perimeters position) corners
-  /-- The cached complete internal corner-polygon contribution. -/ cornerTotal : Data.Gaussian.Basic.Canonical
+  /-- The cached complete internal corner-polygon contribution. -/ cornerTotal : Gaussian
   /-- The corner cache is exactly the sum on the retained original corner grid. -/ cornerTotal_eq : cornerTotal =
     BilinearGridBoundary.cornerSum corners
   /-- The original piece exterior sum decomposes into the retained whole-face exterior, corrected seams and corner
@@ -251,30 +251,30 @@ namespace FaceAssembly
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly in
 /-- Cache the original face corner grid and whole exterior together with every exact internal defect. -/
-@[expose] def build (perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters
+@[expose] def build (perimeters : Perimeters
   assemblies) (position : Fin grid.faces.regulars.length) :
     FaceAssembly perimeters position := by
-  let corners := Data.Vector.Basic.vectorOfFn fun column => Data.Vector.Basic.vectorOfFn fun row =>
-    Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.faceCorners assemblies position column row
+  let corners := Basic.vectorOfFn fun column => Basic.vectorOfFn fun row =>
+    FaceAssembly.faceCorners assemblies position column row
   have readback (column : Fin ((PieceIndices.columns (partitions.get position)) + 1))
       (row : Fin ((PieceIndices.rows (partitions.get position)) + 1)) : corners column row =
-        Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.faceCorners assemblies position column row := by
+        FaceAssembly.faceCorners assemblies position column row := by
     dsimp only [corners]
-    rw [Data.Vector.Basic.vectorOfFn_apply, Data.Vector.Basic.vectorOfFn_apply]
+    rw [Basic.vectorOfFn_apply, Basic.vectorOfFn_apply]
   refine ⟨corners, readback,
-    Assembly.exteriorSides (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides perimeters
+    Assembly.exteriorSides (Perimeters.faceSides perimeters
       position) + BilinearGridBoundary.exteriorJoins corners, rfl,
-    BilinearGridBoundary.correctedSeamSum (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides
+    BilinearGridBoundary.correctedSeamSum (Perimeters.faceSides
       perimeters position) corners, rfl,
     BilinearGridBoundary.cornerSum corners, rfl, ?_⟩
   have equal := BilinearGridBoundary.localBoundary_sub_stitchedExterior
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides perimeters position) corners
-  rw [Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.localBoundary_eq perimeters position] at equal
+    (Perimeters.faceSides perimeters position) corners
+  rw [Perimeters.localBoundary_eq perimeters position] at equal
   calc
     _ = (FiniteSum.Fin.sumFin (fun piece => ((assemblies.get position).get piece).exterior) -
-        (Assembly.exteriorSides (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides perimeters
+        (Assembly.exteriorSides (Perimeters.faceSides perimeters
           position) + BilinearGridBoundary.exteriorJoins corners)) +
-        (Assembly.exteriorSides (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters.faceSides perimeters
+        (Assembly.exteriorSides (Perimeters.faceSides perimeters
           position) + BilinearGridBoundary.exteriorJoins corners) := by ring1
     _ = _ := by rw [equal]; ring1
 
@@ -285,14 +285,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly
 namespace FaceAssembly
 
 /-- The dependent vector of whole-face assemblies on the exact original retained perimeter family. -/
-@[expose] def FaceAssemblies (perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters
+@[expose] def FaceAssemblies (perimeters : Perimeters
   assemblies) :=
-  Data.Vector.DependentVector (fun position : Fin grid.faces.regulars.length =>
+  DependentVector (fun position : Fin grid.faces.regulars.length =>
     FaceAssembly perimeters position)
 
 /-- Build each whole-face assembly from its actual retained perimeter cache. -/
-@[expose] def faceAssemblies (perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters
-  assemblies) : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies perimeters :=
+@[expose] def faceAssemblies (perimeters : Perimeters
+  assemblies) : FaceAssemblies perimeters :=
   DependentVector.ofFn (build perimeters)
 
 end FaceAssembly
@@ -305,23 +305,23 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly
 namespace FaceAssembly.FaceAssemblies
 
 /-- The complete cached whole-face exterior sum on the original retained face family. -/
-@[expose] def exterior (faces : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies
+@[expose] def exterior (faces : FaceAssemblies
   perimeters) : Gaussian :=
   FiniteSum.Fin.sumFin (fun position => (faces.get position).exterior)
 
 /-- The complete actual internal seam and corner defect summed over all retained faces. -/
-@[expose] def defect (faces : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies
+@[expose] def defect (faces : FaceAssemblies
   perimeters) : Gaussian :=
   FiniteSum.Fin.sumFin (fun position => (faces.get position).seams + (faces.get position).cornerTotal)
 
 /-- The original piece exterior sum is exactly the whole-face exterior sum plus its full retained internal defect. -/
-theorem decomposition (faces : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies
+theorem decomposition (faces : FaceAssemblies
   perimeters) :
     ExteriorRequest.exterior assemblies =
-      Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.exterior faces +
-      Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.defect faces := by
-  unfold ExteriorRequest.exterior Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.exterior
-    Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.defect
+      FaceAssemblies.exterior faces +
+      FaceAssemblies.defect faces := by
+  unfold ExteriorRequest.exterior FaceAssemblies.exterior
+    FaceAssemblies.defect
   rw [← FiniteSum.Fin.sumFin_add]
   apply FiniteSum.Fin.sumFin_congr
   intro position
@@ -329,9 +329,9 @@ theorem decomposition (faces : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAs
 
 /-- The lower bound now concerns whole-face exteriors. The exact remaining internal defect is displayed, not silently
 discarded or declared small. -/
-theorem energy_lower (faces : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies
+theorem energy_lower (faces : FaceAssemblies
   perimeters)
-    {ownershipAllowance exteriorAllowance : Fraction.Rational}
+    {ownershipAllowance exteriorAllowance : Rational}
     (ownership : ConjugateRequest energy (ConjugateRequest.energyAllowanceTarget genus
       ownershipAllowance))
     (request : ExteriorRequest energy (ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
@@ -340,14 +340,14 @@ theorem energy_lower (faces : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAss
     (later : request.index ≤ stage) (samples : energy.Readings cache) (face : Attachment.Face) :
     (NewtonObservationSurfaceLower.surfaceLowerConstant observations - energyTarget - ownershipAllowance -
       exteriorAllowance) * PreparedObservationCoercivity.coefficientNormSq coefficients -
-        (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.defect faces).im / 4 ≤
-          (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.exterior faces).im / 4 := by
+        (FaceAssemblies.defect faces).im / 4 ≤
+          (FaceAssemblies.exterior faces).im / 4 := by
   have lower := ExteriorRequest.energy_lower ownership request ownershipPositive exteriorPositive later samples
     coefficients face assemblies
-  rw [Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.decomposition faces,
+  rw [FaceAssemblies.decomposition faces,
     Data.Gaussian.Basic.add_im] at lower
   exact (Fraction.Order.Arithmetic.sub_le_sub_direct lower (le_rfl (a :=
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.FaceAssemblies.defect faces).im / 4))).trans_eq
+    (FaceAssemblies.defect faces).im / 4))).trans_eq
     (by simp only [Fraction.Field.div_eq_mul_inv_direct]; ring1)
 
 end FaceAssembly.FaceAssemblies

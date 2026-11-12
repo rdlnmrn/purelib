@@ -34,33 +34,64 @@ open Purelib.Data
 set_option genInjectivity false in
 /-- A finite certificate that two dense Gaussian polynomials are coprime.
 
-The original nonzero unit and exact common-factor equality refer to the same completed Euclidean result on the two
-original inputs. No coefficient or common-factor selection is replaced. -/
+The original completed Euclidean result and both scaled coefficient polynomials
+are stored once. Their canonical result equality and scalar-unit readbacks refer
+to the same original inputs. -/
 public structure CoprimeCertificate (p q : GCD.CoefficientPolynomial) where
+  /-- The retained original completed Euclidean computation. -/
+  result : Purelib.Polynomial.Dense.GCD.BezoutResult p q
+  /-- The stored result is the original public algorithm's actual output. -/
+  result_eq : result = GCD.extendedGCD p q
   /-- The nonzero scalar returned as the computed gcd. -/ unit : GCD.Scalar
   /-- The retained gcd scalar is nonzero. -/ unit_ne_zero : unit ≠ 0
-  /-- Executable extended Euclid returns exactly the retained constant polynomial. -/ gcd_eq_constant : (GCD.extendedGCD
-    p q).gcd = DensePolynomial.constant unit
+  /-- The original canonical Euclidean gcd is the retained constant polynomial. -/
+  gcd_eq_constant : (GCD.extendedGCD p q).gcd = DensePolynomial.constant unit
+  /-- The cached original left coefficient scaled by the retained unit inverse. -/
+  left : DensePolynomial GCD.Scalar
+  /-- The left coefficient consumes the same stored Euclidean result. -/
+  left_eq : left = DensePolynomial.scale unit⁻¹ result.left
+  /-- The cached original right coefficient scaled by the retained unit inverse. -/
+  right : DensePolynomial GCD.Scalar
+  /-- The right coefficient consumes the same stored Euclidean result. -/
+  right_eq : right = DensePolynomial.scale unit⁻¹ result.right
 
 constructive_injectivity CoprimeCertificate
 
 namespace CoprimeCertificate
 
-/-- Scale the computed left Bezout coefficient by the inverse retained gcd unit.
+/-- The retained Euclidean result has the certificate's original constant gcd. -/
+public theorem result_gcd_eq_constant {p q : GCD.CoefficientPolynomial}
+    (certificate : CoprimeCertificate p q) :
+    certificate.result.gcd = DensePolynomial.constant certificate.unit :=
+  (congrArg (fun result : Purelib.Polynomial.Dense.GCD.BezoutResult p q => result.gcd)
+    certificate.result_eq).trans certificate.gcd_eq_constant
 
-The original Euclidean left coefficient and retained nonzero unit determine this exact scaled polynomial. The same
-source inputs and scalar inverse are retained. -/
-@[expose] public def left {p q : GCD.CoefficientPolynomial} (certificate : CoprimeCertificate p q) :
-    (DensePolynomial GCD.Scalar) :=
-  DensePolynomial.scale certificate.unit⁻¹ (GCD.extendedGCD p q).left
+/-- The same original polynomial inputs determine the complete retained canonical Euclidean certificate.
 
-/-- Scale the computed right Bezout coefficient by the inverse retained gcd unit.
-
-The original Euclidean right coefficient and retained nonzero unit determine this exact scaled polynomial. The same
-source inputs and scalar inverse are retained. -/
-@[expose] public def right {p q : GCD.CoefficientPolynomial} (certificate : CoprimeCertificate p q) :
-    (DensePolynomial GCD.Scalar) :=
-  DensePolynomial.scale certificate.unit⁻¹ (GCD.extendedGCD p q).right
+Both result equations identify the actual extended-Euclid cache. Its constant
+gcd determines the displayed unit by evaluation at zero, and the retained
+scaling equations then determine both coefficient caches. Arbitrary Bezout
+witnesses are not identified by this claim.
+-/
+public theorem eq_of_inputs {p q : GCD.CoefficientPolynomial}
+    (left right : CoprimeCertificate p q) : left = right := by
+  cases left with
+  | mk result resultEq unit unitNonzero gcdEq leftCoefficient leftEq rightCoefficient rightEq =>
+      cases right with
+      | mk otherResult otherResultEq otherUnit otherUnitNonzero otherGcdEq
+          otherLeft otherLeftEq otherRight otherRightEq =>
+          cases resultEq
+          cases otherResultEq
+          have unitEq : unit = otherUnit :=
+            (DensePolynomial.eval_constant unit 0).symm.trans
+              ((congrArg (fun polynomial => polynomial.eval 0) (gcdEq.symm.trans otherGcdEq)).trans
+                (DensePolynomial.eval_constant otherUnit 0))
+          cases unitEq
+          cases leftEq
+          cases otherLeftEq
+          cases rightEq
+          cases otherRightEq
+          rfl
 
 /-- The normalized finite Bézout identity.
 
@@ -70,24 +101,24 @@ public theorem identity {p q : GCD.CoefficientPolynomial}
     (certificate : CoprimeCertificate p q) (z : GCD.Scalar) :
     1 = certificate.left.eval z * p.eval z +
       certificate.right.eval z * q.eval z := by
-  have raw := (GCD.extendedGCD p q).identity z
-  rw [certificate.gcd_eq_constant, DensePolynomial.eval_constant] at raw
+  have raw := certificate.result.identity z
+  rw [certificate.result_gcd_eq_constant, DensePolynomial.eval_constant] at raw
   calc
     1 = certificate.unit⁻¹ * certificate.unit := by
       rw [Gaussian.Basic.mul_comm]
       exact (ExplicitField.mul_inv_cancel certificate.unit
         certificate.unit_ne_zero).symm
     _ = certificate.unit⁻¹ *
-        ((GCD.extendedGCD p q).left.eval z * p.eval z +
-          (GCD.extendedGCD p q).right.eval z * q.eval z) := by
+        (certificate.result.left.eval z * p.eval z +
+          certificate.result.right.eval z * q.eval z) := by
       rw [raw]
     _ = certificate.left.eval z * p.eval z +
         certificate.right.eval z * q.eval z := by
-      simp only [left, right, DensePolynomial.eval_scale]
+      rewrite [certificate.left_eq, certificate.right_eq, DensePolynomial.eval_scale, DensePolynomial.eval_scale]
       exact (Gaussian.Basic.left_distrib
         certificate.unit⁻¹
-        ((GCD.extendedGCD p q).left.eval z * p.eval z)
-        ((GCD.extendedGCD p q).right.eval z * q.eval z)).trans
+        (certificate.result.left.eval z * p.eval z)
+        (certificate.result.right.eval z * q.eval z)).trans
         (congrArg₂ (· + ·)
           (Gaussian.Basic.mul_assoc _ _ _).symm
           (Gaussian.Basic.mul_assoc _ _ _).symm)

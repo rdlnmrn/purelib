@@ -45,6 +45,10 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Approximation.Gaussian.Name.Coherent
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 public section
@@ -71,16 +75,16 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original rational box type retaining its coordinate bounds. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 open Purelib.Approximation.Gaussian in
 /-- An executable Gaussian approximation with quantitative refinement and sample bounds. -/
 abbrev Approximation := Sequence.ApproximationData
 /-- A coherent Gaussian name retaining its executable approximation. -/
-abbrev CoherentNamed := Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
+abbrev CoherentNamed := Approximation.Gaussian.Name.Coherent.CoherentNamed
 /-- Operational equivalence between the two original Gaussian names. -/
-abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 /-- The original certified winding-one polynomial root track. -/
-abbrev WindingOneTrack := Purelib.RootIsolation.Track.Basic.WindingOneTrack
+abbrev WindingOneTrack := RootIsolation.Track.Basic.WindingOneTrack
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
@@ -94,11 +98,11 @@ The search uses the original winding track's residual scale and starts at index 
 remain unchanged. -/
 @[expose] def baseIndex {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) : Nat :=
   Geometric.Search.firstQuarterBelow
     (CoherentRoot.residualScale
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo)
       ambient track)
     0 (SquareRootSheets.residualTarget parameter)
@@ -113,7 +117,7 @@ Samples use the maximum of the requested index and the base index, retaining the
 selecting a new root owner. -/
 @[expose] def approximation {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) : Approximation :=
   SquareRootSheets.tail
     (CoherentRoot.approximation track) (baseIndex track)
@@ -121,12 +125,25 @@ selecting a new root owner. -/
 /-- The tailed approximation sample is the anchor of the original track state at the maximum index. -/
 @[simp] theorem approximation_sample {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) (index : Nat) :
     (approximation track).sample index =
       (CoherentRoot.state track (max (baseIndex track) index)).box.anchor := by
   rw [approximation, SquareRootSheets.tail_sample,
     CoherentRoot.approximation_sample]
+
+/-- Every actual sample of the original tailed root approximation lies in its same initial owner box.
+
+The original maximum index selects a retained state refining the initial
+state. Its actual anchor therefore has the required containment without
+selecting another root track or rebuilding the sample cache.
+-/
+theorem approximation_sample_initial_inside {parameter : Gaussian} {ambient : Box}
+    (track : WindingOneTrack (Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient)
+    (index : Nat) : track.initial.box.Contains ((approximation track).sample index) := by
+  rewrite [approximation_sample]
+  exact (CoherentRoot.state_refines_of_le track (Nat.zero_le _)).contains
+    (CoherentRoot.state track (max (baseIndex track) index)).box.contains_anchor
 
 end
 
@@ -142,7 +159,7 @@ The estimate holds at the requested index even when the retained base index is l
 quarter-radius. -/
 theorem sample_residual_le {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (index : Nat) :
     normSq
@@ -150,24 +167,24 @@ theorem sample_residual_le {parameter : Gaussian} {ambient : Box}
             (approximation track).sample index - parameter) <=
       Geometric.Basic.quarterRadius
         (CoherentRoot.residualScale
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+          (Gaussian.rootPolynomial parameter
             SquareRootDegree.degreeTwo)
           ambient track) index := by
   let selected := max (baseIndex track) index
   have raw := CoherentRoot.sample_residual_le track (by
-    rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+    rw [Gaussian.rootPolynomial_degree]
     exact SquareRootDegree.degreeTwo.positive) selected
-  rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval] at raw
+  rw [Gaussian.rootPolynomial_eval] at raw
   have selectedBound := quarterRadius_antitone
     (CoherentRoot.residualScale_nonneg
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo)
       ambient track)
     (show index ≤ max (baseIndex track) index from by
       rw [Order.max_eq_natMax]
       exact Order.le_max_right (baseIndex track) index)
   simpa only [approximation, SquareRootSheets.tail_sample,
-    selected, SquareRootDegree.degreeTwo_value, Basic.Canonical.normSq, Data.Gaussian.Norm.Basic.normSq, pow_two] using
+    selected, SquareRootDegree.degreeTwo_value, normSq, Norm.Basic.normSq, pow_two] using
       raw.trans selectedBound
 
 /-- For a nonzero radicand, every tailed sample has residual below its fixed nonzero threshold.
@@ -177,7 +194,7 @@ its residual obeys the fixed nonzero-radicand threshold. -/
 theorem sample_residual_lt_target {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (index : Nat) :
     normSq
@@ -185,7 +202,7 @@ theorem sample_residual_lt_target {parameter : Gaussian} {ambient : Box}
             (approximation track).sample index - parameter) <
       SquareRootSheets.residualTarget parameter := by
   let scale := CoherentRoot.residualScale
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    (Gaussian.rootPolynomial parameter
       SquareRootDegree.degreeTwo)
     ambient track
   have baseSmall : Geometric.Basic.quarterRadius scale
@@ -193,28 +210,28 @@ theorem sample_residual_lt_target {parameter : Gaussian} {ambient : Box}
       SquareRootSheets.residualTarget parameter := by
     exact Geometric.Search.firstQuarterBelow_accurate scale
       (CoherentRoot.residualScale_nonneg
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+        (Gaussian.rootPolynomial parameter
           SquareRootDegree.degreeTwo)
         ambient track)
       0 (SquareRootSheets.residualTarget parameter)
       (SquareRootSheets.residualTarget_positive parameterNonzero)
   let selected := max (baseIndex track) index
   have raw := CoherentRoot.sample_residual_le track (by
-    rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+    rw [Gaussian.rootPolynomial_degree]
     exact SquareRootDegree.degreeTwo.positive) selected
-  rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval] at raw
+  rw [Gaussian.rootPolynomial_eval] at raw
   have selectedSmall : Geometric.Basic.quarterRadius scale selected <
       SquareRootSheets.residualTarget parameter :=
     (quarterRadius_antitone
       (CoherentRoot.residualScale_nonneg
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+        (Gaussian.rootPolynomial parameter
           SquareRootDegree.degreeTwo)
         ambient track)
       (show baseIndex track ≤ max (baseIndex track) index from by
         rw [Order.max_eq_natMax]
         exact Order.le_max_left (baseIndex track) index)).trans_lt baseSmall
   simpa only [approximation, SquareRootSheets.tail_sample,
-    selected, SquareRootDegree.degreeTwo_value, Basic.Canonical.normSq, Data.Gaussian.Norm.Basic.normSq, pow_two] using
+    selected, SquareRootDegree.degreeTwo_value, normSq, Norm.Basic.normSq, pow_two] using
       raw.trans_lt selectedSmall
 
 end
@@ -229,32 +246,50 @@ The finite search starts at zero and retains the track's residual scale and
 supplied target. Its selected index belongs to the same quadratic root track. -/
 @[expose] def residualIndex {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (target : Coordinate) (_positive : 0 < target) : Nat :=
   Geometric.Search.firstQuarterBelow
     (CoherentRoot.residualScale
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo)
       ambient track) 0 target
 
 /-- The selected residual index makes the original geometric residual bound strictly smaller than the target. -/
 theorem residualIndex_accurate {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (target : Coordinate) (positive : 0 < target) :
     Geometric.Basic.quarterRadius
         (CoherentRoot.residualScale
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+          (Gaussian.rootPolynomial parameter
             SquareRootDegree.degreeTwo)
           ambient track)
         (residualIndex track target positive) < target := by
   exact Geometric.Search.firstQuarterBelow_accurate _
     (CoherentRoot.residualScale_nonneg
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo)
       ambient track) 0 target positive
+
+/-- Every actual original tailed sample beyond the retained residual index pays the same requested tolerance.
+
+The original finite residual search and geometric monotonicity apply at every
+later index of this very track. No apartness preparation, new owner or
+replacement numerical approximation is required.
+-/
+theorem sample_residual_lt_of_index {parameter : Gaussian} {ambient : Box}
+    (track : WindingOneTrack
+      (Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient)
+    (target : Coordinate) (positive : 0 < target) (index : Nat)
+    (later : residualIndex track target positive ≤ index) :
+    normSq ((approximation track).sample index * (approximation track).sample index - parameter) < target :=
+  (sample_residual_le track index).trans_lt
+    ((quarterRadius_antitone
+      (CoherentRoot.residualScale_nonneg
+        (Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient track) later).trans_lt
+      (residualIndex_accurate track target positive))
 
 end
 
@@ -265,7 +300,7 @@ open Purelib.Riemann.RootContinuation in
 theorem sample_norm_lower {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (index : Nat) :
     SquareRootSheets.sampleNormLower parameter <=
@@ -285,7 +320,7 @@ same root track. -/
 @[expose] def possibleApart {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) :
     Process.Apart.Possible.PossibleApart (approximation track).toProcess where
   lowerSq := SquareRootSheets.sampleNormLower parameter
@@ -295,7 +330,7 @@ same root track. -/
     intro state value possible
     change (approximation track).Possible state value at possible
     rcases possible with ⟨later, _order, rfl⟩
-    simpa only [Basic.Canonical.normSq, Data.Gaussian.Norm.Basic.normSq, pow_two] using
+    simpa only [normSq, Norm.Basic.normSq, pow_two] using
       sample_norm_lower parameterNonzero track later
 
 section
@@ -308,9 +343,9 @@ The coherent name retains this exact approximation, including its sample
 function, refinement indices and quantitative bounds. -/
 @[expose] def rawRoot {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) : CoherentNamed :=
-  Name.Coherent.CoherentNamed.ofApproximation
+  CoherentNamed.ofApproximation
     (approximation track)
 
 /-- Equip the original coherent root name with a retained apartness preparation.
@@ -320,9 +355,9 @@ identity. -/
 @[expose] def root {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) : CoherentNamed :=
-  Name.Coherent.CoherentNamed.apartify
+  CoherentNamed.apartify
     (rawRoot track) (possibleApart parameterNonzero track)
 
 /-- Read the retained apartness certificate of the prepared root name.
@@ -332,12 +367,29 @@ Its certificate bounds the possible values of that retained prepared name. -/
 @[expose] def rootApart {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) :
     Name.Basic.Named.Apart
       (root parameterNonzero track).name where
   certificate := Process.Apart.Preparation.apartifyApart
     (possibleApart parameterNonzero track)
+
+/-- Every possible value of the actual prepared root name meets the original fixed square-residual threshold.
+
+The original name retains the tailed approximation. Every possible candidate
+is one of its later samples, so the same track supplies the residual bound.
+-/
+theorem root_candidate_residual_lt {parameter : Gaussian} {ambient : Box}
+    (parameterNonzero : parameter ≠ 0)
+    (track : WindingOneTrack
+      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient)
+    (state : (root parameterNonzero track).name.process.State) {candidate : Gaussian}
+    (possible : (root parameterNonzero track).name.process.Possible state candidate) :
+    normSq (candidate * candidate - parameter) <
+      Purelib.Riemann.Branches.SquareRootSheets.residualTarget parameter := by
+  change (approximation track).Possible state.source candidate at possible
+  rcases possible with ⟨later, _order, rfl⟩
+  exact sample_residual_lt_target parameterNonzero track later
 
 /-- Prepare a root-name state meeting the requested residual tolerance and apartness condition.
 
@@ -346,7 +398,7 @@ lower bound. -/
 @[expose] def residualState {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (target : Coordinate) (positive : 0 < target) :
     (root parameterNonzero track).name.process.State := by
@@ -369,7 +421,7 @@ theorem residualState_candidate_residual_lt
     {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (target : Coordinate) (positive : 0 < target) {candidate : Gaussian}
     (possible : (root parameterNonzero track).name.process.Possible
@@ -389,14 +441,7 @@ theorem residualState_candidate_residual_lt
     exact (approximation track).refineIndex_ge _ _ _
   have indexLeLater : residualIndex track target positive <= later :=
     indexLeState.trans stateLeLater
-  have residual := sample_residual_le track later
-  have radiusLe := quarterRadius_antitone
-    (CoherentRoot.residualScale_nonneg
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
-        SquareRootDegree.degreeTwo)
-      ambient track) indexLeLater
-  exact residual.trans_lt
-    (radiusLe.trans_lt (residualIndex_accurate track target positive))
+  exact sample_residual_lt_of_index track target positive later indexLeLater
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Gaussian in
@@ -409,7 +454,7 @@ The radius scale is four times the original center bound times the track scale. 
 while retaining pointwise square samples. -/
 @[expose] def squareApproximation {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) : Approximation :=
   let source := approximation track
   let scale := 4 * source.centerBound *
@@ -417,8 +462,8 @@ while retaining pointwise square samples. -/
   { sample := fun index => source.sample index * source.sample index
     radiusSq := Geometric.Basic.quarterRadius scale
     radiusSq_nonneg := Geometric.Basic.quarterRadius_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide)
           source.centerBound_nonneg)
         (CoherentRoot.scale_positive track).le)
     later_close := by
@@ -433,24 +478,24 @@ while retaining pointwise square samples. -/
             rw [Order.max_eq_natMax]
             exact Order.le_max_right (baseIndex track) earlier)
       have firstTerm :
-          Data.Gaussian.Norm.Basic.normSq ((source.sample later - source.sample earlier) *
+          Norm.Basic.normSq ((source.sample later - source.sample earlier) *
               source.sample later) <=
             Geometric.Basic.quarterRadius
                 (CoherentRoot.scale track) earlier *
               source.centerBound := by
         rw [Norm.Basic.normSq_mul]
-        exact Fraction.Order.Arithmetic.mul_le_mul_direct
+        exact Arithmetic.mul_le_mul_direct
           (movement.trans sourceRadiusLe) (source.sample_bounded later)
           (Norm.Basic.normSq_nonneg _) (Geometric.Basic.quarterRadius_nonneg
             (CoherentRoot.scale_positive track).le earlier)
       have secondTerm :
-          Data.Gaussian.Norm.Basic.normSq (source.sample earlier *
+          Norm.Basic.normSq (source.sample earlier *
               (source.sample later - source.sample earlier)) <=
             source.centerBound *
               Geometric.Basic.quarterRadius
                 (CoherentRoot.scale track) earlier := by
         rw [Norm.Basic.normSq_mul]
-        exact Fraction.Order.Arithmetic.mul_le_mul_direct
+        exact Arithmetic.mul_le_mul_direct
           (source.sample_bounded earlier) (movement.trans sourceRadiusLe)
           (Norm.Basic.normSq_nonneg _) source.centerBound_nonneg
       have identity :
@@ -464,15 +509,15 @@ while retaining pointwise square samples. -/
           simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im] <;> ring1
       rw [identity]
       calc
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
             ((source.sample later - source.sample earlier) *
                 source.sample later +
               source.sample earlier *
                 (source.sample later - source.sample earlier)) <=
           2 *
-            (Data.Gaussian.Norm.Basic.normSq ((source.sample later - source.sample earlier) *
+            (Norm.Basic.normSq ((source.sample later - source.sample earlier) *
                 source.sample later) +
-              Data.Gaussian.Norm.Basic.normSq (source.sample earlier *
+              Norm.Basic.normSq (source.sample earlier *
                 (source.sample later - source.sample earlier))) :=
           Norm.Bounds.normSq_add_le_two _ _
         _ <= 2 *
@@ -482,7 +527,7 @@ while retaining pointwise square samples. -/
               source.centerBound *
                 Geometric.Basic.quarterRadius
                   (CoherentRoot.scale track) earlier) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add firstTerm secondTerm) (by decide)
         _ = Geometric.Basic.quarterRadius scale earlier := by
           rw [Geometric.Basic.quarterRadius_eq_mul_pow,
@@ -495,17 +540,17 @@ while retaining pointwise square samples. -/
       Geometric.Search.firstQuarterBelow_ge scale current target
     refineIndex_accurate :=
       Geometric.Search.firstQuarterBelow_accurate scale
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct (by decide)
             source.centerBound_nonneg)
           (CoherentRoot.scale_positive track).le)
     centerBound := source.centerBound * source.centerBound
-    centerBound_nonneg := Fraction.Order.Arithmetic.mul_nonneg_direct
+    centerBound_nonneg := Arithmetic.mul_nonneg_direct
       source.centerBound_nonneg source.centerBound_nonneg
     sample_bounded := by
       intro index
       rw [Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct
+      exact Arithmetic.mul_le_mul_direct
         (source.sample_bounded index) (source.sample_bounded index)
         (Norm.Basic.normSq_nonneg _) source.centerBound_nonneg }
 
@@ -515,7 +560,7 @@ open Purelib.Riemann.RootContinuation in
 @[simp] theorem squareApproximation_sample {parameter : Gaussian}
     {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient)
     (index : Nat) :
     (squareApproximation track).sample index =
@@ -534,7 +579,7 @@ below the requested tolerance. -/
 @[expose] def squareApproximation_equivalent_parameter {parameter : Gaussian}
     {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) :
     Equivalence.Equivalent
       (squareApproximation track)
@@ -543,14 +588,14 @@ below the requested tolerance. -/
     intro leftStart rightStart target positive
     let start := max leftStart rightStart
     let scale := CoherentRoot.residualScale
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo)
       ambient track
     let index := Geometric.Search.firstQuarterBelow scale start target
     have radiusSmall : Geometric.Basic.quarterRadius scale index < target :=
       Geometric.Search.firstQuarterBelow_accurate scale
         (CoherentRoot.residualScale_nonneg
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+          (Gaussian.rootPolynomial parameter
             SquareRootDegree.degreeTwo)
           ambient track) start target positive
     exact
@@ -569,12 +614,12 @@ below the requested tolerance. -/
           have residualBound := sample_residual_le track leftLater
           have radiusLater := quarterRadius_antitone
             (CoherentRoot.residualScale_nonneg
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+              (Gaussian.rootPolynomial parameter
                 SquareRootDegree.degreeTwo)
               ambient track) leftOrder
           simpa only [squareApproximation_sample,
             Sequence.Constant.constantApproximation,
-            Basic.Canonical.normSq, Data.Gaussian.Norm.Basic.normSq, pow_two] using
+            normSq, Norm.Basic.normSq, pow_two] using
               residualBound.trans_lt (radiusLater.trans_lt radiusSmall) }
 
 section
@@ -587,10 +632,10 @@ The comparison passes through the retained pointwise square approximation and it
 comparison. -/
 @[expose] def rawRoot_square {parameter : Gaussian} {ambient : Box}
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) :
     NamedEquivalent
-      (Name.Coherent.CoherentNamed.mul
+      (CoherentNamed.mul
         (rawRoot track) (rawRoot track)).name
       (Name.Basic.Named.exact parameter) := by
   let source := approximation track
@@ -606,8 +651,8 @@ comparison. -/
       (squareApproximation_equivalent_parameter track)
   exact Equivalence.NamedEquivalent.trans
     (by simpa only [rawRoot,
-      Name.Coherent.CoherentNamed.mul,
-      Name.Coherent.CoherentNamed.ofApproximation, source, product]
+      CoherentNamed.mul,
+      CoherentNamed.ofApproximation, source, product]
       using actualToProduct)
     (Equivalence.NamedEquivalent.trans productToConstant
       (Equivalence.NamedEquivalent.symm
@@ -619,10 +664,10 @@ Multiplication respects the retained equivalence between the prepared name and i
 @[expose] def root_square {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) :
     NamedEquivalent
-      (Name.Coherent.CoherentNamed.mul
+      (CoherentNamed.mul
         (root parameterNonzero track)
         (root parameterNonzero track)).name
       (Name.Basic.Named.exact parameter) := by
@@ -630,12 +675,12 @@ Multiplication respects the retained equivalence between the prepared name and i
   let prepared := root parameterNonzero track
   have preparedToRaw : NamedEquivalent prepared.name raw.name :=
     Equivalence.NamedEquivalent.symm
-      (Name.Coherent.CoherentNamed.apartifyEquivalent raw
+      (CoherentNamed.apartifyEquivalent raw
         (possibleApart parameterNonzero track))
   have products : NamedEquivalent
-      (Name.Coherent.CoherentNamed.mul prepared prepared).name
-      (Name.Coherent.CoherentNamed.mul raw raw).name :=
-    Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects
+      (CoherentNamed.mul prepared prepared).name
+      (CoherentNamed.mul raw raw).name :=
+    Arithmetic.Product.Congruence.coherentMul_respects
       prepared raw prepared raw preparedToRaw preparedToRaw
   exact Equivalence.NamedEquivalent.trans products
     (rawRoot_square track)
@@ -652,7 +697,7 @@ structure Certificate (parameter : Gaussian) where
   /-- The retained coherent Gaussian root name. -/ value : CoherentNamed
   /-- The retained root name stays quantitatively away from zero. -/ apart : Name.Basic.Named.Apart value.name
   /-- The square of the retained root name is equivalent to the exact original radicand. -/ square : NamedEquivalent
-    (Name.Coherent.CoherentNamed.mul value value).name
+    (CoherentNamed.mul value value).name
     (Name.Basic.Named.exact parameter)
 
 constructive_injectivity Certificate
@@ -665,7 +710,7 @@ All three fields refer to the same nonzero radicand and the same certified root 
 @[expose] def certificate {parameter : Gaussian} {ambient : Box}
     (parameterNonzero : parameter ≠ 0)
     (track : WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) ambient) :
     Certificate parameter where
   value := root parameterNonzero track

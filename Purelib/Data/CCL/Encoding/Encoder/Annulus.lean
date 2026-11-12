@@ -1,4 +1,5 @@
 module
+public import Purelib.Algebra.NatCast
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Nat.Multiplication
 import Purelib.Algebra.NatCast
@@ -12,8 +13,8 @@ public import Purelib.Data.Nat.BinaryNormalization
 import Purelib.Data.Rat.Fraction.Basic
 public import Purelib.Data.Rat.Fraction.Cast.Order
 import Purelib.Data.Rat.Fraction.Field
-import Purelib.Data.Rat.Fraction.Order.Field
-import Purelib.Geometry.Projective.SectorBlock.Tail
+public import Purelib.Data.Rat.Fraction.Order.Field
+public import Purelib.Geometry.Projective.SectorBlock.Tail
 
 import Purelib.Data.Gaussian.Power
 import Purelib.Data.GaussianInt.Norm.Basic
@@ -32,6 +33,10 @@ import Mathlib.Algebra.Group.Nat.Defs
 public import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
+public import Purelib.Data.CCL.Encoding.Parser.Semantics.Basic
+public import Purelib.Data.GaussianInt.Fraction.Scale
+
+open Purelib.Data.GaussianInt.Fraction.Basic
 
 -- Preserve the existing nominal `Annulus.Annulus` record and its field API.
 
@@ -50,9 +55,9 @@ The closed-band witness belongs to that exact fraction readback; the displayed i
 available for norm descent. -/
 structure Annulus where
   /-- The retained displayed Gaussian-integer fraction. -/ frac :
-    GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias
+    SourceEncodingEncoderFracAlias
   /-- Evidence that this fraction's exact value lies in the closed unit-to-two squared-norm band. -/ band :
-    ComplexContinuedFraction.Encoding.Sector.Band frac.value
+    Sector.Band frac.value
 
 constructive_injectivity Annulus
 
@@ -75,13 +80,17 @@ set_option genInjectivity false in
 
 The numerator equals the post-inversion numerator and the denominator is the retained integer gamma power times the
 original denominator. Its natural norm is strictly below the supplied old measure. -/
-structure LoopResult (post : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias) (oldMeasure : Nat) where
+structure LoopResult (post : SourceEncodingEncoderFracAlias) (oldMeasure : Nat) where
   /-- The exact normalization exponent returned by the retained binary scan. -/ exponent : Nat
   /-- The exact normalized displayed fraction and its annulus witness. -/ annulus : Annulus
   /-- The normalized numerator equals the exact post-inversion numerator. -/ num_eq : annulus.frac.numerator =
     post.numerator
   /-- The normalized denominator is the retained integer gamma power times the original post-inversion denominator. -/
     den_eq : annulus.frac.denominator = GaussianInt.natPow GaussianInt.gammaInt exponent * post.denominator
+  /-- The original post-inversion reading satisfies the selected loop's strict/weak radial bracket. -/
+  radialBracket : Parser.Semantics.Basic.radialBracket .loop exponent post.value
+  /-- The normalized value is the same retained annulus reading. -/
+  normalizedValue : Parser.Semantics.Basic.normalizedValue .loop exponent post.value = annulus.frac.value
   /-- The normalized denominator norm is strictly below the retained old measure. -/ measure_lt : GaussianInt.normNat
     annulus.frac.denominator < oldMeasure
 
@@ -109,12 +118,12 @@ The new numerator is the old denominator; the new denominator is integer gamma t
 Both identities and the strict descent refer to those retained fields. -/
 structure PostInversion (old : Annulus) where
   /-- The retained displayed Gaussian-integer fraction. -/ frac :
-    GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias
+    SourceEncodingEncoderFracAlias
   /-- The post-inversion numerator equals the original annulus denominator. -/ num_eq : frac.numerator =
     old.frac.denominator
   /-- The post-inversion denominator is integer gamma times the exact selected-sector residual. -/ den_eq :
     frac.denominator = GaussianInt.gammaInt *
-    (old.frac.numerator - Sector.Integral.sectorInt (ComplexContinuedFraction.Encoding.Sector.select old.frac.value) *
+    (old.frac.numerator - Sector.Integral.sectorInt (Sector.select old.frac.value) *
       old.frac.denominator)
   /-- The post-inversion denominator norm is strictly below the original annulus denominator norm. -/ den_descent :
     GaussianInt.normNat frac.denominator < GaussianInt.normNat old.frac.denominator
@@ -139,11 +148,11 @@ open Purelib.Data.ComplexContinuedFraction.Encoding in
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- The retained numerator and denominator norm bounds place the fraction in the initial half-open annulus. -/
-private theorem frac_entry_of_bounds (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+private theorem frac_entry_of_bounds (fraction : SourceEncodingEncoderFracAlias)
     (lower : GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator)
     (upper : GaussianInt.normNat fraction.numerator < 2 * GaussianInt.normNat fraction.denominator) :
-    ComplexContinuedFraction.Encoding.Sector.Entry fraction.value := by
-  rw [ComplexContinuedFraction.Encoding.Sector.Entry, ← Norm.Basic.normSq_eq_canonical,
+    Sector.Entry fraction.value := by
+  rw [Sector.Entry, ← Norm.Basic.normSq_eq_canonical,
     GaussianInt.Fraction.normSq_value]
   have denominatorPositive :
       (0 : Fraction.Basic.Rational) < (GaussianInt.normNat fraction.denominator : Nat) :=
@@ -171,11 +180,11 @@ open Purelib.Data.ComplexContinuedFraction.Encoding in
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- The retained strict lower and weak upper norm bounds place the fraction in the loop half-open annulus. -/
-private theorem frac_loop_of_bounds (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+private theorem frac_loop_of_bounds (fraction : SourceEncodingEncoderFracAlias)
     (lower : GaussianInt.normNat fraction.denominator < GaussianInt.normNat fraction.numerator)
     (upper : GaussianInt.normNat fraction.numerator ≤ 2 * GaussianInt.normNat fraction.denominator) :
-    ComplexContinuedFraction.Encoding.Sector.Loop fraction.value := by
-  rw [ComplexContinuedFraction.Encoding.Sector.Loop, ← Norm.Basic.normSq_eq_canonical,
+    Sector.Loop fraction.value := by
+  rw [Sector.Loop, ← Norm.Basic.normSq_eq_canonical,
     GaussianInt.Fraction.normSq_value]
   have denominatorPositive :
       (0 : Fraction.Basic.Rational) < (GaussianInt.normNat fraction.denominator : Nat) :=
@@ -208,10 +217,10 @@ open Purelib.Data.Rat in
 The original numerator norm equals the supplied old measure and strictly exceeds denominator norm. The retained binary
 loop scan determines the exponent; only the denominator is scaled, and all original representation identities are
 stored. -/
-@[expose] def normalizeLoop (post : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias) (oldMeasure : Nat)
+@[expose] def normalizeLoop (post : SourceEncodingEncoderFracAlias) (oldMeasure : Nat)
     (postStrict : GaussianInt.normNat post.denominator < GaussianInt.normNat post.numerator)
     (numeratorMeasure : GaussianInt.normNat post.numerator = oldMeasure) :
-    CCL.Encoding.Encoder.Annulus.LoopResult post oldMeasure := by
+    LoopResult post oldMeasure := by
   let scan := BinaryNormalization.loop
     (GaussianInt.normNat post.numerator) (GaussianInt.normNat post.denominator)
     (GaussianInt.normNat_pos post.denominatorNonzero) postStrict
@@ -235,8 +244,8 @@ stored. -/
           2 ^ (scan.exponent + 1) * GaussianInt.normNat post.denominator := scan.upper
       _ = 2 * (2 ^ scan.exponent * GaussianInt.normNat post.denominator) := by
         rw [Nat.pow_succ, Nat.mul_comm (2 ^ scan.exponent) 2, Multiplication.mul_assoc]
-  let loop : ComplexContinuedFraction.Encoding.Sector.Loop normalized.value := by
-    rw [ComplexContinuedFraction.Encoding.Sector.Loop, ← Norm.Basic.normSq_eq_canonical,
+  let loop : Sector.Loop normalized.value := by
+    rw [Sector.Loop, ← Norm.Basic.normSq_eq_canonical,
       GaussianInt.Fraction.normSq_value]
     have denominatorPositive :
         (0 : Fraction.Basic.Rational) < (GaussianInt.normNat normalized.denominator : Nat) :=
@@ -249,7 +258,25 @@ stored. -/
     · apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
       have castUpper := Fraction.Cast.Order.natCast_le_direct upper
       simpa only [NatCast.mul, Nat.cast_ofNat] using castUpper
-  refine ⟨scan.exponent, ⟨normalized, ⟨loop.1.le, loop.2⟩⟩, rfl, rfl, ?_⟩
+  have radial : Parser.Semantics.Basic.radialBracket .loop scan.exponent post.value := by
+    change (2 : Fraction.Rational) ^ scan.exponent < Basic.Canonical.normSq post.value ∧ _
+    rewrite [← Norm.Basic.normSq_eq_canonical, GaussianInt.Fraction.normSq_value]
+    have denominatorPositive := Fraction.Cast.Order.natCast_pos_direct
+      (GaussianInt.normNat_pos post.denominatorNonzero)
+    constructor
+    · apply (Fraction.Order.Field.lt_div_iff_pos denominatorPositive).mpr
+      have retained := Fraction.Cast.Order.natCast_lt_direct scan.lower
+      simpa only [NatCast.mul, NatCast.pow, Nat.cast_ofNat, -eq_self, -iff_self] using retained
+    · apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).mpr
+      have retained := Fraction.Cast.Order.natCast_le_direct scan.upper
+      simpa only [NatCast.mul, NatCast.pow, Nat.cast_ofNat, -eq_self, -iff_self] using retained
+  refine ⟨scan.exponent, ⟨normalized, ⟨loop.1.le, loop.2⟩⟩, rfl, rfl, radial, ?_, ?_⟩
+  · change post.value * (Power.natPow Basic.Canonical.gamma scan.exponent)⁻¹ = normalized.value
+    have scaled := GaussianInt.Fraction.Scale.value_of_scaled_den post normalized scan.exponent rfl rfl
+    rewrite [← scaled, Basic.mul_assoc, Basic.mul_comm normalized.value,
+      ← Basic.mul_assoc, Basic.Canonical.mul_inv_cancel _
+        (Power.natPow_ne_zero_direct Basic.Canonical.gamma (by decide) scan.exponent), Basic.one_mul]
+    rfl
   calc
     GaussianInt.normNat normalized.denominator < GaussianInt.normNat normalized.numerator := lower
     _ = GaussianInt.normNat post.numerator := rfl
@@ -274,9 +301,9 @@ The exact selected integral residual is nonzero. Retain the old denominator as n
 residual as denominator, using the original sector contraction to certify descent. -/
 @[expose] def postInversion (old : Annulus)
     (residualNonzero :
-      old.frac.numerator - Sector.Integral.sectorInt (ComplexContinuedFraction.Encoding.Sector.select old.frac.value) *
-        old.frac.denominator ≠ 0) : CCL.Encoding.Encoder.Annulus.PostInversion old := by
-  let sector := ComplexContinuedFraction.Encoding.Sector.select old.frac.value
+      old.frac.numerator - Sector.Integral.sectorInt (Sector.select old.frac.value) *
+        old.frac.denominator ≠ 0) : PostInversion old := by
+  let sector := Sector.select old.frac.value
   let residual := old.frac.numerator - Sector.Integral.sectorInt sector * old.frac.denominator
   have residualNonzero' : residual ≠ 0 := by
     simpa only [residual, sector] using residualNonzero
@@ -284,9 +311,9 @@ residual as denominator, using the original sector contraction to certify descen
   have denominatorNonzero : denominator ≠ 0 :=
     GaussianInt.mul_ne_zero (by decide) residualNonzero'
   let next : GaussianInt.Fraction := ⟨old.frac.denominator, denominator, denominatorNonzero⟩
-  have descent := CCL.Encoding.Block.Descent.inversion_stage_descent
+  have descent := Block.Descent.inversion_stage_descent
     old.frac.denominatorGaussianNonzero old.band sector
-    (ComplexContinuedFraction.Encoding.Sector.select_spec old.frac.value old.band.1)
+    (Sector.select_spec old.frac.value old.band.1)
     old.frac.value_mul_denominator.symm
   have denominatorMap : GaussianInt.toGaussian denominator =
       Basic.Canonical.gamma *
@@ -314,12 +341,12 @@ open Purelib.Data.ComplexContinuedFraction.Encoding in
 open Purelib.Data.Gaussian in
 open Purelib.Geometry.Projective in
 /-- The retained post-inversion fraction is a compatible tail modeling the original annulus value. -/
-private theorem post_compatible (annulus : Annulus)
-    (post : CCL.Encoding.Encoder.Annulus.PostInversion annulus) :
-    SectorBlock.Tail.SourceEncodingEncoderCompatibleTailAlias (ComplexContinuedFraction.Encoding.Sector.select
+theorem post_compatible (annulus : Annulus)
+    (post : PostInversion annulus) :
+    SectorBlock.Tail.SourceEncodingEncoderCompatibleTailAlias (Sector.select
       annulus.frac.value)
       post.frac.value annulus.frac.value := by
-  let sector := ComplexContinuedFraction.Encoding.Sector.select annulus.frac.value
+  let sector := Sector.select annulus.frac.value
   have postNumerator : GaussianInt.toGaussian post.frac.numerator =
       GaussianInt.toGaussian annulus.frac.denominator := by rw [post.num_eq]
   have postDenominator : GaussianInt.toGaussian post.frac.denominator =
@@ -406,7 +433,7 @@ private theorem post_compatible (annulus : Annulus)
   refine
     { equation := ?_
       band := annulus.band
-      holds := ComplexContinuedFraction.Encoding.Sector.select_spec annulus.frac.value annulus.band.1 }
+      holds := Sector.select_spec annulus.frac.value annulus.band.1 }
   apply Field.mul_right_cancel_of_ne
     post.frac.denominatorGaussianNonzero
   exact leftScaled.trans rightScaled.symm
@@ -426,7 +453,7 @@ open Purelib.Data in
 open Purelib.Data.ComplexContinuedFraction.Encoding in
 open Purelib.Data.Gaussian in
 /-- A zero displayed residual makes the annulus fraction value equal the retained sector representative. -/
-private theorem terminal_value_eq_rep (annulus : Annulus) (sector :
+theorem terminal_value_eq_rep (annulus : Annulus) (sector :
   Sector.Basic.SourceEncodingEncoderSectorAlias)
     (residualZero :
       annulus.frac.numerator - Sector.Integral.sectorInt sector * annulus.frac.denominator = 0) :

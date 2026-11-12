@@ -80,19 +80,19 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Curves.Hyperelliptic.Branches (BranchCellBank)
 open Purelib.Riemann.Paths.PreparedPathWinding.ClearPath (rawWinding)
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : ClearGrid polynomial
   ambient}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames grid}
+  {frames : RootFrames grid}
 
 namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 /-- Transport through the original retained grid walk is injective on the two starting root sheets. -/
 theorem target_injective
     (edges : RootEdgeBank frames)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point →
+    (reference : ∀ point, ContainsVertex grid point →
       OwnerLoopMonodromy.WindingOneLoop polynomial point)
-    {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk grid start finish) : Function.Injective
+    {start finish : Basic.Canonical} (walk : Walks.Walk grid start finish) : Function.Injective
       (RootEdgeBank.target edges walk) := by
   intro first last equal
   exact (edges.target_reverse reference walk first).symm.trans
@@ -102,10 +102,10 @@ theorem target_injective
 subdivisions or grid routes. -/
 theorem target_eq_of_winding
     (edges : RootEdgeBank frames)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point →
+    (reference : ∀ point, ContainsVertex grid point →
       OwnerLoopMonodromy.WindingOneLoop polynomial point)
-    {start finish : Data.Gaussian.Basic.Canonical} (first last : Walks.Walk grid start finish) (member :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex grid start)
+    {start finish : Basic.Canonical} (first last : Walks.Walk grid start finish) (member :
+      ContainsVertex grid start)
     (winding : ClearPath.rawWinding first.path = ClearPath.rawWinding last.path) (sheet : Fin 2) :
     RootEdgeBank.target edges first sheet = RootEdgeBank.target edges last sheet := by
   have raw : ClearPath.rawWinding (first.append last.reverse).path = 8 * (0 : Int) := by
@@ -120,18 +120,18 @@ theorem target_eq_of_winding
 
 end Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
-  ambient} {box : Purelib.Geometry.Rational.Box}
+variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : ClearGrid polynomial
+  ambient} {box : Geometry.Rational.Box}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WindowRootTransport
 
 /-- The two literal L-shaped connectors traverse this window's boundary with its positive orientation, including every
 retained intermediate cut. -/
 theorem corner_winding (window :
-  Polynomial.Geometry.Grid.WindowBoundary.Window grid box)
-    (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid (Components.Basic.point box.xLower box.yLower))
-    (last : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid (Components.Basic.point box.xUpper box.yUpper)) :
+  Window grid box)
+    (first : ContainsVertex grid (Components.Basic.point box.xLower box.yLower))
+    (last : ContainsVertex grid (Components.Basic.point box.xUpper box.yUpper)) :
     ClearPath.rawWinding ((Grid.connect grid _ _ first last).append
       (Grid.connect grid _ _ last first)).path =
       ClearPath.rawWinding window.boundary.path := by
@@ -154,12 +154,12 @@ theorem corner_winding (window :
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WindowRootTransport
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {faces : PuncturedFaces bank} {window :
-    Polynomial.Geometry.Grid.WindowBoundary.Window bank.grid box} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+    Window bank.grid box} {frames :
+    RootFrames bank.grid}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WindowRootTransport
 
@@ -168,16 +168,16 @@ connector. -/
 theorem corner_target
     (count : Window.BranchCount faces window)
     (edges : RootEdgeBank frames)
-    (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid (Components.Basic.point box.xLower
+    (first : ContainsVertex bank.grid (Components.Basic.point box.xLower
       box.yLower))
-    (last : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid (Components.Basic.point box.xUpper
+    (last : ContainsVertex bank.grid (Components.Basic.point box.xUpper
       box.yUpper)) (sheet : Fin 2) :
     RootEdgeBank.target edges (Grid.connect bank.grid _ _ first last) sheet =
       RootEdgeBank.target edges (Grid.connect bank.grid _ _ last first).reverse
         (count.action sheet) := by
   let reference := fun point member =>
     (BranchCellBank.referenceAt bank point member).toLoop
-  have loop := Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank.target_eq_of_winding edges reference
+  have loop := RootEdgeBank.target_eq_of_winding edges reference
     ((Grid.connect bank.grid _ _ first last).append
       (Grid.connect bank.grid _ _ last first)) window.boundary first
     (corner_winding window first last) sheet

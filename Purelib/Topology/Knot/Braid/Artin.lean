@@ -111,30 +111,30 @@ namespace Word
 
 /-- The original braid words induce pointwise equal executable strand permutations. -/
 @[expose] def PermutationSame {strands : Nat} (left right : Word strands) : Prop :=
-  Data.Fin.Bijection.Same
+  Same
     left.permutation right.permutation
 
 /-- Every original braid word has the same strand permutation as itself. -/
 theorem permutationSame_refl {strands : Nat} (word : Word strands) :
-    Word.PermutationSame word word := fun _ => rfl
+    PermutationSame word word := fun _ => rfl
 
 /-- Reverse pointwise equality of the original word permutations. -/
 theorem permutationSame_symm {strands : Nat} {left right : Word strands}
-    (same : Word.PermutationSame left right) : Word.PermutationSame right left :=
+    (same : PermutationSame left right) : PermutationSame right left :=
   Data.Fin.Bijection.same_symm same
 
 /-- Compose pointwise equalities of three original word permutations. -/
 theorem permutationSame_trans {strands : Nat} {first second third : Word strands}
-    (firstSecond : Word.PermutationSame first second)
-    (secondThird : Word.PermutationSame second third) :
-    Word.PermutationSame first third :=
+    (firstSecond : PermutationSame first second)
+    (secondThird : PermutationSame second third) :
+    PermutationSame first third :=
   Data.Fin.Bijection.same_trans firstSecond secondThird
 
 /-- Prefixing the same original word preserves permutation equality. -/
 theorem permutationSame_append_left {strands : Nat}
     (before : Word strands) {left right : Word strands}
-    (same : Word.PermutationSame left right) :
-    Word.PermutationSame (before ++ left) (before ++ right) := by
+    (same : PermutationSame left right) :
+    PermutationSame (before ++ left) (before ++ right) := by
   intro index
   calc
     (before ++ left).permutation.forward index =
@@ -148,8 +148,8 @@ theorem permutationSame_append_left {strands : Nat}
 /-- Appending the same original suffix preserves permutation equality. -/
 theorem permutationSame_append_right {strands : Nat}
     {left right : Word strands} (suffix : Word strands)
-    (same : Word.PermutationSame left right) :
-    Word.PermutationSame (left ++ suffix) (right ++ suffix) := by
+    (same : PermutationSame left right) :
+    PermutationSame (left ++ suffix) (right ++ suffix) := by
   intro index
   calc
     (left ++ suffix).permutation.forward index =
@@ -163,16 +163,16 @@ theorem permutationSame_append_right {strands : Nat}
 /-- The same original prefix and suffix preserve permutation equality of the middle words. -/
 theorem permutationSame_context {strands : Nat}
     (before after : Word strands) {left right : Word strands}
-    (same : Word.PermutationSame left right) :
-    Word.PermutationSame (before ++ left ++ after)
+    (same : PermutationSame left right) :
+    PermutationSame (before ++ left ++ after)
       (before ++ right ++ after) :=
-  Word.permutationSame_append_right after
-    (Word.permutationSame_append_left before same)
+  permutationSame_append_right after
+    (permutationSame_append_left before same)
 
 /-- An original generator followed by its reverse induces the empty word's permutation. -/
 theorem cancellation_permutationSame {strands : Nat}
     (generator : Generator strands) :
-    Word.PermutationSame [generator, generator.reverse] [] := by
+    PermutationSame [generator, generator.reverse] [] := by
   intro index
   change Transposition.swapIndices generator.left generator.right
       (Transposition.swapIndices generator.left generator.right index) = index
@@ -183,32 +183,32 @@ theorem far_permutationSame {strands : Nat}
     (first second : Generator strands)
     (far : first.index.val + 1 < second.index.val ∨
       second.index.val + 1 < first.index.val) :
-    Word.PermutationSame [first, second] [second, first] := by
+    PermutationSame [first, second] [second, first] := by
   intro index
   change Transposition.swapIndices second.left second.right
       (Transposition.swapIndices first.left first.right index) =
     Transposition.swapIndices first.left first.right
       (Transposition.swapIndices second.left second.right index)
   obtain ⟨leftLeft, leftRight, rightLeft, rightRight⟩ :=
-    Artin.Generator.disjoint_of_far first second far
+    Generator.disjoint_of_far first second far
   exact Transposition.swapIndices_commute_of_disjoint leftLeft leftRight rightLeft
     rightRight index
 
 /-- The two original three-generator Artin words induce the same strand permutation. -/
 theorem artin_permutationSame {strands : Nat}
     (index : Fin (strands - 2)) (sign : CrossingSign) :
-    Word.PermutationSame
-      [Artin.Generator.lower index sign, Artin.Generator.upper index sign,
-        Artin.Generator.lower index sign]
-      [Artin.Generator.upper index sign, Artin.Generator.lower index sign,
-        Artin.Generator.upper index sign] := by
+    PermutationSame
+      [Generator.lower index sign, Generator.upper index sign,
+        Generator.lower index sign]
+      [Generator.upper index sign, Generator.lower index sign,
+        Generator.upper index sign] := by
   intro strand
-  let lower := Artin.Generator.lower index sign
-  let upper := Artin.Generator.upper index sign
+  let lower := Generator.lower index sign
+  let upper := Generator.upper index sign
   have shared : lower.right = upper.left :=
-    Artin.Generator.lower_right_eq_upper_left index sign
+    Generator.lower_right_eq_upper_left index sign
   have outside : lower.left ≠ upper.right :=
-    Artin.Generator.lower_left_ne_upper_right index sign
+    Generator.lower_left_ne_upper_right index sign
   change Transposition.swapIndices lower.left lower.right
       (Transposition.swapIndices upper.left upper.right
         (Transposition.swapIndices lower.left lower.right strand)) =
@@ -229,73 +229,73 @@ exact surrounding words. -/
 inductive Rewrite {strands : Nat} : Word strands → Word strands → Prop
   /-- Remove an original generator and its reverse inside the retained word context. -/ | cancel (before after : Word
     strands) (generator : Generator strands) :
-      Purelib.Topology.Knot.Braid.Artin.Rewrite (before ++ [generator, generator.reverse] ++ after)
+      Artin.Rewrite (before ++ [generator, generator.reverse] ++ after)
         (before ++ after)
   /-- Exchange the two original separated generators inside their retained word context. -/ | far (before after : Word
     strands) (first second : Generator strands)
       (separated : first.index.val + 1 < second.index.val ∨
         second.index.val + 1 < first.index.val) :
-      Purelib.Topology.Knot.Braid.Artin.Rewrite (before ++ [first, second] ++ after)
+      Artin.Rewrite (before ++ [first, second] ++ after)
         (before ++ [second, first] ++ after)
   /-- Apply the original adjacent three-strand relation inside the retained word context. -/ | artin (before after :
     Word strands) (index : Fin (strands - 2))
       (sign : CrossingSign) :
-      Purelib.Topology.Knot.Braid.Artin.Rewrite
-        (before ++ [Artin.Generator.lower index sign, Artin.Generator.upper index sign,
-          Artin.Generator.lower index sign] ++ after)
-        (before ++ [Artin.Generator.upper index sign, Artin.Generator.lower index sign,
-          Artin.Generator.upper index sign] ++ after)
+      Artin.Rewrite
+        (before ++ [Generator.lower index sign, Generator.upper index sign,
+          Generator.lower index sign] ++ after)
+        (before ++ [Generator.upper index sign, Generator.lower index sign,
+          Generator.upper index sign] ++ after)
 
 namespace Rewrite
 
 /-- Append the same original suffix to both sides of a retained Artin rewrite. -/
 theorem append_right {strands : Nat} {left right : Word strands}
-    (rewrite : Artin.Rewrite left right) (suffix : Word strands) :
-    Artin.Rewrite (left ++ suffix) (right ++ suffix) := by
+    (rewrite : Rewrite left right) (suffix : Word strands) :
+    Rewrite (left ++ suffix) (right ++ suffix) := by
   cases rewrite with
   | cancel before after generator =>
-      simpa only [Purelib.Data.List.Append.append_assoc] using
-        Artin.Rewrite.cancel before (after ++ suffix) generator
+      simpa only [Data.List.Append.append_assoc] using
+        Rewrite.cancel before (after ++ suffix) generator
   | far before after first second separated =>
-      simpa only [Purelib.Data.List.Append.append_assoc] using
-        Artin.Rewrite.far before (after ++ suffix) first second separated
+      simpa only [Data.List.Append.append_assoc] using
+        Rewrite.far before (after ++ suffix) first second separated
   | artin before after index sign =>
-      simpa only [Purelib.Data.List.Append.append_assoc] using
-        Artin.Rewrite.artin before (after ++ suffix) index sign
+      simpa only [Data.List.Append.append_assoc] using
+        artin before (after ++ suffix) index sign
 
 /-- Prefix both sides of a retained Artin rewrite by the same original word. -/
 theorem append_left {strands : Nat} (beforeWord : Word strands)
-    {left right : Word strands} (rewrite : Artin.Rewrite left right) :
-    Artin.Rewrite (beforeWord ++ left) (beforeWord ++ right) := by
+    {left right : Word strands} (rewrite : Rewrite left right) :
+    Rewrite (beforeWord ++ left) (beforeWord ++ right) := by
   cases rewrite with
   | cancel before after generator =>
-      simpa only [Purelib.Data.List.Append.append_assoc] using
-        Artin.Rewrite.cancel (beforeWord ++ before) after generator
+      simpa only [Data.List.Append.append_assoc] using
+        Rewrite.cancel (beforeWord ++ before) after generator
   | far before after first second separated =>
-      simpa only [Purelib.Data.List.Append.append_assoc] using
-        Artin.Rewrite.far (beforeWord ++ before) after first second separated
+      simpa only [Data.List.Append.append_assoc] using
+        Rewrite.far (beforeWord ++ before) after first second separated
   | artin before after index sign =>
-      simpa only [Purelib.Data.List.Append.append_assoc] using
-        Artin.Rewrite.artin (beforeWord ++ before) after index sign
+      simpa only [Data.List.Append.append_assoc] using
+        artin (beforeWord ++ before) after index sign
 
 /-- Every retained local Artin rewrite preserves the original executable strand permutation. -/
 theorem permutationSame {strands : Nat} {left right : Word strands}
-    (rewrite : Artin.Rewrite left right) : Artin.Word.PermutationSame left right := by
+    (rewrite : Rewrite left right) : Word.PermutationSame left right := by
   cases rewrite with
   | cancel before after generator =>
-      simpa only [Purelib.Data.List.Append.append_nil] using
-        Artin.Word.permutationSame_context before after
-          (Artin.Word.cancellation_permutationSame generator)
+      simpa only [Data.List.Append.append_nil] using
+        Word.permutationSame_context before after
+          (Word.cancellation_permutationSame generator)
   | far before after first second separated =>
-      exact Artin.Word.permutationSame_context before after
-        (Artin.Word.far_permutationSame first second separated)
+      exact Word.permutationSame_context before after
+        (Word.far_permutationSame first second separated)
   | artin before after index sign =>
-      exact Artin.Word.permutationSame_context before after
-        (Artin.Word.artin_permutationSame index sign)
+      exact Word.permutationSame_context before after
+        (Word.artin_permutationSame index sign)
 
 /-- Every retained local Artin rewrite preserves the original integer writhe. -/
 theorem writhe_eq {strands : Nat} {left right : Word strands}
-    (rewrite : Artin.Rewrite left right) : left.writhe = right.writhe := by
+    (rewrite : Rewrite left right) : left.writhe = right.writhe := by
   cases rewrite with
   | cancel before after generator =>
       simp only [Word.writhe_append,
@@ -319,25 +319,25 @@ end Rewrite
 /-- Constructive equivalence generated by the finite Artin rewrites. -/
 inductive Equivalent {strands : Nat} : Word strands → Word strands → Prop
   /-- Retain the identity equivalence of one original word. -/ | refl (word : Word strands) :
-    Purelib.Topology.Knot.Braid.Artin.Equivalent word word
+    Artin.Equivalent word word
   /-- Include one original checked Artin rewrite in the finite equivalence. -/ | step {left right : Word strands}
-    (rewrite : Artin.Rewrite left right) :
-      Purelib.Topology.Knot.Braid.Artin.Equivalent left right
+    (rewrite : Rewrite left right) :
+      Artin.Equivalent left right
   /-- Reverse a retained finite Artin equivalence. -/ | symm {left right : Word strands} (relation :
-    Purelib.Topology.Knot.Braid.Artin.Equivalent left right) :
-      Purelib.Topology.Knot.Braid.Artin.Equivalent right left
+    Artin.Equivalent left right) :
+      Artin.Equivalent right left
   /-- Concatenate retained equivalences through the same original intermediate word. -/ | trans {first second third :
     Word strands}
-      (firstSecond : Purelib.Topology.Knot.Braid.Artin.Equivalent first second)
-      (secondThird : Purelib.Topology.Knot.Braid.Artin.Equivalent second third) :
-        Purelib.Topology.Knot.Braid.Artin.Equivalent first third
+      (firstSecond : Artin.Equivalent first second)
+      (secondThird : Artin.Equivalent second third) :
+        Artin.Equivalent first third
 
 namespace Equivalent
 
 /-- Append a common original suffix to a retained finite Artin equivalence. -/
 theorem append_right {strands : Nat} {left right : Word strands}
-    (relation : Artin.Equivalent left right) (suffix : Word strands) :
-    Artin.Equivalent (left ++ suffix) (right ++ suffix) := by
+    (relation : Equivalent left right) (suffix : Word strands) :
+    Equivalent (left ++ suffix) (right ++ suffix) := by
   induction relation with
   | refl word => exact .refl _
   | step rewrite => exact .step (rewrite.append_right suffix)
@@ -347,8 +347,8 @@ theorem append_right {strands : Nat} {left right : Word strands}
 
 /-- Prefix a retained finite Artin equivalence by the same original word. -/
 theorem append_left {strands : Nat} (beforeWord : Word strands)
-    {left right : Word strands} (relation : Artin.Equivalent left right) :
-    Artin.Equivalent (beforeWord ++ left) (beforeWord ++ right) := by
+    {left right : Word strands} (relation : Equivalent left right) :
+    Equivalent (beforeWord ++ left) (beforeWord ++ right) := by
   induction relation with
   | refl word => exact .refl _
   | step rewrite => exact .step (rewrite.append_left beforeWord)
@@ -359,9 +359,9 @@ theorem append_left {strands : Nat} (beforeWord : Word strands)
 /-- Concatenate two retained finite Artin equivalences along their original word pairs. -/
 theorem append {strands : Nat}
     {firstLeft firstRight secondLeft secondRight : Word strands}
-    (first : Artin.Equivalent firstLeft firstRight)
-    (second : Artin.Equivalent secondLeft secondRight) :
-    Artin.Equivalent (firstLeft ++ secondLeft) (firstRight ++ secondRight) :=
+    (first : Equivalent firstLeft firstRight)
+    (second : Equivalent secondLeft secondRight) :
+    Equivalent (firstLeft ++ secondLeft) (firstRight ++ secondRight) :=
   .trans (first.append_right secondLeft) (second.append_left firstRight)
 
 open Purelib.Data.List in
@@ -371,21 +371,21 @@ The equivalence retains the original word and cancels its reversed signed
 generators through the displayed finite sequence of local rewrites. -/
 theorem append_inverse {strands : Nat} :
     ∀ word : Word strands,
-      Artin.Equivalent (word ++ Word.inverse word) []
+      Equivalent (word ++ Word.inverse word) []
   | [] => .refl []
   | generator :: remaining => by
-      have middle := (Purelib.Topology.Knot.Braid.Artin.Equivalent.append_inverse remaining).append_left [generator]
+      have middle := (Equivalent.append_inverse remaining).append_left [generator]
       have context := middle.append_right [generator.reverse]
-      have reduceMiddle : Artin.Equivalent
+      have reduceMiddle : Equivalent
           ([generator] ++ (remaining ++
             Word.inverse remaining) ++
             [generator.reverse])
           ([generator] ++ [] ++ [generator.reverse]) := by
-        simpa only [Purelib.Data.List.Append.append_assoc] using context
-      have cancel : Artin.Equivalent
+        simpa only [Append.append_assoc] using context
+      have cancel : Equivalent
           ([generator] ++ [] ++ [generator.reverse]) [] := by
-        simpa only [List.nil_append, Purelib.Data.List.Append.append_nil, List.cons_append] using
-          Artin.Equivalent.step (Artin.Rewrite.cancel [] [] generator)
+        simpa only [List.nil_append, Append.append_nil, List.cons_append] using
+          step (Rewrite.cancel [] [] generator)
       have normalized :
           (generator :: remaining) ++
               Word.inverse (generator :: remaining) =
@@ -402,18 +402,18 @@ theorem append_inverse {strands : Nat} :
 
 /-- Finite Artin equivalence preserves the original executable strand permutation. -/
 theorem permutationSame {strands : Nat} {left right : Word strands}
-    (relation : Artin.Equivalent left right) : Artin.Word.PermutationSame left right := by
+    (relation : Equivalent left right) : Word.PermutationSame left right := by
   induction relation with
-  | refl word => exact Artin.Word.permutationSame_refl word
+  | refl word => exact Word.permutationSame_refl word
   | step rewrite => exact rewrite.permutationSame
   | symm relation inductionHypothesis =>
-      exact Artin.Word.permutationSame_symm inductionHypothesis
+      exact Word.permutationSame_symm inductionHypothesis
   | trans firstSecond secondThird firstHypothesis secondHypothesis =>
-      exact Artin.Word.permutationSame_trans firstHypothesis secondHypothesis
+      exact Word.permutationSame_trans firstHypothesis secondHypothesis
 
 /-- Finite Artin equivalence preserves the original integer writhe. -/
 theorem writhe_eq {strands : Nat} {left right : Word strands}
-    (relation : Artin.Equivalent left right) : left.writhe = right.writhe := by
+    (relation : Equivalent left right) : left.writhe = right.writhe := by
   induction relation with
   | refl word => rfl
   | step rewrite => exact rewrite.writhe_eq

@@ -10,6 +10,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -32,10 +34,10 @@ open Purelib.Data.Rat
 theorem denominator_ne_of_margin
     {denominatorMargin : Fraction.Rational} (marginPositive : 0 < denominatorMargin)
     {denominatorValue : Basic.Canonical}
-    (lower : denominatorMargin ≤ Data.Gaussian.Norm.Basic.normSq denominatorValue) :
+    (lower : denominatorMargin ≤ Norm.Basic.normSq denominatorValue) :
     denominatorValue ≠ 0 := by
   intro zero
-  have positive : 0 < Data.Gaussian.Norm.Basic.normSq denominatorValue := marginPositive.trans_le lower
+  have positive : 0 < Norm.Basic.normSq denominatorValue := marginPositive.trans_le lower
   rw [zero, Norm.Basic.normSq_zero] at positive
   exact (lt_irrefl 0 positive).elim
 
@@ -44,46 +46,46 @@ theorem denominator_ne_of_margin
 The radius used here is the supplied squared-norm bound plus one. No separately chosen square root or positive-radius
 witness is required. -/
 theorem coordinate_bounds_of_normSq_le
-    (value : Basic.Canonical) {bound : Fraction.Rational} (normBound : Data.Gaussian.Norm.Basic.normSq value ≤ bound) :
+    (value : Basic.Canonical) {bound : Fraction.Rational} (normBound : Norm.Basic.normSq value ≤ bound) :
     - (bound + 1) ≤ value.re ∧ value.re ≤ bound + 1 ∧
       - (bound + 1) ≤ value.im ∧ value.im ≤ bound + 1 := by
-  have realSquare : value.re ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq value := by
-    have added := Fraction.Order.Arithmetic.add_le_add_right_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct value.im) (value.re ^ 2)
+  have realSquare : value.re ^ 2 ≤ Norm.Basic.normSq value := by
+    have added := Arithmetic.add_le_add_right_direct
+      (Arithmetic.sq_nonneg_direct value.im) (value.re ^ 2)
     calc
       value.re ^ 2 = 0 + value.re ^ 2 :=
         (Fraction.Field.zero_add _).symm
       _ ≤ value.im ^ 2 + value.re ^ 2 := added
-      _ = Data.Gaussian.Norm.Basic.normSq value := Fraction.Field.add_comm _ _
-  have imaginarySquare : value.im ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq value := by
-    have added := Fraction.Order.Arithmetic.add_le_add_right_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct value.re) (value.im ^ 2)
+      _ = Norm.Basic.normSq value := Fraction.Field.add_comm _ _
+  have imaginarySquare : value.im ^ 2 ≤ Norm.Basic.normSq value := by
+    have added := Arithmetic.add_le_add_right_direct
+      (Arithmetic.sq_nonneg_direct value.re) (value.im ^ 2)
     calc
       value.im ^ 2 = 0 + value.im ^ 2 :=
         (Fraction.Field.zero_add _).symm
       _ ≤ value.re ^ 2 + value.im ^ 2 := added
-      _ = Data.Gaussian.Norm.Basic.normSq value := rfl
+      _ = Norm.Basic.normSq value := rfl
   have realSquareBound := realSquare.trans normBound
   have imaginarySquareBound := imaginarySquare.trans normBound
   have realUpper : value.re ≤ bound + 1 :=
     (Quadratic.coordinate_le_sq_add_one value.re).trans
-      (Fraction.Order.Arithmetic.add_le_add_right_direct realSquareBound 1)
+      (Arithmetic.add_le_add_right_direct realSquareBound 1)
   have realNegUpper : -value.re ≤ bound + 1 :=
     (Quadratic.neg_coordinate_le_sq_add_one value.re).trans
-      (Fraction.Order.Arithmetic.add_le_add_right_direct realSquareBound 1)
+      (Arithmetic.add_le_add_right_direct realSquareBound 1)
   have imaginaryUpper : value.im ≤ bound + 1 :=
     (Quadratic.coordinate_le_sq_add_one value.im).trans
-      (Fraction.Order.Arithmetic.add_le_add_right_direct imaginarySquareBound 1)
+      (Arithmetic.add_le_add_right_direct imaginarySquareBound 1)
   have imaginaryNegUpper : -value.im ≤ bound + 1 :=
     (Quadratic.neg_coordinate_le_sq_add_one value.im).trans
-      (Fraction.Order.Arithmetic.add_le_add_right_direct imaginarySquareBound 1)
+      (Arithmetic.add_le_add_right_direct imaginarySquareBound 1)
   exact ⟨by
       simpa only [_root_.neg_neg] using
-        Fraction.Order.Arithmetic.neg_le_neg_direct realNegUpper,
+        Arithmetic.neg_le_neg_direct realNegUpper,
     realUpper,
     by
       simpa only [_root_.neg_neg] using
-        Fraction.Order.Arithmetic.neg_le_neg_direct imaginaryNegUpper,
+        Arithmetic.neg_le_neg_direct imaginaryNegUpper,
     imaginaryUpper⟩
 end Purelib.Data.Gaussian.NormSq
 

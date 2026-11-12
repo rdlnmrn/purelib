@@ -82,32 +82,32 @@ open Purelib.Integration.Path.Dyadic.DyadicBoundaryRibbon (dyadicArea)
 
 variable {genus count index depth : Nat} {curve : HyperellipticCurve genus}
   {differential : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
     SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {capSample :
+    Primitives.Sample cap differential index box}
 
 set_option genInjectivity false in
 /-- A dependent spine of original reciprocal area cells and their cached cap paths.
 
 Every entry is indexed by the retained comparison bank, common source sample and finite depth; the original source paths
 and summaries remain available. -/
-inductive ComparedCells (source : UniformReciprocalPrimitives.SourcePrimitive data index) (capSample : Primitives.Sample
+inductive ComparedCells (source : SourcePrimitive data index) (capSample : Primitives.Sample
   cap differential index box)
-    (depth : Nat) : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → ParentBank.Bank regular data edges
+    (depth : Nat) : {edges : List ParameterEdge} → Bank regular data edges
       → Type
   /-- The empty original comparison bank has no compared area cells. -/ | nil :
     ComparedCells source capSample depth .nil
   /-- Prepend one retained original area cell and its cap comparison to the exact tail bank. -/ | cons {edge :
-    ClearSheetContinuation.Subdivision.ParameterEdge} {remaining : List
-    ClearSheetContinuation.Subdivision.ParameterEdge} {cell : UniformReciprocalCover.Cell data edge}
-      {comparison : ArcSamples.Data regular cell} {bank : ParentBank.Bank regular data remaining}
-      (head : ParentCells.ComparedCell comparison source capSample depth) (tail :
+    ParameterEdge} {remaining : List
+    ParameterEdge} {cell : Cell data edge}
+      {comparison : ArcSamples.Data regular cell} {bank : Bank regular data remaining}
+      (head : ComparedCell comparison source capSample depth) (tail :
         ComparedCells source capSample depth bank) :
       ComparedCells source capSample depth (.cons
         comparison bank)
@@ -119,27 +119,27 @@ namespace ComparedCells
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells in
 /-- Reuse every original area cell and attach its cap path on the shared retained polynomial sample. -/
 def build (capSample : Primitives.Sample cap differential index box) : {edges : List
-  ClearSheetContinuation.Subdivision.ParameterEdge} →
-    (bank : ParentBank.Bank regular data edges) → ReciprocalBoundaryArea.AreaCells source depth edges →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank
+  ParameterEdge} →
+    (bank : Bank regular data edges) → AreaCells source depth edges →
+      ComparedCells source capSample depth bank
   | _, .nil, .nil => .nil
   | _, .cons comparison bank, .cons original rest =>
       .cons (ComparedCell.build comparison capSample original)
         (build capSample bank rest)
 
 /-- Read back the original reciprocal area-cell spine from the retained comparison bank. -/
-def original : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
+def original : {edges : List ParameterEdge} → {bank : Bank regular data
   edges} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank →
-      ReciprocalBoundaryArea.AreaCells source depth edges
+    ComparedCells source capSample depth bank →
+      AreaCells source depth edges
   | _, _, .nil => .nil
   | _, _, .cons head tail => .cons head.original tail.original
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells in
 /-- Building cap comparisons preserves exactly the original area-cell spine. -/
-theorem build_original {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} (bank : ParentBank.Bank regular
+theorem build_original {edges : List ParameterEdge} (bank : Bank regular
   data edges)
-    (original : ReciprocalBoundaryArea.AreaCells source depth edges) :
+    (original : AreaCells source depth edges) :
       (build capSample bank original).original =
       original := by
   induction bank with
@@ -149,16 +149,16 @@ theorem build_original {edges : List ClearSheetContinuation.Subdivision.Paramete
       | cons head tail => exact congrArg (AreaCells.cons head) (ih tail)
 
 /-- Read the original source and retained cap increment paths in their actual cell order. -/
-def pairs : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
+def pairs : {edges : List ParameterEdge} → {bank : Bank regular data
   edges} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank → List (List
-      InverseRootPolynomial.Gaussian × List InverseRootPolynomial.Gaussian)
+    ComparedCells source capSample depth bank → List (List
+      Gaussian × List Gaussian)
   | _, _, .nil => []
   | _, _, .cons head tail => (head.original.leftPath, head.capPath) :: tail.pairs
 
 /-- The retained path-pair bank has exactly one entry per original covered edge. -/
-theorem pairs_length {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular
-  data edges} (cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth
+theorem pairs_length {edges : List ParameterEdge} {bank : Bank regular
+  data edges} (cells : ComparedCells source capSample depth
   bank) :
     cells.pairs.length = edges.length := by
   induction cells with
@@ -166,41 +166,41 @@ theorem pairs_length {edges : List ClearSheetContinuation.Subdivision.ParameterE
   | cons _ _ ih => exact congrArg Nat.succ ih
 
 /-- Append the cached original source summaries, retaining their exact cross terms. -/
-def leftSummary : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
+def leftSummary : {edges : List ParameterEdge} → {bank : Bank regular data
   edges} →
-    (cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) →
-      IncrementArea.Summary (cells.pairs.map Prod.fst).flatten
-  | _, _, .nil => IncrementArea.Summary.build []
+    (cells : ComparedCells source capSample depth bank) →
+      Summary (cells.pairs.map Prod.fst).flatten
+  | _, _, .nil => Summary.build []
   | _, _, .cons head tail => head.original.left.append tail.leftSummary
 
 /-- Append the cached original cap summaries, retaining their exact cross terms. -/
-def capSummary : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
+def capSummary : {edges : List ParameterEdge} → {bank : Bank regular data
   edges} →
-    (cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) →
-      IncrementArea.Summary (cells.pairs.map Prod.snd).flatten
-  | _, _, .nil => IncrementArea.Summary.build []
+    (cells : ComparedCells source capSample depth bank) →
+      Summary (cells.pairs.map Prod.snd).flatten
+  | _, _, .nil => Summary.build []
   | _, _, .cons head tail => head.capSummary.append tail.capSummary
 
 /-- The retained comparison spine reads back exactly the original source path list. -/
-theorem left_paths {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular data
-  edges} (cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) :
+theorem left_paths {edges : List ParameterEdge} {bank : Bank regular data
+  edges} (cells : ComparedCells source capSample depth bank) :
     cells.pairs.map Prod.fst = cells.original.pairs.map Prod.fst := by
   induction cells with
   | nil => rfl
   | cons head tail ih => exact congrArg (List.cons head.original.leftPath) ih
 
 /-- The original complete source path total is its actual endpoint primitive difference. -/
-theorem source_total (mesh : UniformReciprocalCover.Mesh data) {bank : ParentBank.Bank regular data mesh.edges} (cells :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) :
+theorem source_total (mesh : Mesh data) {bank : Bank regular data mesh.edges} (cells :
+  ComparedCells source capSample depth bank) :
     cells.leftSummary.total = source.primitive.value.eval (parent.edge.point 1) - source.primitive.value.eval
       (parent.edge.point 0) := by
   rw [cells.leftSummary.total_eq, cells.left_paths, ← cells.original.leftSummary.total_eq]
   exact cells.original.source_total mesh
 
 /-- The retained complete source area is the original finite dyadic area at the combined mesh and cell depth. -/
-theorem source_area (mesh : UniformReciprocalCover.Mesh data) {bank : ParentBank.Bank regular data mesh.edges} (cells :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) :
-    cells.leftSummary.area = DyadicBoundaryRibbon.dyadicArea
+theorem source_area (mesh : Mesh data) {bank : Bank regular data mesh.edges} (cells :
+  ComparedCells source capSample depth bank) :
+    cells.leftSummary.area = dyadicArea
       (fun parameter => source.primitive.value.eval (parent.edge.point parameter) - source.primitive.value.eval
         (parent.edge.point 0))
       (mesh.depth + depth) 0 1 := by
@@ -208,35 +208,35 @@ theorem source_area (mesh : UniformReciprocalCover.Mesh data) {bank : ParentBank
   exact cells.original.source_area mesh
 
 /-- Read the original source-minus-cap total discrepancy of every retained cell. -/
-def errors : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
+def errors : {edges : List ParameterEdge} → {bank : Bank regular data
   edges} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank → List
-      InverseRootPolynomial.Gaussian
+    ComparedCells source capSample depth bank → List
+      Gaussian
   | _, _, .nil => []
   | _, _, .cons head tail => (head.original.left.total - head.capSummary.total) :: tail.errors
 
 /-- Read the actual cached original cap increment of every cell. -/
-def increments : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
+def increments : {edges : List ParameterEdge} → {bank : Bank regular data
   edges} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank → List
-      InverseRootPolynomial.Gaussian
+    ComparedCells source capSample depth bank → List
+      Gaussian
   | _, _, .nil => []
   | _, _, .cons head tail => head.sample.increment :: tail.increments
 
 /-- The retained cap path total is the sum of its original cached cell increments. -/
-theorem cap_total {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular data
-  edges} (cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) :
-    cells.capSummary.total = Data.Gaussian.Norm.Sum.Basic.gaussianSum cells.increments := by
+theorem cap_total {edges : List ParameterEdge} {bank : Bank regular data
+  edges} (cells : ComparedCells source capSample depth bank) :
+    cells.capSummary.total = gaussianSum cells.increments := by
   induction cells with
   | nil => rfl
   | cons head tail ih =>
       change head.capSummary.total + tail.capSummary.total = head.sample.increment +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum tail.increments
+        gaussianSum tail.increments
       rw [head.cap_total, ih]
 
 /-- There is exactly one retained source-to-cap discrepancy for each original covered edge. -/
-theorem errors_length {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular
-  data edges} (cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth
+theorem errors_length {edges : List ParameterEdge} {bank : Bank regular
+  data edges} (cells : ComparedCells source capSample depth
   bank) :
     cells.errors.length = edges.length := by
   induction cells with
@@ -244,13 +244,13 @@ theorem errors_length {edges : List ClearSheetContinuation.Subdivision.Parameter
   | cons _ _ ih => exact congrArg Nat.succ ih
 
 /-- The original retained cell discrepancies sum to the source total minus the cap total. -/
-theorem errors_sum {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular data
-  edges} (cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum cells.errors = cells.leftSummary.total - cells.capSummary.total := by
+theorem errors_sum {edges : List ParameterEdge} {bank : Bank regular data
+  edges} (cells : ComparedCells source capSample depth bank) :
+    gaussianSum cells.errors = cells.leftSummary.total - cells.capSummary.total := by
   induction cells with
-  | nil => change (0 : InverseRootPolynomial.Gaussian) = 0 - 0; ring1
+  | nil => change (0 : Gaussian) = 0 - 0; ring1
   | cons head tail ih =>
-      change (head.original.left.total - head.capSummary.total) + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      change (head.original.left.total - head.capSummary.total) + gaussianSum
         tail.errors =
         (head.original.left.total + tail.leftSummary.total) - (head.capSummary.total + tail.capSummary.total)
       rw [ih]

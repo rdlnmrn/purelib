@@ -24,6 +24,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Bounds.Square
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Direct finite quadratic line clearances
 
@@ -53,9 +55,9 @@ public abbrev Coordinate := Fraction.Rational
 public abbrev Gaussian := Gaussian.Basic.Canonical
 /-- The dense Gaussian polynomial type used for the quadratic root equation. -/
 public abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The rational box type used by the original quadratic clearance certificates. -/
-public abbrev Box := Purelib.Geometry.Rational.Box
+public abbrev Box := Geometry.Rational.Box
 
 /-- The squared rational two-coordinate scalar product is bounded by the product of the two squared norms.
 
@@ -65,10 +67,10 @@ private theorem sum_product_sq_le_product_sums
     (a b first second : Coordinate) :
     (a * first + b * second) ^ 2 ≤
       (a ^ 2 + b ^ 2) * (first ^ 2 + second ^ 2) := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (a * second - b * first) ^ 2 :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct _
+      Arithmetic.sq_nonneg_direct _
     _ = (a ^ 2 + b ^ 2) * (first ^ 2 + second ^ 2) -
           (a * first + b * second) ^ 2 := by
       ring1
@@ -88,7 +90,7 @@ one, independently of the supplied coefficient values. -/
 public theorem directLineMajorant_positive
     (constant slope intercept radiusSq : Coordinate) :
     0 < directLineMajorant constant slope intercept radiusSq :=
-  (show (0 : Coordinate) < 1 by decide).trans_le (Fraction.Order.Basic.le_max_left _ _)
+  (show (0 : Coordinate) < 1 by decide).trans_le (Basic.le_max_left _ _)
 
 /-- The rational resultant identity gives a norm-square lower bound.
 
@@ -108,30 +110,30 @@ private theorem directLineLower
   let valueSq := realPart ^ 2 + imaginaryPart ^ 2
   have productLe : slope ^ 2 * coordinate ^ 2 ≤
       slope ^ 2 * radiusSq :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct coordinateSq
-      (Fraction.Order.Arithmetic.sq_nonneg_direct slope)
+    Arithmetic.mul_le_mul_of_nonneg_left_direct coordinateSq
+      (Arithmetic.sq_nonneg_direct slope)
   have linearSqLe : linear ^ 2 ≤
       2 * (slope ^ 2 * radiusSq + intercept ^ 2) := by
     calc
       linear ^ 2 ≤
           2 * ((slope * coordinate) ^ 2 + intercept ^ 2) := by
-        exact Purelib.Data.Rat.Bounds.Square.add_sq_le_two _ _
+        exact Bounds.Square.add_sq_le_two _ _
       _ = 2 * (slope ^ 2 * coordinate ^ 2 + intercept ^ 2) := by
         ring1
       _ ≤ 2 * (slope ^ 2 * radiusSq + intercept ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.add_le_add_direct productLe
-            (Fraction.Order.Basic.le_refl _)) (by decide)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct productLe
+            (Basic.le_refl _)) (by decide)
   have coefficientLe : coefficientSq ≤
       directLineMajorant constant slope intercept radiusSq :=
-    (Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Basic.le_refl _) linearSqLe).trans (Fraction.Order.Basic.le_max_right _ _)
+    (Arithmetic.add_le_add_direct
+      (Basic.le_refl _) linearSqLe).trans (Basic.le_max_right _ _)
   have valueNonnegative : 0 ≤ valueSq :=
     calc
       0 = (0 : Coordinate) + 0 := (Fraction.zero_add 0).symm
-      _ ≤ valueSq := Fraction.Order.Arithmetic.add_le_add_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      _ ≤ valueSq := Arithmetic.add_le_add_direct
+        (Arithmetic.sq_nonneg_direct _)
+        (Arithmetic.sq_nonneg_direct _)
   have cauchy : determinant ^ 2 ≤ coefficientSq * valueSq := by
     calc
       determinant ^ 2 =
@@ -142,9 +144,9 @@ private theorem directLineLower
   have scaled : determinant ^ 2 ≤
       directLineMajorant constant slope intercept radiusSq * valueSq :=
     cauchy.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe valueNonnegative)
-  apply (Fraction.Order.Field.div_le_iff_pos
+  apply (Field.div_le_iff_pos
     (directLineMajorant_positive constant slope intercept radiusSq)).mpr
   rw [Fraction.Field.mul_comm]
   exact scaled
@@ -171,8 +173,8 @@ majorant. Nonvanishing makes the exact quotient positive on the retained box sid
         parameter x ≠ 0) :
     Clearance.Box.Line.Basic.VerticalLineClearance (QuadraticAxisElimination.rootPolynomial parameter) box x where
   bound := directVerticalClearanceBound parameter box x
-  positive := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.exact_rational_sq_pos determinantNonzero)
+  positive := Field.div_pos_direct
+    (Arithmetic.exact_rational_sq_pos determinantNonzero)
     (directLineMajorant_positive _ _ _ _)
   lower := by
     intro y lower upper
@@ -183,7 +185,7 @@ majorant. Nonvanishing makes the exact quotient positive on the retained box sid
     let imaginaryPart := 2 * x * y - parameter.im
     have coordinateSq : y ^ 2 ≤
         max (box.yLower ^ 2) (box.yUpper ^ 2) :=
-      Purelib.Geometry.Rational.Box.sq_le_endpoint_max lower upper
+      Box.sq_le_endpoint_max lower upper
     have identity : determinant =
         (4 * x ^ 2) * realPart +
           ((2 * x) * y + parameter.im) * imaginaryPart := by
@@ -195,11 +197,11 @@ majorant. Nonvanishing makes the exact quotient positive on the retained box sid
       (4 * x ^ 2) (2 * x) parameter.im determinant realPart imaginaryPart
         coordinateSq identity
     have evaluation :
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             ((QuadraticAxisElimination.rootPolynomial parameter).eval (Gaussian.Components.Basic.point x y)) =
           (x ^ 2 - y ^ 2 - parameter.re) ^ 2 +
             (2 * x * y - parameter.im) ^ 2 := by
-      rewrite [QuadraticAxisElimination.rootPolynomial, Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+      rewrite [QuadraticAxisElimination.rootPolynomial, Power.Gaussian.rootPolynomial_eval,
         SquareRootDegree.degreeTwo_value, pow_two]
       change ((x * x - y * y) - parameter.re) ^ 2 +
         ((x * y + y * x) - parameter.im) ^ 2 =
@@ -233,8 +235,8 @@ majorant. Nonvanishing makes the exact quotient positive on the retained box sid
         parameter y ≠ 0) :
     Clearance.Box.Line.Basic.HorizontalLineClearance (QuadraticAxisElimination.rootPolynomial parameter) box y where
   bound := directHorizontalClearanceBound parameter box y
-  positive := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.exact_rational_sq_pos determinantNonzero)
+  positive := Field.div_pos_direct
+    (Arithmetic.exact_rational_sq_pos determinantNonzero)
     (directLineMajorant_positive _ _ _ _)
   lower := by
     intro x lower upper
@@ -245,7 +247,7 @@ majorant. Nonvanishing makes the exact quotient positive on the retained box sid
     let imaginaryPart := 2 * x * y - parameter.im
     have coordinateSq : x ^ 2 ≤
         max (box.xLower ^ 2) (box.xUpper ^ 2) :=
-      Purelib.Geometry.Rational.Box.sq_le_endpoint_max lower upper
+      Box.sq_le_endpoint_max lower upper
     have identity : determinant =
         (4 * y ^ 2) * realPart +
           ((-(2 * y)) * x + (-parameter.im)) * imaginaryPart := by
@@ -257,11 +259,11 @@ majorant. Nonvanishing makes the exact quotient positive on the retained box sid
       (4 * y ^ 2) (-(2 * y)) (-parameter.im) determinant realPart
         imaginaryPart coordinateSq identity
     have evaluation :
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             ((QuadraticAxisElimination.rootPolynomial parameter).eval (Gaussian.Components.Basic.point x y)) =
           (x ^ 2 - y ^ 2 - parameter.re) ^ 2 +
             (2 * x * y - parameter.im) ^ 2 := by
-      rewrite [QuadraticAxisElimination.rootPolynomial, Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+      rewrite [QuadraticAxisElimination.rootPolynomial, Power.Gaussian.rootPolynomial_eval,
         SquareRootDegree.degreeTwo_value, pow_two]
       change ((x * x - y * y) - parameter.re) ^ 2 +
         ((x * y + y * x) - parameter.im) ^ 2 =
@@ -310,9 +312,9 @@ The original initial state and fallback remain part of the retained track. -/
 @[expose] public def accelerateTrack (parameter : Gaussian.Basic.Canonical)
     {ambient : Box}
     (track : Track.Basic.WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient) :
+      (Power.Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient) :
     Track.Basic.WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient :=
+      (Power.Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient :=
   Track.Accelerated.accelerate (QuadraticAxisElimination.quadraticAxisElimination parameter) track
     (quadraticAxisClearances parameter)
 
@@ -320,7 +322,7 @@ The original initial state and fallback remain part of the retained track. -/
 @[simp] public theorem accelerateTrack_initial (parameter : Gaussian.Basic.Canonical)
     {ambient : Box}
     (track : Track.Basic.WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient) :
+      (Power.Gaussian.rootPolynomial parameter SquareRootDegree.degreeTwo) ambient) :
     (accelerateTrack parameter track).initial = track.initial := by
   dsimp only [accelerateTrack, Track.Accelerated.accelerate]
 

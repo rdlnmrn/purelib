@@ -48,18 +48,18 @@ namespace Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Degenerate.Parti
 section
 /-- The constant-one polynomial used by the finite central-third cut selector. -/
 private def unitGuard :
-  CoordinatePolynomial := Dense.Basic.DensePolynomial.constant 1
+  CoordinatePolynomial := Basic.DensePolynomial.constant 1
 /-- The constant-one guard is nonzero. -/
 private theorem
   unitGuard_nonzero :
-  Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Degenerate.Partition.unitGuard.isZero = false := by decide
+  unitGuard.isZero = false := by decide
 end
 
 /-- Fixed-depth central-third subdivision for every degenerate coordinate
 branch.  Since pair-level event data permits axis endpoints, the cuts need
 not avoid any individual coordinate roots. -/
 theorem auxiliaryProductFormulaAtDepth
-    {A B C D E H : CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {A B C D E H : CoordinatePolynomial} {root : Interval.Bounds}
     (left : Certificate A B root) (right : Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
       E.eval x = A.eval x * C.eval x - B.eval x * D.eval x)
@@ -68,38 +68,38 @@ theorem auxiliaryProductFormulaAtDepth
     (degenerate : B.isZero = true ∨ D.isZero = true ∨
       A.isZero = true ∨ C.isZero = true ∨
       H.isZero = true ∨ E.isZero = true)
-    (fuel : Nat) (interval : Data.Rat.Interval.Bounds)
+    (fuel : Nat) (interval : Interval.Bounds)
     (refines : interval.Refines root)
     (proper : interval.lower < interval.upper)
     (sufficient : (2 / 3 : Fraction.Rational) ^ fuel *
       (interval.upper - interval.lower) <
-        Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth left right
+        Bounds.degenerateProductLeafWidth left right
           realIdentity imagIdentity) :
-    Dense.Rational.CauchyIndex.Product.Basic.AuxiliaryProductFormula A B C D E H
+    Basic.AuxiliaryProductFormula A B C D E H
       interval.lower interval.upper := by
   induction fuel generalizing interval with
   | zero =>
       have widthSmall : interval.upper - interval.lower <
-          Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth left right
+          Bounds.degenerateProductLeafWidth left right
             realIdentity imagIdentity := by
         simpa only [pow_zero, one_mul] using sufficient
-      have radius : Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower <
-          Dense.Rational.CauchyIndex.Product.Resolution.localProductResolutionRadiusSq left right
+      have radius : Interval.Radius.sampleRadiusSq interval interval.lower <
+          Resolution.localProductResolutionRadiusSq left right
             realIdentity imagIdentity := by
-        apply Data.Rat.Interval.Radius.Partition.radius_lt_of_width_lt proper
-        simpa only [Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth] using widthSmall
+        apply Interval.Radius.Partition.radius_lt_of_width_lt proper
+        simpa only [Bounds.degenerateProductLeafWidth] using widthSmall
       exact
-        Dense.Rational.CauchyIndex.Product.Degenerate.Resolution.auxiliaryProductFormula_of_degenerate_refined_radiusSq
+        Resolution.auxiliaryProductFormula_of_degenerate_refined_radiusSq
         left right realIdentity imagIdentity refines radius degenerate
   | succ fuel inductionHypothesis =>
-      let cut := Dense.Rational.Nonzero.Search.Central.centralSearchValue
+      let cut := Nonzero.Search.Central.centralSearchValue
         unitGuard
-        Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Degenerate.Partition.unitGuard.natDegree proper
+        unitGuard.natDegree proper
         unitGuard_nonzero le_rfl
       have cutSpec : interval.lower < cut ∧ cut < interval.upper := by
-        have specification := Dense.Rational.Nonzero.Search.Central.centralSearchValue_spec
+        have specification := Nonzero.Search.Central.centralSearchValue_spec
           unitGuard
-          Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Degenerate.Partition.unitGuard.natDegree proper
+          unitGuard.natDegree proper
             unitGuard_nonzero le_rfl
         exact specification.2
       have contraction : cut - interval.lower <
@@ -108,15 +108,15 @@ theorem auxiliaryProductFormulaAtDepth
           interval.upper - cut <
             (2 / 3 : Fraction.Rational) *
               (interval.upper - interval.lower) := by
-        simpa only [cut] using Dense.Rational.Nonzero.Search.Central.centralSearchValue_contraction
+        simpa only [cut] using Nonzero.Search.Central.centralSearchValue_contraction
           unitGuard
-          Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Degenerate.Partition.unitGuard.natDegree proper
+          unitGuard.natDegree proper
             unitGuard_nonzero le_rfl
-      let leftInterval : Data.Rat.Interval.Bounds :=
+      let leftInterval : Interval.Bounds :=
         { lower := interval.lower
           upper := cut
           valid := cutSpec.1.le }
-      let rightInterval : Data.Rat.Interval.Bounds :=
+      let rightInterval : Interval.Bounds :=
         { lower := cut
           upper := interval.upper
           valid := cutSpec.2.le }
@@ -128,7 +128,7 @@ theorem auxiliaryProductFormulaAtDepth
         Fraction.Order.Arithmetic.pow_pos_direct (by decide) fuel
       have leftSufficient : (2 / 3 : Fraction.Rational) ^ fuel *
           (leftInterval.upper - leftInterval.lower) <
-            Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth left right
+            Bounds.degenerateProductLeafWidth left right
               realIdentity imagIdentity := by
         calc
           (2 / 3 : Fraction.Rational) ^ fuel *
@@ -143,11 +143,11 @@ theorem auxiliaryProductFormulaAtDepth
               (interval.upper - interval.lower) := by
             rw [pow_succ]
             ring1
-          _ < Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth left right
+          _ < Bounds.degenerateProductLeafWidth left right
               realIdentity imagIdentity := sufficient
       have rightSufficient : (2 / 3 : Fraction.Rational) ^ fuel *
           (rightInterval.upper - rightInterval.lower) <
-            Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth left right
+            Bounds.degenerateProductLeafWidth left right
               realIdentity imagIdentity := by
         calc
           (2 / 3 : Fraction.Rational) ^ fuel *
@@ -162,7 +162,7 @@ theorem auxiliaryProductFormulaAtDepth
               (interval.upper - interval.lower) := by
             rw [pow_succ]
             ring1
-          _ < Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth left right
+          _ < Bounds.degenerateProductLeafWidth left right
               realIdentity imagIdentity := sufficient
       have leftFormula := inductionHypothesis leftInterval leftRefines
         (by simpa only [leftInterval] using cutSpec.1) leftSufficient
@@ -174,7 +174,7 @@ theorem auxiliaryProductFormulaAtDepth
 coordinate-degenerate branches. -/
 theorem
   auxiliaryProductFormula_of_degenerate_coordinates
-    {A B C D E H : CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {A B C D E H : CoordinatePolynomial} {root : Interval.Bounds}
     (proper : root.lower < root.upper)
     (left : Certificate A B root) (right : Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -184,13 +184,13 @@ theorem
     (degenerate : B.isZero = true ∨ D.isZero = true ∨
       A.isZero = true ∨ C.isZero = true ∨
       H.isZero = true ∨ E.isZero = true) :
-    Dense.Rational.CauchyIndex.Product.Basic.AuxiliaryProductFormula A B C D E H root.lower root.upper := open
+    Basic.AuxiliaryProductFormula A B C D E H root.lower root.upper := open
       Purelib.Algebra.Field in by
-  let leafWidth := Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth
+  let leafWidth := Bounds.degenerateProductLeafWidth
     left right realIdentity imagIdentity
   have leafWidthPositive : 0 < leafWidth := by
     simpa only [leafWidth] using
-      Dense.Rational.CauchyIndex.Product.Degenerate.Bounds.degenerateProductLeafWidth_pos left right realIdentity
+      Bounds.degenerateProductLeafWidth_pos left right realIdentity
         imagIdentity
   let depth := Approximation.Rational.Contraction.geometricDepth (root.upper - root.lower) (leafWidth / 2)
   have geometric : (2 / 3 : Fraction.Rational) ^ depth *

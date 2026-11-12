@@ -129,23 +129,23 @@ without rebuilding entries. -/
           · exact same.symm
           · exact ((List.pairwise_cons.mp unique).1 target inTail equal).elim⟩
       else
-        let found := Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.HoleSides.positionByKey key target tail
+        let found := HoleSides.positionByKey key target tail
           (List.pairwise_cons.mp unique).2
           ((Data.List.Membership.mem_cons.mp member).resolve_left (fun same => equal (congrArg key same.symm)))
         ⟨found.val.succ, found.property⟩
 
 end HoleSides
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
-  {grid : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-    {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {annulus :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index}
+  {preparation : NewtonPreparation original} {target
+    radius : Fraction.Rational}
+  {grid : NewtonGrid preparation target radius}
+    {lifted : Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
+  {index : Branches.BranchIsolation.Data.Index branches} {annulus :
+    AnnularFaces grid index}
 
 section AnnularFaces.Lifted
 
@@ -154,33 +154,33 @@ set_option genInjectivity false in
 
 The equality binds the listed physical hole to the annular owner, and all root-sheet side selections depend on that same
 position. -/
-structure HoleSides (region : LiftedBoundary.Lifted annulus lifted) where
+structure HoleSides (region : Lifted annulus lifted) where
   /-- The retained physical-list position of the original annular hole. -/ position : Fin grid.faces.holes.length
   /-- The selected list entry is exactly the retained annular hole. -/ hole_eq : grid.faces.holes[position.val] =
     region.hole
   /-- The four actual regular faces adjacent to that selected physical hole. -/ adjacent :
-    PuncturedGrid.HoleAdjacentFaces grid.punctured grid.faces.holes[position.val]
-  /-- The actual root-sheet lifts of those retained adjacent sides. -/ sides : HoleRootedCorrection.HoleSideLifts lifted
+    HoleAdjacentFaces grid.punctured grid.faces.holes[position.val]
+  /-- The actual root-sheet lifts of those retained adjacent sides. -/ sides : HoleSideLifts lifted
     adjacent
 
 constructive_injectivity HoleSides
 
 namespace HoleSides
-variable {region : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
+variable {region : Lifted annulus lifted}
 
 /-- Locate the original annular hole by its unique branch key and retain its actual adjacent side lifts. -/
-@[expose] def build (region : LiftedBoundary.Lifted annulus lifted) :
+@[expose] def build (region : Lifted annulus lifted) :
   HoleSides region :=
-  let found := Curves.Hyperelliptic.Meshes.Newton.Annulus.HoleSides.positionByKey (fun hole => hole.index) region.hole
+  let found := HoleSides.positionByKey (fun hole => hole.index) region.hole
     grid.faces.holes grid.faces.holes_pairwise region.hole_mem
-  let adjacent := PuncturedGrid.HoleAdjacentFaces.build grid.punctured grid.faces.holes[found.val.val]
+  let adjacent := HoleAdjacentFaces.build grid.punctured grid.faces.holes[found.val.val]
   ⟨found.val, found.property, adjacent, HoleSideLifts.build lifted adjacent⟩
 
 /-- Reindex the existing annular occurrences to the physical hole position. The edges and source-owner cache are reused
 without a new cut lookup. -/
 @[expose] def innerPhysical (cached : HoleSides
   region) (inner : CutBalance.InnerOccurrences region) :
-    BranchHoleCutWords.PhysicalCutWord lifted (grid.faces.holes[cached.position.val].liftedBoundary lifted.vertices
+    PhysicalCutWord lifted (grid.faces.holes[cached.position.val].liftedBoundary lifted.vertices
       lifted.edges) where
   edges := inner.word.edges
   physical := (InnerOccurrences.toPhysical inner).physical
@@ -188,9 +188,9 @@ without a new cut lookup. -/
     (congrArg (fun hole => hole.liftedBoundary lifted.vertices lifted.edges) cached.hole_eq).symm
   sources := inner.word.sources
 
-variable {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+variable {domains : FaceDomainBank lifted.frames
   grid.faces.regulars} {stage : Nat}
-  {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {cache : Numerics domains stage}
     {i j : Fin genus}
 
 /-- The actual retained annular inner source list has the same chord sum as its indexed physical-hole side bank. -/
@@ -208,19 +208,19 @@ theorem inner_source_chords (cached : HoleSides
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
 open Purelib.Algebra.FiniteSum.Fin (sumFin)
-variable {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+variable {cuts : CommonCuts domains}
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {physicalTarget : Purelib.Data.Rat.Fraction.Rational}
-  {physicalRequest : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun
-    sheet => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts
+  Preflights domains sheet}
+  {physicalTarget : Fraction.Rational}
+  {physicalRequest : TwoSheetRequest (fun
+    sheet => RegularMeshes.build domains cuts
     sheet coarseDepth) fixed physicalTarget}
 
 /-- Read the eight fine side areas from the already retained perimeter bank. -/
 @[expose] def finePerimeter (cached : HoleSides
   region)
-    (perimeters : PuncturedGrid.Matched.FacePerimeters (request := physicalRequest) cache.normalize i j) :
-      Data.Gaussian.Basic.Canonical :=
+    (perimeters : FacePerimeters (request := physicalRequest) cache.normalize i j) :
+      Canonical :=
   FiniteSum.Fin.sumFin (fun sheet =>
     ((perimeters.perimeters.get cached.adjacent.left.position).get (cached.sides.left.get sheet).selected.sheet).right -
     ((perimeters.perimeters.get cached.adjacent.right.position).get (cached.sides.right.get sheet).selected.sheet).left
@@ -234,7 +234,7 @@ variable {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomain
 theorem remainder_add_inner_chords (cached :
   HoleSides region) (inner :
   CutBalance.InnerOccurrences region)
-    (perimeters : PuncturedGrid.Matched.FacePerimeters (request := physicalRequest) cache.normalize i j)
+    (perimeters : FacePerimeters (request := physicalRequest) cache.normalize i j)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) :
     HoleAreaRemainder.holeAreaRemainder perimeters cached.sides +

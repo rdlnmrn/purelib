@@ -12,6 +12,10 @@ import Purelib.Topology.Grid.Signs
 public import Purelib.Riemann.Readings.RectangularSeamBounds
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Riemann.Normalization.InverseRootPolynomial
 
 @[expose] public section
@@ -38,7 +42,7 @@ open Purelib.Riemann.Readings.RectangularBoundaryAssembly (BoundaryAssembly)
 open Purelib.Riemann.Readings.RectangularSeamBounds (boundarySlope)
 open Purelib.Data in
 /-- The exact rational coordinate type. -/
-private abbrev Coordinate := Rat.Fraction.Rational
+private abbrev Coordinate := Fraction.Rational
 
 set_option genInjectivity false in
 /-- Retain a computed accuracy request for the complete regular-grid boundary.
@@ -84,48 +88,48 @@ A positive target gives tolerance equal to target divided by payment coefficient
 seam and corner factors. -/
 def build (bounds : PrimitiveOverlapBounds clearance numerator) (columns rows : Nat)
     (target : Coordinate) (targetPositive : 0 < target) : GridBoundaryAccuracy bounds columns rows target :=
-  let columnCount := Rational.Budget.Aggregate.countCoordinate columns
-  let rowCount := Rational.Budget.Aggregate.countCoordinate rows
+  let columnCount := Aggregate.countCoordinate columns
+  let rowCount := Aggregate.countCoordinate rows
   let slope := boundarySlope bounds
   let seamFactor := (columnCount * (rowCount + 1)) ^ 2 + ((columnCount + 1) * rowCount) ^ 2
   let cornerFactor := (columnCount * rowCount) ^ 2
   let denominator := 1 + 32 * seamFactor * (4 * slope + 1) + 128 * cornerFactor
-  have slopeNonnegative : 0 ≤ slope := Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative
+  have slopeNonnegative : 0 ≤ slope := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative
         bounds.inverseUpper_positive.le)) ambient.diagonalSq_nonneg
-  have seamNonnegative : 0 ≤ seamFactor := add_nonneg (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _)
-    (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _)
-  have cornerNonnegative : 0 ≤ cornerFactor := Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _
+  have seamNonnegative : 0 ≤ seamFactor := add_nonneg (Arithmetic.sq_nonneg_direct _)
+    (Arithmetic.sq_nonneg_direct _)
+  have cornerNonnegative : 0 ≤ cornerFactor := Arithmetic.sq_nonneg_direct _
   have denominatorPositive : 0 < denominator := (show (0 : Coordinate) < 1 by decide).trans_le
-    ((le_add_of_nonneg_right (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) seamNonnegative)
-      (add_nonneg (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) slopeNonnegative) (by decide)))).trans
-      (le_add_of_nonneg_right (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) cornerNonnegative)))
-  have totalPositive : 0 < denominator + target := Rat.Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
+    ((le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide +kernel) seamNonnegative)
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) slopeNonnegative) (by decide)))).trans
+      (le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct (by decide +kernel) cornerNonnegative)))
+  have totalPositive : 0 < denominator + target := Arithmetic.add_pos_of_pos_of_nonneg_direct
     denominatorPositive targetPositive.le
   let tolerance := target / (denominator + target)
-  have positive : 0 < tolerance := Rat.Fraction.Order.Field.div_pos_direct targetPositive totalPositive
+  have positive : 0 < tolerance := Field.div_pos_direct targetPositive totalPositive
   have cancel : (denominator + target) * tolerance = target := by
-    rw [Rat.Fraction.Field.mul_comm]
-    exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _ totalPositive.ne'
+    rw [Fraction.Field.mul_comm]
+    exact Fraction.Field.div_mul_cancel_of_ne _ _ totalPositive.ne'
   { slope := slope
     slope_eq := rfl
     seamFactor := seamFactor
     seamFactor_eq := by dsimp only [seamFactor, columnCount, rowCount]; rw
-      [Rational.Budget.Aggregate.countCoordinate_eq, Rational.Budget.Aggregate.countCoordinate_eq]
+      [Aggregate.countCoordinate_eq, Aggregate.countCoordinate_eq]
     cornerFactor := cornerFactor
     cornerFactor_eq := by dsimp only [cornerFactor, columnCount, rowCount]; rw
-      [Rational.Budget.Aggregate.countCoordinate_eq, Rational.Budget.Aggregate.countCoordinate_eq]
+      [Aggregate.countCoordinate_eq, Aggregate.countCoordinate_eq]
     denominator := denominator
     denominator_eq := rfl
     denominator_positive := denominatorPositive
     tolerance := tolerance
     positive := positive
-    le_one := (Rat.Fraction.Order.Field.div_le_iff_pos totalPositive).2 (by
-      rw [Rat.Fraction.Field.one_mul]
+    le_one := (Field.div_le_iff_pos totalPositive).2 (by
+      rw [Fraction.Field.one_mul]
       exact le_add_of_nonneg_left denominatorPositive.le)
-    paid := (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    paid := (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (le_add_of_nonneg_right targetPositive.le) positive.le).trans_eq cancel
     gridRequest := GridPrimitiveAccuracy.build bounds columns tolerance positive }
 
@@ -142,7 +146,7 @@ theorem accurate (request : GridBoundaryAccuracy bounds columns rows target)
     {transitions : Transitions (bank.refine request.gridRequest.index)} {gauge : Grid.Signs.Gauge transitions.flatGrid}
     {primitives : Primitives (Branches.RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} {anchors
       : PrimitiveAnchors primitives}
-    {offsets : LinearAlgebra.Grid.Offsets anchors.edges} {depth : Nat} (assembly : BoundaryAssembly anchors offsets
+    {offsets : Grid.Offsets anchors.edges} {depth : Nat} (assembly : BoundaryAssembly anchors offsets
       depth)
     (refines : ∀ column row, (geometry.box column row).Refines ambient) :
     normSq (assembly.localTotal - assembly.exterior) < target := by
@@ -151,31 +155,31 @@ theorem accurate (request : GridBoundaryAccuracy bounds columns rows target)
   have edgeLe := request.gridRequest.edgeBound_le_globalBound.trans globalLe
   have seamNonnegative : 0 ≤ request.seamFactor := by
     rw [request.seamFactor_eq]
-    exact add_nonneg (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _) (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct
+    exact add_nonneg (Arithmetic.sq_nonneg_direct _) (Arithmetic.sq_nonneg_direct
       _)
   have cornerNonnegative : 0 ≤ request.cornerFactor := by
-    rw [request.cornerFactor_eq]; exact Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _
+    rw [request.cornerFactor_eq]; exact Arithmetic.sq_nonneg_direct _
   have squareLe : request.gridRequest.globalBound ^ 2 ≤ request.gridRequest.globalBound := by
-    have product := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct globalLe globalNonnegative
+    have product := Arithmetic.mul_le_mul_of_nonneg_left_direct globalLe globalNonnegative
     exact (show request.gridRequest.globalBound ^ 2 = request.gridRequest.globalBound * request.gridRequest.globalBound
       by ring1).trans_le
       (product.trans_eq (by ring1))
-  have raw := Readings.RectangularSeamBounds.GridPrimitiveAccuracy.boundaryDiscrepancy_bound request.gridRequest
+  have raw := RectangularSeamBounds.GridPrimitiveAccuracy.boundaryDiscrepancy_bound request.gridRequest
     assembly refines
   rw [← request.seamFactor_eq, ← request.cornerFactor_eq, ← request.slope_eq] at raw
   calc
     _ ≤ _ := raw
     _ ≤ 32 * request.seamFactor * request.gridRequest.globalBound * (4 * request.slope + 1) +
         128 * request.cornerFactor * request.gridRequest.globalBound := add_le_add
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add le_rfl edgeLe)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add le_rfl edgeLe)
+        (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct
           (by decide +kernel) seamNonnegative) globalNonnegative))
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
-        (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) cornerNonnegative))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
+        (Arithmetic.mul_nonneg_direct (by decide +kernel) cornerNonnegative))
     _ ≤ request.denominator * request.gridRequest.globalBound := by
       rw [request.denominator_eq]
       exact (le_add_of_nonneg_right globalNonnegative).trans_eq (by ring1)
-    _ < request.denominator * request.tolerance := Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    _ < request.denominator * request.tolerance := Arithmetic.mul_lt_mul_of_pos_left_direct
       request.denominator_positive request.gridRequest.accurate
     _ ≤ target := request.paid
 

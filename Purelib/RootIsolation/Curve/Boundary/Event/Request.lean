@@ -83,7 +83,7 @@ def request
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary) (epsilon : Fraction.Rational) :=
+    (entry : BoundaryEventEntry boundary) (epsilon : Fraction.Rational) :=
   entry.event.2.request epsilon
 
 /-- A positive parameter-width request bounds the retained boundary event's refined interval width. -/
@@ -94,7 +94,7 @@ theorem request_width_le
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary) (epsilon : Fraction.Rational)
+    (entry : BoundaryEventEntry boundary) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     (Bounds.width (entry.request epsilon).cell.interval) ≤ epsilon :=
   entry.event.2.request_width_le epsilon positive
@@ -108,7 +108,7 @@ def refineRequest
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary)
+    (entry : BoundaryEventEntry boundary)
     (state : State
       entry.event.1.factor.polynomial)
     (epsilon : Fraction.Rational) :
@@ -125,7 +125,7 @@ theorem refineRequest_refines
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary)
+    (entry : BoundaryEventEntry boundary)
     (state : State
       entry.event.1.factor.polynomial)
     (epsilon : Fraction.Rational) :
@@ -142,7 +142,7 @@ theorem refineRequest_width_le
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary)
+    (entry : BoundaryEventEntry boundary)
     (state : State
       entry.event.1.factor.polynomial)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) :
@@ -160,7 +160,7 @@ theorem chordalSq_refineRequest_le
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary)
+    (entry : BoundaryEventEntry boundary)
     (state : State
       entry.event.1.factor.polynomial)
     (stateRefinesChart : state.cell.interval.Refines
@@ -177,7 +177,7 @@ theorem chordalSq_refineRequest_le
   let requested := entry.refineRequest state epsilon
   have requestedRefinesChart : requested.cell.interval.Refines
       entry.chart.cell.interval :=
-    Data.Rat.Interval.Refinement.intervalRefines_trans
+    Interval.Refinement.intervalRefines_trans
       (entry.refineRequest_refines state epsilon) stateRefinesChart
   have leftChart : entry.chart.cell.interval.Contains left :=
     ⟨requestedRefinesChart.1.trans leftInside.1,
@@ -186,7 +186,7 @@ theorem chordalSq_refineRequest_le
     ⟨requestedRefinesChart.1.trans rightInside.1,
       rightInside.2.trans requestedRefinesChart.2⟩
   have parameterBound :=
-    Data.Rat.Interval.parameter_sub_sq_le_width_sq
+    Interval.parameter_sub_sq_le_width_sq
       requested.cell.interval leftInside rightInside
   have widthSquare : (Bounds.width requested.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
     Fraction.Order.Arithmetic.pow_le_pow_direct
@@ -206,7 +206,7 @@ theorem chordalSq_request_le
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary) (epsilon : Fraction.Rational)
+    (entry : BoundaryEventEntry boundary) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) {left right : Fraction.Rational}
     (leftInside : (entry.request epsilon).cell.interval.Contains left)
     (rightInside : (entry.request epsilon).cell.interval.Contains right) :
@@ -225,9 +225,9 @@ def affineResidualCoefficient
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary) (targetBox : Box) :
+    (entry : BoundaryEventEntry boundary) (targetBox : Box) :
       Fraction.Rational :=
-  Curve.Event.Basic.EventLeaf.affineEventResidualCoefficient
+  Event.Basic.EventLeaf.affineEventResidualCoefficient
     (targetBox := targetBox) entry.event.1
 
 /-- The original boundary event's coefficient for affine residuals in the supplied target box is nonnegative. -/
@@ -238,9 +238,9 @@ theorem affineResidualCoefficient_nonneg
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary) (targetBox : Box) :
+    (entry : BoundaryEventEntry boundary) (targetBox : Box) :
     0 ≤ entry.affineResidualCoefficient targetBox :=
-  Curve.Event.Basic.EventLeaf.affineEventResidualCoefficient_nonneg
+  Event.Basic.EventLeaf.affineEventResidualCoefficient_nonneg
     (targetBox := targetBox) entry.event.1
 
 /-- Every affine meeting of a requested boundary event with `targetBox` has
@@ -253,7 +253,7 @@ theorem
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.BoundaryEventEntry boundary) (targetBox : Box)
+    (entry : BoundaryEventEntry boundary) (targetBox : Box)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon)
     (parameter : Fraction.Rational)
     (parameterInside :
@@ -262,7 +262,7 @@ theorem
       entry.chart.parameterization.curve.denominatorAt parameter ≠ 0)
     (pointInside : targetBox.Contains
       (entry.chart.parameterization.curve.point parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (entry.chart.parameterization.curve.point parameter)) ≤
       entry.affineResidualCoefficient targetBox * epsilon ^ 2 := by
   simpa only [affineResidualCoefficient] using

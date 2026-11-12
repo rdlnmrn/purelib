@@ -52,6 +52,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 public section
 
 /-!
@@ -76,88 +78,88 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {index depth readingIndex : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {sample : Cap.Primitives.Sample cap differential index box} {shared :
+    Face.PrimitiveData.FacePrimitiveBank differential index domains}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
-    regular domains differential} {target areaTarget : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared target
+    regular domains differential} {target areaTarget : InverseRootPolynomial.Coordinate} {floor : Nat}
+  {request : Request prepared target
     areaTarget floor}
 
 namespace Request.Evaluation
 
 /-- The original occurrence order identifies the sampled reversed inverse-arc sum with the exact attached cap words. -/
 theorem reverse_arc_sum (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation request sample
+  Evaluation request sample
   shared depth readingIndex)
-    (attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
+    (attached : Caps.AllSurfacePreparation.CapAttachment prepared)
       (energyDepth : Nat) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.samples.values.map (fun value =>
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
+    Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.samples.values.map (fun value =>
+      ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
       value.entry.occurrence.finish value.entry.occurrence.start)) =
     Geometry.Grid.CellBoundary.sumValues (fun word => Geometry.Grid.CellBoundary.sumValues (fun edge =>
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
+      ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
       (lifted.vertices.coordinate edge.finish) (lifted.vertices.coordinate edge.start)) word) attached.words := open
         Purelib in by
   have indexed : evaluated.samples.values.map (fun value => value.entry.occurrence.placement.indexed) =
     attached.words.flatten := by
     calc
       _ = (evaluated.samples.values.map
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.entry).map (fun
+        SampledEntry.entry).map (fun
         entry => entry.occurrence.placement.indexed) := by
-        rw [Data.List.Map.map_map]
+        rw [List.Map.map_map]
         rfl
       _ = _ := by rw [evaluated.samples.entries_eq, request.indexed_eq, attached.words_flatten]
-  rw [Geometry.Grid.CellBoundary.sumValues_flatten, ← indexed, Data.List.Map.map_map]
-  apply congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
-  apply Data.List.Map.map_congr_left
+  rw [Geometry.Grid.CellBoundary.sumValues_flatten, ← indexed, List.Map.map_map]
+  apply congrArg Gaussian.Norm.Sum.Basic.gaussianSum
+  apply List.Map.map_congr_left
   intro value _
   dsimp only [Function.comp_def]
   rw [value.entry.occurrence.placement.start_eq, value.entry.occurrence.placement.finish_eq]
 
 /-- The retained regular cap energy equals the actual reverse-arc sum on the same original sampled occurrences. -/
 theorem energy_area_sum (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation request sample
+  Evaluation request sample
   shared depth readingIndex)
-    {attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared} {geometry
-      : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    {attached : Caps.AllSurfacePreparation.CapAttachment prepared} {geometry
+      : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
       attached}
     {energyDepth : Nat} {parameters : Path.Dyadic.RadialTriangles.Parameters energyDepth} {radius :
-      Normalization.InverseRootPolynomial.Coordinate}
-    (energy : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularEnergy geometry parameters sample radius) :
-    energy.area = Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.samples.values.map (fun value =>
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
+      InverseRootPolynomial.Coordinate}
+    (energy : CapEnergy.RegularEnergy geometry parameters sample radius) :
+    energy.area = Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.samples.values.map (fun value =>
+      ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
       value.entry.occurrence.finish value.entry.occurrence.start)) :=
   energy.area_eq_arcs.trans (evaluated.reverse_arc_sum attached energyDepth).symm
 
 /-- Every term is charged, with the exact sample count inherited from the
 original request. This is a finite area estimate, not a closure assumption. -/
 theorem cap_arc_error (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation request sample
+  Evaluation request sample
   shared depth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) (energyDepth : Nat) {error :
-      Normalization.InverseRootPolynomial.Coordinate}
+      InverseRootPolynomial.Coordinate}
     (localBounds : ∀ value ∈ evaluated.samples.values,
-      Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea
+      Gaussian.Norm.Basic.normSq (ReciprocalRadialGeometry.arcArea
         sample.primitive.value.eval energyDepth
         value.entry.occurrence.finish value.entry.occurrence.start + value.endpointArea + value.evaluated.right.area) ≤
           error) :
-    Data.Gaussian.Norm.Basic.normSq (evaluated.cap.area + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Gaussian.Norm.Basic.normSq (evaluated.cap.area + Gaussian.Norm.Sum.Basic.gaussianSum
       (evaluated.samples.values.map (fun value =>
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
+      ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
         value.entry.occurrence.finish value.entry.occurrence.start))) ≤
-        (request.count : Normalization.InverseRootPolynomial.Coordinate) ^ 2 * error := open Purelib in by
+        (request.count : InverseRootPolynomial.Coordinate) ^ 2 * error := open Purelib in by
   have bound := Gaussian.Norm.Sum.Bounds.normSq_sum_le (evaluated.samples.values.map (fun value =>
-    Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
+    ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth
       value.entry.occurrence.finish value.entry.occurrence.start +
       value.endpointArea + value.evaluated.right.area)) error (by
         intro term member
@@ -165,16 +167,16 @@ theorem cap_arc_error (evaluated :
         rw [← equal]
         exact localBounds value member)
   have count := congrArg List.length evaluated.samples.entries_eq
-  rw [Data.List.Map.length_map, request.count_entries] at count
-  have aligned := Data.List.Map.map_congr_left (values := evaluated.samples.values)
-    (function := fun value => Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea
+  rw [List.Map.length_map, request.count_entries] at count
+  have aligned := List.Map.map_congr_left (values := evaluated.samples.values)
+    (function := fun value => ReciprocalRadialGeometry.arcArea
       sample.primitive.value.eval energyDepth value.entry.occurrence.finish value.entry.occurrence.start +
       value.endpointArea + value.evaluated.right.area)
-    (other := fun value => Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea sample.primitive.value.eval
+    (other := fun value => ReciprocalRadialGeometry.arcArea sample.primitive.value.eval
       energyDepth value.entry.occurrence.finish value.entry.occurrence.start + (value.evaluated.right.area +
       value.endpointArea))
     (by intro value _; ring1)
-  rw [Data.List.Map.length_map, count, aligned, ← Data.Gaussian.Norm.Sum.Basic.gaussianSum_map_add, ←
+  rw [List.Map.length_map, count, aligned, ← Gaussian.Norm.Sum.Basic.gaussianSum_map_add, ←
     evaluated.cap_area_segments degree] at bound
   have commuted := bound
   rw [Gaussian.Basic.add_comm] at commuted
@@ -183,22 +185,22 @@ theorem cap_arc_error (evaluated :
 /-- The complete cap-plus-energy discrepancy satisfies the actual occurrence-count-squared bound from the retained local
 arc errors. -/
 theorem cap_energy_error (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation request sample
+  Evaluation request sample
   shared depth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    {attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared} {geometry
-      : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    {attached : Caps.AllSurfacePreparation.CapAttachment prepared} {geometry
+      : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
       attached}
     {energyDepth : Nat} {parameters : Path.Dyadic.RadialTriangles.Parameters energyDepth} {radius error :
-      Normalization.InverseRootPolynomial.Coordinate}
-    (energy : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularEnergy geometry parameters sample radius)
+      InverseRootPolynomial.Coordinate}
+    (energy : CapEnergy.RegularEnergy geometry parameters sample radius)
     (localBounds : ∀ value ∈ evaluated.samples.values,
-      Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea
+      Gaussian.Norm.Basic.normSq (ReciprocalRadialGeometry.arcArea
         sample.primitive.value.eval energyDepth
         value.entry.occurrence.finish value.entry.occurrence.start + value.endpointArea + value.evaluated.right.area) ≤
           error) :
-    Data.Gaussian.Norm.Basic.normSq (evaluated.cap.area + energy.area) ≤ (request.count :
-      Normalization.InverseRootPolynomial.Coordinate) ^ 2 * error := by
+    Gaussian.Norm.Basic.normSq (evaluated.cap.area + energy.area) ≤ (request.count :
+      InverseRootPolynomial.Coordinate) ^ 2 * error := by
   rw [evaluated.energy_area_sum energy]
   exact evaluated.cap_arc_error degree energyDepth localBounds
 
@@ -206,28 +208,28 @@ theorem cap_energy_error (evaluated :
 cap-plus-energy discrepancy. Its local obligations are the existing arc
 comparison certificates at the same common energy depth. -/
 theorem cap_energy_error_requested (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation request sample
+  Evaluation request sample
   shared depth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    {attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared} {geometry
-      : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    {attached : Caps.AllSurfacePreparation.CapAttachment prepared} {geometry
+      : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
       attached}
     {energyDepth : Nat} {parameters : Path.Dyadic.RadialTriangles.Parameters energyDepth} {radius :
-      Normalization.InverseRootPolynomial.Coordinate}
-    (energy : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularEnergy geometry parameters sample radius)
-    (errorTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget)
+      InverseRootPolynomial.Coordinate}
+    (energy : CapEnergy.RegularEnergy geometry parameters sample radius)
+    (errorTarget : InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget)
     (localBounds : ∀ value ∈ evaluated.samples.values,
-      Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea
+      Gaussian.Norm.Basic.normSq (ReciprocalRadialGeometry.arcArea
         sample.primitive.value.eval energyDepth
         value.entry.occurrence.finish value.entry.occurrence.start + value.endpointArea + value.evaluated.right.area) <
           Rational.Budget.Aggregate.perTerm errorTarget request.count) :
-    Data.Gaussian.Norm.Basic.normSq (evaluated.cap.area + energy.area) < errorTarget := by
+    Gaussian.Norm.Basic.normSq (evaluated.cap.area + energy.area) < errorTarget := by
   have bound := evaluated.cap_energy_error degree energy (fun value member => (localBounds value member).le)
   have paid := Rational.Budget.Aggregate.count_mul_perTerm_lt positive request.count
-  exact bound.trans_lt ((by ring1 : (request.count : Normalization.InverseRootPolynomial.Coordinate) ^ 2 *
+  exact bound.trans_lt ((by ring1 : (request.count : InverseRootPolynomial.Coordinate) ^ 2 *
     Rational.Budget.Aggregate.perTerm errorTarget request.count =
-    (request.count : Normalization.InverseRootPolynomial.Coordinate) * ((request.count :
-      Normalization.InverseRootPolynomial.Coordinate) * Rational.Budget.Aggregate.perTerm errorTarget
+    (request.count : InverseRootPolynomial.Coordinate) * ((request.count :
+      InverseRootPolynomial.Coordinate) * Rational.Budget.Aggregate.perTerm errorTarget
       request.count)).trans_lt paid)
 
 end Request.Evaluation

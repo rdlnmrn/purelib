@@ -33,6 +33,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Rational.Box.Square.Centered
+
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -66,10 +70,10 @@ open Purelib.Data.Rat in
 /-- The exact rational coordinate field used for residual bounds. -/
 private abbrev Coordinate := Fraction.Rational
 /-- The original rational box carrier with retained coordinate bounds. -/
-private abbrev Box := Purelib.Geometry.Rational.Box
+private abbrev Box := Geometry.Rational.Box
 
 /-- The original nominal square-root continuation owner of the retained nonzero parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 
 section
 open Purelib.Data.Gaussian
@@ -88,15 +92,15 @@ theorem seed_residual_le_relative {parameter root : Basic.Canonical} {bound : Fr
       _ = parameter - root * root * (parameter * inv parameter) ^ 2 := by ring1
       _ = _ := by
         have cancel : parameter * inv parameter = 1 := by
-          with_unfolding_all exact Basic.Canonical.mul_inv_cancel parameter nonzero
+          with_unfolding_all exact mul_inv_cancel parameter nonzero
         rw [cancel]
         ring1
   have positive := Norm.Basic.normSq_pos nonzero
   rw [Norm.Basic.normSq_eq_canonical] at positive
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := normSq parameter) ?_ positive
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := normSq parameter) ?_ positive
   calc
-    _ = normSq ((1 - parameter * (root * inv parameter) ^ 2) * parameter) := (Basic.Canonical.normSq_mul _ _).symm
-    _ = normSq (root * root - parameter) := by rw [identity, Basic.Canonical.normSq_neg]
+    _ = normSq ((1 - parameter * (root * inv parameter) ^ 2) * parameter) := (normSq_mul _ _).symm
+    _ = normSq (root * root - parameter) := by rw [identity, normSq_neg]
     _ <= bound * normSq parameter := residualBound
 
 /-- A square-root residual below parameter norm squared divided by sixty-four gives inverse-root seed residual at most
@@ -153,7 +157,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Geometry.Rational in
 open Purelib.Riemann.Branches in
 /-- The Gaussian point whose coordinates are the midpoints of the original box intervals. -/
-def boxCenter (box : Purelib.Geometry.Rational.Box) : Basic.Canonical :=
+def boxCenter (box : Geometry.Rational.Box) : Basic.Canonical :=
   ⟨ClearSheetContinuation.midpoint box.xLower box.xUpper,
     ClearSheetContinuation.midpoint box.yLower box.yUpper⟩
 
@@ -163,7 +167,7 @@ open Purelib.Riemann.Branches in
 
 The original valid coordinate intervals bound each of their retained rational
 midpoints, so all four box inequalities hold for the same center point. -/
-theorem boxCenter_inside (box : Purelib.Geometry.Rational.Box) : box.Contains (boxCenter box) :=
+theorem boxCenter_inside (box : Geometry.Rational.Box) : box.Contains (boxCenter box) :=
   ⟨ClearSheetContinuation.left_le_midpoint box.x_valid,
     ClearSheetContinuation.midpoint_le_right box.x_valid,
     ClearSheetContinuation.left_le_midpoint box.y_valid,
@@ -224,7 +228,7 @@ def ofOwner {parameter : Basic.Canonical} (owner : Owner parameter) : Seed param
     (by
       have positive := Norm.Basic.normSq_pos owner.parameterNonzero
       rw [Norm.Basic.normSq_eq_canonical] at positive
-      exact Fraction.Order.Field.div_pos_direct positive (by decide +kernel))
+      exact Field.div_pos_direct positive (by decide +kernel))
   ofSample owner sample.value sample.inside sample.residualBound
 
 open Purelib.Data.Gaussian in
@@ -245,7 +249,7 @@ theorem mismatch_le {parameter : Basic.Canonical} (seed : Seed parameter) {root 
       _ = seed.rootSample ^ 2 * inv parameter := by ring1
       _ = seed.rootSample ^ 2 * inv parameter * (parameter * inv parameter) := by
         have cancel : parameter * inv parameter = 1 := by
-          with_unfolding_all exact Basic.Canonical.mul_inv_cancel parameter seed.owner.parameterNonzero
+          with_unfolding_all exact mul_inv_cancel parameter seed.owner.parameterNonzero
         rw [cancel, Basic.mul_one]
       _ = _ := by ring1
   have identity : 1 - root * seed.value =
@@ -256,13 +260,13 @@ theorem mismatch_le {parameter : Basic.Canonical} (seed : Seed parameter) {root 
     (1 - parameter * seed.value ^ 2) ((seed.rootSample - root) * seed.value)
   simp only [Norm.Basic.normSq_eq_canonical] at triangle
   apply triangle.trans
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _ (by decide)
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct _ (by decide)
   apply add_le_add le_rfl
-  rw [Basic.Canonical.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  rw [normSq_mul]
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
     (by
       simpa only [Norm.Basic.normSq_eq_canonical] using
-        Box.normSq_sub_le_diagonalSq seed.rootSample_inside inside) (Basic.Canonical.normSq_nonneg _)
+        Box.normSq_sub_le_diagonalSq seed.rootSample_inside inside) (normSq_nonneg _)
 
 end Seed
 
@@ -274,8 +278,8 @@ supply the two nonnegative factors of this unchanged variation scale. -/
 theorem seedScale_nonnegative {polynomial : Polynomial} {count : Nat}
     (site : ObservationNeighborhood polynomial count) (seed : Seed (polynomial.eval site.center)) :
     0 <= site.denominatorSlope * normSq seed.value ^ 2 :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct site.denominatorSlope_positive.le
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  Arithmetic.mul_nonneg_direct site.denominatorSlope_positive.le
+    (Arithmetic.sq_nonneg_direct _)
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -291,11 +295,11 @@ theorem seed_small_on_box {polynomial : Polynomial} {count : Nat}
     {radius : Fraction.Rational} (nonnegative : 0 <= radius)
     (radiusBound : radius <= 1)
     (radiusError : (site.denominatorSlope * normSq seed.value ^ 2) * (8 * radius ^ 2) <= 1 / 64)
-    {point : Basic.Canonical} (inside : (Box.Square.Centered.BoxTransport.centeredBox site.center radius
+    {point : Basic.Canonical} (inside : (BoxTransport.centeredBox site.center radius
       nonnegative).Contains point) :
     normSq (1 - polynomial.eval point * seed.value ^ 2) <= 1 / 16 := by
   have centerInside := PreparedObservationNeighborhoods.centeredBox_center site.center nonnegative
-  have refines : (Box.Square.Centered.BoxTransport.centeredBox site.center radius nonnegative).Refines site.ambient :=
+  have refines : (BoxTransport.centeredBox site.center radius nonnegative).Refines site.ambient :=
     by
     rw [site.ambient_eq]
     exact centeredBox_refines _ nonnegative (by decide) radiusBound
@@ -303,19 +307,19 @@ theorem seed_small_on_box {polynomial : Polynomial} {count : Nat}
     (refines.contains centerInside) (refines.contains inside)
   rw [<- site.denominatorSlope_eq] at variation
   have distance := Box.normSq_sub_le_diagonalSq centerInside inside
-  rw [Box.Square.Centered.BoxTransport.centeredBox_diagonalSq] at distance
+  rw [BoxTransport.centeredBox_diagonalSq] at distance
   simp only [Norm.Basic.normSq_eq_canonical] at variation distance
   have movement : normSq (polynomial.eval site.center - polynomial.eval point) <=
       site.denominatorSlope * (8 * radius ^ 2) := variation.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distance site.denominatorSlope_positive.le)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct distance site.denominatorSlope_positive.le)
   have perturbation : normSq ((polynomial.eval site.center - polynomial.eval point) * seed.value ^ 2) <= 1 / 64 := by
     have squareNorm := Power.normSq_pow seed.value 2
     simp only [Norm.Basic.normSq_eq_canonical] at squareNorm
-    rw [Basic.Canonical.normSq_mul, squareNorm]
+    rw [normSq_mul, squareNorm]
     calc
       _ <= (site.denominatorSlope * (8 * radius ^ 2)) * normSq seed.value ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct movement
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct movement
+          (Arithmetic.sq_nonneg_direct _)
       _ = (site.denominatorSlope * normSq seed.value ^ 2) * (8 * radius ^ 2) := by ring1
       _ <= 1 / 64 := radiusError
   have identity : 1 - polynomial.eval point * seed.value ^ 2 =
@@ -331,7 +335,7 @@ theorem seed_small_on_box {polynomial : Polynomial} {count : Nat}
           ((polynomial.eval site.center - polynomial.eval point) * seed.value ^ 2)
         simpa only [Norm.Basic.normSq_eq_canonical] using scalar
     _ <= 2 * ((1 / 64 : Fraction.Rational) + 1 / 64) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add seed.residual_small perturbation) (by decide)
     _ = 1 / 16 := by decide +kernel
 
@@ -352,9 +356,9 @@ structure SeededNeighborhood (polynomial : Polynomial) (count : Nat) where
   /-- The retained radius is no larger than the original observation site's radius. -/ radius_le_site : radius ≤
     site.radius
   /-- The retained centered-neighborhood radius is strictly positive. -/ radius_positive : 0 < radius
-  /-- The exact centered box retained for the inverse-root model. -/ box : Purelib.Geometry.Rational.Box
+  /-- The exact centered box retained for the inverse-root model. -/ box : Geometry.Rational.Box
   /-- The box equals the centered square at the original site center and retained radius. -/ box_eq : box =
-    Box.Square.Centered.BoxTransport.centeredBox site.center radius radius_positive.le
+    BoxTransport.centeredBox site.center radius radius_positive.le
   /-- The certified inverse-root polynomial model on this exact retained box. -/ model : Model polynomial box
   /-- The model polynomial is exactly the constant polynomial of the retained seed value. -/ model_value_eq :
     model.value = Dense.Basic.DensePolynomial.constant seed.value
@@ -372,7 +376,7 @@ inequality is retained. -/
 def ofRadius {polynomial : Polynomial} {count : Nat} (site : ObservationNeighborhood polynomial count)
     (seed : Seed (polynomial.eval site.center)) (radius : Fraction.Rational) (positive : 0 < radius)
     (siteBound : radius ≤ site.radius)
-    (small : ∀ point, (Box.Square.Centered.BoxTransport.centeredBox site.center radius positive.le).Contains point →
+    (small : ∀ point, (BoxTransport.centeredBox site.center radius positive.le).Contains point →
       normSq (1 - polynomial.eval point * seed.value ^ 2) ≤ 1 / 16) :
     SeededNeighborhood polynomial count where
   site := site
@@ -380,7 +384,7 @@ def ofRadius {polynomial : Polynomial} {count : Nat} (site : ObservationNeighbor
   radius := radius
   radius_le_site := siteBound
   radius_positive := positive
-  box := Box.Square.Centered.BoxTransport.centeredBox site.center radius positive.le
+  box := BoxTransport.centeredBox site.center radius positive.le
   box_eq := rfl
   model := Model.ofSeed polynomial _ seed.value small
   model_value_eq := rfl
@@ -393,14 +397,14 @@ replacing the root owner. -/
 def ofSeed {polynomial : Polynomial} {count : Nat} (site : ObservationNeighborhood polynomial count)
     (seed : Seed (polynomial.eval site.center)) : SeededNeighborhood polynomial count :=
   let radius := min site.radius (variationRadius (1 / 16) (site.denominatorSlope * normSq seed.value ^ 2))
-  have positive : 0 < radius := Fraction.Order.Basic.lt_min site.radius_positive
+  have positive : 0 < radius := Basic.lt_min site.radius_positive
     (variationRadius_positive (by decide) (seedScale_nonnegative site seed))
-  ofRadius site seed radius positive (Fraction.Order.Basic.min_le_left _ _)
+  ofRadius site seed radius positive (Basic.min_le_left _ _)
     (fun _ inside => seed_small_on_box site seed positive.le
-      ((Fraction.Order.Basic.min_le_left _ _).trans site.radius_le_one)
+      ((Basic.min_le_left _ _).trans site.radius_le_one)
       (by
         have bound := variation_error_le_quarter (seedScale_nonnegative site seed) positive.le
-          (Fraction.Order.Basic.min_le_right _ _)
+          (Basic.min_le_right _ _)
         exact bound.trans_eq (by decide +kernel)) inside)
 
 /-- Build a seeded observation neighborhood from the original site's supplied root owner. -/

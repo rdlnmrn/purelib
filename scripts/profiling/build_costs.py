@@ -16,6 +16,8 @@ import time
 
 BUILT = re.compile(r"^.*\] Built ([\w.]+) \((\d+(?:\.\d+)?)(ms|s)\)$")
 FRAME = re.compile(r"^( *)\[([^]]+)\] \[(\d+(?:\.\d+)?)\] (.*)$")
+MODULE_TIMEOUT = 120.0
+TERMINATION_GRACE = 15.0
 
 
 def stop_owned(process: subprocess.Popen) -> None:
@@ -26,7 +28,7 @@ def stop_owned(process: subprocess.Popen) -> None:
         raise ValueError("owned compiler process-group identity changed")
     os.killpg(process.pid, signal.SIGTERM)
     try:
-        process.wait(timeout=5)
+        process.wait(timeout=TERMINATION_GRACE)
     except subprocess.TimeoutExpired:
         if os.getpgid(process.pid) != process.pid:
             raise ValueError("owned compiler process-group identity changed")
@@ -187,6 +189,7 @@ class Probes:
         atomic(output / "inputs.json", inputs)
         atomic(output / "command.json", command)
         started = time.monotonic()
+        timed_out = False
         with (output / "output.log").open("w") as log:
             with self.process_lock:
                 if self.stopping.is_set():
@@ -196,7 +199,13 @@ class Probes:
                                            stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
                 self.processes.add(process)
             try:
-                code = process.wait()
+                try:
+                    code = process.wait(timeout=MODULE_TIMEOUT)
+                except subprocess.TimeoutExpired:
+                    timed_out = True
+                    stop_owned(process)
+                    code = 124
+                atomic(output / "exit.json", {"raw_exit_code": process.returncode, "timed_out": timed_out})
             finally:
                 with self.process_lock:
                     self.processes.discard(process)
@@ -215,7 +224,8 @@ class Probes:
                 if match:
                     frames.append({"indent": len(match[1]), "kind": match[2],
                                    "seconds": float(match[3]), "label": match[4]})
-        result = {"inputs": inputs, "exit_code": code, "wall_seconds": elapsed,
+        result = {"inputs": inputs, "exit_code": code, "raw_exit_code": process.returncode,
+                  "timed_out": timed_out, "wall_seconds": elapsed,
                   "frames": sorted(frames, key=lambda f: -f["seconds"])[:100],
                   "outputs": {p.name: self.digests.sha(p) for p in output.iterdir()
                               if p.is_file() and p != receipt}}

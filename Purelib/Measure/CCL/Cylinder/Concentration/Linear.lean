@@ -26,6 +26,9 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Fraction.Order.Field
 
+open Purelib.Approximation.CCL
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.CCL.Encoding (Block)
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
@@ -52,7 +55,7 @@ open Purelib.Geometry.Projective in
 Every original distribution atom realizes the same completed block list, and the probe's nonnegative sensitivity bounds
 separation by chordal square. -/
 theorem realizedProbeVarianceAroundWitness_le_radius_sq {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (blocks : List Block) (witness : Line.GaussianLine)
     (witnessRealizes : Realizes blocks witness)
     (points : ι → Line.GaussianLine)
@@ -65,25 +68,25 @@ theorem realizedProbeVarianceAroundWitness_le_radius_sq {ι : Type}
         factor * Chordal.Basic.chordalSq left right) :
     distribution.varianceAround (fun item => probe (points item))
         (probe witness) ≤
-      (factor * Approximation.CCL.Cylinder.cylinderSpread blocks) ^ 2 := by
+      (factor * Cylinder.cylinderSpread blocks) ^ 2 := by
   change distribution.expectation (fun item =>
       (probe (points item) - probe witness) ^ 2) ≤ _
   calc
     distribution.expectation (fun item =>
           (probe (points item) - probe witness) ^ 2) ≤
         distribution.expectation
-          (fun _ => (factor * Approximation.CCL.Cylinder.cylinderSpread blocks) ^ 2) := by
+          (fun _ => (factor * Cylinder.cylinderSpread blocks) ^ 2) := by
       apply distribution.expectation_mono
       intro atom member
-      have separationLe := Approximation.CCL.Prefix.realized_probe_separation_le
+      have separationLe := Prefix.realized_probe_separation_le
         (pointsRealize atom member) witnessRealizes probe factor
           factorNonnegative sensitive
-      have powered := Fraction.Order.Arithmetic.pow_le_pow_direct
+      have powered := Arithmetic.pow_le_pow_direct
         (Distance.rationalSeparation_nonneg
           (probe (points atom.item)) (probe witness)) separationLe 2
       rw [Distance.NaturalLp.rationalSeparation_sq] at powered
       exact powered
-    _ = (factor * Approximation.CCL.Cylinder.cylinderSpread blocks) ^ 2 :=
+    _ = (factor * Cylinder.cylinderSpread blocks) ^ 2 :=
       distribution.expectation_constant _
 
 open Purelib in
@@ -94,7 +97,7 @@ open Purelib.Measure in
 /-- A chordal-square-sensitive probe on one realized cylinder has variance at most the squared sensitivity-scaled
 spread. -/
 theorem realizedProbeVariance_le_radius_sq {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (blocks : List Block) (witness : Line.GaussianLine)
     (witnessRealizes : Realizes blocks witness)
     (points : ι → Line.GaussianLine)
@@ -106,7 +109,7 @@ theorem realizedProbeVariance_le_radius_sq {ι : Type}
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right) :
     distribution.variance (fun item => probe (points item)) ≤
-      (factor * Approximation.CCL.Cylinder.cylinderSpread blocks) ^ 2 := by
+      (factor * Cylinder.cylinderSpread blocks) ^ 2 := by
   let value := fun item => probe (points item)
   let center := probe witness
   exact (distribution.variance_le_varianceAround value center).trans
@@ -123,7 +126,7 @@ open Purelib.Measure in
 /-- Deviation from the retained cylinder witness has probability zero when the sensitivity-scaled spread is below the
 threshold. -/
 theorem realizedProbe_deviationProbability_eq_zero_of_radius_lt {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (blocks : List Block) (witness : Line.GaussianLine)
     (witnessRealizes : Realizes blocks witness)
     (points : ι → Line.GaussianLine)
@@ -135,18 +138,18 @@ theorem realizedProbe_deviationProbability_eq_zero_of_radius_lt {ι : Type}
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right)
     (threshold : Fraction.Rational)
-    (radiusSmall : factor * Approximation.CCL.Cylinder.cylinderSpread blocks < threshold) :
+    (radiusSmall : factor * Cylinder.cylinderSpread blocks < threshold) :
     distribution.probability
-        (Measure.separationAtLeast threshold
+        (separationAtLeast threshold
           (fun item => probe (points item)) (fun _ => probe witness)) = 0 := by
   unfold Distribution.probability
   apply CylinderConcentration.eventWeight_eq_zero_of_false_on_atoms
   intro atom member
   have separationSmall :=
-    (Approximation.CCL.Prefix.realized_probe_separation_le (pointsRealize atom member)
+    (Prefix.realized_probe_separation_le (pointsRealize atom member)
       witnessRealizes probe factor factorNonnegative sensitive).trans_lt
       radiusSmall
-  unfold Measure.separationAtLeast
+  unfold separationAtLeast
   apply decide_eq_false
   exact fun thresholdLe => (thresholdLe.trans_lt separationSmall).false
 
@@ -159,7 +162,7 @@ open Purelib.Measure in
 /-- A sufficient original block count makes the witness-deviation event have probability zero at the supplied positive
 threshold. -/
 theorem realizedProbe_deviationProbability_eq_zero_of_requested {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (blocks : List Block) (witness : Line.GaussianLine)
     (witnessRealizes : Realizes blocks witness)
     (points : ι → Line.GaussianLine)
@@ -173,25 +176,25 @@ theorem realizedProbe_deviationProbability_eq_zero_of_requested {ι : Type}
     (threshold : Fraction.Rational) (thresholdPositive : 0 < threshold)
     (enough : Budget.requiredProbeBlockCount threshold factor ≤ blocks.length) :
     distribution.probability
-        (Measure.separationAtLeast threshold
+        (separationAtLeast threshold
           (fun item => probe (points item)) (fun _ => probe witness)) = 0 := by
-  have widthSmall := Approximation.CCL.Prefix.completedPrefixProbeBound_width_lt_requested witness
+  have widthSmall := Prefix.completedPrefixProbeBound_width_lt_requested witness
     witnessRealizes probe factor factorPositive sensitive threshold
       thresholdPositive enough
-  have radiusNonnegative : 0 ≤ factor * Approximation.CCL.Cylinder.cylinderSpread blocks :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct factorPositive.le
-      (Approximation.CCL.Cylinder.cylinderSpread_nonneg blocks)
-  have radiusLeWidth : factor * Approximation.CCL.Cylinder.cylinderSpread blocks ≤
-      (Approximation.CCL.Prefix.completedPrefixProbeBound blocks witness witnessRealizes probe factor
+  have radiusNonnegative : 0 ≤ factor * Cylinder.cylinderSpread blocks :=
+    Arithmetic.mul_nonneg_direct factorPositive.le
+      (Cylinder.cylinderSpread_nonneg blocks)
+  have radiusLeWidth : factor * Cylinder.cylinderSpread blocks ≤
+      (Prefix.completedPrefixProbeBound blocks witness witnessRealizes probe factor
         factorPositive.le sensitive).width := by
-    rw [Approximation.CCL.Prefix.completedPrefixProbeBound_width]
+    rw [Prefix.completedPrefixProbeBound_width]
     calc
-      factor * Approximation.CCL.Cylinder.cylinderSpread blocks =
-          0 + factor * Approximation.CCL.Cylinder.cylinderSpread blocks := by ring1
-      _ ≤ factor * Approximation.CCL.Cylinder.cylinderSpread blocks +
-          factor * Approximation.CCL.Cylinder.cylinderSpread blocks :=
-        Fraction.Order.Arithmetic.add_le_add_direct radiusNonnegative le_rfl
-      _ = 2 * (factor * Approximation.CCL.Cylinder.cylinderSpread blocks) := by ring1
+      factor * Cylinder.cylinderSpread blocks =
+          0 + factor * Cylinder.cylinderSpread blocks := by ring1
+      _ ≤ factor * Cylinder.cylinderSpread blocks +
+          factor * Cylinder.cylinderSpread blocks :=
+        Arithmetic.add_le_add_direct radiusNonnegative le_rfl
+      _ = 2 * (factor * Cylinder.cylinderSpread blocks) := by ring1
   exact realizedProbe_deviationProbability_eq_zero_of_radius_lt distribution
     blocks witness witnessRealizes points pointsRealize probe factor
     factorPositive.le sensitive threshold (radiusLeWidth.trans_lt widthSmall)
@@ -206,7 +209,7 @@ open Purelib.Measure in
 /-- A sufficient original block count for the centered-variance request gives probe variance below the positive target.
 -/
 theorem realizedProbeVariance_lt_of_requested {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (blocks : List Block) (witness : Line.GaussianLine)
     (witnessRealizes : Realizes blocks witness)
     (points : ι → Line.GaussianLine)
@@ -222,32 +225,32 @@ theorem realizedProbeVariance_lt_of_requested {ι : Type}
       (Budget.centeredVarianceMeanTarget target)
       factor ≤ blocks.length) :
     distribution.variance (fun item => probe (points item)) < target := by
-  let radius := factor * Approximation.CCL.Cylinder.cylinderSpread blocks
+  let radius := factor * Cylinder.cylinderSpread blocks
   let meanTarget := Budget.centeredVarianceMeanTarget target
   have radiusNonnegative : 0 ≤ radius :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct factorPositive.le
-      (Approximation.CCL.Cylinder.cylinderSpread_nonneg blocks)
+    Arithmetic.mul_nonneg_direct factorPositive.le
+      (Cylinder.cylinderSpread_nonneg blocks)
   have widthSmall :
-      (Approximation.CCL.Prefix.completedPrefixProbeBound blocks witness witnessRealizes probe factor
+      (Prefix.completedPrefixProbeBound blocks witness witnessRealizes probe factor
         factorPositive.le sensitive).width < meanTarget :=
-    Approximation.CCL.Prefix.completedPrefixProbeBound_width_lt_requested witness witnessRealizes probe
+    Prefix.completedPrefixProbeBound_width_lt_requested witness witnessRealizes probe
       factor factorPositive sensitive meanTarget
       (Budget.centeredVarianceMeanTarget_positive targetPositive)
       enough
   have radiusLeWidth : radius ≤
-      (Approximation.CCL.Prefix.completedPrefixProbeBound blocks witness witnessRealizes probe factor
+      (Prefix.completedPrefixProbeBound blocks witness witnessRealizes probe factor
         factorPositive.le sensitive).width := by
-    rw [Approximation.CCL.Prefix.completedPrefixProbeBound_width]
+    rw [Prefix.completedPrefixProbeBound_width]
     change radius ≤ 2 * radius
     calc
       radius = 0 + radius := by ring1
       _ ≤ radius + radius :=
-        Fraction.Order.Arithmetic.add_le_add_direct radiusNonnegative le_rfl
+        Arithmetic.add_le_add_direct radiusNonnegative le_rfl
       _ = 2 * radius := by ring1
   have radiusLeTarget : radius ≤ meanTarget :=
     (radiusLeWidth.trans_lt widthSmall).le
   have radiusSquareLe : radius ^ 2 ≤ meanTarget ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct radiusNonnegative
+    Arithmetic.pow_le_pow_direct radiusNonnegative
       radiusLeTarget 2
   exact (realizedProbeVariance_le_radius_sq distribution blocks witness
     witnessRealizes points pointsRealize probe factor factorPositive.le
@@ -255,7 +258,7 @@ theorem realizedProbeVariance_lt_of_requested {ι : Type}
       (radiusSquareLe.trans_lt
         ((Budget.centeredVarianceMeanTarget_sq_lt_half
             targetPositive).trans
-          (Purelib.Data.Rat.Fraction.Order.Field.half_lt_self targetPositive)))
+          (Field.half_lt_self targetPositive)))
 
 end Purelib.Measure.CCL.Cylinder
 

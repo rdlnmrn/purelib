@@ -60,6 +60,8 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface
+
 open Purelib.Data.Rat
 
 open Purelib.Algebra
@@ -91,90 +93,90 @@ open Purelib.Topology.Polygon.Stokes
 
 open Purelib.Topology.Surface.Chord.Spanning.CutBoundaryWord.IntegralPairing.SpanningCoordinates (OnChords onChords)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : Meshes.FramedPuncturedGrid curve (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
+  {base : Meshes.FramedPuncturedGrid curve (Branches.BranchConfiguration.configurationOfData curve
     branches).branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {index : Fin genus} {pair :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted index}
-  {coordinates : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates pair} {integral :
-    Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-  {source : Hyperelliptic.Differentials.Basic.Differential genus} {differential : Fin genus}
+    TourFaces.StandardTours.Pair lifted index}
+  {coordinates : TourCoordinates.BoundaryCoordinates pair} {integral :
+    Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
+  {source : Differentials.Basic.Differential genus} {differential : Fin genus}
 
 set_option genInjectivity false in
 /-- The two original tour chains expressed through one retained chord-period bank.
 
 Keep each chain's physical correction and original integer weights with its component approximation. -/
-structure ChordPeriods (span : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourSpanning.Spanning coordinates integral)
-  (prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutChordPrograms lifted source)
-    (components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential)
+structure ChordPeriods (span : TourSpanning.Spanning coordinates integral)
+  (prepared : Cut.CyclePrograms.CutChordPrograms lifted source)
+    (components : Cut.ChainPeriods.ComponentSamples prepared.programs differential)
       where
   /-- The actual A-chain geometry on the retained original chord routes. -/ aGeometry :
-    Topology.Surface.Chord.Spanning.CutBoundaryWord.IntegralPairing.SpanningCoordinates.OnChords span.a prepared.routes
+    OnChords span.a prepared.routes
   /-- The actual B-chain geometry on the retained original chord routes. -/ bGeometry :
-    Topology.Surface.Chord.Spanning.CutBoundaryWord.IntegralPairing.SpanningCoordinates.OnChords span.b prepared.routes
+    OnChords span.b prepared.routes
   /-- The A-period combination using the original shared components and actual integer coefficients. -/ a :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components span.a.coefficients
+    Cut.ChainPeriods.ChainPeriod components span.a.coefficients
   /-- The B-period combination using the original shared components and actual integer coefficients. -/ b :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components span.b.coefficients
+    Cut.ChainPeriods.ChainPeriod components span.b.coefficients
 
 constructive_injectivity ChordPeriods
 
 /-- Reuse the one prepared component bank and synchronized streams. Only
 the two integer combinations and their physical corrections are new data. -/
-@[expose] def chordPeriods (span : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourSpanning.Spanning coordinates
-  integral) (prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutChordPrograms lifted source)
-    (components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential) :
-      Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span prepared components :=
+@[expose] def chordPeriods (span : TourSpanning.Spanning coordinates
+  integral) (prepared : Cut.CyclePrograms.CutChordPrograms lifted source)
+    (components : Cut.ChainPeriods.ComponentSamples prepared.programs differential) :
+      ChordPeriods span prepared components :=
   ⟨onChords span.a prepared.routes,
-    Topology.Surface.Chord.Spanning.CutBoundaryWord.IntegralPairing.SpanningCoordinates.onChords span.b prepared.routes,
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod.build components span.a.coefficients,
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod.build components span.b.coefficients⟩
+    Chord.Spanning.CutBoundaryWord.IntegralPairing.SpanningCoordinates.onChords span.b prepared.routes,
+    Cut.ChainPeriods.ChainPeriod.build components span.a.coefficients,
+      Cut.ChainPeriods.ChainPeriod.build components span.b.coefficients⟩
 
 namespace ChordPeriods
 
-variable {span : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourSpanning.Spanning coordinates integral} {prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutChordPrograms lifted source}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential}
+variable {span : TourSpanning.Spanning coordinates integral} {prepared :
+  Cut.CyclePrograms.CutChordPrograms lifted source}
+  {components : Cut.ChainPeriods.ComponentSamples prepared.programs differential}
 
 /-- The retained A-period chain equals its original chord-geometry chain. -/
-theorem a_chain (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span prepared
+theorem a_chain (periods : ChordPeriods span prepared
   components) : periods.a.chain = periods.aGeometry.chain := rfl
 /-- The retained B-period chain equals its original chord-geometry chain. -/
-theorem b_chain (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span prepared
+theorem b_chain (periods : ChordPeriods span prepared
   components) : periods.b.chain = periods.bGeometry.chain := rfl
 
 /-- The original A-tour value is its chord-chain value plus the retained physical and signed-face corrections. -/
-theorem a_value (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span prepared
-  components) (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+theorem a_value (periods : ChordPeriods span prepared
+  components) (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value pair.aFaces.geometry.indexed =
-      Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.a.chain value +
-      Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine periods.aGeometry.physical
-        (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+    Sewing.SewingRetraction.wordValue value pair.aFaces.geometry.indexed =
+      Chord.Spanning.CutCycleChain.edgeValue periods.a.chain value +
+      Boundary.BoundaryCoordinates.WordCoordinates.combine periods.aGeometry.physical
+        (fun column => value (Sewing.VertexSewing.OrientedEdge.map
           lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column))) +
-      Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
+      Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
         coordinates.routes.a.correction := by
   rw [coordinates.a_value value anti, periods.aGeometry.value_eq value anti]
   rfl
 
 /-- The original B-tour value is its chord-chain value plus the retained physical and signed-face corrections. -/
-theorem b_value (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span prepared
-  components) (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
+theorem b_value (periods : ChordPeriods span prepared
+  components) (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value pair.bFaces.geometry.indexed =
-      Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.b.chain value +
-      Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine periods.bGeometry.physical
-        (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+    Sewing.SewingRetraction.wordValue value pair.bFaces.geometry.indexed =
+      Chord.Spanning.CutCycleChain.edgeValue periods.b.chain value +
+      Boundary.BoundaryCoordinates.WordCoordinates.combine periods.bGeometry.physical
+        (fun column => value (Sewing.VertexSewing.OrientedEdge.map
           lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column))) +
-      Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
+      Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
         coordinates.routes.b.correction := by
   rw [coordinates.b_value value anti, periods.bGeometry.value_eq value anti]
   rfl
 
 /-- The cached A sample is the finite integer-weighted combination of the original component program readings. -/
-theorem a_sample (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span prepared
+theorem a_sample (periods : ChordPeriods span prepared
   components) (stage : Nat) :
     periods.a.approximation.sample stage = FiniteSum.Fin.sumFin (fun index =>
       (span.a.coefficients index : Gaussian.Basic.Canonical) *
@@ -182,7 +184,7 @@ theorem a_sample (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChor
   periods.a.sample_eq_programs stage
 
 /-- The cached B sample is the finite integer-weighted combination of the original component program readings. -/
-theorem b_sample (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span prepared
+theorem b_sample (periods : ChordPeriods span prepared
   components) (stage : Nat) :
     periods.b.approximation.sample stage = FiniteSum.Fin.sumFin (fun index =>
       (span.b.coefficients index : Gaussian.Basic.Canonical) *
@@ -191,29 +193,29 @@ theorem b_sample (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChor
 
 /-- Transport a component estimate through the actual A-chain identity.
 The physical and face terms are subtracted explicitly, not declared zero. -/
-theorem a_comparison_bound (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span
+theorem a_comparison_bound (periods : ChordPeriods span
   prepared components)
-    (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (anti : ∀ edge,
+    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (anti : ∀ edge,
       value edge.reverse = -value edge)
     (stage : Nat) (bounds : Fin lifted.cutBoundaryWord.alphabet.count → Periods.WeightedPeriods.Coordinate)
-    (bounded : ∀ index, Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue value
+    (bounded : ∀ index, Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue value
       (prepared.programs.programs index).cycle.path.surfaceEdges -
       (((prepared.programs.programs index).program differential).integral.model stage).integralSample) ≤ bounds index) :
-    Data.Gaussian.Norm.Basic.normSq ((Topology.Surface.Sewing.SewingRetraction.wordValue value
+    Gaussian.Norm.Basic.normSq ((Sewing.SewingRetraction.wordValue value
       pair.aFaces.geometry.indexed -
-      Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine periods.aGeometry.physical
-        (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+      Boundary.BoundaryCoordinates.WordCoordinates.combine periods.aGeometry.physical
+        (fun column => value (Sewing.VertexSewing.OrientedEdge.map
           lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column))) -
-      Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
+      Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
         coordinates.routes.a.correction) - periods.a.approximation.sample stage) ≤
       periods.a.coefficients.charge bounds := by
   have comparison := periods.a.comparison_bound
-    (fun index => Topology.Surface.Sewing.SewingRetraction.wordValue value (prepared.routes.cycles
+    (fun index => Sewing.SewingRetraction.wordValue value (prepared.routes.cycles
       index).path.surfaceEdges) stage bounds (fun index => by
       rw [← prepared.programs.cycles_eq]
       exact bounded index)
   rw [periods.a.coefficients.combine_eq] at comparison
-  change Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.a.chain
+  change Gaussian.Norm.Basic.normSq (Chord.Spanning.CutCycleChain.edgeValue periods.a.chain
     value - periods.a.approximation.sample stage) ≤ _ at comparison
   rw [periods.a_value value anti]
   have cancellation (chain physical faces : Gaussian.Basic.Canonical) : chain + physical + faces - physical - faces =
@@ -223,29 +225,29 @@ theorem a_comparison_bound (periods : Hyperelliptic.Meshes.PuncturedGrid.Standar
 
 /-- The original B-tour comparison is bounded by its retained weighted component errors after subtracting the actual
 physical and face corrections. -/
-theorem b_comparison_bound (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods span
+theorem b_comparison_bound (periods : ChordPeriods span
   prepared components)
-    (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (anti : ∀ edge,
+    (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (anti : ∀ edge,
       value edge.reverse = -value edge)
     (stage : Nat) (bounds : Fin lifted.cutBoundaryWord.alphabet.count → Periods.WeightedPeriods.Coordinate)
-    (bounded : ∀ index, Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue value
+    (bounded : ∀ index, Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue value
       (prepared.programs.programs index).cycle.path.surfaceEdges -
       (((prepared.programs.programs index).program differential).integral.model stage).integralSample) ≤ bounds index) :
-    Data.Gaussian.Norm.Basic.normSq ((Topology.Surface.Sewing.SewingRetraction.wordValue value
+    Gaussian.Norm.Basic.normSq ((Sewing.SewingRetraction.wordValue value
       pair.bFaces.geometry.indexed -
-      Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine periods.bGeometry.physical
-        (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+      Boundary.BoundaryCoordinates.WordCoordinates.combine periods.bGeometry.physical
+        (fun column => value (Sewing.VertexSewing.OrientedEdge.map
           lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column))) -
-      Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
+      Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
         coordinates.routes.b.correction) - periods.b.approximation.sample stage) ≤
       periods.b.coefficients.charge bounds := by
   have comparison := periods.b.comparison_bound
-    (fun index => Topology.Surface.Sewing.SewingRetraction.wordValue value (prepared.routes.cycles
+    (fun index => Sewing.SewingRetraction.wordValue value (prepared.routes.cycles
       index).path.surfaceEdges) stage bounds (fun index => by
       rw [← prepared.programs.cycles_eq]
       exact bounded index)
   rw [periods.b.coefficients.combine_eq] at comparison
-  change Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.b.chain
+  change Gaussian.Norm.Basic.normSq (Chord.Spanning.CutCycleChain.edgeValue periods.b.chain
     value - periods.b.approximation.sample stage) ≤ _ at comparison
   rw [periods.b_value value anti]
   have cancellation (chain physical faces : Gaussian.Basic.Canonical) : chain + physical + faces - physical - faces =

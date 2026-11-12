@@ -2,11 +2,14 @@ module
 import Purelib.Data.Fin
 import Purelib.Approximation.Gaussian.Equivalence
 public import Purelib.Riemann.Integration.LegendreModularMonodromy
+public import Purelib.Approximation.Gaussian.Affine.Integral
 import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.Approximation.Gaussian.Vector.Operational.Basic
 import Purelib.Approximation.Matrix.Operational.Integral.Action
 import Purelib.LinearAlgebra.Matrix.Basic
 import Purelib.LinearAlgebra.Matrix.Multiplication
+import Purelib.Approximation.Gaussian.Arithmetic.Mul
+import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Sum.Congruence
 import Init.Data.Fin.Basic
 import Init.Data.Fin.Lemmas
 import Init.Prelude
@@ -36,6 +39,19 @@ names.
 -/
 
 /-! ## Convention-locked homogeneous composition -/
+
+/-- An original matrix row agrees with its exact integer affine operation on the unchanged input. -/
+def fractionalRow_affine (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix)
+    (tau : Coherent.CoherentNamed) (row : Fin 2) :
+    NamedEquivalent (LegendreModularMonodromy.fractionalRow matrix tau row).name
+      (Affine.Integral.affine (matrix row 0) (matrix row 1) tau).name := by
+  have expanded := LegendreModularMonodromy.matrixAction_row_two matrix
+    (LegendreModularMonodromy.fractionalVector tau) row
+  rewrite [LegendreModularMonodromy.fractionalVector_zero,
+    LegendreModularMonodromy.fractionalVector_one] at expanded
+  exact NamedEquivalent.trans expanded
+    (Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects _ _ _ _
+      (Arithmetic.Mul.coherentMul_one_right _) (NamedEquivalent.refl _))
 
 /-- The homogeneous fractional rows of `left * right` are obtained by acting with `right` first and then `left`.
 

@@ -62,6 +62,10 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
+open Purelib.Riemann.RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests
+
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid
 open Purelib.Riemann.RootContinuation.NewtonGlobalPhysicalEndpointReadback.SynchronizedSurfaceRequests
 
@@ -86,17 +90,17 @@ open Purelib
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {lifted : Meshes.LiftedPuncturedGrid grid.punctured}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
@@ -110,29 +114,29 @@ variable {observations : RootContinuation.NewtonProtectedObservations.ProtectedO
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
   (samples : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests traces cache
     coefficients)
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {differential : Differentials.Basic.Differential genus}
 
 /-- All retained component endpoints are exactly the cached Newton exterior correction. -/
 theorem AllSurfacePreparation.cachedEndpoints_sum_newton
     (prepared :
-      PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+      ExteriorProgram.AllSurfacePreparation
       regular domains differential)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank grid.faces) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.components.map (fun component =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
+    Gaussian.Norm.Sum.Basic.gaussianSum (prepared.components.map (fun component =>
+      Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
       coefficients)) =
-      RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentSum
+      PerimeterSamples.componentSum
         neighbors .exterior
         (PerimeterSamples.cachedEndpointSideSum
         cache coefficients) := by
-  apply (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.EndpointComponents.componentCachedEndpoints_sum prepared
+  apply (Exterior.Basis.EndpointComponents.componentCachedEndpoints_sum prepared
     neighbors cache coefficients).trans
-  unfold Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation
-    RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentSum
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value, -eq_self, -iff_self]
+  unfold SelectedPhysicalComponents.componentEvaluation
+    PerimeterSamples.componentSum
+  simp only [SelectedPerimeterIdentity.SelectedSides.value, -eq_self, -iff_self]
   have sides (side : Meshes.GridLiftedDualSteps.GridSide) (position : Fin grid.faces.regulars.length) :
       FiniteSum.Fin.sumFin (fun sheet =>
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.EndpointReadback.SharedPerimeter.cachedEndpoint cache
+        Exterior.Basis.EndpointReadback.SharedPerimeter.cachedEndpoint cache
         coefficients position sheet side) =
 
           PerimeterSamples.cachedEndpointSideSum
@@ -146,62 +150,62 @@ theorem AllSurfacePreparation.cachedEndpoints_sum_newton
 /-- The centered component sum keeps exactly the exterior endpoint correction. -/
 theorem AllSurfacePreparation.observedBoundary_sum
     (prepared :
-      PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+      ExteriorProgram.AllSurfacePreparation
       regular domains differential)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank grid.faces) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.components.map (fun component =>
+    Gaussian.Norm.Sum.Basic.gaussianSum (prepared.components.map (fun component =>
       component.prepared.observedSides samples -
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
+        Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
         coefficients)) =
-      RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentBoundary
+      PerimeterSamples.componentBoundary
         samples neighbors .exterior -
-        RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentSum
+        PerimeterSamples.componentSum
           neighbors .exterior
           (PerimeterSamples.cachedEndpointSideSum
           cache coefficients) := by
-  rw [Data.Gaussian.Norm.Sum.Basic.gaussianSum_map_sub, prepared.observedSides_sum samples neighbors,
-    Hyperelliptic.Meshes.Newton.Basis.ObservationBoundary.AllSurfacePreparation.cachedEndpoints_sum_newton prepared
+  rw [Gaussian.Norm.Sum.Basic.gaussianSum_map_sub, prepared.observedSides_sum samples neighbors,
+    AllSurfacePreparation.cachedEndpoints_sum_newton prepared
       neighbors]
 
 /-- Consume component bounds in the exact Newton exterior expression, including its endpoint subtraction. -/
 theorem AllSurfacePreparation.canonical_observation_energy_upper
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank grid.faces)
-    (readings : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+    (readings : (row : Fin genus) → TrianglePrimitiveReadings.TriangleReadings
       (cache.get row) lifted.mesh)
     {allowance : Fraction.Rational}
     (bounded : ∀ component ∈
-      (PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
+      (ExteriorProgram.AllSurfacePreparation.build
       (lifted := lifted) regular domains differential).components,
       (component.prepared.observedSides samples -
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
+        Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
         coefficients +
         Path.PairedIncrementArea.area (component.program.indexed.map
           (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-            Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+            CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
               edge)))).im / 4 ≤
         allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    (RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentBoundary
+    (PerimeterSamples.componentBoundary
       samples neighbors .exterior -
-      RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentSum
+      PerimeterSamples.componentSum
         neighbors .exterior
         (PerimeterSamples.cachedEndpointSideSum
         cache coefficients) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word =>
+        Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word =>
           Path.PairedIncrementArea.area (word.map
           (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-            Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+            CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
               edge)))))).im / 4 ≤
 
-        ((PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
+        ((ExteriorProgram.AllSurfacePreparation.build
         (lifted := lifted) regular domains differential).components.length : Fraction.Rational) *
         allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
   have bound :=
     ExteriorProgram.AllSurfacePreparation.built_canonical_energy_upper
     cache coefficients readings
     (fun component => component.prepared.observedSides samples -
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
+      Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
       coefficients) bounded
-  rw [Hyperelliptic.Meshes.Newton.Basis.ObservationBoundary.AllSurfacePreparation.observedBoundary_sum samples _
+  rw [AllSurfacePreparation.observedBoundary_sum samples _
     neighbors] at bound
   exact bound
 

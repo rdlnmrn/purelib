@@ -145,6 +145,73 @@ theorem vector_eq_at {n : Nat} {left right : Vector K n}
   congrArg (fun vector : Vector K n => vector index) equal
 
 end Vector.Basic
+namespace Vector
+
+/-- Transform each retained structural vector entry without rebuilding a function table. -/
+def map {K L : Type*} (transform : K → L) : {count : Nat} → Vector K count → Vector L count
+  | _, .nil => .nil
+  | _, .cons head tail => .cons (transform head) (map transform tail)
+
+/-- Combine corresponding retained vector entries by one structural traversal. -/
+def zipWith {K L M : Type*} (combine : K → L → M) :
+    {count : Nat} → Vector K count → Vector L count → Vector M count
+  | _, .nil, .nil => .nil
+  | _, .cons left leftTail, .cons right rightTail =>
+      .cons (combine left right) (zipWith combine leftTail rightTail)
+
+namespace Basic
+
+/-- Readback of a structural vector transformation consumes the same original entry. -/
+theorem map_apply {K L : Type*} (transform : K → L) {count : Nat}
+    (values : Vector K count) (index : Fin count) : map transform values index = transform (values index) := by
+  induction values with
+  | nil => exact Fin.elim0 index
+  | @cons count head tail previous =>
+      cases index with
+      | mk index bound =>
+          cases index with
+          | zero => rfl
+          | succ index => exact previous ⟨index, Nat.lt_of_succ_lt_succ bound⟩
+
+/-- Readback of a paired structural traversal combines the two original entries. -/
+theorem zipWith_apply {K L M : Type*} (combine : K → L → M) {count : Nat}
+    (left : Vector K count) (right : Vector L count) (index : Fin count) :
+    zipWith combine left right index = combine (left index) (right index) := by
+  induction left with
+  | nil => exact Fin.elim0 index
+  | @cons count head tail previous =>
+      cases right with
+      | cons rightHead rightTail =>
+          cases index with
+          | mk index bound =>
+              cases index with
+              | zero => rfl
+              | succ index => exact previous rightTail ⟨index, Nat.lt_of_succ_lt_succ bound⟩
+
+end Basic
+end Vector
+
 end Purelib.Data
+
+end
+
+public section
+
+namespace Purelib.Data.Vector.Basic
+
+universe v
+
+/-- Whole dimension transport preserves lookup at the correspondingly transported original bounded index.
+
+Equality elimination forwards the original structural vector, retained
+entry and finite bound. No vector table or indexing proof is recomputed.
+-/
+theorem get_eq_mp {K : Type v} {first last : Nat} (equal : first = last)
+    (values : Vector K first) (index : Fin first) :
+    (Eq.mp (congrArg (fun size => Vector K size) equal) values) (Fin.cast equal index) = values index := by
+  cases equal
+  rfl
+
+end Purelib.Data.Vector.Basic
 
 end

@@ -20,6 +20,8 @@ import Purelib.RootIsolation.Exact.Basic
 import Purelib.RootIsolation.FTA.Squarefree.Basic
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.RootIsolation.Track.Separation.Coprime
+
 open Purelib.Polynomial.Dense.Gaussian.Coprime.SquarefreeSide (SquarefreeSideInput)
 open Purelib.RootIsolation.Squarefree.Observation.Basic (SquarefreeObservation)
 
@@ -46,7 +48,7 @@ namespace Purelib.RootIsolation.Squarefree.Observation.Separation
 no selected or completed irrational root is introduced. -/
 def SquarefreeObservationsSeparated
     {leftSource leftOpposite rightSource rightOpposite :
-      Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
     {leftInput : SquarefreeSideInput leftSource leftOpposite}
     {rightInput : SquarefreeSideInput rightSource rightOpposite}
     (left : SquarefreeObservation leftInput)
@@ -58,20 +60,20 @@ def SquarefreeObservationsSeparated
       PLift (leftRoot.point ≠ rightRoot.point)
   | .exact leftRoot _ _, .higher rightBoxes _ =>
       ∀ index : Fin rightSource.natDegree,
-        Track.Separation.Coprime.Basic.ExactTrackSeparation
+        Basic.ExactTrackSeparation
           (exactPolynomial := leftSource)
           (rightBoxes.isolation.trackAt index)
           (rightBoxes.isolation.trackAt index).initial leftRoot.point
   | .higher leftBoxes _, .exact rightRoot _ _ =>
       ∀ index : Fin leftSource.natDegree,
-        Track.Separation.Coprime.Basic.ExactTrackSeparation
+        Basic.ExactTrackSeparation
           (exactPolynomial := rightSource)
           (leftBoxes.isolation.trackAt index)
           (leftBoxes.isolation.trackAt index).initial rightRoot.point
   | .higher leftBoxes _, .higher rightBoxes _ =>
       ∀ (leftIndex : Fin leftSource.natDegree)
         (rightIndex : Fin rightSource.natDegree),
-        Track.Separation.Coprime.Basic.TrackPairSeparation
+        Basic.TrackPairSeparation
           (leftBoxes.isolation.trackAt leftIndex)
           (leftBoxes.isolation.trackAt leftIndex).initial
           (rightBoxes.isolation.trackAt rightIndex)
@@ -83,7 +85,7 @@ Constant sides contribute no sites; exact pairs give unequal points, while mixed
 original-track exclusions or separated refinements. -/
 def separateSquarefreeObservations
     {leftSource leftOpposite rightSource rightOpposite :
-      Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
     {leftInput : SquarefreeSideInput leftSource leftOpposite}
     {rightInput : SquarefreeSideInput rightSource rightOpposite}
     (left : SquarefreeObservation leftInput)
@@ -101,7 +103,7 @@ def separateSquarefreeObservations
             leftRoot.root rightRoot.root⟩
       | higher rightBoxes rightDegree =>
           intro index
-          exact Track.Separation.Coprime.Build.separateExactFromTrack
+          exact Build.separateExactFromTrack
             ((show (0 : Nat) < 2 by decide).trans_le rightDegree)
             (Dense.Gaussian.Coprime.Operations.CoprimeCertificate.symm coprime)
             (rightBoxes.isolation.trackAt index)
@@ -112,14 +114,14 @@ def separateSquarefreeObservations
       | constant => exact PUnit.unit
       | exact rightRoot =>
           intro index
-          exact Track.Separation.Coprime.Build.separateExactFromTrack
+          exact Build.separateExactFromTrack
             ((show (0 : Nat) < 2 by decide).trans_le leftDegree) coprime
             (leftBoxes.isolation.trackAt index)
             (leftBoxes.isolation.trackAt index).initial rightRoot.point
             rightRoot.root
       | higher rightBoxes rightDegree =>
           intro leftIndex rightIndex
-          exact Track.Separation.Coprime.Build.separateTracks
+          exact Build.separateTracks
             ((show (0 : Nat) < 2 by decide).trans_le leftDegree)
             ((show (0 : Nat) < 2 by decide).trans_le rightDegree) coprime
             (leftBoxes.isolation.trackAt leftIndex)

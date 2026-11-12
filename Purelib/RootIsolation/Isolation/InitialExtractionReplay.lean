@@ -20,6 +20,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.RootIsolation.Newton.Extraction.Initial
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -45,7 +47,7 @@ isolation and exact proposal-checking modules.
 
 namespace Purelib.RootIsolation.Isolation.InitialExtractionReplay
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound
   : Nat}
   (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
   (current : State.Raw.RawWindingState p ambient) (epsilon : Fraction.Rational)
@@ -76,22 +78,22 @@ attribute [local irreducible] Newton.Search.Iteration.search
 
 /-- The original initial search tries the displayed first seed before considering its retained tail. -/
 private theorem search_cons (seed : Gaussian.Basic.Canonical) (rest : List Gaussian.Basic.Canonical) :
-    Newton.Extraction.Initial.Search.search elimination current epsilon (seed :: rest) =
+    Search.search elimination current epsilon (seed :: rest) =
       match Newton.Search.Iteration.search elimination current epsilon 6 0 seed (.canonical elimination) with
       | some accepted => some accepted
-      | none => Newton.Extraction.Initial.Search.search elimination current epsilon rest := rfl
+      | none => Search.search elimination current epsilon rest := rfl
 
 /-- The original initial search returns no accepted refinement on an empty seed list. -/
 private theorem search_nil :
-    Newton.Extraction.Initial.Search.search elimination current epsilon [] = none := rfl
+    Search.search elimination current epsilon [] = none := rfl
 
-attribute [local irreducible] Newton.Extraction.Initial.Search.search
+attribute [local irreducible] Search.search
 
 /-- The retained finite trace reproduces the original ordered seed search result exactly. -/
 theorem Trace.equation {seeds : List Gaussian.Basic.Canonical} {value : Option (Refinement current
   epsilon)}
     (trace : Trace elimination current epsilon seeds value) :
-    Newton.Extraction.Initial.Search.search elimination current epsilon seeds = value := by
+    Search.search elimination current epsilon seeds = value := by
   induction trace with
   | exhausted => exact search_nil elimination current epsilon
   | accepted trial value found =>
@@ -138,7 +140,7 @@ constructive_injectivity Replay
 
 /-- The retained replay result equals the original search on the canonical five seeds. -/
 theorem Replay.equation (replay : Replay elimination current epsilon) :
-    Newton.Extraction.Initial.Search.search elimination current epsilon
+    Search.search elimination current epsilon
       (Box.Sample.Five.seeds current.box) = replay.value :=
   replay.trace.equation
 
@@ -159,9 +161,10 @@ theorem extract_eq (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p) (positive : 0 <
       epsilon)
     (replay : Replay elimination current epsilon) (value : Refinement current epsilon)
-    (found : replay.value = some value) :
-    Newton.Extraction.Initial.Build.extract degreeAtLeastTwo squarefree elimination current positive = value := by
-  unfold Newton.Extraction.Initial.Build.extract
-  rw [replay.equation, found]
+    (found : replay.value = some value)
+    (request : Option Data.Rat.Fraction.Rational := none) :
+    Build.extract degreeAtLeastTwo squarefree elimination current positive request = value :=
+  Build.extract_of_first_success degreeAtLeastTwo squarefree elimination current positive
+    value (replay.equation.trans found) request
 
 end Purelib.RootIsolation.Isolation.InitialExtractionReplay

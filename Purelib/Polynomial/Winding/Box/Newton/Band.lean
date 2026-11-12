@@ -28,6 +28,8 @@ import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Geometry.Rational.Box.Band.Bounds
 
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -52,50 +54,50 @@ namespace Purelib.Polynomial.Winding.Box.Newton.Band
 
 /-- The eliminant-safe Newton band has raw winding four. -/
 theorem quadrupledBoxWinding_eq_four_of_newtonBand
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
     {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (newton : Dense.Gaussian.Newton.Box.Squarefree.NewtonCenterCertificate
+    (newton : Squarefree.NewtonCenterCertificate
       p ambient source squarefree)
     (sourceRefines : source.Refines ambient) {r : Fraction.Rational}
     (positive : 0 < r)
-    (band : Box.Band.Basic.BandBox (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r)
+    (band : Box.Band.Basic.BandBox (Anchor.anchorNewtonCenter p source) r)
     (targetRefines : band.box.Refines ambient)
-    (displacementSmall : Data.Gaussian.Norm.Basic.normSq
-      (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor) ≤ r ^ 2)
+    (displacementSmall : Gaussian.Norm.Basic.normSq
+      (Anchor.anchorNewtonCenter p source - source.anchor) ≤ r ^ 2)
     (taylorSmall :
-      2 * (Dense.Gaussian.Newton.Box.Band.Parameters.extractionBandTaylorCoefficient *
+      2 * (Band.Parameters.extractionBandTaylorCoefficient *
         Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
           Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree ambient) :
-    Winding.Box.Basic.quadrupledBoxWinding p band.box = 4 := by
+    Basic.quadrupledBoxWinding p band.box = 4 := by
   have centerInside := band.center_strictly_inside positive
   have proper := band.proper positive
   let affineClearance : Clearance.Box.Boundary.Basic.BoundaryClearance
-      (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source) band.box := by
-    simpa only [Dense.Gaussian.Newton.Box.Linearization.newtonLinearization] using
+      (Linearization.newtonLinearization p source) band.box := by
+    simpa only [Linearization.newtonLinearization] using
       Clearance.Box.Boundary.Affine.affineCoordinate_boundaryClearanceBox newton.derivativeNonzero
-        (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) centerInside.1 centerInside.2.1
+        (Anchor.anchorNewtonCenter p source) centerInside.1 centerInside.2.1
         centerInside.2.2.1 centerInside.2.2.2
   let dominance := Clearance.Box.Dominance.Newton.Band.newtonBandBoundaryNormDominance newton sourceRefines
     positive band targetRefines displacementSmall taylorSmall
-  have transfer := Winding.Box.Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
-    (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source)
-      (Dense.Gaussian.Newton.Box.Linearization.newtonError p source) band.box proper
+  have transfer := Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
+    (Linearization.newtonLinearization p source)
+      (Linearization.newtonError p source) band.box proper
     affineClearance dominance
-  have sumIdentity := Dense.Gaussian.Newton.Box.Linearization.newtonLinearization_add_error_eq_normalize
+  have sumIdentity := Linearization.newtonLinearization_add_error_eq_normalize
     degreeAtLeastTwo source newton.derivativeNonzero
   rw [sumIdentity] at transfer
   calc
-    Winding.Box.Basic.quadrupledBoxWinding p band.box =
-        Winding.Box.Basic.quadrupledBoxWinding p.normalize band.box :=
-      (Winding.Box.Basic.quadrupledBoxWinding_normalize p band.box).symm
-    _ = Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source)
+    Basic.quadrupledBoxWinding p band.box =
+        Basic.quadrupledBoxWinding p.normalize band.box :=
+      (Basic.quadrupledBoxWinding_normalize p band.box).symm
+    _ = Basic.quadrupledBoxWinding (Linearization.newtonLinearization p source)
       band.box :=
       transfer
     _ = 4 := by
-      simpa only [Dense.Gaussian.Newton.Box.Linearization.newtonLinearization] using
-        Winding.Box.Affine.quadrupledBoxWinding_affineCoordinate newton.derivativeNonzero
-          (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) centerInside.1 centerInside.2.1
+      simpa only [Linearization.newtonLinearization] using
+        Affine.quadrupledBoxWinding_affineCoordinate newton.derivativeNonzero
+          (Anchor.anchorNewtonCenter p source) centerInside.1 centerInside.2.1
           centerInside.2.2.1 centerInside.2.2.2
 end Purelib.Polynomial.Winding.Box.Newton.Band
 

@@ -71,12 +71,12 @@ instance [Neg K] : Neg (Pair K radialSquare) :=
 
 The first coordinate subtracts the parameter times the imaginary-coordinate product; the second coordinate is the sum of
 the cross products. -/
-@[expose] def multiply [CommRing K] (left right : Pair K radialSquare) : Pair K radialSquare :=
+@[expose] def multiply [Mul K] [Sub K] [Add K] (left right : Pair K radialSquare) : Pair K radialSquare :=
   ⟨left.re * right.re - radialSquare * left.im * right.im,
     left.re * right.im + left.im * right.re⟩
 
 /-- Use the displayed quadratic multiplication as the pair multiplication operation. -/
-instance [CommRing K] : Mul (Pair K radialSquare) := ⟨multiply⟩
+instance [Mul K] [Sub K] [Add K] : Mul (Pair K radialSquare) := ⟨multiply⟩
 
 /-- Conjugate a quadratic pair by negating its imaginary coordinate. -/
 @[expose] def conjugate [Neg K] (value : Pair K radialSquare) : Pair K radialSquare :=
@@ -156,13 +156,13 @@ theorem quadrance_scale [CommRing K] (factor : K) (pair : Pair K (1 : K)) :
     (-value).im = -value.im := rfl
 
 /-- Read the real coordinate of the product of two pairs. -/
-@[simp] theorem mul_re [CommRing K]
+@[simp] theorem mul_re [Mul K] [Sub K] [Add K]
     (left right : Pair K radialSquare) :
     (left * right).re =
       left.re * right.re - radialSquare * left.im * right.im := rfl
 
 /-- Read the imaginary coordinate of the product of two pairs. -/
-@[simp] theorem mul_im [CommRing K]
+@[simp] theorem mul_im [Mul K] [Sub K] [Add K]
     (left right : Pair K radialSquare) :
     (left * right).im = left.re * right.im + left.im * right.re := rfl
 

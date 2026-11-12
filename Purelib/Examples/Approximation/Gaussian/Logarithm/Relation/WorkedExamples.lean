@@ -13,6 +13,8 @@ import Purelib.Approximation.Relation.Refinement
 import Purelib.Approximation.Relation.Fibre
 import Purelib.Approximation.Relation.Selection
 
+open Purelib.Approximation.Gaussian.Logarithm.Relation.Basic
+
 @[expose] public section
 
 /-!
@@ -39,21 +41,21 @@ inductive Owner
   deriving DecidableEq
 
 /-- The principal candidate from the once-refined target and its transported chart. -/
-def firstCandidate : Logarithm.Relation.Basic.Candidate Owner where
+def firstCandidate : Candidate Owner where
   owner := .principal
   input := LogarithmState.preparedTarget
     Partial.WorkedExamples.refined
   branch := Partial.WorkedExamples.refinedOutput
 
 /-- The same principal owner with the twice-refined target and transported chart. -/
-def secondCandidate : Logarithm.Relation.Basic.Candidate Owner where
+def secondCandidate : Candidate Owner where
   owner := .principal
   input := LogarithmState.preparedTarget
     Partial.WorkedExamples.refinedAgain
   branch := Partial.WorkedExamples.refinedAgainOutput
 
 /-- The ordered two-candidate family from the original refinement schedules. -/
-def candidates : Fin 2 → Logarithm.Relation.Basic.Candidate Owner :=
+def candidates : Fin 2 → Candidate Owner :=
   Fin.casesByRecursion firstCandidate (fun _ =>
     secondCandidate)
 
@@ -62,7 +64,7 @@ def displayedFibre := Logarithm.Relation.Basic.localFibre candidates
 
 /-- Each retained candidate has its original local logarithm relation witness. -/
 def both_candidates_satisfy_the_local_relation (label : Fin 2) :
-    Logarithm.Relation.Basic.RelationWitness (candidates label) :=
+    RelationWitness (candidates label) :=
   displayedFibre.certified label
 
 /-- Alignment of the second retained candidate to the first candidate's chart.
@@ -90,13 +92,13 @@ def alignedSelection : Logarithm.Relation.Alignment.AlignedSelection candidates 
 /-! ## Same-owner overlap transport -/
 
 /-- The principal candidate retaining the original exact source anchor. -/
-def sourceCandidate : Logarithm.Relation.Basic.Candidate Owner where
+def sourceCandidate : Candidate Owner where
   owner := .principal
   input := Partial.WorkedExamples.sourceInput
   branch := Partial.WorkedExamples.sourceAnchor
 
 /-- The singleton family of the original principal source candidate. -/
-def singletonSource (_label : Fin 1) : Logarithm.Relation.Basic.Candidate Owner :=
+def singletonSource (_label : Fin 1) : Candidate Owner :=
   sourceCandidate
 
 /-- Transport the singleton source through the retained safe overlap extension.

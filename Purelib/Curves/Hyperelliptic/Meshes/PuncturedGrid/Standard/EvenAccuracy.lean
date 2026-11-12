@@ -126,37 +126,37 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Riemann.Integration
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : Meshes.FramedPuncturedGrid curve (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
+  {base : Meshes.FramedPuncturedGrid curve (Branches.BranchConfiguration.configurationOfData curve
     branches).branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-  {index differential : Fin genus} {row : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow
-    lifted integral index} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutChordPrograms lifted source}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods row.span prepared components}
-  {segments : Data.Vector.DependentVector (fun entry =>
-    Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period)}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-    {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {index differential : Fin genus} {row : TourIntersection.IntersectionRow
+    lifted integral index} {source : Differentials.Basic.Differential genus}
+  {prepared : Cut.CyclePrograms.CutChordPrograms lifted source}
+  {components : Cut.ChainPeriods.ComponentSamples prepared.programs differential}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {periods : TourChordPeriods.ChordPeriods row.span prepared components}
+  {segments : Vector.DependentVector (fun entry =>
+    PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period)}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+    {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
   {minimum floor : Nat} {target loss : Fraction.Rational} {extraPoints : List Gaussian.Basic.Canonical}
 
 /-- Both original weighted exterior row values meet their quarter-target allocations on the retained numerical bank. -/
 def ExteriorSmall
     (request : EvenReadings periods segments domains regular
       minimum floor target loss extraPoints) : Prop :=
-    let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    let value := CanonicalEdgeValues.edgeValuation lifted.mesh
       request.payload.fst.comparison.readings.standard.triangles.values
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
       (request.payload.fst.preparation.loops.aSplit.exterior.map
       (fun entry => (entry.1 : Gaussian.Basic.Canonical) * Topology.Surface.Sewing.SewingRetraction.wordValue value
         entry.2))) < target / 4 ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
       (request.payload.fst.preparation.loops.bSplit.exterior.map
       (fun entry => (entry.1 : Gaussian.Basic.Canonical) * Topology.Surface.Sewing.SewingRetraction.wordValue value
         entry.2))) < target / 4
@@ -167,8 +167,8 @@ theorem exterior_small
     (request : EvenReadings periods segments domains regular
       minimum floor target loss extraPoints)
     (positive : 0 < target) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.ExteriorSmall request := by
-  let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    ExteriorSmall request := by
+  let value := CanonicalEdgeValues.edgeValuation lifted.mesh
     request.payload.fst.comparison.readings.standard.triangles.values
   have aLe : request.preparation.allowance ≤ request.preparation.a.coefficients.perComponent (target / 4) :=
     request.preparation.allowance_eq.trans_le ((Fraction.Order.Basic.min_le_left _ _).trans_eq
@@ -182,53 +182,53 @@ theorem exterior_small
   have bPaid := request.preparation.b.accurate value quarterPositive
     (fun word member => (request.payload.snd.val.boundary_small word member).trans_le bLe)
   have aEq := congrArg (fun loops : PhysicalLoops periods =>
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
     (loops.aSplit.exterior.map (fun entry => (entry.1 : Gaussian.Basic.Canonical) *
       Topology.Surface.Sewing.SewingRetraction.wordValue value entry.2)))) request.payload.snd.property
   have bEq := congrArg (fun loops : PhysicalLoops periods =>
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
     (loops.bSplit.exterior.map (fun entry => (entry.1 : Gaussian.Basic.Canonical) *
       Topology.Surface.Sewing.SewingRetraction.wordValue value entry.2)))) request.payload.snd.property
   exact ⟨aEq.trans_lt aPaid, bEq.trans_lt bPaid⟩
 
 /-- A quarter-target comparison and quarter-target exterior bound pay the original standard-to-cached comparison. -/
 private theorem pay_exterior {standard cached exterior : Gaussian.Basic.Canonical} {target : Fraction.Rational}
-    (comparison : Data.Gaussian.Norm.Basic.normSq (standard - (cached + exterior)) < target / 4)
-    (small : Data.Gaussian.Norm.Basic.normSq exterior < target / 4) : Data.Gaussian.Norm.Basic.normSq (standard
+    (comparison : Gaussian.Norm.Basic.normSq (standard - (cached + exterior)) < target / 4)
+    (small : Gaussian.Norm.Basic.normSq exterior < target / 4) : Gaussian.Norm.Basic.normSq (standard
       - cached) < target := by
   have bound := (Gaussian.Norm.Bounds.normSq_add_le_two
     (standard - (cached + exterior)) exterior).trans_lt
     (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct comparison small))
   have equal : standard - (cached + exterior) + exterior = standard - cached := by ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).symm.trans_lt
+  exact (congrArg Gaussian.Norm.Basic.normSq equal).symm.trans_lt
     (bound.trans_eq ((by ring1 : 2 * (target / 4 + target / 4) = (target / 4) * 4).trans
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))
 
 variable
   {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-  (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
+  (normal : NormalForm integral.paired raw)
   (period : Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodRow curve)
   (periodEq : period = (Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
     branches).rows index)
-  {periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
+  {periods : TourChordPeriods.ChordPeriods
+    (TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
       period periodEq).span prepared components}
 
 /-- The cached A/B values of the exact retained original period-relation readings. -/
 def AccuracyValues
     (request : EvenReadings periods segments domains regular
       minimum floor target loss extraPoints) :=
-      Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodRelation.PeriodRelationReadings.Values
+      PeriodRelation.PeriodRelationReadings.Values
       request.payload.fst.comparison
 
 /-- The original standard A-period sample approximates its retained cached value within the requested target. -/
 def AAccurate
     (request : EvenReadings periods segments domains regular
       minimum floor target loss extraPoints)
-    (values : Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.AccuracyValues normal period periodEq request) :
+    (values : AccuracyValues normal period periodEq request) :
       Prop :=
-    Data.Gaussian.Norm.Basic.normSq ((((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve
+    Gaussian.Norm.Basic.normSq ((((PreparedRefinementPrograms.rawPeriodDataOfData curve
       branches).aProgram differential index).integral.model
       request.payload.fst.comparison.common.common.stage).integralSample - values.aValue) < target
 
@@ -237,18 +237,18 @@ theorem a_accurate
     (request : EvenReadings periods segments domains regular
       minimum floor target loss extraPoints)
     (positive : 0 < target)
-    (values : Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.AccuracyValues normal period periodEq request) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.AAccurate normal period periodEq request values :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.pay_exterior (request.payload.fst.a_exterior_accurate normal
-    period periodEq values) (Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.exterior_small request positive).1
+    (values : AccuracyValues normal period periodEq request) :
+    AAccurate normal period periodEq request values :=
+  EvenAccuracy.pay_exterior (request.payload.fst.a_exterior_accurate normal
+    period periodEq values) (EvenAccuracy.exterior_small request positive).1
 
 /-- The original standard B-period sample approximates its retained cached value within the requested target. -/
 def BAccurate
     (request : EvenReadings periods segments domains regular
       minimum floor target loss extraPoints)
-    (values : Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.AccuracyValues normal period periodEq request) :
+    (values : AccuracyValues normal period periodEq request) :
       Prop :=
-    Data.Gaussian.Norm.Basic.normSq ((((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve
+    Gaussian.Norm.Basic.normSq ((((PreparedRefinementPrograms.rawPeriodDataOfData curve
       branches).bProgram differential index).integral.model
       request.payload.fst.comparison.common.common.stage).integralSample - values.bValue) < target
 
@@ -257,9 +257,9 @@ theorem b_accurate
     (request : EvenReadings periods segments domains regular
       minimum floor target loss extraPoints)
     (positive : 0 < target)
-    (values : Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.AccuracyValues normal period periodEq request) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.BAccurate normal period periodEq request values :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.pay_exterior (request.payload.fst.b_exterior_accurate normal
-    period periodEq values) (Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy.exterior_small request positive).2
+    (values : AccuracyValues normal period periodEq request) :
+    BAccurate normal period periodEq request values :=
+  EvenAccuracy.pay_exterior (request.payload.fst.b_exterior_accurate normal
+    period periodEq values) (EvenAccuracy.exterior_small request positive).2
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy

@@ -20,6 +20,10 @@ public import Purelib.Riemann.RootContinuation.SquareRootDegree
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Basic
+
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 /-!
 # Explicit quadratic axis elimination
 
@@ -51,7 +55,7 @@ public abbrev Polynomial := Dense.Basic.DensePolynomial Coordinate
 The retained positive degree selects the original three-term coefficient table
 for the quadratic root equation. -/
 public abbrev rootPolynomial (parameter : Gaussian) :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+  Power.Gaussian.rootPolynomial parameter
     SquareRootDegree.degreeTwo
 
 /-- Construct the two-coefficient polynomial with the displayed slope and intercept.
@@ -95,20 +99,20 @@ determinant denominator. Their identity holds at each supplied line parameter. -
 @[expose] public def verticalCoprime (parameter : Gaussian.Basic.Canonical) (x : Coordinate)
     (determinantNonzero : verticalDeterminant parameter x ≠ 0) :
     Dense.Rational.Bezout.Basic.CoprimeCertificate
-      (Dense.Gaussian.Path.Components.pathReal (rootPolynomial parameter) (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathReal (rootPolynomial parameter) (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit)
-      (Dense.Gaussian.Path.Components.pathImag (rootPolynomial parameter) (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathImag (rootPolynomial parameter) (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit) where
-  left := Dense.Basic.DensePolynomial.constant (4 * x ^ 2 / verticalDeterminant parameter x)
+  left := DensePolynomial.constant (4 * x ^ 2 / verticalDeterminant parameter x)
   right := linearPolynomial
     (2 * x / verticalDeterminant parameter x)
     (parameter.im / verticalDeterminant parameter x)
   identity := by
     intro y
-    simp only [Dense.Basic.DensePolynomial.eval_constant, eval_linearPolynomial,
-      Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathImag, rootPolynomial,
-        Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+    simp only [DensePolynomial.eval_constant, eval_linearPolynomial,
+      Components.eval_pathReal,
+      Components.eval_pathImag, rootPolynomial,
+        Power.Gaussian.rootPolynomial_eval,
       SquareRootDegree.degreeTwo_value, pow_two, Affine.Axis.line_vertical,
       Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im, point_re, point_im]
     rw [ExplicitField.div_eq_mul_inv,
@@ -138,20 +142,20 @@ determinant denominator, including both original coefficient signs. -/
 @[expose] public def horizontalCoprime (parameter : Gaussian.Basic.Canonical) (y : Coordinate)
     (determinantNonzero : horizontalDeterminant parameter y ≠ 0) :
     Dense.Rational.Bezout.Basic.CoprimeCertificate
-      (Dense.Gaussian.Path.Components.pathReal (rootPolynomial parameter) (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathReal (rootPolynomial parameter) (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection)
-      (Dense.Gaussian.Path.Components.pathImag (rootPolynomial parameter) (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathImag (rootPolynomial parameter) (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection) where
-  left := Dense.Basic.DensePolynomial.constant (4 * y ^ 2 / horizontalDeterminant parameter y)
+  left := DensePolynomial.constant (4 * y ^ 2 / horizontalDeterminant parameter y)
   right := linearPolynomial
     (-(2 * y) / horizontalDeterminant parameter y)
     (-parameter.im / horizontalDeterminant parameter y)
   identity := by
     intro x
-    simp only [Dense.Basic.DensePolynomial.eval_constant, eval_linearPolynomial,
-      Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathImag, rootPolynomial,
-        Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+    simp only [DensePolynomial.eval_constant, eval_linearPolynomial,
+      Components.eval_pathReal,
+      Components.eval_pathImag, rootPolynomial,
+        Power.Gaussian.rootPolynomial_eval,
       SquareRootDegree.degreeTwo_value, pow_two, Affine.Axis.line_horizontal,
       Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im, point_re, point_im]
     rw [ExplicitField.div_eq_mul_inv,
@@ -186,7 +190,7 @@ expression as the vertical resultant at the supplied real coordinate. -/
 @[simp] public theorem quadraticVerticalEliminant_eval
     (parameter : Gaussian.Basic.Canonical) (x : Coordinate) :
     (quadraticVerticalEliminant parameter).eval x = verticalDeterminant parameter x := by
-  simp only [quadraticVerticalEliminant, Dense.Basic.DensePolynomial.eval, Dense.Basic.DensePolynomial.evalCoeffs,
+  simp only [quadraticVerticalEliminant, DensePolynomial.eval, DensePolynomial.evalCoeffs,
     List.foldl_cons, List.foldl_nil]
   unfold verticalDeterminant
   ring1
@@ -198,7 +202,7 @@ expression as the horizontal resultant at the supplied imaginary coordinate. -/
 @[simp] public theorem quadraticHorizontalEliminant_eval
     (parameter : Gaussian.Basic.Canonical) (y : Coordinate) :
     (quadraticHorizontalEliminant parameter).eval y = horizontalDeterminant parameter y := by
-  simp only [quadraticHorizontalEliminant, Dense.Basic.DensePolynomial.eval, Dense.Basic.DensePolynomial.evalCoeffs,
+  simp only [quadraticHorizontalEliminant, DensePolynomial.eval, DensePolynomial.evalCoeffs,
     List.foldl_cons, List.foldl_nil]
   unfold horizontalDeterminant
   ring1

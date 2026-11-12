@@ -93,6 +93,12 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 public section
@@ -116,16 +122,16 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} (prepared :
-    ExteriorProgram.SurfacePreparation
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} (prepared :
+    SurfacePreparation
     regular domains program)
 
 set_option genInjectivity false in
@@ -133,41 +139,41 @@ set_option genInjectivity false in
 
 Its root-closing certificate retains both source and chart area bounds, component totals and all connector
 contributions. -/
-structure OddClosedBoundaryComparison (other : Hyperelliptic.Differentials.Basic.Differential genus) (requested :
-  Normalization.InverseRootPolynomial.Coordinate) (minimum : Nat) where
+structure OddClosedBoundaryComparison (other : Differentials.Basic.Differential genus) (requested :
+  InverseRootPolynomial.Coordinate) (minimum : Nat) where
   /-- The original paired parent request on the complete exterior program cache. -/ original :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other program.cache.parents (requested /
+    PairedParentRequest.Request regular other program.cache.parents (requested /
     128) minimum
   /-- The first original covers are exactly the surface preparation's source covers. -/ original_left : original.left =
     prepared.sourceCovers
   /-- The allocated paired boundary request on the original parent plan. -/ request :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedParentBoundaries.BoundaryBankRequest original (requested / 128)
+    PairedParentBoundaries.BoundaryBankRequest original (requested / 128)
   /-- The actual closing-root request on that same boundary request. -/ closed :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedClosedBoundary.ClosedRequest request (requested / 128)
+    PairedClosedBoundary.ClosedRequest request (requested / 128)
   /-- The retained successful closed-boundary certificate. -/ certified : closed.Certificate
   /-- The original source primitives retained by the certified boundary evaluation. -/ sources :
-    Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Sources certified.retained.boundary
+    BoundarySourceRequests.Sources certified.retained.boundary
   /-- The comparison of those exact retained sources with their chart paths. -/ charts : sources.ChartComparison
     certified.retained.boundary
   /-- The cached total and area of the complete closed chart trace increments. -/ chartLoop :
     Path.PairedIncrementArea.Summary ((Path.JoinedTraceIncrements.VertexTrace.increments
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
+    (Evaluation.closedChartTrace
     certified.retained.boundary) id))
   /-- The cached chart-loop area equals all original chart areas, internal connectors, parent connectors and the closing
     connector. -/ chartLoop_area : chartLoop.areaValue = FiniteSum.Fin.sumFin (fun i =>
     (certified.retained.boundary.entries.get i).chartArea) +
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryClosure.Evaluation.internalConnectors
+    (PairedBoundaryClosure.Evaluation.internalConnectors
       certified.retained.boundary) +
-    FiniteSum.Fin.sumFin (Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryClosure.Evaluation.parentConnector
+    FiniteSum.Fin.sumFin (PairedBoundaryClosure.Evaluation.parentConnector
       certified.retained.boundary) +
     certified.closing.connector
   /-- The complete cached chart-loop area meets the requested tolerance. -/ chartLoop_bounded :
-    Data.Gaussian.Norm.Basic.normSq chartLoop.areaValue < requested
+    Gaussian.Norm.Basic.normSq chartLoop.areaValue < requested
   /-- The retained complete source-path area meets the requested tolerance. -/ source_bounded :
-    Data.Gaussian.Norm.Basic.normSq sources.path.areaValue < requested
+    Gaussian.Norm.Basic.normSq sources.path.areaValue < requested
   /-- Both retained source-path totals meet the requested component bound. -/ source_total_bounded :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded sources.path.totalValue requested
-  /-- The certified closed boundary area meets the requested tolerance. -/ bounded : Data.Gaussian.Norm.Basic.normSq
+  /-- The certified closed boundary area meets the requested tolerance. -/ bounded : Gaussian.Norm.Basic.normSq
     certified.area < requested
 
 constructive_injectivity OddClosedBoundaryComparison
@@ -175,27 +181,27 @@ constructive_injectivity OddClosedBoundaryComparison
 /-- Reuse the surface's first-differential covers and the original period
 cache. Recasting the second numerator preserves that cache's root geometry.
 The original program supplies its own root return, including both odd laps. -/
-@[expose] def oddClosedBoundaryComparison (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+@[expose] def oddClosedBoundaryComparison (other : Differentials.Basic.Differential genus)
+    (right : Charts.Reciprocal.UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge other)))
-    (requested : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < requested)
-    (minimum : Nat) (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (requested : InverseRootPolynomial.Coordinate) (positive : 0 < requested)
+    (minimum : Nat) (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
     prepared.OddClosedBoundaryComparison other requested minimum := by
-  have localPositive := Fraction.Order.Field.div_pos_direct positive (by
-      decide +kernel : (0 : Normalization.InverseRootPolynomial.Coordinate) < 128)
-  let original := Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.build regular other
+  have localPositive := Field.div_pos_direct positive (by
+      decide +kernel : (0 : InverseRootPolynomial.Coordinate) < 128)
+  let original := PairedParentRequest.Request.build regular other
     prepared.sourceCovers right program.cache.proper
     (requested / 128) localPositive minimum
-  let request := Hyperelliptic.Charts.Reciprocal.Disk.PairedParentBoundaries.BoundaryBankRequest.build original
+  let request := PairedParentBoundaries.BoundaryBankRequest.build original
     (requested / 128) localPositive
-  let closed := Hyperelliptic.Charts.Reciprocal.Disk.PairedClosedBoundary.ClosedRequest.build request (requested / 128)
+  let closed := PairedClosedBoundary.ClosedRequest.build request (requested / 128)
     localPositive
     (Nonempty.map (fun chain => chain.toDirectPathChain) program.cache.chain)
     (RootContinuation.PreparedCachedParentRoots.ParentCache.rootChain program.cache) rfl (by
       change Gaussian.Equivalence.NamedEquivalent
         (Paths.OwnerTraceReadings.ownerName
           (Paths.PreparedPathGluing.finishOwner program.period.closed.traced.prepared))
-        (Paths.OwnerTraceReadings.ownerName (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorOwner
+        (Paths.OwnerTraceReadings.ownerName (PeriodPrograms.exteriorOwner
           lifted program.sheet))
       rw [← program.period.closed.traced.finishOwner_eq]
       exact program.period.closed.rootReturn)
@@ -203,110 +209,110 @@ The original program supplies its own root return, including both odd laps. -/
   have paid : 2 * (2 * (requested / 128 + requested / 128) + requested / 128) ≤ requested := by
     calc
       _ = 10 * (requested / 128) := by ring1
-      _ ≤ 128 * (requested / 128) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
+      _ ≤ 128 * (requested / 128) := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
         localPositive.le
       _ = requested := by
         rw [Fraction.Field.mul_comm]
         exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
-  let sources := Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.sources certified.retained.boundary
+  let sources := BoundarySourceRequests.sources certified.retained.boundary
   let boundary := certified.retained.boundary
   let discrepancy := FiniteSum.Fin.sumFin (fun i => (boundary.entries.get i).sourceArea -
     (boundary.entries.get i).chartArea - (boundary.entries.get i).correction)
-  have discrepancyBound : Data.Gaussian.Norm.Basic.normSq discrepancy < requested / 128 := by
-    have each (i : Fin original.plans.length) : Data.Gaussian.Norm.Basic.normSq ((boundary.entries.get i).sourceArea
+  have discrepancyBound : Gaussian.Norm.Basic.normSq discrepancy < requested / 128 := by
+    have each (i : Fin original.plans.length) : Gaussian.Norm.Basic.normSq ((boundary.entries.get i).sourceArea
       -
         (boundary.entries.get i).chartArea - (boundary.entries.get i).correction) ≤ request.allowance := by
       have smaller : (request.plans.get i).allowance ≤ request.allowance := by
         calc
-          _ ≤ request.allowance / 32 := (request.plans.get i).allowance_eq.trans_le (Fraction.Order.Basic.min_le_left _
+          _ ≤ request.allowance / 32 := (request.plans.get i).allowance_eq.trans_le (Basic.min_le_left _
             _)
           _ = 1 * (request.allowance / 32) := (Fraction.Field.one_mul _).symm
-          _ ≤ 32 * (request.allowance / 32) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          _ ≤ 32 * (request.allowance / 32) := Arithmetic.mul_le_mul_of_nonneg_right_direct
             (by decide +kernel)
-            (Fraction.Order.Field.div_nonneg_direct request.positive.le (by decide +kernel))
+            (Field.div_nonneg_direct request.positive.le (by decide +kernel))
           _ = request.allowance := by rw [Fraction.Field.mul_comm]; exact Fraction.Field.div_mul_cancel_of_ne _ _ (by
             decide +kernel)
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] using
         (boundary.entries.get i).bounded.le.trans smaller
     have aggregate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le _ request.allowance each
     have paid := request.paid
-    rw [show (original.plans.length : Normalization.InverseRootPolynomial.Coordinate) * ((original.plans.length :
-      Normalization.InverseRootPolynomial.Coordinate) * request.allowance) =
-      (original.plans.length : Normalization.InverseRootPolynomial.Coordinate)^2 * request.allowance by ring1] at paid
+    rw [show (original.plans.length : InverseRootPolynomial.Coordinate) * ((original.plans.length :
+      InverseRootPolynomial.Coordinate) * request.allowance) =
+      (original.plans.length : InverseRootPolynomial.Coordinate)^2 * request.allowance by ring1] at paid
     exact aggregate.trans_lt paid
   let chartBoundary := certified.area - discrepancy
   have chartEq : chartBoundary = FiniteSum.Fin.sumFin (fun i => (boundary.entries.get i).chartArea) +
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryClosure.Evaluation.internalConnectors boundary) +
-        FiniteSum.Fin.sumFin (Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryClosure.Evaluation.parentConnector
+      (PairedBoundaryClosure.Evaluation.internalConnectors boundary) +
+        FiniteSum.Fin.sumFin (PairedBoundaryClosure.Evaluation.parentConnector
         boundary) + certified.closing.connector := by
     dsimp only [chartBoundary, discrepancy, -eq_self, -iff_self]
     rw [certified.boundary_eq, certified.closing.connector_eq]
-    unfold Hyperelliptic.Charts.Reciprocal.Disk.PairedClosedBoundary.ClosedRequest.Boundary
+    unfold PairedClosedBoundary.ClosedRequest.Boundary
     rw [boundary.sourceArea_eq, boundary.correction_eq, FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_sub]
     ring1
   have chartBound := (Gaussian.Norm.Bounds.normSq_sub_le_two certified.area discrepancy).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-        decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 2)
-      (Fraction.Order.Arithmetic.add_lt_add_direct certified.bounded discrepancyBound))
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by
+        decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+      (Arithmetic.add_lt_add_direct certified.bounded discrepancyBound))
   have chartPaid : 2 * (2 * (2 * (requested / 128 + requested / 128) + requested / 128) + requested / 128) ≤ requested
     := by
     calc
       _ = 22 * (requested / 128) := by ring1
-      _ ≤ 128 * (requested / 128) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
+      _ ≤ 128 * (requested / 128) := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
         localPositive.le
       _ = requested := by
         rw [Fraction.Field.mul_comm]
         exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
   have loopArea : chartBoundary = Path.PairedIncrementArea.area ((Path.JoinedTraceIncrements.VertexTrace.increments
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace boundary)
+    (Evaluation.closedChartTrace boundary)
     id)) := by
     rw
-      [Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace_increment_area
+      [Evaluation.closedChartTrace_increment_area
       boundary,
-      Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.ClosingPlan.closedChartTrace_area
+      ClosingPlan.closedChartTrace_area
         boundary closed.closing branch,
       chartEq, certified.closing.connector_eq]
   let chartLoop : Path.PairedIncrementArea.Summary ((Path.JoinedTraceIncrements.VertexTrace.increments
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace boundary)
+    (Evaluation.closedChartTrace boundary)
     id)) :=
     ⟨Topology.Polygon.Stokes.PrimitivePoint.zero,
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace_total
+      (Evaluation.closedChartTrace_total
         boundary).symm,
       chartBoundary, loopArea⟩
-  let charts := Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Sources.compareCharts boundary sources
+  let charts := BoundarySourceRequests.Sources.compareCharts boundary sources
   have inserted :=
-    Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Sources.ChartComparison.insertion_accurate
+    BoundarySourceRequests.Sources.ChartComparison.insertion_accurate
     certified.retained sources charts
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace_closing_area
+  rw [Evaluation.chartTrace_closing_area
     boundary, ← loopArea] at inserted
   have sourceLoop := (Gaussian.Norm.Bounds.normSq_sub_le_via sources.path.areaValue charts.chart.areaValue
     chartBoundary).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 :
-      Normalization.InverseRootPolynomial.Coordinate) < 2) (Fraction.Order.Arithmetic.add_lt_add_direct charts.accurate
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 :
+      InverseRootPolynomial.Coordinate) < 2) (Arithmetic.add_lt_add_direct charts.accurate
       inserted))
   have sourceSum := (Gaussian.Norm.Bounds.normSq_add_le_two
     (sources.path.areaValue - chartBoundary) chartBoundary).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 :
-      Normalization.InverseRootPolynomial.Coordinate) < 2) (Fraction.Order.Arithmetic.add_lt_add_direct sourceLoop
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 :
+      InverseRootPolynomial.Coordinate) < 2) (Arithmetic.add_lt_add_direct sourceLoop
       chartBound))
   rw [sub_add_cancel] at sourceSum
   have sourcePaid : 2 * (2 * (requested / 128 + requested / 128) +
       2 * (2 * (2 * (requested / 128 + requested / 128) + requested / 128) + requested / 128)) ≤ requested := by
     calc
       _ = 52 * (requested / 128) := by ring1
-      _ ≤ 128 * (requested / 128) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
+      _ ≤ 128 * (requested / 128) := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
         localPositive.le
       _ = requested := by
         rw [Fraction.Field.mul_comm]
         exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
   have insertedTotal :=
-    Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Sources.ChartComparison.insertion_total_accurate
+    BoundarySourceRequests.Sources.ChartComparison.insertion_total_accurate
     certified.retained sources charts
   have closingTotal :=
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.ClosingPlan.trace_total_bounded boundary
+    ClosingPlan.trace_total_bounded boundary
     closed.closing
-    ((Data.Nat.Order.le_max_right _ _).trans_eq closed.index_eq.symm) localPositive.le branch
-  have scalar (a b c : Normalization.InverseRootPolynomial.Gaussian) (source : Gaussian.Basic.Canonical.normSq (a - b) ≤
+    ((Nat.Order.le_max_right _ _).trans_eq closed.index_eq.symm) localPositive.le branch
+  have scalar (a b c : InverseRootPolynomial.Gaussian) (source : Gaussian.Basic.Canonical.normSq (a - b) ≤
     requested / 128)
       (inserted : Gaussian.Basic.Canonical.normSq (b - c) ≤ requested / 128) (closing : Gaussian.Basic.Canonical.normSq
         c ≤ requested / 128) :
@@ -314,12 +320,12 @@ The original program supplies its own root return, including both odd laps. -/
     have first := Gaussian.Norm.Bounds.normSq_sub_le_via a b c
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at first
     have difference := first.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct source
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct source
         inserted) (by decide))
     have second := Gaussian.Norm.Bounds.normSq_add_le_two (a - c) c
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at second
     have total := second.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
         difference closing) (by decide))
     rw [sub_add_cancel] at total
     exact total.trans paid
@@ -331,14 +337,14 @@ The original program supplies its own root return, including both odd laps. -/
     sourceTotal, certified.bounded.trans_le paid⟩
 
 /-- The constructed closed comparison's slope is the maximum of the two original retained cover maxima. -/
-theorem oddClosedBoundaryComparison_slope (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+theorem oddClosedBoundaryComparison_slope (other : Differentials.Basic.Differential genus)
+    (right : Charts.Reciprocal.UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge other)))
-    (requested : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < requested) (minimum : Nat)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (requested : InverseRootPolynomial.Coordinate) (positive : 0 < requested) (minimum : Nat)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
     (prepared.oddClosedBoundaryComparison other right requested positive minimum branch).original.slope =
-      max (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.sourceMaximum prepared.sourceCovers)
-        (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.sourceMaximum right) := by
+      max (PairedParentRequest.sourceMaximum prepared.sourceCovers)
+        (PairedParentRequest.sourceMaximum right) := by
   let comparison := prepared.oddClosedBoundaryComparison other right requested positive minimum branch
   have slope := comparison.original.slope_eq
   rw [comparison.original_left] at slope
@@ -346,41 +352,41 @@ theorem oddClosedBoundaryComparison_slope (other : Hyperelliptic.Differentials.B
 
 /-- The actual exterior source path is compared with the joined parent chart
 paths, paying both levels of polygons of totals. -/
-theorem OddClosedBoundaryComparison.chart_path_bounded {other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+theorem OddClosedBoundaryComparison.chart_path_bounded {other : Differentials.Basic.Differential genus}
+  {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
     (comparison : prepared.OddClosedBoundaryComparison other requested minimum) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
-      (Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Evaluation.sourcePaths
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+      (BoundarySourceRequests.Evaluation.sourcePaths
       comparison.certified.retained.boundary).flatten -
-      Path.PairedIncrementArea.area (Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Evaluation.chartPaths
+      Path.PairedIncrementArea.area (BoundarySourceRequests.Evaluation.chartPaths
         comparison.certified.retained.boundary).flatten) < requested / 128 := by
   rw [← comparison.sources.path.area_eq, ← comparison.charts.chart.area_eq]
   exact comparison.charts.accurate
 
 /-- The joined chart path already has the bounded full increment area;
 adding its closing edge changes neither that area nor the retained excursions. -/
-theorem OddClosedBoundaryComparison.joined_chart_path_bounded {other : Hyperelliptic.Differentials.Basic.Differential
-  genus} {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+theorem OddClosedBoundaryComparison.joined_chart_path_bounded {other : Differentials.Basic.Differential
+  genus} {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
     (comparison : prepared.OddClosedBoundaryComparison other requested minimum) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
       ((Path.JoinedTraceIncrements.VertexTrace.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+      (Evaluation.chartTrace
       comparison.certified.retained.boundary) id))) < requested := by
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace_closing_area
+  rw [Evaluation.chartTrace_closing_area
     comparison.certified.retained.boundary, ← comparison.chartLoop.area_eq]
   exact comparison.chartLoop_bounded
 
 /-- Each original parent now pays insertion of all its common-cover
 junctions in the full source-to-chart path area comparison. -/
 theorem OddClosedBoundaryComparison.parent_joined_chart_path_bounded {other :
-  Hyperelliptic.Differentials.Basic.Differential genus} {requested : Normalization.InverseRootPolynomial.Coordinate}
+  Differentials.Basic.Differential genus} {requested : InverseRootPolynomial.Coordinate}
   {minimum : Nat}
     (comparison : prepared.OddClosedBoundaryComparison other requested minimum) (i : Fin
       comparison.original.plans.length) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
       (comparison.certified.retained.boundary.entries.get i).sourceBlocks.flatten -
       Path.PairedIncrementArea.area (Path.JoinedTraceIncrements.VertexTrace.increments
-        (Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace
+        (PairedChartTrace.Evaluation.chartTrace
           (comparison.certified.retained.boundary.entries.get i)) id)) <
       comparison.request.allowance := by
   let planned := comparison.request.plans.get i
@@ -388,55 +394,55 @@ theorem OddClosedBoundaryComparison.parent_joined_chart_path_bounded {other :
     have divided : comparison.request.allowance / 32 ≤ comparison.request.allowance := by
       calc
         _ = 1 * (comparison.request.allowance / 32) := (Fraction.Field.one_mul _).symm
-        _ ≤ 32 * (comparison.request.allowance / 32) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+        _ ≤ 32 * (comparison.request.allowance / 32) := Arithmetic.mul_le_mul_of_nonneg_right_direct (by
           decide +kernel)
-          (Fraction.Order.Field.div_nonneg_direct comparison.request.positive.le (by decide +kernel))
+          (Field.div_nonneg_direct comparison.request.positive.le (by decide +kernel))
         _ = comparison.request.allowance := by
           rw [Fraction.Field.mul_comm]; exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
-    exact (planned.allowance_eq.trans_le (Fraction.Order.Basic.min_le_left _ _)).trans (divided.trans
+    exact (planned.allowance_eq.trans_le (Basic.min_le_left _ _)).trans (divided.trans
       comparison.request.small)
   rw [← (comparison.certified.retained.boundary.certificates.get i).blocks.source.area_eq]
-  exact Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.joined_source_accurate planned
+  exact PairedChartTrace.Evaluation.joined_source_accurate planned
     (comparison.certified.retained.boundary.entries.get i) (comparison.certified.retained.boundary.certificates.get i)
       small
 
 /-- Requested bound on the full actual source increment path. All interval
 and parent junctions have been paid; no origin or chord correction remains. -/
-theorem OddClosedBoundaryComparison.path_bounded {other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+theorem OddClosedBoundaryComparison.path_bounded {other : Differentials.Basic.Differential genus}
+  {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
     (comparison : prepared.OddClosedBoundaryComparison other requested minimum) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
-      (Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Evaluation.sourcePaths
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+      (BoundarySourceRequests.Evaluation.sourcePaths
       comparison.certified.retained.boundary).flatten) < requested :=
   comparison.sources.path.area_eq ▸ comparison.source_bounded
 
 /-- Extract one original controlled source pair with its retained combined depth and paid dyadic reference error. -/
-@[expose] def OddClosedBoundaryComparison.sourceEntry {other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+@[expose] def OddClosedBoundaryComparison.sourceEntry {other : Differentials.Basic.Differential genus}
+  {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
     (comparison : prepared.OddClosedBoundaryComparison other requested minimum) (i : Fin
       comparison.original.plans.length) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.SourceReferenceEntry comparison.original i := by
+    SourceComparison.SourceReferenceEntry comparison.original i := by
   let entry := comparison.certified.retained.boundary.entries.get i
   let controlled := comparison.sources.entries.get i
   let planned := comparison.request.plans.get i
-  let depth := (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent comparison.original i).common.depth
+  let depth := (PairedParentCharts.ChartParent comparison.original i).common.depth
     + planned.depth
-  have rate : 16 * (max (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent comparison.original
+  have rate : 16 * (max (PairedParentCharts.ChartParent comparison.original
     i).data.sourceSlope
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent comparison.original
+      (PairedParentCharts.ChartParent comparison.original
         i).otherData.sourceSlope)^2 *
-      ((1 / 2 : Normalization.InverseRootPolynomial.Coordinate)^depth)^2 ≤ planned.allowance := by
+      ((1 / 2 : InverseRootPolynomial.Coordinate)^depth)^2 ≤ planned.allowance := by
     have decreasing := quarterRadius_antitone
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤
-        16) (Fraction.Order.Arithmetic.sq_nonneg_direct
-        (max (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent comparison.original
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤
+        16) (Arithmetic.sq_nonneg_direct
+        (max (PairedParentCharts.ChartParent comparison.original
           i).data.sourceSlope
-          (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent comparison.original
+          (PairedParentCharts.ChartParent comparison.original
             i).otherData.sourceSlope)))
       (Nat.le_add_left planned.depth
-        (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent comparison.original i).common.depth)
+        (PairedParentCharts.ChartParent comparison.original i).common.depth)
     rw [← pow_mul, Nat.mul_comm depth 2, pow_mul,
-      show (1 / 2 : Normalization.InverseRootPolynomial.Coordinate)^2 = 1 / 4 by decide, ←
+      show (1 / 2 : InverseRootPolynomial.Coordinate)^2 = 1 / 4 by decide, ←
         Rational.Geometric.Basic.quarterRadius_eq_mul_pow]
     exact decreasing.trans planned.source_accurate.le
   exact ⟨comparison.request.index, entry.samples.source, entry.samples.otherSource,
@@ -444,23 +450,23 @@ theorem OddClosedBoundaryComparison.path_bounded {other : Hyperelliptic.Differen
 
 /-- Keep the odd proof's source samples and cached path while exposing only
 the data needed by the parity-independent physical-source comparison. -/
-@[expose] def OddClosedBoundaryComparison.toSourceComparison {other : Hyperelliptic.Differentials.Basic.Differential
-  genus} {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+@[expose] def OddClosedBoundaryComparison.toSourceComparison {other : Differentials.Basic.Differential
+  genus} {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
     (comparison : prepared.OddClosedBoundaryComparison other requested minimum) :
     prepared.ClosedBoundaryComparison other requested minimum := by
-  let entries := Data.Vector.DependentVector.ofFn (comparison.sourceEntry prepared)
-  have paths : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths entries =
-    (Hyperelliptic.Charts.Reciprocal.Disk.BoundarySourceRequests.Evaluation.sourcePaths
+  let entries := Vector.DependentVector.ofFn (comparison.sourceEntry prepared)
+  have paths : SourceComparison.sourceReferencePaths entries =
+    (BoundarySourceRequests.Evaluation.sourcePaths
     comparison.certified.retained.boundary) := by
-    apply Data.List.OfFn.Basic.ofFn_congr
+    apply List.OfFn.Basic.ofFn_congr
     intro i
-    dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths, entries, -eq_self,
+    dsimp only [SourceComparison.sourceReferencePaths, entries, -eq_self,
       -iff_self]
-    rw [Data.Vector.DependentVector.ofFn_get]
+    rw [Vector.DependentVector.ofFn_get]
     rfl
   let old := comparison.sources.path
   let path : Path.PairedIncrementArea.Summary
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths entries).flatten :=
+    (SourceComparison.sourceReferencePaths entries).flatten :=
     ⟨old.totalValue, old.total_eq.trans (congrArg (fun paths => Path.PairedIncrementArea.total paths.flatten)
       paths.symm),
       old.areaValue, old.area_eq.trans (congrArg (fun paths => Path.PairedIncrementArea.area paths.flatten) paths.symm)⟩
@@ -469,14 +475,14 @@ the data needed by the parity-independent physical-source comparison. -/
       comparison.source_total_bounded⟩
   intro i
   dsimp only [entries, -eq_self, -iff_self]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  rw [Vector.DependentVector.ofFn_get]
   change (comparison.request.plans.get i).allowance ≤ comparison.request.allowance
   have divided : comparison.request.allowance / 32 ≤ comparison.request.allowance := by
-    apply (Fraction.Order.Field.div_le_iff_pos (by
-        decide +kernel : (0 : Normalization.InverseRootPolynomial.Coordinate) < 32)).mpr
+    apply (Field.div_le_iff_pos (by
+        decide +kernel : (0 : InverseRootPolynomial.Coordinate) < 32)).mpr
     exact (show comparison.request.allowance = comparison.request.allowance * 1 by ring1).le.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide +kernel) comparison.request.positive.le)
-  exact ((comparison.request.plans.get i).allowance_eq.trans_le (Fraction.Order.Basic.min_le_left _ _)).trans divided
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide +kernel) comparison.request.positive.le)
+  exact ((comparison.request.plans.get i).allowance_eq.trans_le (Basic.min_le_left _ _)).trans divided
 
 end SurfacePreparation
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram

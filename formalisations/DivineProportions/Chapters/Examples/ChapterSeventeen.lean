@@ -27,6 +27,9 @@ public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Geometry.Quadrilaterals.Cyclic.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial
+open Purelib.Geometry.Quadrilaterals.Basic
+
 open Purelib.Algebra.Field
 
 open Purelib.Data.Rat
@@ -55,29 +58,29 @@ namespace ChapterSeventeenExamples
 namespace ExampleSeventeenOne
 
 /-- The origin of the coordinate plane over the field with eleven elements. -/
-def origin : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨0, 0⟩
+def origin : Point Finite.Eleven.Element := ⟨0, 0⟩
 
 /-- The first vertex (2, 3) of the first quadrilateral over the field with eleven elements. -/
-def a₁ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨2, 3⟩
+def a₁ : Point Finite.Eleven.Element := ⟨2, 3⟩
 /-- The second vertex (9, 3) of the first quadrilateral over the field with eleven elements. -/
-def a₂ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨9, 3⟩
+def a₂ : Point Finite.Eleven.Element := ⟨9, 3⟩
 /-- The third vertex (1, 10) of the first quadrilateral over the field with eleven elements. -/
-def a₃ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨1, 10⟩
+def a₃ : Point Finite.Eleven.Element := ⟨1, 10⟩
 /-- The fourth vertex (8, 9) of the first quadrilateral over the field with eleven elements. -/
-def a₄ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨8, 9⟩
+def a₄ : Point Finite.Eleven.Element := ⟨8, 9⟩
 
 /-- The first vertex (4, 2) of the second quadrilateral over the field with eleven elements. -/
-def b₁ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨4, 2⟩
+def b₁ : Point Finite.Eleven.Element := ⟨4, 2⟩
 /-- The second vertex (3, 0) of the second quadrilateral over the field with eleven elements. -/
-def b₂ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨3, 0⟩
+def b₂ : Point Finite.Eleven.Element := ⟨3, 0⟩
 /-- The third vertex (8, 0) of the second quadrilateral over the field with eleven elements. -/
-def b₃ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨8, 0⟩
+def b₃ : Point Finite.Eleven.Element := ⟨8, 0⟩
 /-- The fourth vertex (9, 7) of the second quadrilateral over the field with eleven elements. -/
-def b₄ : Purelib.Geometry.Plane.Point Finite.Eleven.Element := ⟨9, 7⟩
+def b₄ : Point Finite.Eleven.Element := ⟨9, 7⟩
 
 /-- A nonzero coordinate determinant excludes collinearity of the three supplied points. -/
 private theorem notCollinear_of_determinant_ne_zero
-    {first second third : Purelib.Geometry.Plane.Point Finite.Eleven.Element}
+    {first second third : Point Finite.Eleven.Element}
     (determinantNonzero : Line.Incidence.pointDeterminant first second third ≠ 0) :
     ¬ Line.Incidence.Collinear first second third := by
   intro collinear
@@ -86,7 +89,7 @@ private theorem notCollinear_of_determinant_ne_zero
 
 /-- The first displayed point list satisfies the book's quadrilateral
 distinctness and noncollinearity conditions. -/
-def aQuadrilateral : Quadrilaterals.Basic.Quadrilateral Finite.Eleven.Element where
+def aQuadrilateral : Quadrilateral Finite.Eleven.Element where
   first := a₁
   second := a₂
   third := a₃
@@ -127,7 +130,7 @@ def aQuadrilateral : Quadrilaterals.Basic.Quadrilateral Finite.Eleven.Element wh
       ((Line.Incidence.collinear_iff_pointDeterminant_eq_zero a₂ a₃ a₄).1 collinear)
 
 /-- The second displayed point list is also a genuine quadrilateral. -/
-def bQuadrilateral : Quadrilaterals.Basic.Quadrilateral Finite.Eleven.Element where
+def bQuadrilateral : Quadrilateral Finite.Eleven.Element where
   first := b₁
   second := b₂
   third := b₃
@@ -168,42 +171,42 @@ def bQuadrilateral : Quadrilaterals.Basic.Quadrilateral Finite.Eleven.Element wh
       ((Line.Incidence.collinear_iff_pointDeterminant_eq_zero b₂ b₃ b₄).1 collinear)
 
 /-- The first displayed side line `⟨0:7:1⟩`. -/
-def line₁₂ : Purelib.Geometry.Plane.Line Finite.Eleven.Element where
+def line₁₂ : Line Finite.Eleven.Element where
   a := 0
   b := 7
   c := 1
   direction_nonzero := Or.inr (by decide)
 
 /-- The second displayed side line `⟨7:8:1⟩`. -/
-def line₂₃ : Purelib.Geometry.Plane.Line Finite.Eleven.Element where
+def line₂₃ : Line Finite.Eleven.Element where
   a := 7
   b := 8
   c := 1
   direction_nonzero := Or.inl (by decide)
 
 /-- The third displayed side line `⟨2:3:1⟩`. -/
-def line₃₄ : Purelib.Geometry.Plane.Line Finite.Eleven.Element where
+def line₃₄ : Line Finite.Eleven.Element where
   a := 2
   b := 3
   c := 1
   direction_nonzero := Or.inl (by decide)
 
 /-- The fourth displayed side line `⟨1:10:1⟩`. -/
-def line₁₄ : Purelib.Geometry.Plane.Line Finite.Eleven.Element where
+def line₁₄ : Line Finite.Eleven.Element where
   a := 1
   b := 10
   c := 1
   direction_nonzero := Or.inl (by decide)
 
 /-- The displayed diagonal `⟨8:9:1⟩`. -/
-def line₁₃ : Purelib.Geometry.Plane.Line Finite.Eleven.Element where
+def line₁₃ : Line Finite.Eleven.Element where
   a := 8
   b := 9
   c := 1
   direction_nonzero := Or.inl (by decide)
 
 /-- The displayed diagonal `⟨8:5:1⟩`. -/
-def line₂₄ : Purelib.Geometry.Plane.Line Finite.Eleven.Element where
+def line₂₄ : Line Finite.Eleven.Element where
   a := 8
   b := 5
   c := 1
@@ -211,22 +214,22 @@ def line₂₄ : Purelib.Geometry.Plane.Line Finite.Eleven.Element where
 
 /-- The line through the first two vertices has nonzero norm. -/
 theorem line₁₂_nonNull : ¬ line₁₂.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₁₂
+  unfold Line.IsNull line₁₂
   decide
 
 /-- The line through the second and third vertices has nonzero norm. -/
 theorem line₂₃_nonNull : ¬ line₂₃.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₂₃
+  unfold Line.IsNull line₂₃
   decide
 
 /-- The line through the third and fourth vertices has nonzero norm. -/
 theorem line₃₄_nonNull : ¬ line₃₄.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₃₄
+  unfold Line.IsNull line₃₄
   decide
 
 /-- The line through the first and fourth vertices has nonzero norm. -/
 theorem line₁₄_nonNull : ¬ line₁₄.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₁₄
+  unfold Line.IsNull line₁₄
   decide
 
 /-- The four prescribed side quadrances, shared by both displayed
@@ -241,15 +244,15 @@ theorem side_quadrances :
 
 /-- The printed coefficient values `p=3`, `q=0`, and `r=10`. -/
 theorem coefficient_values :
-    Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
+    Quadrilateral.circumquadranceCoefficientP
         (5 : Finite.Eleven.Element) 3 6 6 = 3 ∧
-      Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ
+      Quadrilateral.circumquadranceCoefficientQ
         (5 : Finite.Eleven.Element) 3 6 6 = 0 ∧
-      Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR
+      Quadrilateral.circumquadranceCoefficientR
         (5 : Finite.Eleven.Element) 3 6 6 = 10 := by
-  unfold Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
-    Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ
-    Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR
+  unfold Quadrilateral.circumquadranceCoefficientP
+    Quadrilateral.circumquadranceCoefficientQ
+    Quadrilateral.circumquadranceCoefficientR
       Trigonometry.QuadTriple.Quadruple.quadrupleQuadFunction
   decide
 
@@ -324,13 +327,13 @@ theorem vertex_spreads :
 
 /-- The six subtended spreads printed for the first quadrilateral. -/
 theorem subtended_spreads :
-    Quadrilaterals.Basic.Quadrilateral.normalizedSubtendedSpread 2 a₁ a₂ = 2 ∧
-      Quadrilaterals.Basic.Quadrilateral.normalizedSubtendedSpread 2 a₂ a₃ = 10 ∧
-      Quadrilaterals.Basic.Quadrilateral.normalizedSubtendedSpread 2 a₃ a₄ = 9 ∧
-      Quadrilaterals.Basic.Quadrilateral.normalizedSubtendedSpread 2 a₁ a₄ = 9 ∧
-      Quadrilaterals.Basic.Quadrilateral.normalizedSubtendedSpread 2 a₁ a₃ = 9 ∧
-      Quadrilaterals.Basic.Quadrilateral.normalizedSubtendedSpread 2 a₂ a₄ = 6 := by
-  unfold Quadrilaterals.Basic.Quadrilateral.normalizedSubtendedSpread Point.Quadrance.quadrance
+    Quadrilateral.normalizedSubtendedSpread 2 a₁ a₂ = 2 ∧
+      Quadrilateral.normalizedSubtendedSpread 2 a₂ a₃ = 10 ∧
+      Quadrilateral.normalizedSubtendedSpread 2 a₃ a₄ = 9 ∧
+      Quadrilateral.normalizedSubtendedSpread 2 a₁ a₄ = 9 ∧
+      Quadrilateral.normalizedSubtendedSpread 2 a₁ a₃ = 9 ∧
+      Quadrilateral.normalizedSubtendedSpread 2 a₂ a₄ = 6 := by
+  unfold Quadrilateral.normalizedSubtendedSpread Point.Quadrance.quadrance
     a₁ a₂ a₃ a₄
   decide
 
@@ -358,16 +361,16 @@ theorem polygon_quadreas :
 /-- Example 17.2: `m=1`, `p=3`, and the two displayed quadreas `4` and `9`
 are the roots of `A²-2A+3`. -/
 theorem example_17_2 :
-    Quadrilaterals.Basic.Quadrilateral.cyclicQuadreaCoefficientM
+    Quadrilateral.cyclicQuadreaCoefficientM
         (5 : Finite.Eleven.Element) 3 6 6 = 1 ∧
-      Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
+      Quadrilateral.circumquadranceCoefficientP
         (5 : Finite.Eleven.Element) 3 6 6 = 3 ∧
       (4 : Finite.Eleven.Element) ^ 2 - 2 * 1 * 4 + 3 = 0 ∧
       (9 : Finite.Eleven.Element) ^ 2 - 2 * 1 * 9 + 3 = 0 ∧
       ((4 : Finite.Eleven.Element) + 9) / 2 = 1 ∧
       (4 : Finite.Eleven.Element) * 9 = 3 := by
-  unfold Quadrilaterals.Basic.Quadrilateral.cyclicQuadreaCoefficientM
-    Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
+  unfold Quadrilateral.cyclicQuadreaCoefficientM
+    Quadrilateral.circumquadranceCoefficientP
       Trigonometry.QuadTriple.Quadruple.quadrupleQuadFunction
   decide
 
@@ -389,14 +392,14 @@ theorem example_17_4 :
 relation holds: taking `Q₁=Q₂=Q₃=P₁=P₂=1` and `P₃=0` gives an
 executable counterexample in `F₁₁`. -/
 theorem exercise_17_5_printed_counterexample :
-    Quadrilaterals.Basic.Quadrilateral.eulerFunction
+    Quadrilateral.eulerFunction
         (1 : Finite.Eleven.Element) 1 1 1 1 0 = 0 ∧
       (0 - 1 - 1 + 1 - 1 - 1 +
           ((1 - 1) * (1 - 1) / 1 : Finite.Eleven.Element)) ^ 2 ≠
         Trigonometry.QuadTriple.Basic.archimedesFunction (1 : Finite.Eleven.Element) 1 1 *
           Trigonometry.QuadTriple.Basic.archimedesFunction (1 : Finite.Eleven.Element) 1 1 / (4 * (1 :
             Finite.Eleven.Element) ^ 2) := by
-  unfold Quadrilaterals.Basic.Quadrilateral.eulerFunction Quadrilaterals.Basic.Quadrilateral.determinantThree
+  unfold Quadrilateral.eulerFunction Quadrilateral.determinantThree
     Trigonometry.QuadTriple.Basic.archimedesFunction
   decide
 
@@ -412,18 +415,18 @@ theorem side_quadrances :
 
 /-- The four coefficient values printed in Example 17.3. -/
 theorem coefficient_values :
-    Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
+    Quadrilateral.circumquadranceCoefficientP
         (25 : Fraction.Rational) 64 4 100 = 19490625 ∧
-      Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ
+      Quadrilateral.circumquadranceCoefficientQ
         (25 : Fraction.Rational) 64 4 100 = 582390000 ∧
-      Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR
+      Quadrilateral.circumquadranceCoefficientR
         (25 : Fraction.Rational) 64 4 100 = 16964640000 ∧
-      Quadrilaterals.Basic.Quadrilateral.cyclicQuadreaCoefficientM
+      Quadrilateral.cyclicQuadreaCoefficientM
         (25 : Fraction.Rational) 64 4 100 = 7775 := by
-  unfold Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
-    Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ
-    Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR
-    Quadrilaterals.Basic.Quadrilateral.cyclicQuadreaCoefficientM Trigonometry.QuadTriple.Quadruple.quadrupleQuadFunction
+  unfold Quadrilateral.circumquadranceCoefficientP
+    Quadrilateral.circumquadranceCoefficientQ
+    Quadrilateral.circumquadranceCoefficientR
+    Quadrilateral.cyclicQuadreaCoefficientM Trigonometry.QuadTriple.Quadruple.quadrupleQuadFunction
   exact ⟨by ring1, by ring1, by ring1, by ring1⟩
 
 /-- The exact factorization of the circumquadrance equation. -/

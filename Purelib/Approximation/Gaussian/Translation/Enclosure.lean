@@ -76,21 +76,21 @@ open Purelib.Data.Rat in
 /-- Forget the rectangular geometry of a box while retaining a sound closed ball. The native squared gauge is unchanged
 exactly. -/
 def boxToBall : Observation.ObservationMap
-  Gaussian.Representation.Box.boxRepresentation Ball.ballRepresentation where
-  map box := Approximation.Gaussian.Enclosure.Ball.ofBox box
-  covers possible := Approximation.Gaussian.Enclosure.Ball.contains_ofBox possible
+  Box.boxRepresentation Ball.ballRepresentation where
+  map box := Ball.ofBox box
+  covers possible := Ball.contains_ofBox possible
   coherent := by
     intro inner outer refines
     refine ⟨inner.anchor, ?_, ?_⟩
-    · exact Approximation.Gaussian.Enclosure.Ball.contains_ofBox
+    · exact Ball.contains_ofBox
         inner.contains_anchor
-    · exact Approximation.Gaussian.Enclosure.Ball.contains_ofBox
+    · exact Ball.contains_ofBox
         (refines.contains inner.contains_anchor)
   precisionLoss _ := 0
   precisionLoss_nonneg _ := le_rfl
   precision_le _ := by
-    simp only [Ball.ballRepresentation, Gaussian.Representation.Box.boxRepresentation,
-      Approximation.Gaussian.Enclosure.Ball.ofBox, add_zero, -eq_self, -iff_self]
+    simp only [Ball.ballRepresentation, Box.boxRepresentation,
+      Ball.ofBox, add_zero, -eq_self, -iff_self]
     exact Fraction.Order.Basic.le_refl _
   schedule _ :=
     { sourceRefinements := 0
@@ -103,7 +103,7 @@ def boxToBall : Observation.ObservationMap
 explicit four-radius estimate between an arbitrary point of the output ball and the process's displayed witness. -/
 def processToBall (process : Process)
   :
-    Approximation.Gaussian.Translation.Realizer (Process.processRepresentation process) Ball.ballRepresentation where
+    Realizer (Process.processRepresentation process) Ball.ballRepresentation where
   translate state request := by
     let refined := process.refine state request.targetSq request.positive
     let output := process.ball refined
@@ -126,7 +126,7 @@ def processToBall (process : Process)
           intro targetValue targetPossible
           let sourceValue := (process.witness refined).val
           refine ⟨sourceValue, (process.witness refined).property, ?_⟩
-          exact Approximation.Gaussian.Enclosure.Ball.Distance.normSq_sub_le_four_radiusSq targetPossible
+          exact Distance.normSq_sub_le_four_radiusSq targetPossible
             (process.possible_inside (process.witness refined).property)
         precisionLoss := 0
         precisionLoss_nonneg := le_rfl
@@ -147,12 +147,12 @@ def processToBall (process : Process)
 consists of exactly one call to the displayed `refineIndex` modulus. -/
 def approximationToBall (approximation :
   ApproximationData) :
-    Approximation.Gaussian.Translation.Realizer (Sequence.approximationRepresentation approximation)
+    Realizer (Sequence.approximationRepresentation approximation)
       Ball.ballRepresentation where
   translate index request := by
     let refined := approximation.refineIndex index request.targetSq
       request.positive
-    let output : Approximation.Gaussian.Enclosure.Ball :=
+    let output : Ball :=
       { center := approximation.sample refined
         radiusSq := approximation.radiusSq refined
         radiusSq_nonneg := approximation.radiusSq_nonneg refined }
@@ -173,7 +173,7 @@ def approximationToBall (approximation :
           intro targetValue targetPossible
           refine ⟨approximation.sample refined,
             approximation.sample_possible refined, ?_⟩
-          exact Approximation.Gaussian.Enclosure.Ball.Distance.normSq_sub_le_four_radiusSq targetPossible
+          exact Distance.normSq_sub_le_four_radiusSq targetPossible
             (approximation.possible_inside
               (approximation.sample_possible refined))
         precisionLoss := 0

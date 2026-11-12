@@ -52,6 +52,10 @@ import Purelib.Riemann.Paths.RectangularPerimeterTraces
 import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.RootIsolation.Newton.Band.Basic
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation
+
+open Purelib.Riemann.RootContinuation.PreparedNewtonAreaRate
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -71,18 +75,18 @@ The area radius is chosen before extraction, and junction tolerances after
 the trace is fixed. The inner grid hole is not identified with this band. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPaidPerimeters
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet}
   {target : Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     target}
 
 namespace CenteredPerimeters
@@ -95,19 +99,19 @@ variable {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve
 
 The retained reference request must be sufficiently late, and all actual trace vertices must lie on a common side of the
 extracted band. -/
-theorem bottom_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem bottom_newton_area_paid (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     (radiusBudget : RootContinuation.PreparedNewtonBandSamples.PreparedBandBudget
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family) areaTarget radius)
+      (PreparedBandFamily.areaCoefficient family) areaTarget radius)
     (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radiusBudget.size)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.bottom ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.bottom ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band (((samples.traces.get position).get
+      (PreparedBandFamily.sideBudget band (((samples.traces.get position).get
         sheet).bottom.vertices.rest.length)).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains
       (((samples.traces.get position).get sheet).bottom.point vertex))
@@ -115,35 +119,35 @@ theorem bottom_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.Re
       (((samples.traces.get position).get sheet).bottom.point first)
       (((samples.traces.get position).get sheet).bottom.point last))
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .bottom) ≤ areaTarget := by
-  have bound := Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.bottom_band_area_bound
+  have bound := NewtonBandPerimeterArea.SideGeometry.bottom_band_area_bound
     ((domains.get position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) band
-    ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-      ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) references inside side
+    ((PreparedBandFamily.sideBudget band _))
+      ((PreparedBandFamily.sideBudget_padding_le band _)) references inside side
       later
     (cache.normalize.atDomain position sheet i) (cache.normalize.atDomain position sheet j)
     ((samples.samples.get position).get sheet)
-  exact bound.trans (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.quadratic_paid radiusBudget band)
+  exact bound.trans (PreparedBandFamily.quadratic_paid radiusBudget band)
 
 /-- The normalized original top perimeter area meets the paid Newton radius target.
 
 The retained reference request must be sufficiently late, and all actual trace vertices must lie on a common side of the
 extracted band. -/
-theorem top_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem top_newton_area_paid (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     (radiusBudget : RootContinuation.PreparedNewtonBandSamples.PreparedBandBudget
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family) areaTarget radius)
+      (PreparedBandFamily.areaCoefficient family) areaTarget radius)
     (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radiusBudget.size)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.top ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.top ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band (((samples.traces.get position).get
+      (PreparedBandFamily.sideBudget band (((samples.traces.get position).get
         sheet).top.vertices.rest.length)).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains
       (((samples.traces.get position).get sheet).top.point vertex))
@@ -151,35 +155,35 @@ theorem top_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.Reque
       (((samples.traces.get position).get sheet).top.point first)
       (((samples.traces.get position).get sheet).top.point last))
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .top) ≤ areaTarget := by
-  have bound := Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.top_band_area_bound
+  have bound := NewtonBandPerimeterArea.SideGeometry.top_band_area_bound
     ((domains.get position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) band
-    ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-      ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) references inside side
+    ((PreparedBandFamily.sideBudget band _))
+      ((PreparedBandFamily.sideBudget_padding_le band _)) references inside side
       later
     (cache.normalize.atDomain position sheet i) (cache.normalize.atDomain position sheet j)
     ((samples.samples.get position).get sheet)
-  exact bound.trans (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.quadratic_paid radiusBudget band)
+  exact bound.trans (PreparedBandFamily.quadratic_paid radiusBudget band)
 
 /-- The normalized original left perimeter area meets the paid Newton radius target.
 
 The retained reference request must be sufficiently late, and all actual trace vertices must lie on a common side of the
 extracted band. -/
-theorem left_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem left_newton_area_paid (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     (radiusBudget : RootContinuation.PreparedNewtonBandSamples.PreparedBandBudget
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family) areaTarget radius)
+      (PreparedBandFamily.areaCoefficient family) areaTarget radius)
     (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radiusBudget.size)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.left ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.left ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band (((samples.traces.get position).get
+      (PreparedBandFamily.sideBudget band (((samples.traces.get position).get
         sheet).left.vertices.rest.length)).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains
       (((samples.traces.get position).get sheet).left.point vertex))
@@ -187,35 +191,35 @@ theorem left_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.Requ
       (((samples.traces.get position).get sheet).left.point first)
       (((samples.traces.get position).get sheet).left.point last))
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .left) ≤ areaTarget := by
-  have bound := Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.left_band_area_bound
+  have bound := NewtonBandPerimeterArea.SideGeometry.left_band_area_bound
     ((domains.get position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) band
-    ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-      ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) references inside side
+    ((PreparedBandFamily.sideBudget band _))
+      ((PreparedBandFamily.sideBudget_padding_le band _)) references inside side
       later
     (cache.normalize.atDomain position sheet i) (cache.normalize.atDomain position sheet j)
     ((samples.samples.get position).get sheet)
-  exact bound.trans (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.quadratic_paid radiusBudget band)
+  exact bound.trans (PreparedBandFamily.quadratic_paid radiusBudget band)
 
 /-- The normalized original right perimeter area meets the paid Newton radius target.
 
 The retained reference request must be sufficiently late, and all actual trace vertices must lie on a common side of the
 extracted band. -/
-theorem right_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem right_newton_area_paid (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     (radiusBudget : RootContinuation.PreparedNewtonBandSamples.PreparedBandBudget
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family) areaTarget radius)
+      (PreparedBandFamily.areaCoefficient family) areaTarget radius)
     (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radiusBudget.size)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.right ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.right ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band (((samples.traces.get position).get
+      (PreparedBandFamily.sideBudget band (((samples.traces.get position).get
         sheet).right.vertices.rest.length)).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains
       (((samples.traces.get position).get sheet).right.point vertex))
@@ -223,17 +227,17 @@ theorem right_newton_area_paid (samples : Hyperelliptic.Meshes.PuncturedGrid.Req
       (((samples.traces.get position).get sheet).right.point first)
       (((samples.traces.get position).get sheet).right.point last))
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .right) ≤ areaTarget := by
-  have bound := Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.right_band_area_bound
+  have bound := NewtonBandPerimeterArea.SideGeometry.right_band_area_bound
     ((domains.get position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) band
-    ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-      ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) references inside side
+    ((PreparedBandFamily.sideBudget band _))
+      ((PreparedBandFamily.sideBudget_padding_le band _)) references inside side
       later
     (cache.normalize.atDomain position sheet i) (cache.normalize.atDomain position sheet j)
     ((samples.samples.get position).get sheet)
-  exact bound.trans (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.quadratic_paid radiusBudget band)
+  exact bound.trans (PreparedBandFamily.quadratic_paid radiusBudget band)
 
 end CenteredPerimeters
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPaidPerimeters

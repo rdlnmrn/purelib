@@ -54,8 +54,8 @@ open Purelib.Integration.Program.Gaussian.Cached in
 
 The retained relation compares the original actual and replay modes
 while separately preserving both ordered emitted and pending words. -/
-@[expose] public def MachineRep (program : Basic.CachedProgram) (actual : Data.CCL.Transducer.Machine)
-    (machine : Data.CCL.Transducer.Replay.Machine) : Prop :=
+@[expose] public def MachineRep (program : Basic.CachedProgram) (actual : Machine)
+    (machine : Replay.Machine) : Prop :=
   Representation.ModeRep program actual.mode machine.mode ∧
     machine.emitted = actual.emitted ∧ machine.pending = actual.pending
 
@@ -68,8 +68,8 @@ open Purelib.Integration.Program.Gaussian.Query in
 The original source cursor represents the process at its supplied stage
 index. Both machines start with the same empty emitted and pending words. -/
 public theorem MachineRep.initial (program : Basic.CachedProgram) (index : Nat) :
-    MachineProjection.MachineRep program (Data.CCL.Transducer.Machine.initial program.approximation.toProcess index)
-      (Data.CCL.Transducer.Replay.Machine.initial index) :=
+    MachineRep program (Machine.initial program.approximation.toProcess index)
+      (Replay.Machine.initial index) :=
   ⟨Representation.ModeRep.initial _ _ (CursorRepresentation.CursorRep.source program index), rfl, rfl⟩
 
 open Purelib.Data.CCL.Transducer in
@@ -81,10 +81,10 @@ The same certified nonempty emitted chunk determines the first bit,
 remaining queue and next mode. Its original representation certifies the
 replay machine without choosing another emission or process. -/
 public theorem consume_rep (program : Basic.CachedProgram) (emitted : List Bool)
-    (actual : Data.CCL.Transducer.Emission) (emission : Data.CCL.Transducer.Replay.Emission)
+    (actual : Emission) (emission : Replay.Emission)
     (represented : Representation.EmissionRep program emission actual) :
     ∃ machine, Replay.Machine.Consume.consume emitted emission = .ok machine ∧
-      MachineProjection.MachineRep program (Machine.Step.consumeEmission emitted actual).2 machine := by
+      MachineRep program (Machine.Step.consumeEmission emitted actual).2 machine := by
   cases actual with
   | mk bits nonempty next =>
       cases emission with
@@ -107,11 +107,11 @@ open Purelib.Integration.Program.Gaussian.Cached
 A pending bit preserves the exact represented mode and remaining queue.
 An empty queue runs the retained controller emission once and transports
 that same selected result through certified consumption. -/
-public theorem nextBit_rep {program : Basic.CachedProgram} {actual : Data.CCL.Transducer.Machine} {machine :
-  Data.CCL.Transducer.Replay.Machine}
-    (represented : MachineProjection.MachineRep program actual machine) :
+public theorem nextBit_rep {program : Basic.CachedProgram} {actual : Machine} {machine :
+  Replay.Machine}
+    (represented : MachineRep program actual machine) :
     ∃ next, ((Machine.nextBit (IntegrationReplay.control program) machine).run program.stage).value = .ok next ∧
-      MachineProjection.MachineRep program (Machine.Step.nextBit actual).2 next := by
+      MachineRep program (Machine.Step.nextBit actual).2 next := by
   cases actual with
   | mk actualMode actualEmitted actualPending =>
       cases machine with
@@ -123,12 +123,13 @@ public theorem nextBit_rep {program : Basic.CachedProgram} {actual : Data.CCL.Tr
           cases actualPending with
           | nil =>
               obtain ⟨emission, valueEqual, emissionRep⟩ := StepProjection.step_rep modeRep
+              rewrite [Machine.nextBit_run]
               change ∃ next,
                 (((Controller.step (IntegrationReplay.control program) mode).map
                   (fun result => result.bind (Replay.Machine.Consume.consume actualEmitted))).run program.stage).value =
                     .ok next ∧ _
-              rw [Computation.Query.Protocol.map_run_value, valueEqual]
-              exact MachineProjection.consume_rep program actualEmitted (Emission.Step.step actualMode) emission
+              rw [Protocol.map_run_value, valueEqual]
+              exact consume_rep program actualEmitted (Emission.Step.step actualMode) emission
                 emissionRep
           | cons bit rest => exact ⟨_, rfl, modeRep, rfl, rfl⟩
 
@@ -138,26 +139,25 @@ Induction on the requested finite count retains each successful next-bit
 result as the following machine. The original actual machine and replay
 procedure therefore share their complete selected state sequence. -/
 public theorem advance_rep {program : Basic.CachedProgram} (count : Nat) :
-    ∀ {actual : Data.CCL.Transducer.Machine} {machine : Data.CCL.Transducer.Replay.Machine},
-      MachineProjection.MachineRep program actual machine →
+    ∀ {actual : Machine} {machine : Replay.Machine},
+      MachineRep program actual machine →
       ∃ result, ((Machine.advance (IntegrationReplay.control program) machine count).run program.stage).value = .ok
         result ∧
-        MachineProjection.MachineRep program (Machine.Advance.advance actual count) result := by
+        MachineRep program (Machine.Advance.advance actual count) result := by
   induction count with
   | zero =>
       intro actual machine represented
       exact ⟨machine, rfl, represented⟩
   | succ count induction =>
       intro actual machine represented
-      obtain ⟨next, nextEqual, nextRep⟩ := MachineProjection.nextBit_rep represented
-      unfold Machine.advance
-      rw [Computation.Query.Protocol.iterate, Computation.Query.Protocol.bind_run_value]
+      obtain ⟨next, nextEqual, nextRep⟩ := nextBit_rep represented
+      rw [Machine.advance_run, Protocol.iterate, Protocol.bind_run_value]
       change ∃ result,
-        ((Computation.Query.Protocol.iterate _ count
+        ((Protocol.iterate _ count
           ((Machine.nextBit (IntegrationReplay.control program) machine).run program.stage).value).run
             program.stage).value =
             .ok result ∧ _
-      rw [nextEqual]
+      rw [nextEqual, ← Machine.advance_run]
       exact induction nextRep
 
 end
@@ -174,13 +174,13 @@ Its finite actual advance and retained replay advance remain related
 after every requested bit. -/
 public theorem initial_advance_rep (program : Basic.CachedProgram) (index count : Nat) :
     ∃ result,
-      ((Machine.advance (IntegrationReplay.control program) (Data.CCL.Transducer.Replay.Machine.initial index)
+      ((Machine.advance (IntegrationReplay.control program) (Replay.Machine.initial index)
         count).run
         program.stage).value = .ok result ∧
-      MachineProjection.MachineRep program
+      MachineRep program
         (Machine.Advance.advance
-          (Data.CCL.Transducer.Machine.initial program.approximation.toProcess index) count) result :=
-  MachineProjection.advance_rep count (MachineProjection.MachineRep.initial program index)
+          (Machine.initial program.approximation.toProcess index) count) result :=
+  advance_rep count (MachineRep.initial program index)
 
 open Purelib.Approximation.Gaussian in
 open Purelib.CCL.Progressive in
@@ -195,20 +195,22 @@ and the oracle reply at exactly that source stage. No additional query
 or reordering is introduced by the singleton advance. -/
 public theorem initial_one_trace (control : IntegrationReplay.Control) (index : Nat)
     (oracle : Nat → Basic.CachedModel) :
-    ((Machine.advance control (Data.CCL.Transducer.Replay.Machine.initial index) 1).run oracle).trace =
-      [⟨Approximation.Gaussian.Process.Recipe.refine control .source index Emission.Initial.Budget.initialRadiusSq,
-        oracle (Approximation.Gaussian.Process.Recipe.refine control .source index
+    ((Machine.advance control (Replay.Machine.initial index) 1).run oracle).trace =
+      [⟨Process.Recipe.refine control .source index Emission.Initial.Budget.initialRadiusSq,
+        oracle (Process.Recipe.refine control .source index
             Emission.Initial.Budget.initialRadiusSq)⟩] :=
           by
-  change (((Machine.nextBit control (Data.CCL.Transducer.Replay.Machine.initial index)).bind
-    (fun result => Computation.Query.Protocol.pure result)).run oracle).trace = _
-  rw [Computation.Query.Protocol.bind_run_trace]
-  change ((Machine.nextBit control (Data.CCL.Transducer.Replay.Machine.initial index)).run oracle).trace ++ [] = _
+  rewrite [Machine.advance_run]
+  change (((Machine.nextBit control (Replay.Machine.initial index)).bind
+    (fun result => Protocol.pure result)).run oracle).trace = _
+  rw [Protocol.bind_run_trace]
+  change ((Machine.nextBit control (Replay.Machine.initial index)).run oracle).trace ++ [] = _
   rw [Append.append_nil]
+  rewrite [Machine.nextBit_run]
   change (((Controller.initialStep control ⟨.source, index⟩).map _).run oracle).trace = _
-  rw [Computation.Query.Protocol.map_run_trace, Controller.initialStep,
-    Computation.Query.Protocol.map_run_trace, Approximation.Gaussian.Process.Recipe.Cursor.observe,
-    Computation.Query.Protocol.map_run_trace, Approximation.Gaussian.Process.Recipe.ball_trace]
+  rw [Protocol.map_run_trace, Controller.initialStep_run,
+    Protocol.map_run_trace, Process.Recipe.Cursor.observe_run,
+    Protocol.map_run_trace, Process.Recipe.ball_trace]
   rfl
 
 end Purelib.Integration.Program.Gaussian.CCL.Replay.MachineProjection

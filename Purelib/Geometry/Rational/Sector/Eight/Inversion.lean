@@ -53,51 +53,51 @@ namespace Purelib.Geometry.Rational.Sector.Eight.Inversion
 this local inequality. -/
 theorem postInversion_norm_gt_one {sector :
   Sector}
-  {value : Data.Gaussian.Basic.Canonical}
-    (safe : Geometry.Rational.Sector.Eight.Safe sector value) (residualNonzero : value - sector.rep ≠ 0) :
-    1 < Data.Gaussian.Norm.Basic.normSq ((Canonical.gamma * (value - sector.rep))⁻¹) := by
+  {value : Canonical}
+    (safe : Safe sector value) (residualNonzero : value - sector.rep ≠ 0) :
+    1 < Norm.Basic.normSq ((Canonical.gamma * (value - sector.rep))⁻¹) := by
   have gammaNonzero : Canonical.gamma ≠ 0 := by decide
   have productNonzero : Canonical.gamma * (value - sector.rep) ≠ 0 :=
-    Data.Gaussian.Field.mul_ne_zero_direct gammaNonzero residualNonzero
-  have productNormPositive := Data.Gaussian.Norm.Basic.normSq_pos productNonzero
-  have productNormLtOne : Data.Gaussian.Norm.Basic.normSq (Canonical.gamma * (value -
+    Field.mul_ne_zero_direct gammaNonzero residualNonzero
+  have productNormPositive := Norm.Basic.normSq_pos productNonzero
+  have productNormLtOne : Norm.Basic.normSq (Canonical.gamma * (value -
     sector.rep)) < 1 := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, Constants.normSq_gamma]
+    rw [Norm.Basic.normSq_mul, Constants.normSq_gamma]
     calc
-      2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep) < 2 * (1 / 2 : Fraction.Rational) :=
+      2 * Norm.Basic.normSq (value - sector.rep) < 2 * (1 / 2 : Fraction.Rational) :=
         Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
           (by decide) safe
       _ = 1 := by decide
-  rw [Data.Gaussian.Field.inv_eq, Data.Gaussian.Field.normSq_inv _ productNonzero]
+  rw [Field.inv_eq, Field.normSq_inv _ productNonzero]
   apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-    (c := Data.Gaussian.Norm.Basic.normSq (Canonical.gamma * (value - sector.rep))) _
+    (c := Norm.Basic.normSq (Canonical.gamma * (value - sector.rep))) _
       productNormPositive
   calc
-    1 * Data.Gaussian.Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)) =
-        Data.Gaussian.Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)) :=
+    1 * Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)) =
+        Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)) :=
       Fraction.Field.one_mul _
     _ < 1 := productNormLtOne
-    _ = (Data.Gaussian.Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)))⁻¹ *
-          Data.Gaussian.Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)) :=
+    _ = (Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)))⁻¹ *
+          Norm.Basic.normSq (Canonical.gamma * (value - sector.rep)) :=
       (Fraction.Field.inv_mul_cancel _
         productNormPositive.ne').symm
 
 /-- Squared norm of the numerator created by the safe inverse chart. -/
 theorem transformed_difference_normSq
-    {sector : Sector} (left right : Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq
+    {sector : Sector} (left right : Canonical) :
+    Norm.Basic.normSq
         ((Canonical.gamma * (right - sector.rep)) -
           (Canonical.gamma * (left - sector.rep))) =
-      2 * Data.Gaussian.Norm.Basic.normSq (left - right) := by
+      2 * Norm.Basic.normSq (left - right) := by
   have numeratorIdentity :
       (Canonical.gamma * (right - sector.rep)) -
           (Canonical.gamma * (left - sector.rep)) =
         -(Canonical.gamma * (left - right)) := by
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
       simp only [Basic.sub_re, Basic.sub_im, Basic.mul_re, Basic.mul_im, Basic.neg_re, Basic.neg_im,
         Canonical.gamma] <;>
       ring1
-  rw [numeratorIdentity, Data.Gaussian.Norm.Basic.normSq_neg, Data.Gaussian.Norm.Basic.normSq_mul,
+  rw [numeratorIdentity, Norm.Basic.normSq_neg, Norm.Basic.normSq_mul,
     Constants.normSq_gamma]
 
 end Purelib.Geometry.Rational.Sector.Eight.Inversion
@@ -109,58 +109,58 @@ namespace Purelib.Geometry.Rational.Sector.Eight.Inversion
 /-- Explicit-inverse form of the affine error calculation. -/
 private theorem
   inversion_difference_normSq_explicit
-    {sector : Sector} {left right : Data.Gaussian.Basic.Canonical}
+    {sector : Sector} {left right : Canonical}
     (leftNonzero : left - sector.rep ≠ 0)
     (rightNonzero : right - sector.rep ≠ 0) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (Canonical.inv (Canonical.gamma * (left - sector.rep)) -
           Canonical.inv (Canonical.gamma * (right - sector.rep))) =
-      Data.Gaussian.Norm.Basic.normSq (left - right) /
-        (2 * Data.Gaussian.Norm.Basic.normSq (left - sector.rep) * Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq (left - right) /
+        (2 * Norm.Basic.normSq (left - sector.rep) * Norm.Basic.normSq
           (right - sector.rep)) := by
   have leftInverse :
       Canonical.inv (Canonical.gamma * (left - sector.rep)) =
-        Data.Gaussian.Field.inv (Canonical.gamma * (left - sector.rep)) :=
-    Data.Gaussian.Field.inv_eq (Canonical.gamma * (left - sector.rep))
+        Field.inv (Canonical.gamma * (left - sector.rep)) :=
+    Field.inv_eq (Canonical.gamma * (left - sector.rep))
   have rightInverse :
       Canonical.inv (Canonical.gamma * (right - sector.rep)) =
-        Data.Gaussian.Field.inv (Canonical.gamma * (right - sector.rep)) :=
-    Data.Gaussian.Field.inv_eq (Canonical.gamma * (right - sector.rep))
+        Field.inv (Canonical.gamma * (right - sector.rep)) :=
+    Field.inv_eq (Canonical.gamma * (right - sector.rep))
   rw [leftInverse, rightInverse]
   have gammaNonzero : Canonical.gamma ≠ 0 := by decide
   have leftProductNonzero : Canonical.gamma * (left - sector.rep) ≠ 0 :=
-    Data.Gaussian.Field.mul_ne_zero_direct gammaNonzero leftNonzero
+    Field.mul_ne_zero_direct gammaNonzero leftNonzero
   have rightProductNonzero : Canonical.gamma * (right - sector.rep) ≠ 0 :=
-    Data.Gaussian.Field.mul_ne_zero_direct gammaNonzero rightNonzero
+    Field.mul_ne_zero_direct gammaNonzero rightNonzero
   let leftProduct := Canonical.gamma * (left - sector.rep)
   let rightProduct := Canonical.gamma * (right - sector.rep)
   have inverseDifference :
-      Data.Gaussian.Field.inv leftProduct - Data.Gaussian.Field.inv rightProduct =
-        Data.Gaussian.Field.inv leftProduct * (rightProduct - leftProduct) * Data.Gaussian.Field.inv
+      Field.inv leftProduct - Field.inv rightProduct =
+        Field.inv leftProduct * (rightProduct - leftProduct) * Field.inv
           rightProduct :=
-    Data.Gaussian.Field.inverse_sub_inverse_direct leftProductNonzero rightProductNonzero
+    Field.inverse_sub_inverse_direct leftProductNonzero rightProductNonzero
   rw [inverseDifference,
-    Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Field.normSq_inv _
+    Norm.Basic.normSq_mul, Norm.Basic.normSq_mul, Field.normSq_inv _
       leftProductNonzero,
-    Data.Gaussian.Field.normSq_inv _ rightProductNonzero]
+    Field.normSq_inv _ rightProductNonzero]
   have numeratorNorm :
-      Data.Gaussian.Norm.Basic.normSq (rightProduct - leftProduct) =
-        2 * Data.Gaussian.Norm.Basic.normSq (left - right) := by
+      Norm.Basic.normSq (rightProduct - leftProduct) =
+        2 * Norm.Basic.normSq (left - right) := by
     exact transformed_difference_normSq left right
-  have leftProductNorm : Data.Gaussian.Norm.Basic.normSq leftProduct =
-      2 * Data.Gaussian.Norm.Basic.normSq (left - sector.rep) := by
+  have leftProductNorm : Norm.Basic.normSq leftProduct =
+      2 * Norm.Basic.normSq (left - sector.rep) := by
     dsimp only [leftProduct]
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, Constants.normSq_gamma]
-  have rightProductNorm : Data.Gaussian.Norm.Basic.normSq rightProduct =
-      2 * Data.Gaussian.Norm.Basic.normSq (right - sector.rep) := by
+    rw [Norm.Basic.normSq_mul, Constants.normSq_gamma]
+  have rightProductNorm : Norm.Basic.normSq rightProduct =
+      2 * Norm.Basic.normSq (right - sector.rep) := by
     dsimp only [rightProduct]
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, Constants.normSq_gamma]
+    rw [Norm.Basic.normSq_mul, Constants.normSq_gamma]
   rw [leftProductNorm, rightProductNorm]
   rw [numeratorNorm]
   exact Fraction.ScaledProduct.inverse_error_fraction_direct
-    (Data.Gaussian.Norm.Basic.normSq (left - sector.rep))
-    (Data.Gaussian.Norm.Basic.normSq (left - right))
-    (Data.Gaussian.Norm.Basic.normSq (right - sector.rep))
+    (Norm.Basic.normSq (left - sector.rep))
+    (Norm.Basic.normSq (left - right))
+    (Norm.Basic.normSq (right - sector.rep))
 
 end Purelib.Geometry.Rational.Sector.Eight.Inversion
 
@@ -171,14 +171,14 @@ namespace Purelib.Geometry.Rational.Sector.Eight.Inversion
 /-- Exact affine error propagation through the safe inverse chart. This identity explains why a scalar error bound must
 be accompanied by residual separation before the projective tail is converted back to an affine box. -/
 theorem inversion_difference_normSq
-    {sector : Sector} {left right : Data.Gaussian.Basic.Canonical}
+    {sector : Sector} {left right : Canonical}
     (leftNonzero : left - sector.rep ≠ 0)
     (rightNonzero : right - sector.rep ≠ 0) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((Canonical.gamma * (left - sector.rep))⁻¹ -
           (Canonical.gamma * (right - sector.rep))⁻¹) =
-      Data.Gaussian.Norm.Basic.normSq (left - right) /
-        (2 * Data.Gaussian.Norm.Basic.normSq (left - sector.rep) * Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq (left - right) /
+        (2 * Norm.Basic.normSq (left - sector.rep) * Norm.Basic.normSq
           (right - sector.rep)) := by
   exact inversion_difference_normSq_explicit
     leftNonzero rightNonzero

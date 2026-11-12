@@ -52,6 +52,14 @@ theorem eval_polynomial (index : Nat) (input :
     Polynomial.eval_exponential,
     Taylor.sample_eq_truncatedExp]
 
+/-- The finite exponential sample at one has zero imaginary coordinate. -/
+theorem sample_one_im_zero (index : Nat) : (Sample.sample 1 index).im = 0 := by
+  rw [← eval_polynomial index 1, polynomial, Evaluation.eval_ofRational]
+  change (Ascending.Rational.GaussianEvaluation.eval (Polynomial.exponential (index + 1))
+    (Data.Gaussian.RationalEmbedding.ComplexLog.scalar 1)).im = 0
+  rw [Ascending.Rational.GaussianEvaluation.eval_scalar]
+  rfl
+
 /-- The coefficientwise derivative of the next Gaussian exponential polynomial is the preceding one. -/
 theorem derivative_next (index : Nat) :
     Coefficient.CoefficientwiseEqual (Derivative.derivative

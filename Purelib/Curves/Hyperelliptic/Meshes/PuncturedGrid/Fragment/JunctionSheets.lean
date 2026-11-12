@@ -227,7 +227,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {source : Differential genus} {axes :
     PrimitiveAxes base.bank.grid} {parent :
     CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
+  {cuts : List Rational} {partition : Geometry.Rectangle.AxisPartition 0 1 cuts}
     {leftInterval rightInterval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
   {leftFragment : RegularPrimitiveFragment axes
     parent partition leftInterval}
@@ -248,7 +248,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 selected incident faces. -/
 theorem sheet_eq_of_query_junction
     {rightParent : PreparedSubdivisionModelCore.CenteredEdge curve source}
-    {rightPartition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters rightParent)}
+    {rightCuts : List Rational} {rightPartition : Geometry.Rectangle.AxisPartition 0 1 rightCuts}
     {rightFragment : RegularFaces.RegularPrimitiveFragment axes rightParent rightPartition rightInterval}
     {rightRequest : UniformPreparedRequests.LocalRequest rightParent count target}
     {rightEntry : RegularPrimitiveFragment.SheetEntry rightFragment domains rightRequest}
@@ -314,7 +314,7 @@ private theorem indexed_eq_of_endpoints {start finish otherStart otherFinish : D
 share a parent. -/
 theorem edge_eq_of_query_junction
     {rightParent : PreparedSubdivisionModelCore.CenteredEdge curve source}
-    {rightPartition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters rightParent)}
+    {rightCuts : List Rational} {rightPartition : Geometry.Rectangle.AxisPartition 0 1 rightCuts}
     {rightFragment : RegularFaces.RegularPrimitiveFragment axes rightParent rightPartition rightInterval}
     {rightRequest : UniformPreparedRequests.LocalRequest rightParent count target}
     {rightEntry : RegularPrimitiveFragment.SheetEntry rightFragment domains rightRequest}

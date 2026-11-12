@@ -42,12 +42,12 @@ open Purelib.Riemann.RootContinuation.NewtonOriginalRegionPartition.NewtonGrid (
 
 open Purelib.Topology.Polygon.Stokes (OrientedTriangle PrimitivePoint edgeListArea)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Data.Rat.Fraction.Rational}
   {grid : NewtonGrid preparation target radius} {lifted : LiftedPuncturedGrid grid.punctured}
-  {localValues : Fin lifted.mesh.triangles.length → Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
+  {localValues : Fin lifted.mesh.triangles.length → PrimitiveValues 3}
 
 open Purelib.Curves in
 open Purelib.Integration in
@@ -57,19 +57,19 @@ open Purelib.Polynomial in
 
 Each selected triangle list comes from the supplied cached surface, and completeness makes the remaining face selection
 empty. -/
-private theorem paired_cells_area_partition (surface : Surface.Sewing.SewnPrimitiveSamples.CachedSample
+private theorem paired_cells_area_partition (surface : CachedSample
   lifted.cutPolygon.patch localValues)
-    (cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)))
+    (cells : List (Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)))
     (complete : ∀ source, cells.any (fun cell => originalCellMask lifted cell source) = true)
     (disjoint : cells.Pairwise (fun first last => ∀ source,
       originalCellMask lifted first source = true → originalCellMask lifted last source = true → False))
     (primitive : Fin lifted.cutPolygon.patch.cut.count → PrimitivePoint)
-    (selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) →
-      Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection surface (originalCellMask lifted cell))
+    (selected : (cell : Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) →
+      FaceSelection surface (originalCellMask lifted cell))
       :
-    Geometry.Grid.CellBoundary.sumValues (fun cell => edgeListArea primitive ((selected cell).triangles.flatMap
+    sumValues (fun cell => edgeListArea primitive ((selected cell).triangles.flatMap
       OrientedTriangle.boundary)) cells = edgeListArea primitive lifted.cutPolygon.patch.cut.boundary := by
-  let remaining := Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection.build surface
+  let remaining := FaceSelection.build surface
     (fun source => !(cells.any (fun cell => originalCellMask lifted cell source)))
   have empty : surface.faces.entries.filter
       (fun trace => !(cells.any (fun cell => originalCellMask lifted cell trace.source))) = [] := by
@@ -108,15 +108,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPu
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank (CircuitPartition)
 
 open Purelib.Topology.Polygon.Stokes (OrientedTriangle PrimitivePoint edgeListArea)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {originalLifted : LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank
+    BasedBranchBank
     originalLifted} {sheet : Fin 2}
-  {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Data.Rat.Fraction.Rational}
   {grid : NewtonGrid preparation target radius} {current : LiftedPuncturedGrid grid.punctured}
-  {localValues : Fin current.mesh.triangles.length → Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
+  {localValues : Fin current.mesh.triangles.length → PrimitiveValues 3}
 
 open Purelib.Riemann in
 open Purelib.Curves in
@@ -128,27 +128,27 @@ open Purelib.Polynomial in
 The regular occurrence list and ordered branch labels retain their literal selections on the same cut surface;
 completeness and disjointness follow from the original cell partition. -/
 theorem original_paired_regions_area_partition (ordered :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
+  Ordered bank sheet) (newSheet
   : Fin 2)
-    (surface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch localValues)
+    (surface : CachedSample current.cutPolygon.patch localValues)
     (primitive : Fin current.cutPolygon.patch.cut.count → PrimitivePoint)
-    (selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) →
-      Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection surface (originalCellMask current
+    (selected : (cell : Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) →
+      FaceSelection surface (originalCellMask current
       cell)) :
     let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
       reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    Geometry.Grid.CellBoundary.sumValues (fun occurrence => edgeListArea primitive ((selected
+    sumValues (fun occurrence => edgeListArea primitive ((selected
       occurrence.cell).triangles.flatMap OrientedTriangle.boundary)) compiled.regulars +
-      Geometry.Grid.CellBoundary.sumValues (fun index => edgeListArea primitive ((selected (base.bank.cell
+      sumValues (fun index => edgeListArea primitive ((selected (base.bank.cell
         index)).triangles.flatMap OrientedTriangle.boundary)) ordered.prepared.labels = edgeListArea primitive
         current.cutPolygon.patch.cut.boundary := by
   intro reference compiled
-  have members (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) :
+  have members (cell : Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) :
       cell ∈ ordered.prepared.ordered.tree.cells ↔ cell ∈ base.bank.grid.cells := by
     rewrite [ordered.prepared.ordered.tree_eq]
     exact ordered.window.circuits_member.trans ⟨And.left, fun present => ⟨present, cell.box_refines⟩⟩
@@ -158,7 +158,7 @@ theorem original_paired_regions_area_partition (ordered :
   have complete (source : Fin current.mesh.triangles.length) :
       ordered.prepared.ordered.tree.cells.any (fun cell => originalCellMask current cell source) = true := by
     obtain ⟨cell, present, kept⟩ := (Data.List.Search.any_iff _ _).mp
-      (RootContinuation.NewtonOriginalRegionPartition.NewtonGrid.originalCellMask_complete current source)
+      (NewtonOriginalRegionPartition.NewtonGrid.originalCellMask_complete current source)
     exact (Data.List.Search.any_iff _ _).mpr ⟨cell, (members cell).mpr present, kept⟩
   have disjoint : ordered.prepared.ordered.tree.cells.Pairwise (fun first last => ∀ source,
       originalCellMask current first source = true → originalCellMask current last source = true → False) := by
@@ -168,18 +168,18 @@ theorem original_paired_regions_area_partition (ordered :
       (Geometry.Grid.CellSeparation.cells_interiorSeparated base.bank.grid ((members first).mp firstMember) ((members
         last).mp lastMember) different)
       (of_decide_eq_true left) (of_decide_eq_true right)
-  have total := RootContinuation.NewtonOriginalPairedPartition.paired_cells_area_partition surface
+  have total := paired_cells_area_partition surface
     ordered.prepared.ordered.tree.cells complete disjoint primitive selected
   have split :=
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit_cell_sum
+    CircuitPartition.compileResplit_cell_sum
     grid.shrunk.included current.edges current.vertices
     reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
       ordered.prepared.partition newSheet (fun cell => edgeListArea primitive ((selected cell).triangles.flatMap
       OrientedTriangle.boundary))
-  rw [Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.kept_cell_sum] at split
-  have labels := congrArg (Geometry.Grid.CellBoundary.sumValues (fun index => edgeListArea primitive ((selected
+  rw [CircuitPartition.kept_cell_sum] at split
+  have labels := congrArg (sumValues (fun index => edgeListArea primitive ((selected
     (base.bank.cell index)).triangles.flatMap OrientedTriangle.boundary))) ordered.prepared.labels_eq
-  exact (congrArg (fun area => Geometry.Grid.CellBoundary.sumValues (fun occurrence => edgeListArea primitive ((selected
+  exact (congrArg (fun area => sumValues (fun occurrence => edgeListArea primitive ((selected
     occurrence.cell).triangles.flatMap OrientedTriangle.boundary)) compiled.regulars + area) labels).trans
     (split.trans total)
 

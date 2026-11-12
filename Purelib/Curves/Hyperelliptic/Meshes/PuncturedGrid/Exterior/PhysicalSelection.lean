@@ -63,9 +63,9 @@ open Purelib.Riemann
 open Purelib
 
 /-- A nondegenerate horizontal segment on one rectangle side lies at the lower or upper vertical coordinate. -/
-private theorem horizontal_boundary {box : Purelib.Geometry.Rational.Box} {lower upper height :
-  Purelib.Data.Rat.Fraction.Rational}
-    (proper : lower < upper) (same : Purelib.Riemann.Paths.PreparedBoundarySegments.SameSide box ⟨lower, height⟩ ⟨upper,
+private theorem horizontal_boundary {box : Geometry.Rational.Box} {lower upper height :
+  Rat.Fraction.Rational}
+    (proper : lower < upper) (same : Paths.PreparedBoundarySegments.SameSide box ⟨lower, height⟩ ⟨upper,
       height⟩) :
     height = box.yLower ∨ height = box.yUpper := by
   rcases same with left | right | bottom | top
@@ -75,9 +75,9 @@ private theorem horizontal_boundary {box : Purelib.Geometry.Rational.Box} {lower
   · exact Or.inr top.1
 
 /-- A nondegenerate vertical segment on one rectangle side lies at the left or right horizontal coordinate. -/
-private theorem vertical_boundary {box : Purelib.Geometry.Rational.Box} {lower upper horizontal :
-  Purelib.Data.Rat.Fraction.Rational}
-    (proper : lower < upper) (same : Purelib.Riemann.Paths.PreparedBoundarySegments.SameSide box ⟨horizontal, lower⟩
+private theorem vertical_boundary {box : Geometry.Rational.Box} {lower upper horizontal :
+  Rat.Fraction.Rational}
+    (proper : lower < upper) (same : Paths.PreparedBoundarySegments.SameSide box ⟨horizontal, lower⟩
       ⟨horizontal, upper⟩) :
     horizontal = box.xLower ∨ horizontal = box.xUpper := by
   rcases same with left | right | bottom | top
@@ -88,10 +88,10 @@ private theorem vertical_boundary {box : Purelib.Geometry.Rational.Box} {lower u
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSelection in
 /-- A proper contained rectangle side lying on the ambient boundary is its corresponding exterior side. -/
-private theorem side_exterior {face ambient : Purelib.Geometry.Rational.Box} {side :
-  Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide}
+private theorem side_exterior {face ambient : Geometry.Rational.Box} {side :
+  Meshes.GridLiftedDualSteps.GridSide}
     (proper : face.Proper) (inside : face.Refines ambient) (boundary :
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary face ambient side) :
+      SideBoundaryGeometry.SideBoundary face ambient side) :
     side.Exterior face ambient := by
   cases side with
   | bottom =>
@@ -112,15 +112,15 @@ private theorem side_exterior {face ambient : Purelib.Geometry.Rational.Box} {si
     · exact same
 
 /-- A retained walk on rectangle sides satisfies the same-side relation on every original edge. -/
-private theorem walk_sameSide {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box}
-    {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient} : {start finish : Gaussian.Basic.Canonical} → (walk :
-      Purelib.Polynomial.Geometry.Grid.Walks.Walk grid start finish) →
-    Purelib.Riemann.Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient walk.path → walk.Edgewise
-      (Purelib.Riemann.Paths.PreparedBoundarySegments.SameSide ambient)
+private theorem walk_sameSide {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box}
+    {grid : Geometry.Grid.ClearGrid polynomial ambient} : {start finish : Gaussian.Basic.Canonical} → (walk :
+      Geometry.Grid.Walks.Walk grid start finish) →
+    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient walk.path → walk.Edgewise
+      (Paths.PreparedBoundarySegments.SameSide ambient)
   | _, _, .nil _, _ => trivial
   | _, _, .cons _ tail, sides => ⟨sides.1,
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSelection.walk_sameSide tail sides.2⟩
+    PhysicalSelection.walk_sameSide tail sides.2⟩
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSelection
 
@@ -141,20 +141,20 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram
   (AllSurfacePreparation SurfaceOccurrence)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- Equal retained exterior edges have equal original occurrence indices.
 
 The simple exterior boundary gives distinct starting vertices in the same ordered occurrence list. -/
 private theorem occurrence_index_injective (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (first last : Fin prepared.occurrences.length)
     (equal : (prepared.occurrences[first.val]'first.isLt).placement.indexed =
@@ -162,22 +162,22 @@ private theorem occurrence_index_injective (prepared :
   have starts : (prepared.occurrences.map (fun occurrence => occurrence.placement.indexed.start)).Nodup := by
     have maps : (prepared.occurrences.map (fun occurrence => occurrence.placement.indexed)).map
         Topology.Polygon.Stokes.OrientedEdge.start =
-        prepared.occurrences.map (fun occurrence => occurrence.placement.indexed.start) := Data.List.Map.map_map _ _ _
+        prepared.occurrences.map (fun occurrence => occurrence.placement.indexed.start) := List.Map.map_map _ _ _
     have equal := maps.symm.trans
       (congrArg (List.map Topology.Polygon.Stokes.OrientedEdge.start) prepared.indexed_eq)
     exact equal.symm ▸ lifted.exteriorBoundaries_simple
   have distinct := Data.List.Pairwise.pairwise_map.mp starts
   have same := congrArg Topology.Polygon.Stokes.OrientedEdge.start equal
   rcases Nat.lt_trichotomy first.val last.val with before | equal | after
-  · exact (Data.List.Pairwise.pairwise_getElem distinct _ _ first.isLt last.isLt before same).elim
+  · exact (List.Pairwise.pairwise_getElem distinct _ _ first.isLt last.isLt before same).elim
   · exact Fin.ext equal
-  · exact (Data.List.Pairwise.pairwise_getElem distinct _ _ last.isLt first.isLt after same.symm).elim
+  · exact (List.Pairwise.pairwise_getElem distinct _ _ last.isLt first.isLt after same.symm).elim
 
 /-- Every edge of the original root-closed exterior has exactly one retained
 occurrence index. The witness reads the original list, including its sheet;
 it does not select or prepare a replacement geometric path. -/
 private theorem occurrence_index_unique (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (edge : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count)
     (member : edge ∈ lifted.exteriorBoundaries.flatten) :
@@ -190,7 +190,7 @@ private theorem occurrence_index_unique (prepared :
   obtain ⟨occurrence, belongs, edgeEq⟩ := Data.List.Map.mem_map.mp retained
   have indexed : occurrence ∈ List.ofFn (fun i : Fin prepared.occurrences.length =>
       prepared.occurrences[i.val]'i.isLt) :=
-    (Data.List.OfFn.Basic.ofFn_getElem prepared.occurrences).symm ▸ belongs
+    (List.OfFn.Basic.ofFn_getElem prepared.occurrences).symm ▸ belongs
   obtain ⟨index, occurrenceEq⟩ := Data.List.OfFn.Basic.mem_ofFn.mp indexed
   have found := (congrArg (fun value => value.placement.indexed) occurrenceEq).trans edgeEq
   exact ⟨index, found, fun other same => prepared.occurrence_index_injective other index (same.trans found.symm)⟩
@@ -199,7 +199,7 @@ private theorem occurrence_index_unique (prepared :
 Gaussian weights. This is the multiplicity identity needed when interchanging
 the occurrence sum with the face-and-sheet sum. -/
 theorem occurrence_weight (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (edge : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count)
     (member : edge ∈ lifted.exteriorBoundaries.flatten) :
@@ -227,59 +227,59 @@ theorem occurrence_weight (prepared :
 The original root-closed walk, edge projection and side boundary certificates identify the corresponding ambient-box
 side. -/
 theorem occurrence_exterior (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (occurrence :
       SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences) :
     occurrence.sideOccurrence.side.Exterior
       (base.faces.regulars[occurrence.sideOccurrence.position.val]'occurrence.sideOccurrence.position.isLt).cell.box
-      (Hyperelliptic.Branches.Cuts.Ambient curve) := by
+      (Branches.Cuts.Ambient curve) := by
   have retained := prepared.occurrences_eq ▸ member
   obtain ⟨component, _, belongs⟩ := Data.List.Flatten.mem_flatMap.mp retained
   have indexed : occurrence.placement.indexed ∈ component.program.indexed :=
-    component.prepared.occurrences_eq ▸ Data.List.Map.mem_map_of_mem belongs
+    component.prepared.occurrences_eq ▸ List.Map.mem_map_of_mem belongs
   have onSide := Geometry.Grid.Walks.Walk.Edgewise.indexed lifted.edges lifted.vertices
     component.program.period.closed.walk
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSelection.walk_sameSide _
+    (PhysicalSelection.walk_sameSide _
       (by rw [component.program.walk_eq]; exact
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorWalk_sides base)) component.program.sheet
+        PeriodPrograms.exteriorWalk_sides base)) component.program.sheet
     occurrence.placement.indexed indexed
   have endpoints := component.program.indexed_boundary _ indexed
   have projected := (congrArg (fun source => source.project lifted.mesh.triangulation.faces)
     occurrence.side_source).trans
     occurrence.placement.location.sourceEdge_project
-  have boundary : Hyperelliptic.Meshes.PuncturedGrid.PreparedSideOccurrences.SideOccurrence.OnBoundary
-    occurrence.sideOccurrence (Hyperelliptic.Branches.Cuts.Ambient curve) := by
-    unfold Hyperelliptic.Meshes.PuncturedGrid.PreparedSideOccurrences.SideOccurrence.OnBoundary
+  have boundary : PreparedSideOccurrences.SideOccurrence.OnBoundary
+    occurrence.sideOccurrence (Branches.Cuts.Ambient curve) := by
+    unfold PreparedSideOccurrences.SideOccurrence.OnBoundary
     rw [projected]
     exact ⟨endpoints.1.1, endpoints.2.1, onSide⟩
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSelection.side_exterior
+  exact PhysicalSelection.side_exterior
 
         (base.faces.regulars[occurrence.sideOccurrence.position.val]'
           occurrence.sideOccurrence.position.isLt).cell.box_proper
 
         (base.faces.regulars[occurrence.sideOccurrence.position.val]'
           occurrence.sideOccurrence.position.isLt).cell.box_refines
-    (Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.BranchCellBank.LiftedMesh.SideOccurrence.boundary
+    (SideBoundaryGeometry.BranchCellBank.LiftedMesh.SideOccurrence.boundary
       occurrence.sideOccurrence boundary)
 
 /-- Every retained occurrence survives the normal-form exterior selector.
 The value can contain the full fine path area and its endpoint corrections. -/
 theorem occurrence_selected (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
     (occurrence :
       SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences)
     (value : Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-      (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+    PhysicalComponentValues.SideNeighbor.componentValue
+      (NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
         (neighbors.entries.get occurrence.sideOccurrence.position) occurrence.sideOccurrence.side)
       .exterior value = value := by
   have exterior := prepared.occurrence_exterior occurrence member
-  cases Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+  cases NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
     (neighbors.entries.get occurrence.sideOccurrence.position) occurrence.sideOccurrence.side with
   | exterior _ => rfl
   | neighbor cell _ matching _ =>

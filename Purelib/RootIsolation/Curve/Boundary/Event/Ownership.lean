@@ -57,6 +57,8 @@ import Purelib.RootIsolation.Curve.Event.Profile.Basic
 import Purelib.RootIsolation.Curve.Event.Profile.Complete.Basic
 import Purelib.RootIsolation.Sturm.Track.Basic
 
+open Purelib.Geometry.Projective
+
 open Purelib.Geometry.Projective.Hermitian (Atom)
 open Purelib.Geometry.Projective.Line (Proj)
 open Purelib.Geometry.Rational.Box.Separation (SourcePersistentRegionOwnershipSeparatedAlias)
@@ -114,9 +116,9 @@ theorem controlled_event_contains_of_uniform_strip
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry :
-      Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry
+      Complete.Basic.BoundaryCompleteRequestEntry
         boundary
-        (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth
+        (Complete.Control.boundaryControlledRequestWidth
           boundary boxes pairwise target))
     (box : Box) {radius : Fraction.Rational} (radiusPositive : 0 < radius)
     (sampleParameter : Fraction.Rational)
@@ -138,7 +140,7 @@ theorem controlled_event_contains_of_uniform_strip
     (sampleTop :
       (entry.parent.parent.chart.parameterization.curve.point
         sampleParameter).im + radius < box.yUpper)
-    (targetLeGap : target ≤ Geometry.Projective.Chordal.Box.Interior.interiorStripChordalGap box radius)
+    (targetLeGap : target ≤ Chordal.Box.Interior.interiorStripChordalGap box radius)
     {parameter : Fraction.Rational}
     (parameterInside : entry.child.cell.interval.Contains parameter)
     (denominatorNonzero :
@@ -152,18 +154,18 @@ theorem controlled_event_contains_of_uniform_strip
   by_cases contained : box.Contains point
   · exact contained
   · have eventUpper := entry.chordalSq_le
-        (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos
+        (Complete.Control.boundaryControlledRequestWidth_pos
           boundary boxes pairwise targetPositive)
         sampleInside parameterInside
     have leftTransport :
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
             (entry.parent.parent.chart.projective sampleParameter)
             (entry.parent.parent.chart.projective parameter) =
-          Geometry.Projective.Chordal.Basic.chordalSq
+          Chordal.Basic.chordalSq
             (Proj.affine samplePoint)
             (entry.parent.parent.chart.projective parameter) := by
       simpa only [curve, samplePoint,
-        Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+        Hermitian.Chart.BoundedChart.projective] using
         Curve.Projective.chordalSq_projective_eq_affine
           curve sampleParameter sampleDenominatorNonzero
             (entry.parent.parent.chart.projective parameter)
@@ -171,37 +173,37 @@ theorem controlled_event_contains_of_uniform_strip
         (entry.parent.parent.chart.projective parameter).Equivalent
           (Proj.affine point) := by
       simpa only [curve, point,
-        Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+        Hermitian.Chart.BoundedChart.projective] using
         Curve.Projective.projective_equivalent_affine
           curve parameter denominatorNonzero
     have rightTransport :
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
             (Proj.affine samplePoint)
             (entry.parent.parent.chart.projective parameter) =
-          Geometry.Projective.Chordal.Basic.chordalSq
+          Chordal.Basic.chordalSq
             (Proj.affine samplePoint) (Proj.affine point) :=
-      Geometry.Projective.Chordal.Equivalence.chordalSq_eq_of_equivalent_right
+      Chordal.Equivalence.chordalSq_eq_of_equivalent_right
         (entry.parent.parent.chart.projective_valid parameter)
-        (Geometry.Projective.Line.Gaussian.Proj.affine_hasNonzeroCoordinate point)
+        (Line.Gaussian.Proj.affine_hasNonzeroCoordinate point)
         rightEquivalent (Proj.affine samplePoint)
     have affineUpper :
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
             (Proj.affine samplePoint) (Proj.affine point) ≤
           entry.parent.parent.chart.uniformChordalVariationCoefficient *
-            Curve.Boundary.Complete.Control.boundaryControlledRequestWidth
+            Complete.Control.boundaryControlledRequestWidth
               boundary boxes pairwise target ^ 2 := by
       rw [← rightTransport, ← leftTransport]
       exact eventUpper
     have diameterSmall :
         entry.parent.parent.chart.uniformChordalVariationCoefficient *
-            Curve.Boundary.Complete.Control.boundaryControlledRequestWidth
+            Complete.Control.boundaryControlledRequestWidth
               boundary boxes pairwise target ^ 2 <
-          Geometry.Projective.Chordal.Box.Interior.interiorStripChordalGap box radius :=
+          Chordal.Box.Interior.interiorStripChordalGap box radius :=
       (entry.controlled_chordal_diameter_lt targetPositive).trans_le targetLeGap
-    have affineLower : Geometry.Projective.Chordal.Box.Interior.interiorStripChordalGap box radius ≤
-        Geometry.Projective.Chordal.Basic.chordalSq
+    have affineLower : Chordal.Box.Interior.interiorStripChordalGap box radius ≤
+        Chordal.Basic.chordalSq
           (Proj.affine samplePoint) (Proj.affine point) := by
-      exact Geometry.Projective.Chordal.Box.Interior.interiorStripChordalGap_le_affine_of_outside radiusPositive
+      exact Chordal.Box.Interior.interiorStripChordalGap_le_affine_of_outside radiusPositive
         (by simpa only [curve, samplePoint] using samplePointInside)
         (by simpa only [curve, samplePoint] using sampleLeft)
         (by simpa only [curve, samplePoint] using sampleRight)
@@ -247,7 +249,7 @@ def pairRequestWidths
     (List.finRange boxes.length).filterMap fun right =>
       if different : left ≠ right then
         some
-          (Curve.Boundary.Event.Separation.separatedEventRequestWidth
+          (Separation.separatedEventRequestWidth
             entry (Data.List.Pairwise.pairwise_get_separated pairwise left right different))
       else
         none
@@ -264,7 +266,7 @@ theorem pairRequestWidth_mem
       Box)
     (pairwise : boxes.Pairwise SourcePersistentRegionOwnershipSeparatedAlias)
     (left right : Fin boxes.length) (different : left ≠ right) :
-    Curve.Boundary.Event.Separation.separatedEventRequestWidth
+    Separation.separatedEventRequestWidth
         entry (Data.List.Pairwise.pairwise_get_separated pairwise left right different) ∈
       pairRequestWidths entry boxes pairwise := by
   simp only [pairRequestWidths, -eq_self, -iff_self]
@@ -296,7 +298,7 @@ theorem pairRequestWidths_positive
     have equal := Option.some.inj selected
     rw [← equal]
     exact
-      Curve.Boundary.Event.Separation.separatedEventRequestWidth_pos
+      Separation.separatedEventRequestWidth_pos
         entry (Data.List.Pairwise.pairwise_get_separated pairwise left right different)
   next same => cases selected
 
@@ -342,7 +344,7 @@ theorem familyEventRequestWidth_le_pair
     (pairwise : boxes.Pairwise SourcePersistentRegionOwnershipSeparatedAlias)
     (left right : Fin boxes.length) (different : left ≠ right) :
     familyEventRequestWidth entry boxes pairwise ≤
-      Curve.Boundary.Event.Separation.separatedEventRequestWidth
+      Separation.separatedEventRequestWidth
         entry (Data.List.Pairwise.pairwise_get_separated pairwise left right different) :=
   Data.Rat.List.Minimum.RegionOwnership.positiveMinimum_le_of_mem
     (pairRequestWidth_mem entry boxes pairwise left right different)
@@ -380,12 +382,12 @@ theorem familyEventRequest_not_spanning
   let separated := Data.List.Pairwise.pairwise_get_separated pairwise left right different
   let familyWidth := familyEventRequestWidth entry boxes pairwise
   let pairWidth :=
-    Curve.Boundary.Event.Separation.separatedEventRequestWidth
+    Separation.separatedEventRequestWidth
       entry separated
   have familyPositive : 0 < familyWidth :=
     familyEventRequestWidth_pos entry boxes pairwise
   have pairPositive : 0 < pairWidth :=
-    Curve.Boundary.Event.Separation.separatedEventRequestWidth_pos
+    Separation.separatedEventRequestWidth_pos
       entry separated
   have widthOrder : familyWidth ≤ pairWidth := by
     simpa only [familyWidth, pairWidth, separated] using
@@ -401,21 +403,21 @@ theorem familyEventRequest_not_spanning
       coefficientNonnegative
   have pairDiameterSmall :
       entry.chart.uniformChordalVariationCoefficient * pairWidth ^ 2 <
-        Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+        Chordal.Box.Separation.separatedChordalGap
           separated := by
     simpa only [pairWidth,
-      Curve.Boundary.Event.Separation.separatedEventRequestWidth]
+      Separation.separatedEventRequestWidth]
       using
-        Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+        SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
           coefficientNonnegative
-          (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_pos
+          (Chordal.Box.Separation.separatedChordalGap_pos
             separated)
   exact
-    Curve.Boundary.Event.Separation.requested_event_not_spanning_with_gap
+    Separation.requested_event_not_spanning_with_gap
       entry
-      (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+      (Chordal.Box.Separation.separatedChordalGap
         separated)
-      (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_le_affine
+      (Chordal.Box.Separation.separatedChordalGap_le_affine
         separated)
       familyWidth familyPositive (familyDiameterLe.trans_lt pairDiameterSmall)
       leftParameterInside rightParameterInside leftDenominatorNonzero
@@ -435,7 +437,7 @@ structure FamilyRequestMeeting
     (pairwise : boxes.Pairwise SourcePersistentRegionOwnershipSeparatedAlias) where
   /-- The original family index of the met box. -/ index : Fin boxes.length
   /-- The retained rational witness that the requested event meets this indexed box. -/ meeting :
-    Curve.Boundary.Event.Separation.SourcePersistentRegionOwnershipRequestMeetingAlias entry
+    Separation.SourcePersistentRegionOwnershipRequestMeetingAlias entry
     (familyEventRequestWidth entry boxes pairwise) (boxes.get index)
 
 constructive_injectivity FamilyRequestMeeting
@@ -501,10 +503,10 @@ def nonpoleRequestSample
   let denominatorPolynomial :=
     Curve.Coordinates.denominatorNormSq curve
   have chartMember :=
-    Curve.Boundary.Event.Analysis.chart_mem_of_analysis_mem
+    Analysis.chart_mem_of_analysis_mem
       boundary entry.analysisMember
   have nondegenerate :=
-    Geometry.Projective.Hermitian.Chart.nondegenerate_of_mem_charts
+    Hermitian.Chart.nondegenerate_of_mem_charts
       boundary.source current denominatorMargin marginPositive entry.chart
         chartMember
   have intervalProper : interval.lower < interval.upper := by

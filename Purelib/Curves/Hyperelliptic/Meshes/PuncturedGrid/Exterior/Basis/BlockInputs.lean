@@ -43,35 +43,35 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Block
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 /-- Transport only the positional parent identity; preserve the selected
 covers, primitive polynomials and cell samples from the original input bank. -/
-def blockInput (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+def blockInput (retained : Preparation.CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
     (outer : Fin prepared.occurrences.length)
     {vertical forward : Bool} {physical : Rectangle.Partition.PreparedAxisPartitions.Interval}
-    (block : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) vertical
+    (block : ParentBlocks.ParentBlock
+      (ParentIndices.occurrenceAt prepared.occurrences outer) vertical
       forward physical) :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.NumericalSelection.SelectedInput
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    Charts.Reciprocal.Disk.Basis.NumericalSelection.SelectedInput
+      (ParentBlocks.cacheParent
+      (ParentIndices.occurrenceAt prepared.occurrences outer)
       block.index) index :=
-  Eq.mp (congrArg (fun parent => Hyperelliptic.Charts.Reciprocal.Disk.Basis.NumericalSelection.SelectedInput parent
-    index) (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.blockIndex_read prepared outer block))
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.NumericalSelection.NumericalBank.select retained.anchors
-      retained.sources inputs (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.blockIndex prepared outer
+  Eq.mp (congrArg (fun parent => Charts.Reciprocal.Disk.Basis.NumericalSelection.SelectedInput parent
+    index) (ParentIndices.blockIndex_read prepared outer block))
+    (Charts.Reciprocal.Disk.Basis.NumericalSelection.NumericalBank.select retained.anchors
+      retained.sources inputs (ParentIndices.blockIndex prepared outer
       block))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.BlockInputs

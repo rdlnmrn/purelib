@@ -58,17 +58,17 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergy
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus count index depth readingIndex floor minimum : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve
+variable {genus count index depth readingIndex floor minimum : Nat} {curve : Basic.HyperellipticCurve
   genus}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {collar :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
+  {differential : Differentials.Basic.Differential genus} {collar :
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
     Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
+    UniformReciprocalPrimitives.SourcePrimitive data index}
+  {box : Rational.Box} {capSample : Cap.Primitives.Sample cap
     differential index box}
   {target energyTarget joinTarget : Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth joinFloor :
     Nat}
@@ -76,12 +76,12 @@ variable {genus count index depth readingIndex floor minimum : Nat} {curve : Hyp
 set_option genInjectivity false in
 /-- Accuracy searches and bounds retained before any fan generation. -/
 structure EnergyPreparation {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {bank :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} {owners :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank}
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners} (plans :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum requests)
-    (cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) (evaluated :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells)
+  ParentBank.Bank regular data edges} {owners :
+  ParentOwners.Owners bank}
+    {requests : ParentChartRequests.ChartRequests target floor owners} (plans :
+      ParentChartRequests.ChartPlans capSample minimum requests)
+    (cells : ParentPaths.ComparedCells source capSample depth bank) (evaluated :
+      ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells)
     (energyTarget : Normalization.InverseRootPolynomial.Coordinate) (energyFloor : Nat) where
   /-- The retained energy allowance for one original parent cell. -/ allowance :
     Normalization.InverseRootPolynomial.Coordinate
@@ -93,7 +93,7 @@ structure EnergyPreparation {edges : List Branches.ClearSheetContinuation.Subdiv
   /-- The shared polynomial energy bounds on the original radial domain. -/ bounds :
     Cap.EnergyBounds capSample RootContinuation.RootRadialGeometry.domain
   /-- The actual original cell-energy requests using the retained common bounds and allowance. -/ requests :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergyRequests.EnergyRequests bounds allowance energyFloor plans cells
+    ParentEnergyRequests.EnergyRequests bounds allowance energyFloor plans cells
     evaluated
 
 constructive_injectivity EnergyPreparation
@@ -101,22 +101,22 @@ constructive_injectivity EnergyPreparation
 namespace EnergyPreparation
 
 variable {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {bank :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} {owners :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank}
-  {requests : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners} {plans :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum requests}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank} {evaluated :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells}
+  ParentBank.Bank regular data edges} {owners :
+  ParentOwners.Owners bank}
+  {requests : ParentChartRequests.ChartRequests target floor owners} {plans :
+    ParentChartRequests.ChartPlans capSample minimum requests}
+  {cells : ParentPaths.ComparedCells source capSample depth bank} {evaluated :
+    ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells}
 
 /-- Parents may share this polynomial-bound cache, and select a common
 radial depth after all their cheap accuracy searches are complete. -/
-@[expose] def build (plans : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum
-  requests) (cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank)
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans
+@[expose] def build (plans : ParentChartRequests.ChartPlans capSample minimum
+  requests) (cells : ParentPaths.ComparedCells source capSample depth bank)
+    (evaluated : ParentChartRequests.ChartPlans.EvaluationData readingIndex plans
       cells) (bounds : Cap.EnergyBounds capSample
       RootContinuation.RootRadialGeometry.domain)
     (energyTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergy.EnergyPreparation plans cells evaluated energyTarget energyFloor
+    EnergyPreparation plans cells evaluated energyTarget energyFloor
       := by
   have countNonnegative : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ (edges.length :
     Normalization.InverseRootPolynomial.Coordinate) := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
@@ -135,7 +135,7 @@ radial depth after all their cheap accuracy searches are complete. -/
     exact bound.trans_eq (by
         rw [Fraction.Field.mul_comm];
         exact Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne')
-  let requests := Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergyRequests.EnergyRequests.build bounds allowance
+  let requests := ParentEnergyRequests.EnergyRequests.build bounds allowance
     allowancePositive energyFloor plans cells evaluated
   exact ⟨allowance, rfl, allowancePositive, allowancePaid, bounds, requests⟩
 

@@ -154,21 +154,21 @@ open Purelib.Integration.Path.PairedIncrementArea (area total)
 open Purelib.Riemann.Normalization
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {first second : Fin genus} {target radius : Fraction.Rational} {floor :
+  {preparation : NewtonPreparation original} {first second : Fin genus} {target radius : Rational} {floor :
     Nat}
   {differential : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
 
 open Purelib.Curves.Hyperelliptic in
 /-- The original prepared exterior surface occurrence for the first retained differential. -/
 @[expose] def RetainedExteriorOccurrence (prepared : BoundaryPreparation preparation first second target radius floor)
   :=
-  Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
     prepared.exterior.regular prepared.domains (standardDifferential first)
 
 open Purelib.Curves.Hyperelliptic in
@@ -189,9 +189,9 @@ theorem retained_exterior_points (prepared : BoundaryPreparation preparation fir
     point ∈ ((prepared.paid.cut.exterior.prepared.energy.entries.get sheet).meshes.entries.get position).points := by
   rw [(prepared.paid.cut.exterior.prepared.energy.entries.get sheet).mesh_eq,
     ((prepared.paid.cut.exterior.prepared.energy.entries.get sheet).entries.get position).mesh_eq]
-  change point ∈ ((Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build prepared.domains prepared.paid.cut.cuts
+  change point ∈ ((RegularMeshes.build prepared.domains prepared.paid.cut.cuts
     sheet 0).entries.get position).points
-  rw [Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build_points, prepared.cut_points_eq]
+  rw [RegularMeshes.build_points, prepared.cut_points_eq]
   exact prepared.exterior.selected.split_points member retained present
 
 open Purelib.Geometry.Rectangle in
@@ -210,12 +210,12 @@ source range. -/
       (parent.edge.point 0) (parent.edge.point 1))
     (retained : ParentSplits.Member split occurrence.compared.entered.mesh.splits)
     (vertical : Bool) (physical : PreparedAxisPartitions.Interval)
-    (present : physical ∈ SourceIntervals.axisIntervals ((prepared.paid.cut.exterior.prepared.energy.entries.get
+    (present : physical ∈ axisIntervals ((prepared.paid.cut.exterior.prepared.energy.entries.get
       sheet).meshes.entries.get position) vertical)
     (range : PreparedAxisPartitions.Interval) (within : 0 ≤ range.lower ∧ range.upper ≤ 1)
-    (correspondence : SourceIntervals.AxisCorrespondence vertical
+    (correspondence : AxisCorrespondence vertical
       (parent.edge.point 0) (parent.edge.point 1) range physical) : Subinterval split range :=
-  SourceIntervals.locateSourceInterval ((prepared.paid.cut.exterior.prepared.energy.entries.get
+  locateSourceInterval ((prepared.paid.cut.exterior.prepared.energy.entries.get
     sheet).meshes.entries.get position) split
     (fun _ present => retained_exterior_points prepared sheet position member retained present)
     vertical physical present range within correspondence
@@ -225,14 +225,14 @@ open Purelib.Data.Rat in
 /-- Allocate a positive-tolerance side-remainder request for the supplied original exterior preparation. -/
 @[expose] def exteriorSideRequest (prepared : BoundaryPreparation preparation first second target radius floor)
     (exterior :
-      Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation regular
+      AllSurfacePreparation regular
       prepared.domains differential)
-    (tolerance : Fraction.Rational) (positive : 0 < tolerance) :
+    (tolerance : Rational) (positive : 0 < tolerance) :
 
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.SideRemainderRequest
+      AllSurfacePreparation.SideRemainderRequest
       exterior prepared.paid.cut.fixed first second tolerance :=
 
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.SideRemainderRequest.build
+    AllSurfacePreparation.SideRemainderRequest.build
     exterior prepared.paid.cut.fixed first second tolerance positive
 
 open Purelib.Curves.Hyperelliptic in
@@ -247,18 +247,18 @@ physical interval owner. -/
     (prepared : BoundaryPreparation preparation first second target radius floor)
     {occurrences : List (RetainedExteriorOccurrence prepared)}
     {parent : PreparedSubdivisionModelCore.CenteredEdge curve (standardDifferential first)}
-    (assigned : Meshes.PuncturedGrid.Exterior.BoundaryParentLocation.LocatedParent occurrences parent)
+    (assigned : LocatedParent occurrences parent)
     (member : assigned.occurrence ∈ prepared.exterior.prepared.occurrences)
     (sheet : Fin 2) (position : Fin prepared.fine.family.single.grid.faces.regulars.length)
     (vertical forward : Bool) (physical : PreparedAxisPartitions.Interval)
-    (present : physical ∈ SourceIntervals.axisIntervals ((prepared.paid.cut.exterior.prepared.energy.entries.get
+    (present : physical ∈ axisIntervals ((prepared.paid.cut.exterior.prepared.energy.entries.get
       sheet).meshes.entries.get position) vertical)
-    (lower : Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward (parent.edge.point 0) ≤
-      Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward physical)
-    (upper : Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward physical <
-      Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward (parent.edge.point 1)) :
-    Meshes.PuncturedGrid.Exterior.BoundaryAxisInterval.ParentInterval parent vertical physical :=
-  Meshes.PuncturedGrid.Exterior.BoundaryAxisInterval.LocatedParent.locateInterval assigned
+    (lower : signedAxis vertical forward (parent.edge.point 0) ≤
+      blockMidpoint forward physical)
+    (upper : blockMidpoint forward physical <
+      signedAxis vertical forward (parent.edge.point 1)) :
+    ParentInterval parent vertical physical :=
+  BoundaryAxisInterval.LocatedParent.locateInterval assigned
     ((prepared.paid.cut.exterior.prepared.energy.entries.get sheet).meshes.entries.get position)
     (fun _ present => retained_exterior_points prepared sheet position member assigned.selected.member present)
     vertical forward physical present lower upper
@@ -274,17 +274,17 @@ original source-parent assignment. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Type _ :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let sheet := occurrence.sideOccurrence.sheet
     let position := occurrence.sideOccurrence.position
     let vertical := occurrence.sourceVertical
     let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get sheet).meshes
-    let intervals := SourceIntervals.axisIntervals (meshes.entries.get position) vertical
-    (intervalIndex : Fin intervals.length) → Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordData
+    let intervals := axisIntervals (meshes.entries.get position) vertical
+    (intervalIndex : Fin intervals.length) → SourceChordData
         comparison
       vertical (intervals[intervalIndex.val]'intervalIndex.isLt)
 
@@ -306,7 +306,7 @@ orientation and cached mesh depth. -/
   have member := assigned.in_surface prepared.exterior.prepared (List.getElem_mem componentIndex.isLt)
   let range := locateRetainedParentInterval prepared assigned member sheet position vertical forward physical present
     crossing.lower crossing.upper
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordData.build
+  exact SourceChordData.build
     comparison crossing.index forward vertical physical range (crossing.lower.trans_lt crossing.upper)
       (meshes.entries.get position).depth
 
@@ -321,23 +321,23 @@ the same retained comparison. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    ∀ i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
+    ∀ i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
     let before := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
     let after := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
-    (comparison.sourceValues after.index (Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.firstParameter
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
+    (comparison.sourceValues after.index (firstParameter
       after.forward after.range)).sub
-      (comparison.sourceValues before.index (Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.lastParameter
+      (comparison.sourceValues before.index (lastParameter
         before.forward before.range)) =
     if after.index = before.index then Stokes.PrimitivePoint.zero else
       (comparison.sourceValues after.index (if occurrence.sourceForward then 0 else 1)).sub
@@ -350,20 +350,20 @@ open Purelib.Data.Rat in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    ∀ i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
+    ∀ i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
     let before := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
     let after := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
     if occurrence.sourceForward then before.index.val ≤ after.index.val else after.index.val ≤ before.index.val
 
 open Purelib.Curves.Hyperelliptic in
@@ -374,11 +374,11 @@ theorem retained_exterior_source_order
       := by
   intro componentIndex component requested minimum comparison outer occurrence side mesh i before after
   let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get occurrence.sideOccurrence.sheet).meshes
-  let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
-  let firstIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+  let intervals := axisIntervals mesh occurrence.sourceVertical
+  let firstIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
     i.castSucc
-  let lastIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ
-  have consecutive := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_interval
+  let lastIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ
+  have consecutive := RetainedJunctions.RetainedPerimeterPiece.junction_interval
     ((prepared.traces.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet) side i
   exact comparison.locateSideInterval_order outer meshes
     (intervals[firstIndex.val]'firstIndex.isLt) (intervals[lastIndex.val]'lastIndex.isLt)
@@ -393,21 +393,21 @@ The original parent indices determine the separation direction, preserving the s
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    ∀ i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
+    ∀ i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
     let before := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
     let after := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
-    let project := Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis occurrence.sourceVertical
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
+    let project := signedAxis occurrence.sourceVertical
       occurrence.sourceForward
     after.index ≠ before.index →
       if occurrence.sourceForward then
@@ -432,10 +432,10 @@ theorem retained_exterior_parent_separation
   intro componentIndex component requested minimum comparison outer occurrence side mesh i before after project
     different
   let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get occurrence.sideOccurrence.sheet).meshes
-  let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
-  let firstIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+  let intervals := axisIntervals mesh occurrence.sourceVertical
+  let firstIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
     i.castSucc
-  let lastIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ
+  let lastIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ
   have ordered := retained_exterior_source_order prepared componentIndex comparison outer i
   apply ordered_pair_separated occurrence.sourceForward before.index after.index ordered different
   · intro strict
@@ -457,7 +457,7 @@ theorem retained_exterior_source_junction
     (prepared : BoundaryPreparation preparation first second target radius floor) : RetainedExteriorSourceJunction
       prepared := by
   intro componentIndex component requested minimum comparison outer occurrence side mesh i before after
-  have consecutive := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_interval
+  have consecutive := RetainedJunctions.RetainedPerimeterPiece.junction_interval
     ((prepared.traces.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet) side i
   if same : after.index = before.index then
     exact (before.same_parent_join after same consecutive).trans (if_pos same).symm
@@ -487,20 +487,20 @@ open Purelib.Data.Rat in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    ∀ i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
+    ∀ i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side),
     let before := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
     let after := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
     after.index = before.index ∨
       (if occurrence.sourceForward then after.index.val = before.index.val + 1 else before.index.val = after.index.val +
         1)
@@ -519,11 +519,11 @@ theorem retained_exterior_no_skipped_parents
   else
     apply Or.inr
     let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get occurrence.sideOccurrence.sheet).meshes
-    let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
-    let firstIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+    let intervals := axisIntervals mesh occurrence.sourceVertical
+    let firstIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
       i.castSucc
-    let lastIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ
-    have consecutive := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_interval
+    let lastIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ
+    have consecutive := RetainedJunctions.RetainedPerimeterPiece.junction_interval
       ((prepared.traces.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet) side i
     have separated := retained_exterior_parent_separation prepared componentIndex comparison outer i same
     have endpoints := before.cross_parent_endpoints after occurrence.sourceForward rfl rfl consecutive separated
@@ -546,26 +546,26 @@ open Purelib.Data.Rat in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
     let first := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0)
     let last := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
-        (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side)))
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
+        (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side)))
     if occurrence.sourceForward then
-      Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.firstParameter first.forward first.range = 0 ∧
-        Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.lastParameter last.forward last.range = 1
+      firstParameter first.forward first.range = 0 ∧
+        lastParameter last.forward last.range = 1
     else
-      Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.lastParameter last.forward last.range = 0 ∧
-        Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.firstParameter first.forward first.range = 1
+      lastParameter last.forward last.range = 0 ∧
+        firstParameter first.forward first.range = 1
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Geometry.Rectangle in
@@ -575,16 +575,16 @@ theorem retained_exterior_source_endpoints
       prepared := by
   intro componentIndex component requested minimum comparison outer occurrence side mesh first last
   let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get occurrence.sideOccurrence.sheet).meshes
-  let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
-  let firstIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0
-  let lastIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
-    (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side))
+  let intervals := axisIntervals mesh occurrence.sourceVertical
+  let firstIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0
+  let lastIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
+    (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side))
   have firstBounds := comparison.locateSideInterval_bounds outer meshes
     (intervals[firstIndex.val]'firstIndex.isLt) (List.getElem_mem firstIndex.isLt)
   have lastBounds := comparison.locateSideInterval_bounds outer meshes
     (intervals[lastIndex.val]'lastIndex.isLt) (List.getElem_mem lastIndex.isLt)
   have source := occurrence.source_span_endpoints
-  have physical := Meshes.PuncturedGrid.Exterior.RetainedJunctions.SurfaceOccurrence.side_span_endpoints occurrence
+  have physical := side_span_endpoints occurrence
     meshes
   exact first.side_endpoints last occurrence.sourceForward rfl rfl
     ⟨source.1.symm.trans_le firstBounds.1, firstBounds.2.trans_eq source.2⟩
@@ -600,21 +600,21 @@ orientation. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
     let first := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0)
     let last := retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
-        (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side)))
-    let offset := (Meshes.PuncturedGrid.Exterior.BoundaryParentLocation.occurrenceParents
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
+        (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side)))
+    let offset := (occurrenceParents
       (component.prepared.occurrences.take outer.val)).length
     let count := occurrence.compared.entered.cache.parents.length
     if occurrence.sourceForward then first.index.val = offset ∧ last.index.val + 1 = offset + count
@@ -628,12 +628,12 @@ theorem retained_exterior_endpoint_positions
       prepared := by
   intro componentIndex component requested minimum comparison outer occurrence side mesh first last offset count
   let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get occurrence.sideOccurrence.sheet).meshes
-  let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
-  let firstIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0
-  let lastIndex := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
-    (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side))
+  let intervals := axisIntervals mesh occurrence.sourceVertical
+  let firstIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0
+  let lastIndex := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side (Fin.last
+    (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side))
   have source := occurrence.source_span_endpoints
-  have physical := Meshes.PuncturedGrid.Exterior.RetainedJunctions.SurfaceOccurrence.side_span_endpoints occurrence
+  have physical := side_span_endpoints occurrence
     meshes
   apply first.side_positions last occurrence.sourceForward
     (retained_exterior_source_endpoints prepared componentIndex comparison outer) physical.1 physical.2
@@ -714,21 +714,21 @@ open Purelib.Data.Rat in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    let offset := (Meshes.PuncturedGrid.Exterior.BoundaryParentLocation.occurrenceParents
+    let offset := (occurrenceParents
       (component.prepared.occurrences.take outer.val)).length
     ∀ parent : Fin occurrence.compared.entered.cache.parents.length,
-      ∃ i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1),
+      ∃ i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1),
         (retainedExteriorChord prepared componentIndex comparison outer
-          (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).index.val =
+          (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).index.val =
             offset + parent.val
 
 /-- Transport the stationary alternative of a bounded-index step to equality of its natural values. -/
@@ -744,7 +744,7 @@ theorem retained_exterior_parent_coverage
   intro componentIndex component requested minimum comparison outer occurrence side mesh offset parent
   apply oriented_walk_covers
     (fun i => (retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).index.val)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).index.val)
         occurrence.sourceForward _
     (retained_exterior_endpoint_positions prepared componentIndex comparison outer) parent
   intro i
@@ -761,22 +761,22 @@ physical-mesh order. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Type _ :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
+    let intervals := axisIntervals mesh occurrence.sourceVertical
     let chords := List.ofFn (fun i : Fin
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1) =>
-      let index := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i
+      (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1) =>
+      let index := RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i
       (⟨intervals[index.val]'index.isLt, retainedExteriorChord prepared componentIndex comparison outer index⟩ :
-        Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord comparison occurrence.sourceVertical))
-    Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordGrouping comparison occurrence.sourceVertical chords
+        StoredSourceChord comparison occurrence.sourceVertical))
+    SourceChordGrouping comparison occurrence.sourceVertical chords
 
 open Purelib.Curves.Hyperelliptic in
 /-- Group the exact retained exterior chords into their original source-parent runs. -/
@@ -784,7 +784,7 @@ open Purelib.Curves.Hyperelliptic in
     (prepared : BoundaryPreparation preparation first second target radius floor) : RetainedExteriorSourceGrouping
       prepared := by
   intro componentIndex component requested minimum comparison outer occurrence side mesh intervals chords
-  exact Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordGrouping.build chords
+  exact SourceChordGrouping.build chords
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
@@ -794,13 +794,13 @@ private def RetainedExteriorEndpointTotals
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
-    (grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.values).map
-      PairedIncrementArea.total =
-      grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.endpointIncrement
+    (grouped.runs.map SourceChordRun.values).map
+      total =
+      grouped.runs.map SourceChordRun.endpointIncrement
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
@@ -810,12 +810,12 @@ open Purelib.Integration.Path.Dyadic in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
     ∀ run ∈ grouped.runs, run.values = SourceListResampling.increments (comparison.sourceValues run.parent)
-      (Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.firstParameter run.first.2.forward run.first.2.range)
+      (firstParameter run.first.2.forward run.first.2.range)
       run.parameters
 
 section
@@ -825,10 +825,10 @@ theorem retained_exterior_run_sampling
     (prepared : BoundaryPreparation preparation first second target radius floor) : RetainedExteriorRunSampling prepared
       := by
   intro componentIndex component requested minimum comparison outer grouped
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer
+  let occurrence := occurrenceAt component.prepared.occurrences outer
   apply grouped.sampling_ofFn
   intro i
-  exact Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_interval
+  exact RetainedJunctions.RetainedPerimeterPiece.junction_interval
     ((prepared.traces.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet)
       occurrence.sideOccurrence.side i
 
@@ -837,10 +837,10 @@ private theorem retained_exterior_endpoint_totals
     (prepared : BoundaryPreparation preparation first second target radius floor) : RetainedExteriorEndpointTotals
       prepared := by
   intro componentIndex component requested minimum comparison outer grouped
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer
+  let occurrence := occurrenceAt component.prepared.occurrences outer
   apply grouped.totals_ofFn
   intro i
-  exact Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_interval
+  exact RetainedJunctions.RetainedPerimeterPiece.junction_interval
     ((prepared.traces.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet)
       occurrence.sideOccurrence.side i
 
@@ -848,7 +848,7 @@ end
 
 open Purelib.Data.Rat in
 /-- Rewrite the retained unit endpoints as the two explicit orientation-dependent anchors. -/
-private theorem physical_source_anchors (forward : Bool) {first last : Fraction.Rational}
+private theorem physical_source_anchors (forward : Bool) {first last : Rational}
     (ends : if forward then first = 0 ∧ last = 1 else last = 0 ∧ first = 1) :
     first = (if forward then 0 else 1) ∧ last = (if forward then 1 else 0) := by
   cases forward with
@@ -862,10 +862,10 @@ open Purelib.Data.Rat in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
     ∀ run ∈ grouped.runs, run.FullEndpoints occurrence.sourceForward
@@ -885,10 +885,10 @@ theorem retained_exterior_run_endpoints
   apply grouped.endpoints_ofFn occurrence.sourceForward _ anchors.1 anchors.2
   intro i different
   let before := retainedExteriorChord prepared componentIndex comparison outer
-    (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
+    (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.castSucc)
   let after := retainedExteriorChord prepared componentIndex comparison outer
-    (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
-  have consecutive := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_interval
+    (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i.succ)
+  have consecutive := RetainedJunctions.RetainedPerimeterPiece.junction_interval
     ((prepared.traces.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet) side i
   have separated := retained_exterior_parent_separation prepared componentIndex comparison outer i different
   exact before.cross_parent_endpoints after occurrence.sourceForward rfl rfl consecutive separated
@@ -905,10 +905,10 @@ parameter sequence. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
@@ -921,7 +921,7 @@ parameter sequence. -/
       (OrientedBounds.orientParameter occurrence.sourceForward parameter)
     run.values = SourceListResampling.increments values 0 parameters ∧
       SourceResampling.Chain 0 parameters 1 ∧
-        SourceResampling.widths 0 parameters ((1 / 2 : Fraction.Rational)^mesh.depth)
+        SourceResampling.widths 0 parameters ((1 / 2 : Rational)^mesh.depth)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
@@ -931,10 +931,10 @@ theorem retained_exterior_run_mesh
       by
   intro componentIndex component requested minimum comparison outer occurrence mesh grouped run member parameters values
   have bounds := grouped.parameter_bounds_ofFn
-    (fun i => Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_interval
+    (fun i => RetainedJunctions.RetainedPerimeterPiece.junction_interval
       ((prepared.traces.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet)
         occurrence.sideOccurrence.side i)
-    occurrence.sourceForward (width := (1 / 2 : Fraction.Rational)^mesh.depth) (fun _ => ⟨rfl, le_rfl⟩) run member
+    occurrence.sourceForward (width := (1 / 2 : Rational)^mesh.depth) (fun _ => ⟨rfl, le_rfl⟩) run member
   have ends := retained_exterior_run_endpoints prepared componentIndex comparison outer run member
   have sampling := retained_exterior_run_sampling prepared componentIndex comparison outer run member
   exact run.sampling_mesh occurrence.sourceForward sampling bounds ends
@@ -951,19 +951,19 @@ error. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
     ∀ run ∈ grouped.runs,
-      Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area run.values - comparison.sourceReferenceArea
+      normSq (area run.values - comparison.sourceReferenceArea
         occurrence.sourceForward run.parent) ≤
-        max (16 * (comparison.sourceDensity run.parent)^2 * ((1 / 2 : Fraction.Rational)^mesh.depth)^2)
+        max (16 * (comparison.sourceDensity run.parent)^2 * ((1 / 2 : Rational)^mesh.depth)^2)
           (comparison.entries.get run.parent).referenceError
 
 /-- The exact retained source mesh supplies the original per-run resampling estimate. -/
@@ -982,13 +982,13 @@ open Purelib.Data.Rat in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
-    grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.parent =
+    grouped.runs.map SourceChordRun.parent =
       if occurrence.sourceForward then comparison.parentIndices outer else (comparison.parentIndices outer).reverse
 
 open Purelib.Curves.Hyperelliptic in
@@ -997,7 +997,7 @@ theorem retained_exterior_run_order
     (prepared : BoundaryPreparation preparation first second target radius floor) : RetainedExteriorRunOrder prepared :=
       by
   intro componentIndex component requested minimum comparison outer occurrence grouped
-  let offset := (Meshes.PuncturedGrid.Exterior.BoundaryParentLocation.occurrenceParents
+  let offset := (occurrenceParents
     (component.prepared.occurrences.take outer.val)).length
   let count := occurrence.compared.entered.cache.parents.length
   have order := grouped.parent_order_ofFn occurrence.sourceForward offset count
@@ -1014,17 +1014,17 @@ open Purelib.Integration.Path in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
-    (grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.values).map
-      PairedIncrementArea.total =
+    (grouped.runs.map SourceChordRun.values).map
+      total =
       (if occurrence.sourceForward then comparison.parentIndices outer else (comparison.parentIndices
         outer).reverse).map
-        (Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentIncrement comparison occurrence.sourceForward)
+        (sourceParentIncrement comparison occurrence.sourceForward)
 
 /-- The full original run endpoints and exact parent order identify every retained total increment. -/
 theorem retained_exterior_run_totals
@@ -1049,29 +1049,29 @@ in an actual grouped run. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    let source := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+    let source := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
       side + 1) =>
       (retainedExteriorChord prepared componentIndex comparison outer
-        (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).increments
+        (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).increments
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
-    let blocks := grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.values
-    let offset := (Meshes.PuncturedGrid.Exterior.BoundaryParentLocation.occurrenceParents
+    let blocks := grouped.runs.map SourceChordRun.values
+    let offset := (occurrenceParents
       (component.prepared.occurrences.take outer.val)).length
-    PairedIncrementArea.area (List.ofFn source).flatten =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) +
-        PairedIncrementArea.area
+    area (List.ofFn source).flatten =
+      Norm.Sum.Basic.gaussianSum (blocks.map area) +
+        area
           ((if occurrence.sourceForward then comparison.parentIndices outer else (comparison.parentIndices
             outer).reverse).map
-            (Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentIncrement comparison occurrence.sourceForward)) ∧
+            (sourceParentIncrement comparison occurrence.sourceForward)) ∧
       ∀ parent : Fin occurrence.compared.entered.cache.parents.length,
         ∃ run ∈ grouped.runs, run.parent.val = offset + parent.val
 
@@ -1085,7 +1085,7 @@ theorem retained_exterior_source_regrouping
   intro componentIndex component requested minimum comparison outer occurrence side mesh source grouped blocks offset
   constructor
   · exact grouped.area_ofFn.trans (congrArg (fun totals : List Stokes.PrimitivePoint =>
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) + PairedIncrementArea.area totals)
+      Norm.Sum.Basic.gaussianSum (blocks.map area) + area totals)
       (retained_exterior_run_totals prepared componentIndex comparison outer))
   · exact grouped.covers (retained_exterior_parent_coverage prepared componentIndex comparison outer)
 
@@ -1101,25 +1101,25 @@ contribution cancels exactly. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    let source := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+    let source := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
       side + 1) =>
       (retainedExteriorChord prepared componentIndex comparison outer
-        (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).increments
+        (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).increments
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
-    let blocks := grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.values
+    let blocks := grouped.runs.map SourceChordRun.values
     let sourceBlocks := comparison.sourceOccurrenceBlocks outer occurrence.sourceForward
-    PairedIncrementArea.area (List.ofFn source).flatten - PairedIncrementArea.area sourceBlocks.flatten =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (sourceBlocks.map PairedIncrementArea.area)
+    area (List.ofFn source).flatten - area sourceBlocks.flatten =
+      Norm.Sum.Basic.gaussianSum (blocks.map area) -
+        Norm.Sum.Basic.gaussianSum (sourceBlocks.map area)
 
 /-- The exact retained regrouping cancels the common original parent-increment area. -/
 theorem retained_exterior_source_area_difference
@@ -1142,24 +1142,24 @@ original comparison. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
     let grouped := retainedExteriorSourceGrouping prepared componentIndex comparison outer
-    let blocks := grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.values
+    let blocks := grouped.runs.map SourceChordRun.values
     let sourceBlocks := comparison.sourceOccurrenceBlocks outer occurrence.sourceForward
     let errors := grouped.runs.map (fun run =>
-      max (16 * (comparison.sourceDensity run.parent)^2 * ((1 / 2 : Fraction.Rational)^mesh.depth)^2)
+      max (16 * (comparison.sourceDensity run.parent)^2 * ((1 / 2 : Rational)^mesh.depth)^2)
         (comparison.entries.get run.parent).referenceError)
-    let error := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum id errors
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sourceBlocks.map PairedIncrementArea.area)) ≤
-        (grouped.runs.length : Fraction.Rational)^2 * error
+    let error := maximum id errors
+    normSq (Norm.Sum.Basic.gaussianSum (blocks.map area) -
+      Norm.Sum.Basic.gaussianSum (sourceBlocks.map area)) ≤
+        (grouped.runs.length : Rational)^2 * error
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.List in
@@ -1177,9 +1177,9 @@ theorem retained_exterior_source_resampling_bound
     (retained_exterior_run_order prepared componentIndex comparison outer)
   intro run member
   have paid := retained_exterior_run_resampling prepared componentIndex comparison outer run member
-  have present : max (16 * (comparison.sourceDensity run.parent)^2 * ((1 / 2 : Fraction.Rational)^mesh.depth)^2)
+  have present : max (16 * (comparison.sourceDensity run.parent)^2 * ((1 / 2 : Rational)^mesh.depth)^2)
       (comparison.entries.get run.parent).referenceError ∈ errors :=
     Map.mem_map_of_mem member
-  exact paid.trans (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum id present)
+  exact paid.trans (le_maximum id present)
 
 end Purelib.Riemann.RootContinuation.NewtonRetainedExteriorSources

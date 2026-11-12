@@ -24,6 +24,8 @@ import Mathlib.Algebra.Group.Nat.Defs
 import Mathlib.Data.Nat.Cast.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Cast
+
 @[expose] public section
 namespace Purelib.Data.Gaussian.Basic.Canonical.Fraction
 
@@ -46,13 +48,31 @@ derive_exposed_repr NaturalDenominator
 
 namespace NaturalDenominator
 
-open Purelib.Data.Gaussian in
-open Purelib.Data.Rat in
-/-- Read the Gaussian fraction by dividing both integer numerator coordinates by the retained natural denominator. -/
+section
+open Purelib.Data.Gaussian
+open Purelib.Data.Rat
+
+/-- Read the Gaussian fraction by dividing both integer coordinates by its positive natural denominator.
+
+Direct denominator-one casts retain the original integers without recursive
+addition. The same cast denominator is shared by both coordinate divisions.
+-/
 def value (fraction :
-  NaturalDenominator) : Basic.Canonical :=
-  ⟨(fraction.numerator.re : Fraction.Rational) / (fraction.denominator : Fraction.Rational),
-    (fraction.numerator.im : Fraction.Rational) / (fraction.denominator : Fraction.Rational)⟩
+  NaturalDenominator) : Canonical :=
+  let denominator := fromInt (Int.ofNat fraction.denominator)
+  ⟨fromInt fraction.numerator.re / denominator,
+    fromInt fraction.numerator.im / denominator⟩
+
+/-- Direct integer casts preserve both original coordinate quotients of the retained fraction. -/
+theorem value_eq (fraction : NaturalDenominator) :
+    fraction.value =
+      ⟨(fraction.numerator.re : Fraction.Rational) / (fraction.denominator : Fraction.Rational),
+        (fraction.numerator.im : Fraction.Rational) / (fraction.denominator : Fraction.Rational)⟩ := by
+  unfold value
+  rewrite [intCast_eq_fromInt, intCast_eq_fromInt, natCast_eq_fromInt]
+  rfl
+
+end
 
 open Purelib.Data.Gaussian in
 /-- Compute the fraction height as the square of its retained natural denominator. -/
@@ -66,7 +86,7 @@ theorem denominatorCast_ne (fraction :
   NaturalDenominator) :
     (fraction.denominator : Fraction.Rational) ≠ 0 := by
   intro zero
-  have := Fraction.Cast.Compatibility.natCast_injective_direct
+  have := Compatibility.natCast_injective_direct
     (zero.trans (Nat.cast_zero).symm)
   exact (Nat.ne_of_gt fraction.denominatorPositive) this
 
@@ -80,8 +100,9 @@ theorem value_mul_denominator (fraction :
     fraction.value * GaussianInt.toGaussian
         (GaussianInt.ofNat fraction.denominator) =
       GaussianInt.toGaussian fraction.numerator := by
-  apply Basic.ext
-  · simp only [-eq_self, -iff_self, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+  rewrite [value_eq]
+  apply ext
+  · simp only [-eq_self, -iff_self, GaussianInt.toGaussian, ← Fraction.Cast.intCast_eq_fromInt]
     change
       ((fraction.numerator.re : Fraction.Rational) /
           (fraction.denominator : Fraction.Rational)) *
@@ -89,7 +110,7 @@ theorem value_mul_denominator (fraction :
         (fraction.numerator.re : Fraction.Rational)
     rw [Field.ExplicitField.div_mul_cancel _ fraction.denominatorCast_ne]
     ring1
-  · simp only [-eq_self, -iff_self, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+  · simp only [-eq_self, -iff_self, GaussianInt.toGaussian, ← Fraction.Cast.intCast_eq_fromInt]
     change
       ((fraction.numerator.re : Fraction.Rational) / _ : Fraction.Rational) * 0 +
           ((fraction.numerator.im : Fraction.Rational) /
@@ -105,7 +126,8 @@ theorem normSq_value (fraction :
     Norm.Basic.normSq fraction.value =
       (GaussianInt.normNat fraction.numerator : Fraction.Rational) /
         fraction.height := by
-  simp only [value, height,
+  rewrite [value_eq]
+  simp only [height,
     Norm.Basic.normSq]
   rw [NatCast.pow]
   change
@@ -117,7 +139,7 @@ theorem normSq_value (fraction :
         (fraction.denominator : Fraction.Rational) ^ 2
   have numeratorNorm := GaussianInt.normSq_toGaussian fraction.numerator
   simp only [-eq_self, -iff_self, Norm.Basic.normSq, GaussianInt.toGaussian,
-    ← Rat.Fraction.Cast.intCast_eq_fromInt] at numeratorNorm
+    ← Fraction.Cast.intCast_eq_fromInt] at numeratorNorm
   change
     (fraction.numerator.re : Fraction.Rational) ^ 2 +
         (fraction.numerator.im : Fraction.Rational) ^ 2 =
@@ -139,7 +161,7 @@ open Purelib.Data.Rat in
 Read the exact reduced representatives of both rational coordinates, multiply their positive denominators and
 cross-multiply their numerators. The resulting fraction keeps that product denominator without an additional
 normalization step. -/
-def ofGaussian (source : Basic.Canonical) :
+def ofGaussian (source : Canonical) :
   NaturalDenominator := by
   let real := Fraction.Basic.representative source.re
   let imaginary := Fraction.Basic.representative source.im
@@ -159,8 +181,9 @@ open Purelib.Data Purelib.Algebra
 The retained coordinate numerators are scaled by the opposite denominators;
 their shared denominator is the original product of those two denominators. -/
 theorem ofGaussian_value (source :
-  Basic.Canonical) :
+  Canonical) :
     (ofGaussian source).value = source := by
+  rewrite [value_eq]
   let real := Rat.Fraction.Basic.representative source.re
   let imaginary := Rat.Fraction.Basic.representative source.im
   have realClear := Rat.Fraction.Cast.representative_mul_den source.re
@@ -169,7 +192,7 @@ theorem ofGaussian_value (source :
   change source.re * (real.den : Rat.Fraction.Rational) = (real.num : Rat.Fraction.Rational) at realClear
   change source.im * (imaginary.den : Rat.Fraction.Rational) =
     (imaginary.num : Rat.Fraction.Rational) at imaginaryClear
-  apply Gaussian.Basic.ext
+  apply ext
   · change
       ((real.num * (imaginary.den : Int) : Int) : Rat.Fraction.Rational) /
           ((real.den * imaginary.den : Nat) : Rat.Fraction.Rational) = source.re
@@ -178,18 +201,18 @@ theorem ofGaussian_value (source :
       (show ((real.den : Rat.Fraction.Rational) * (imaginary.den : Rat.Fraction.Rational)) ≠ 0 by
         exact Rat.Fraction.Field.mul_ne_zero_direct
           (fun zero => (Nat.ne_of_gt real.den_pos)
-            (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+            (Compatibility.natCast_injective_direct
               (zero.trans (Nat.cast_zero).symm)))
           (fun zero => (Nat.ne_of_gt imaginary.den_pos)
-            (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+            (Compatibility.natCast_injective_direct
               (zero.trans (Nat.cast_zero).symm))))
     rw [Field.ExplicitField.div_mul_cancel _
       (Rat.Fraction.Field.mul_ne_zero_direct
         (fun zero => (Nat.ne_of_gt real.den_pos)
-          (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+          (Compatibility.natCast_injective_direct
             (zero.trans (Nat.cast_zero).symm)))
         (fun zero => (Nat.ne_of_gt imaginary.den_pos)
-          (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+          (Compatibility.natCast_injective_direct
             (zero.trans (Nat.cast_zero).symm))))]
     rw [← realClear]
     ring1
@@ -201,18 +224,18 @@ theorem ofGaussian_value (source :
       (show ((real.den : Rat.Fraction.Rational) * (imaginary.den : Rat.Fraction.Rational)) ≠ 0 by
         exact Rat.Fraction.Field.mul_ne_zero_direct
           (fun zero => (Nat.ne_of_gt real.den_pos)
-            (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+            (Compatibility.natCast_injective_direct
               (zero.trans (Nat.cast_zero).symm)))
           (fun zero => (Nat.ne_of_gt imaginary.den_pos)
-            (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+            (Compatibility.natCast_injective_direct
               (zero.trans (Nat.cast_zero).symm))))
     rw [Field.ExplicitField.div_mul_cancel _
       (Rat.Fraction.Field.mul_ne_zero_direct
         (fun zero => (Nat.ne_of_gt real.den_pos)
-          (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+          (Compatibility.natCast_injective_direct
             (zero.trans (Nat.cast_zero).symm)))
         (fun zero => (Nat.ne_of_gt imaginary.den_pos)
-          (Rat.Fraction.Cast.Compatibility.natCast_injective_direct
+          (Compatibility.natCast_injective_direct
             (zero.trans (Nat.cast_zero).symm))))]
     rw [← imaginaryClear]
     ring1
@@ -237,7 +260,7 @@ open Purelib.Data in
 open Purelib.Data.Gaussian in
 /-- Embed the retained positive natural denominator into a Gaussian-integer displayed fraction. -/
 def toDisplayed (fraction :
-  NaturalDenominator) : GaussianInt.Fraction :=
+  NaturalDenominator) : Fraction :=
   ⟨fraction.numerator, GaussianInt.ofNat fraction.denominator, by
     intro zero
     have realZero := congrArg GaussianInt.re zero

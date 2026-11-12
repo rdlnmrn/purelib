@@ -69,6 +69,10 @@ import Purelib.Tactic.QuotientFreeOmega
 meta import Purelib.Elab.Deriving.Repr
 public import Purelib.Data.Rat.Fraction.Construction.Bezout
 
+open Purelib.Curves.Hyperelliptic.Branches
+open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements
+open Purelib.Riemann.Topology.PreparedCycleModels hiding DyadicBank
+
 section
 public section
 
@@ -142,30 +146,30 @@ theorem baseBranchData_siteCount : (LoopBaseBranches.baseBranchData ()).siteCoun
 
 /-- Transport a displayed three-element branch index to the original branch-data index type. -/
 @[expose] def branchIndex (index : Fin 3) :
-    Hyperelliptic.Branches.BranchIsolation.Data.Index (LoopBaseBranches.baseBranchData ()) :=
+    BranchIsolation.Data.Index (LoopBaseBranches.baseBranchData ()) :=
   Fin.cast baseBranchData_siteCount.symm index
 
 /-! ## Explicit quadratic sheet owners at the branch-box anchors -/
 
 /-- Lower-left anchors of the three large period boxes. -/
-@[expose] def squareRootEndpointPoint (index : Fin 3) : Gaussian.Basic.Canonical :=
-  Nat.casesOn (motive := fun _ => Gaussian.Basic.Canonical) index.val
-    (Gaussian.Basic.ExplicitLegendrePreparedPeriods.point (-(1 / 2)) (-(1 / 2)))
-    (fun previous => Nat.casesOn (motive := fun _ => Gaussian.Basic.Canonical) previous
-      (Gaussian.Basic.ExplicitLegendrePreparedPeriods.point (1 / 8) (3 / 2))
-      (fun _ => Gaussian.Basic.ExplicitLegendrePreparedPeriods.point (15 / 16) (-(1 / 2))))
+@[expose] def squareRootEndpointPoint (index : Fin 3) : Basic.Canonical :=
+  Nat.casesOn (motive := fun _ => Basic.Canonical) index.val
+    (Basic.ExplicitLegendrePreparedPeriods.point (-(1 / 2)) (-(1 / 2)))
+    (fun previous => Nat.casesOn (motive := fun _ => Basic.Canonical) previous
+      (Basic.ExplicitLegendrePreparedPeriods.point (1 / 8) (3 / 2))
+      (fun _ => Basic.ExplicitLegendrePreparedPeriods.point (15 / 16) (-(1 / 2))))
 
 /-- The exact Legendre radicands at the three displayed anchors.  Keeping
 these as a three-entry table makes the subsequent finite determinant and
 winding checks reduce directly, without unfolding polynomial normalization
 inside every decision procedure. -/
-@[expose] def squareRootParameter (index : Fin 3) : Gaussian.Basic.Canonical :=
-  Nat.casesOn (motive := fun _ => Gaussian.Basic.Canonical) index.val
-    (Gaussian.Basic.ExplicitLegendrePreparedPeriods.point q17_8 (-2))
-    (fun previous => Nat.casesOn (motive := fun _ => Gaussian.Basic.Canonical) previous
-      (Gaussian.Basic.ExplicitLegendrePreparedPeriods.point qNeg137_512
+@[expose] def squareRootParameter (index : Fin 3) : Basic.Canonical :=
+  Nat.casesOn (motive := fun _ => Basic.Canonical) index.val
+    (Basic.ExplicitLegendrePreparedPeriods.point q17_8 (-2))
+    (fun previous => Nat.casesOn (motive := fun _ => Basic.Canonical) previous
+      (Basic.ExplicitLegendrePreparedPeriods.point qNeg137_512
         q169_128)
-      (fun _ => Gaussian.Basic.ExplicitLegendrePreparedPeriods.point qNeg5349_4096
+      (fun _ => Basic.ExplicitLegendrePreparedPeriods.point qNeg5349_4096
         q241_512))
 
 /-- The Legendre polynomial at each displayed anchor equals its retained radicand table entry. -/
@@ -176,7 +180,7 @@ theorem basePolynomial_eval_squareRootEndpointPoint (index : Fin 3) :
   rcases Cases.three index with h | h | h <;> subst index <;>
     rw [LoopBaseBranches.baseCurve_polynomial,
       Legendre.Paths.polynomial_eval] <;>
-    apply Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
     apply Fraction.Rational.ext <;> rfl
 
 /-- Resultant-optimized rational rectangles around the two square roots of
@@ -212,13 +216,13 @@ quadratic roots and therefore avoid repeated moving-owner resets. -/
 theorem squareRootOwnerBox_proper (index : Fin 3) (sheet : Fin 2) :
     (squareRootOwnerBox index sheet).Proper := by
   rcases Cases.three index with h | h | h <;> subst index <;>
-    rcases Data.Fin.Two.finTwo_cases sheet with h | h <;> subst sheet <;>
+    rcases Two.finTwo_cases sheet with h | h <;> subst sheet <;>
     constructor <;> decide
 
 /-- The quadratic polynomial whose roots are square roots of the retained anchor radicand. -/
 @[expose] def squareRootPolynomial (index : Fin 3) :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial (squareRootParameter index)
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+  Power.Gaussian.rootPolynomial (squareRootParameter index)
     RootContinuation.SquareRootDegree.degreeTwo
 
 /-- Every displayed anchor radicand is nonzero. -/
@@ -235,7 +239,7 @@ theorem squareRootOwner_leftNonzero : ∀ index : Fin 3, ∀ sheet : Fin 2,
         0 := by
   intro index sheet
   rcases Cases.three index with h | h | h <;> subst index <;>
-    rcases Data.Fin.Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
+    rcases Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
 
 /-- The vertical elimination determinant is nonzero on the right side of every displayed sheet-owner box. -/
 theorem squareRootOwner_rightNonzero : ∀ index : Fin 3, ∀ sheet : Fin 2,
@@ -245,7 +249,7 @@ theorem squareRootOwner_rightNonzero : ∀ index : Fin 3, ∀ sheet : Fin 2,
         0 := by
   intro index sheet
   rcases Cases.three index with h | h | h <;> subst index <;>
-    rcases Data.Fin.Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
+    rcases Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
 
 /-- The horizontal elimination determinant is nonzero on the bottom side of every displayed sheet-owner box. -/
 theorem squareRootOwner_bottomNonzero :
@@ -256,7 +260,7 @@ theorem squareRootOwner_bottomNonzero :
         0 := by
   intro index sheet
   rcases Cases.three index with h | h | h <;> subst index <;>
-    rcases Data.Fin.Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
+    rcases Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
 
 /-- The horizontal elimination determinant is nonzero on the top side of every displayed sheet-owner box. -/
 theorem squareRootOwner_topNonzero : ∀ index : Fin 3, ∀ sheet : Fin 2,
@@ -266,7 +270,7 @@ theorem squareRootOwner_topNonzero : ∀ index : Fin 3, ∀ sheet : Fin 2,
         0 := by
   intro index sheet
   rcases Cases.three index with h | h | h <;> subst index <;>
-    rcases Data.Fin.Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
+    rcases Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
 
 /-- The quadratic has quadrupled boundary winding four on each displayed sheet-owner box. -/
 theorem squareRootOwner_windingFour :
@@ -275,7 +279,7 @@ theorem squareRootOwner_windingFour :
       (squareRootOwnerBox index sheet) = 4 := by
   intro index sheet
   rcases Cases.three index with h | h | h <;> subst index <;>
-    rcases Data.Fin.Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
+    rcases Two.finTwo_cases sheet with h | h <;> subst sheet <;> decide
 
 /-- A complete local owner for either square-root sheet at each displayed
 branch anchor, without invoking the generic all-root isolator. -/
@@ -295,7 +299,7 @@ branch anchor, without invoking the generic all-root isolator. -/
 
 /-- The original branch track at refinement zero has the displayed square-root endpoint anchor. -/
 theorem refinedTrackAnchor_eq_squareRootEndpointPoint (index : Fin 3) :
-    Hyperelliptic.Branches.Cuts.refinedTrackAnchor (LoopBaseBranches.baseBranchData ())
+    Cuts.refinedTrackAnchor (LoopBaseBranches.baseBranchData ())
         LoopBaseBranches.baseCurve_degree_gt_one (branchIndex index) 0
           =
       squareRootEndpointPoint index := by
@@ -380,8 +384,8 @@ theorem workingRootDiameter_positive : 0 < workingRootDiameter :=
 /-- A dyadic continuation bank for the original path and starting owner at the specified depth.
 
 The bank retains the common positive root-diameter request and the path-indexed continuation certificates. -/
-abbrev WorkingBank (depth : Nat) {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    (path : Polynomial.Geometry.ClearPath LoopBaseBranches.baseCurve.polynomial ambient
+abbrev WorkingBank (depth : Nat) {ambient : Rational.Box} {start finish : Basic.Canonical}
+    (path : Geometry.ClearPath LoopBaseBranches.baseCurve.polynomial ambient
       start finish)
     (owner : Topology.SquareRootContinuationChain.Owner
       (LoopBaseBranches.baseCurve.polynomial.eval start)) :=
@@ -394,8 +398,8 @@ abbrev WorkingBank (depth : Nat) {ambient : Rational.Box} {start finish : Gaussi
 
 The report retains its completed prefix and typed stopping reason, so a finite
 unfinished attempt can be inspected or resumed without rebuilding that prefix. -/
-abbrev WorkingAttempt (depth : Nat) {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    (path : Polynomial.Geometry.ClearPath LoopBaseBranches.baseCurve.polynomial ambient start finish)
+abbrev WorkingAttempt (depth : Nat) {ambient : Rational.Box} {start finish : Basic.Canonical}
+    (path : Geometry.ClearPath LoopBaseBranches.baseCurve.polynomial ambient start finish)
     (within : path.WithinAmbient)
     (owner : Topology.SquareRootContinuationChain.Owner
       (LoopBaseBranches.baseCurve.polynomial.eval start)) :=
@@ -406,13 +410,13 @@ abbrev WorkingAttempt (depth : Nat) {ambient : Rational.Box} {start finish : Gau
 
 Its coordinate bounds and clearances come from the original endpoint branch states. -/
 @[expose] def rawConnector (left right : Fin 3) :
-    Polynomial.Geometry.ClearPath LoopBaseBranches.baseCurve.polynomial
+    Geometry.ClearPath LoopBaseBranches.baseCurve.polynomial
       (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox LoopBaseBranches.baseCurve.polynomial)
       (branchState left).box.anchor (branchState
         right).box.anchor := by
   let leftState := branchState left
   let rightState := branchState right
-  exact Polynomial.Geometry.ClearPath.cons
+  exact Geometry.ClearPath.cons
     (.horizontal leftState.box.xLower rightState.box.xLower
       leftState.box.yLower
       leftState.refinesAmbient.1
@@ -460,13 +464,13 @@ theorem workingConnector_withinAmbient (left right : Fin 3) :
 
 /-- The reversal of the uniformly refined connector. -/
 @[expose] def workingBackwardConnector (left right : Fin 3) :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse (workingConnector left
+  BranchCutLifts.ClearPath.reverse (workingConnector left
     right)
 
 /-- The reversed uniform connector lies within its original ambient box. -/
 theorem workingBackwardConnector_withinAmbient (left right : Fin 3) :
     (workingBackwardConnector left right).WithinAmbient :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse_withinAmbient
+  BranchCutLifts.ClearPath.reverse_withinAmbient
     (workingConnector left right)
       (workingConnector_withinAmbient left right)
 
@@ -488,12 +492,12 @@ theorem workingBConnector_withinAmbient : workingBConnector.WithinAmbient :=
 
 /-- The reversal of the scheduled B connector, retaining its single stationary segment. -/
 @[expose] def workingBBackwardConnector :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse workingBConnector
+  BranchCutLifts.ClearPath.reverse workingBConnector
 
 /-- The reversed scheduled B connector lies within its original ambient box. -/
 theorem workingBBackwardConnector_withinAmbient :
     workingBBackwardConnector.WithinAmbient :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse_withinAmbient
+  BranchCutLifts.ClearPath.reverse_withinAmbient
     workingBConnector
       workingBConnector_withinAmbient
 
@@ -513,23 +517,23 @@ theorem workingAConnector_withinAmbient : workingAConnector.WithinAmbient :=
 
 /-- The reversal of the scheduled A connector. -/
 @[expose] def workingABackwardConnector :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse workingAConnector
+  BranchCutLifts.ClearPath.reverse workingAConnector
 
 /-- The reversed scheduled A connector lies within its original ambient box. -/
 theorem workingABackwardConnector_withinAmbient :
     workingABackwardConnector.WithinAmbient :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse_withinAmbient
+  BranchCutLifts.ClearPath.reverse_withinAmbient
     workingAConnector
       workingAConnector_withinAmbient
 
 /-- The positively oriented boundary path of the original branch-state box. -/
 @[expose] def rawBoundary (index : Fin 3) :=
-  Hyperelliptic.Branches.BranchCutLifts.ownerBoundaryPath (branchState index)
+  BranchCutLifts.ownerBoundaryPath (branchState index)
 
 /-- The original branch boundary lies within its original ambient box. -/
 theorem rawBoundary_withinAmbient (index : Fin 3) :
     (rawBoundary index).WithinAmbient :=
-  Hyperelliptic.Branches.BranchCutLifts.ownerBoundaryPath_withinAmbient
+  BranchCutLifts.ownerBoundaryPath_withinAmbient
     (branchState index)
 
 /-- The uniform depth-two dyadic refinement of the original branch boundary. -/
@@ -654,10 +658,10 @@ opaque bBackwardAttempt (depth : Nat) :
     (leftBoundary : WorkingBank
       leftBoundaryInnerDepth workingLeftBoundary
       (branchSquareRootOwner 0 1)) :
-    Topology.PreparedCycleModels.PreparedBoundaryDoublePath LoopBaseBranches.baseCurve :=
-  { leftAmbient := Hyperelliptic.Branches.Cuts.Ambient LoopBaseBranches.baseCurve
-    rightAmbient := Hyperelliptic.Branches.Cuts.Ambient LoopBaseBranches.baseCurve
-    connectorAmbient := Hyperelliptic.Branches.Cuts.Ambient LoopBaseBranches.baseCurve
+    PreparedBoundaryDoublePath LoopBaseBranches.baseCurve :=
+  { leftAmbient := Cuts.Ambient LoopBaseBranches.baseCurve
+    rightAmbient := Cuts.Ambient LoopBaseBranches.baseCurve
+    connectorAmbient := Cuts.Ambient LoopBaseBranches.baseCurve
     leftState := branchState 0
     rightState := branchState 1
     connector := workingAConnector
@@ -682,7 +686,7 @@ opaque bBackwardAttempt (depth : Nat) :
 loop-base A-cycle data. -/
 @[expose] def rawACycleTarget (_ : Unit) :
     Path.Gaussian.Lifted.Closed.ClosedLiftedPath 2 :=
-  Hyperelliptic.Branches.BranchCutLifts.doubleLiftWithBoundaryOwners
+  BranchCutLifts.doubleLiftWithBoundaryOwners
     (branchState 0) (branchState 1)
       (rawConnector 0 1)
 
@@ -693,9 +697,9 @@ reconstructing the large bank value during downstream elaboration. -/
 structure RealizedPreparedCycle
     (raw : Path.Gaussian.Lifted.Closed.ClosedLiftedPath 2) where
   /-- The retained executable prepared-cycle data for the original Legendre curve. -/ data :
-    Topology.PreparedCycleModels.PreparedCycleData LoopBaseBranches.baseCurve
+    PreparedCycleData LoopBaseBranches.baseCurve
   /-- The exact raw-cycle realization of the retained prepared data. -/ realizes :
-    Topology.PreparedCycleModels.PreparedCycleData.RealizesRaw data raw
+    PreparedCycleData.RealizesRaw data raw
 
 constructive_injectivity RealizedPreparedCycle
 
@@ -790,7 +794,7 @@ realization they determine. -/
   let boundary := banks.boundaryData
   { data := .finiteCut boundary
     realizes := by
-      simpa only [boundary, PreparedABanks.boundaryData,
+      simpa only [boundary, boundaryData,
         executedABoundaryData, rawACycleTarget,
           rawConnector, branchState,
         branchIndex] using
@@ -839,7 +843,7 @@ fallback if an explicitly bounded execution reports failure. -/
 @[expose] def totalPreparedACycleWitness (_ : Unit) :
     RealizedPreparedCycle (rawACycleTarget ()) := by
   let boundary :=
-    Topology.PreparedCycleModels.PreparedBoundaryDoublePath.ofConnectorAtWithOwners
+    PreparedBoundaryDoublePath.ofConnectorAtWithOwners
       (LoopBaseBranches.baseBranchData ()) LoopBaseBranches.baseCurve_degree_gt_one
         (branchIndex 0)
       (branchIndex 1) 0
@@ -856,7 +860,7 @@ fallback if an explicitly bounded execution reports failure. -/
 
 /-- Data projection of the conservative A-cycle witness. -/
 @[expose] def totalPreparedACycle (token : Unit) :
-    Topology.PreparedCycleModels.PreparedCycleData LoopBaseBranches.baseCurve :=
+    PreparedCycleData LoopBaseBranches.baseCurve :=
   (totalPreparedACycleWitness token).data
 
 /-- Canonical cached A-cycle witness, preferring the measured executable
@@ -870,7 +874,7 @@ banks and retaining the constructive total fallback. -/
 /-- The explicit A cut prefers the measured executable banks while remaining
 total by the general finite preparation theorem. -/
 @[expose] def preparedACycle (token : Unit) :
-    Topology.PreparedCycleModels.PreparedCycleData LoopBaseBranches.baseCurve :=
+    PreparedCycleData LoopBaseBranches.baseCurve :=
   (preparedACycleWitness token).data
 
 /-- Assemble the two measured B-cycle connector banks. -/
@@ -881,8 +885,8 @@ total by the general finite preparation theorem. -/
     (backward : WorkingBank bConnectorInnerDepth
       workingBBackwardConnector
         (branchSquareRootOwner 2 1)) :
-    Topology.PreparedCycleModels.PreparedDoublePath LoopBaseBranches.baseCurve :=
-  { ambient := Hyperelliptic.Branches.Cuts.Ambient LoopBaseBranches.baseCurve
+    PreparedDoublePath LoopBaseBranches.baseCurve :=
+  { ambient := Cuts.Ambient LoopBaseBranches.baseCurve
     start := (branchState 0).box.anchor
     finish := (branchState 2).box.anchor
     basePath := workingBConnector
@@ -898,7 +902,7 @@ total by the general finite preparation theorem. -/
 B-cycle data. -/
 @[expose] def rawBCycleTarget (_ : Unit) :
     Path.Gaussian.Lifted.Closed.ClosedLiftedPath 2 :=
-  Hyperelliptic.Branches.BranchCutLifts.doubleLift (rawConnector 0 2)
+  BranchCutLifts.doubleLift (rawConnector 0 2)
 
 set_option genInjectivity false in
 /-- The two successful measured banks which make up the displayed B cycle. -/
@@ -988,7 +992,7 @@ existing total-cycle fallback is still selected only by its original caller. -/
 @[expose] def totalPreparedBCycleWitness (_ : Unit) :
     RealizedPreparedCycle (rawBCycleTarget ()) := by
   let bridge :=
-    Topology.PreparedCycleModels.PreparedDoublePath.ofConnectorAtWithOwners
+    PreparedDoublePath.ofConnectorAtWithOwners
       (LoopBaseBranches.baseBranchData ()) LoopBaseBranches.baseCurve_degree_gt_one
         (branchIndex 0)
       (branchIndex 2) 0
@@ -1003,7 +1007,7 @@ existing total-cycle fallback is still selected only by its original caller. -/
 
 /-- Data projection of the conservative B-cycle witness. -/
 @[expose] def totalPreparedBCycle (token : Unit) :
-    Topology.PreparedCycleModels.PreparedCycleData LoopBaseBranches.baseCurve :=
+    PreparedCycleData LoopBaseBranches.baseCurve :=
   (totalPreparedBCycleWitness token).data
 
 /-- Canonical cached B-cycle witness, preferring the measured executable
@@ -1016,7 +1020,7 @@ banks and retaining the constructive total fallback. -/
 
 /-- The explicit B bridge, with the total finite theorem as fallback. -/
 @[expose] def preparedBCycle (token : Unit) :
-    Topology.PreparedCycleModels.PreparedCycleData LoopBaseBranches.baseCurve :=
+    PreparedCycleData LoopBaseBranches.baseCurve :=
   (preparedBCycleWitness token).data
 
 set_option genInjectivity false in
@@ -1076,22 +1080,22 @@ end PreparedLegendreContext
 
 /-- The branch-cut family determined by the original Legendre curve and its three branch owners. -/
 @[expose] def branchFamily (_ : Unit) :=
-  Hyperelliptic.Branches.BranchCutLifts.familyOfData LoopBaseBranches.baseCurve
+  BranchCutLifts.familyOfData LoopBaseBranches.baseCurve
     (LoopBaseBranches.baseBranchData ())
 
 /-- The canonical lifted A-cycle equals the original boundary double lift of the raw connector. -/
 private theorem canonicalACycle_eq_rawData :
     (((branchFamily ()).symplecticCycles.aCycle (0 : Fin 1)).liftedPath 0) =
-      Hyperelliptic.Branches.BranchCutLifts.doubleLiftWithBoundaryOwners
+      BranchCutLifts.doubleLiftWithBoundaryOwners
         (branchState 0) (branchState 1)
           (rawConnector 0 1) := by
   unfold branchFamily
-  rw [Hyperelliptic.Branches.BranchCutLifts.canonicalACycle_liftedPath_ofData]
+  rw [BranchCutLifts.canonicalACycle_liftedPath_ofData]
   rfl
 
 /-- The prepared A-cycle realizes the canonical lifted A basis cycle. -/
 theorem preparedACycle_realizes_basis (token : Unit) :
-    Topology.PreparedCycleModels.PreparedCycleData.RealizesRaw
+    PreparedCycleData.RealizesRaw
       (preparedACycle token)
       (((branchFamily ()).symplecticCycles.aCycle (0 : Fin 1)).liftedPath 0) := by
   rw [canonicalACycle_eq_rawData]
@@ -1099,7 +1103,7 @@ theorem preparedACycle_realizes_basis (token : Unit) :
 
 /-- Provenance of the retained connector-only certificate, not the standard B tour. -/
 theorem preparedBCycle_realizes_connector (token : Unit) :
-    Topology.PreparedCycleModels.PreparedCycleData.RealizesRaw
+    PreparedCycleData.RealizesRaw
       (preparedBCycle token)
       (rawBCycleTarget token) :=
   (preparedBCycleWitness token).realizes
@@ -1107,7 +1111,7 @@ theorem preparedBCycle_realizes_connector (token : Unit) :
 /-- The context-retained prepared A witness realizes the canonical lifted A basis cycle. -/
 theorem preparedAOfContext_realizes_basis
     (context : PreparedLegendreContext) :
-    Topology.PreparedCycleModels.PreparedCycleData.RealizesRaw
+    PreparedCycleData.RealizesRaw
       context.preparedA.data
       (((branchFamily ()).symplecticCycles.aCycle (0 : Fin 1)).liftedPath 0) := by
   rw [canonicalACycle_eq_rawData]
@@ -1116,7 +1120,7 @@ theorem preparedAOfContext_realizes_basis
 /-- The context-retained prepared B witness realizes the original connector double lift. -/
 theorem preparedBOfContext_realizes_connector
     (context : PreparedLegendreContext) :
-    Topology.PreparedCycleModels.PreparedCycleData.RealizesRaw
+    PreparedCycleData.RealizesRaw
       context.preparedB.data
       (rawBCycleTarget ()) :=
   context.preparedB.realizes
@@ -1143,34 +1147,34 @@ The token keeps even this small finite fold out of executable startup. -/
   let count : Fraction.Rational :=
     Fraction.Cast.fromInt (Int.ofNat aPeriodPreflightParentCount)
   let totalWeight :=
-    Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedDyadicBound
+    CenteredPathChain.dyadicPathTotalWeightedDyadicBound
         source workingRootDiameter
           connectorInnerDepth workingAConnector +
-      (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedDyadicBound
+      (CenteredPathChain.dyadicPathTotalWeightedDyadicBound
           source workingRootDiameter
             rightBoundaryInnerDepth
             workingRightBoundary +
-        (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedDyadicBound
+        (CenteredPathChain.dyadicPathTotalWeightedDyadicBound
             source workingRootDiameter
               connectorInnerDepth
               workingABackwardConnector +
-          Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedDyadicBound
+          CenteredPathChain.dyadicPathTotalWeightedDyadicBound
             source workingRootDiameter
               leftBoundaryInnerDepth
               workingLeftBoundary))
   let integralNormSqSum :=
-    Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathIntegralNormSqCeilBound
+    CenteredPathChain.dyadicPathIntegralNormSqCeilBound
         source workingRootDiameter
           connectorInnerDepth workingAConnector +
-      (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathIntegralNormSqCeilBound
+      (CenteredPathChain.dyadicPathIntegralNormSqCeilBound
           source workingRootDiameter
             rightBoundaryInnerDepth
             workingRightBoundary +
-        (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathIntegralNormSqCeilBound
+        (CenteredPathChain.dyadicPathIntegralNormSqCeilBound
             source workingRootDiameter
               connectorInnerDepth
               workingABackwardConnector +
-          Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathIntegralNormSqCeilBound
+          CenteredPathChain.dyadicPathIntegralNormSqCeilBound
             source workingRootDiameter
               leftBoundaryInnerDepth
               workingLeftBoundary))
@@ -1305,7 +1309,7 @@ theorem aPeriodSampleBallRealLower_le
 /-- Rational lower endpoint for an arbitrary fixed projection of the explicit
 A-period sample selected by one public request. -/
 @[expose] def aPeriodSampleDirectionalLower (context : PreparedLegendreContext)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
+    (direction : Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
   Integration.PreparedSwitchedRefinements.compactSourceDirectionalIntegralLower
     LoopBaseBranches.baseCurve (Periods.PeriodMatrix.standardDifferential (0 : Fin 1))
       (aPeriodScheduleOfContext context).prepared direction
@@ -1314,7 +1318,7 @@ A-period sample selected by one public request. -/
 /-- Sharp arbitrary-direction endpoint from the retained coefficient process
 balls at one public A-period sample. -/
 @[expose] def aPeriodSampleBallDirectionalLower (context : PreparedLegendreContext)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
+    (direction : Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
   Integration.PreparedSwitchedRefinements.compactSourceBallDirectionalIntegralLower
     LoopBaseBranches.baseCurve (Periods.PeriodMatrix.standardDifferential (0 : Fin 1))
       (aPeriodScheduleOfContext context).prepared direction
@@ -1323,7 +1327,7 @@ balls at one public A-period sample. -/
 /-- The displayed directional endpoint bounds the corresponding projection
 of the public A-period sample. -/
 theorem aPeriodSampleDirectionalLower_le
-    (context : PreparedLegendreContext) (direction : Gaussian.Basic.Canonical)
+    (context : PreparedLegendreContext) (direction : Basic.Canonical)
     (sampleIndex : Nat) :
     aPeriodSampleDirectionalLower context direction sampleIndex <=
       direction.re *
@@ -1343,7 +1347,7 @@ theorem aPeriodSampleDirectionalLower_le
 /-- The retained coefficient-ball directional lower endpoint bounds the matching projection of the public A-period
 sample. -/
 theorem aPeriodSampleBallDirectionalLower_le
-    (context : PreparedLegendreContext) (direction : Gaussian.Basic.Canonical)
+    (context : PreparedLegendreContext) (direction : Basic.Canonical)
     (sampleIndex : Nat) :
     aPeriodSampleBallDirectionalLower context direction sampleIndex <=
       direction.re *
@@ -1415,7 +1419,7 @@ cache selected by the same public sample request. -/
 @[expose] def aPeriodSampleDirectionalLowerOfCache
     (context : PreparedLegendreContext)
     {count : Nat} (cache : APeriodCache context count)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
+    (direction : Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
   cache.directionalIntegralLower direction
     (aPeriodModelIndex context sampleIndex)
 
@@ -1423,7 +1427,7 @@ cache selected by the same public sample request. -/
 @[expose] def aPeriodSampleBallDirectionalLowerOfCache
     (context : PreparedLegendreContext)
     {count : Nat} (cache : APeriodCache context count)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
+    (direction : Basic.Canonical) (sampleIndex : Nat) : Fraction.Rational :=
   cache.ballDirectionalIntegralLower direction
     (aPeriodModelIndex context sampleIndex)
 
@@ -1452,7 +1456,7 @@ theorem aPeriodSampleBallRealLowerOfCache_eq
 theorem aPeriodSampleDirectionalLowerOfCache_eq
     (context : PreparedLegendreContext)
     {count : Nat} (cache : APeriodCache context count)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) :
+    (direction : Basic.Canonical) (sampleIndex : Nat) :
     aPeriodSampleDirectionalLowerOfCache context cache direction sampleIndex =
       aPeriodSampleDirectionalLower context direction sampleIndex := by
   exact cache.directionalIntegralLower_eq_compactSourceDirectionalIntegralLower
@@ -1462,7 +1466,7 @@ theorem aPeriodSampleDirectionalLowerOfCache_eq
 theorem aPeriodSampleBallDirectionalLowerOfCache_eq
     (context : PreparedLegendreContext)
     {count : Nat} (cache : APeriodCache context count)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) :
+    (direction : Basic.Canonical) (sampleIndex : Nat) :
     aPeriodSampleBallDirectionalLowerOfCache context cache direction
         sampleIndex =
       aPeriodSampleBallDirectionalLower context direction sampleIndex := by
@@ -1497,7 +1501,7 @@ cached direct model. -/
 theorem aPeriodSampleDirectionalLowerOfCache_le_model
     (context : PreparedLegendreContext)
     {count : Nat} (cache : APeriodCache context count)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) :
+    (direction : Basic.Canonical) (sampleIndex : Nat) :
     aPeriodSampleDirectionalLowerOfCache context cache direction sampleIndex <=
       direction.re *
           (cache.model (aPeriodModelIndex context sampleIndex)).integralSample.re +
@@ -1511,7 +1515,7 @@ theorem aPeriodSampleDirectionalLowerOfCache_le_model
 theorem aPeriodSampleBallDirectionalLowerOfCache_le_model
     (context : PreparedLegendreContext)
     {count : Nat} (cache : APeriodCache context count)
-    (direction : Gaussian.Basic.Canonical) (sampleIndex : Nat) :
+    (direction : Basic.Canonical) (sampleIndex : Nat) :
     aPeriodSampleBallDirectionalLowerOfCache context cache direction
         sampleIndex <=
       direction.re *
@@ -1729,7 +1733,7 @@ generated from the same three rational branch owners. -/
 theorem periodData_realizes_basis :
     Integration.PreparedRefinementPrograms.SymplecticCycleRealization
       LoopBaseBranches.baseCurve (periodData ()).cycles
-        (Hyperelliptic.Branches.BranchCutLifts.symplecticBasisOfData
+        (BranchCutLifts.symplecticBasisOfData
           LoopBaseBranches.baseCurve (LoopBaseBranches.baseBranchData ())).cycles :=
   Integration.PreparedRefinementPrograms.SymplecticCycleRealization.ofData
     LoopBaseBranches.baseCurve (LoopBaseBranches.baseBranchData ())

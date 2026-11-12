@@ -19,11 +19,7 @@ import Purelib.Integration.Program.Gaussian.Cached.Basic
 @[expose] public section
 
 /-!
-# Positive-stride integration regressions
-
-Ceiling-division tests cover offsets, exact and inexact hits, large strides,
-and an already advanced cursor.  The comparison test deliberately quantifies
-over two independently advanced tails, not only a selected pair of samples.
+CCL output under a positive-stride polynomial integration schedule.
 -/
 
 namespace Purelib.Examples.Integration.Program.Gaussian.Polynomial.CCL.Schedule

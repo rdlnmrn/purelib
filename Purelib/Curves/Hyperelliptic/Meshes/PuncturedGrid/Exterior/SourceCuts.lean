@@ -100,27 +100,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrenc
 open Purelib.Riemann.Normalization
 open Purelib.Riemann.Integration.PreparedParentSplitting (ParentSplits)
 open Purelib.Riemann.Paths.RectangularSegmentSplitting (SegmentSplit)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
 
 set_option genInjectivity false in
 /-- The shared cut bank extended by every actual endpoint of the original exterior source preparation.
 
 Membership certificates retain both all previous cuts and the complete original source-point bank. -/
-structure SourceCuts (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential) (previous :
-  RegularMeshes.CommonCuts domains) where
+structure SourceCuts (prepared : AllSurfacePreparation regular domains differential) (previous :
+  CommonCuts domains) where
   /-- The cached flattening of actual mesh points from the original retained exterior occurrences. -/ sourcePoints :
     List InverseRootPolynomial.Gaussian
   /-- The source-point cache is exactly the original occurrence mesh-point flattening. -/ sourcePoints_eq : sourcePoints
     = prepared.occurrences.flatMap (fun occurrence => occurrence.compared.entered.mesh.points)
-  /-- The retained common cut bank containing previous and actual source points. -/ cuts : RegularMeshes.CommonCuts
+  /-- The retained common cut bank containing previous and actual source points. -/ cuts : CommonCuts
     domains
   /-- Every previous retained cut point survives in the enlarged common bank. -/ previous_included : ∀ point ∈
     previous.points, point ∈ cuts.points
@@ -131,17 +131,17 @@ constructive_injectivity SourceCuts
 
 namespace SourceCuts
 variable {prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential} {previous :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  CommonCuts domains}
 
 /-- Only concatenate cached point banks. Parent preparation, splitting, root ownership and numerical values are not
 recomputed. -/
-@[expose] def build (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential) (previous :
-  RegularMeshes.CommonCuts domains) : SourceCuts prepared
+@[expose] def build (prepared : AllSurfacePreparation regular domains differential) (previous :
+  CommonCuts domains) : SourceCuts prepared
   previous :=
   let sourcePoints := prepared.occurrences.flatMap (fun occurrence => occurrence.compared.entered.mesh.points)
-  let cuts : RegularMeshes.CommonCuts domains :=
+  let cuts : CommonCuts domains :=
     ⟨previous.points ++ sourcePoints, fun position sheet point member =>
       List.mem_append_left _ (previous.includes position sheet point member)⟩
   ⟨sourcePoints, rfl, cuts, fun _ member => List.mem_append_left _ member,
@@ -156,7 +156,7 @@ theorem previous_points (selected : SourceCuts prepared
 /-- Every actual retained exterior occurrence mesh point belongs to the selected shared bank. -/
 theorem occurrence_points (selected : SourceCuts prepared
   previous)
-    {occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential} (member : occurrence ∈
+    {occurrence : SurfaceOccurrence regular domains differential} (member : occurrence ∈
       prepared.occurrences)
     {point : InverseRootPolynomial.Gaussian} (present : point ∈ occurrence.compared.entered.mesh.points) : point ∈
       selected.cuts.points := by
@@ -167,10 +167,10 @@ theorem occurrence_points (selected : SourceCuts prepared
 /-- Every endpoint in an original retained parent split belongs to the selected shared bank. -/
 theorem split_points (selected : SourceCuts prepared
   previous)
-    {occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential} (member : occurrence ∈
+    {occurrence : SurfaceOccurrence regular domains differential} (member : occurrence ∈
       prepared.occurrences)
     {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {split : RectangularSegmentSplitting.SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
+    {split : SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
       (parent.edge.point 1)}
     (retained : ParentSplits.Member split occurrence.compared.entered.mesh.splits)
     {point : InverseRootPolynomial.Gaussian} (present : point ∈ split.points) : point ∈ selected.cuts.points := by
@@ -182,10 +182,10 @@ theorem split_points (selected : SourceCuts prepared
 theorem mesh_split_points (selected : SourceCuts prepared
   previous) (sheet : Fin 2) (depth : Nat)
     (position : Fin base.faces.regulars.length)
-    {occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential} (member : occurrence ∈
+    {occurrence : SurfaceOccurrence regular domains differential} (member : occurrence ∈
       prepared.occurrences)
     {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {split : RectangularSegmentSplitting.SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
+    {split : SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
       (parent.edge.point 1)}
     (retained : ParentSplits.Member split occurrence.compared.entered.mesh.splits)
     {point : InverseRootPolynomial.Gaussian} (present : point ∈ split.points) :
@@ -196,14 +196,14 @@ theorem mesh_split_points (selected : SourceCuts prepared
 /-- Every original retained source-split endpoint belongs to the requested actual mesh on every face and sheet. -/
 theorem requested_split_points (selected : SourceCuts
   prepared previous) {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet} {target : InverseRootPolynomial.Coordinate}
-    (request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet => RegularMeshes.build domains selected.cuts sheet
+    {fixed : (sheet : Fin 2) → Preflights domains sheet} {target : Coordinate}
+    (request : TwoSheetRequest (fun sheet => RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed target)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
-    {occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential} (member : occurrence ∈
+    {occurrence : SurfaceOccurrence regular domains differential} (member : occurrence ∈
       prepared.occurrences)
     {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {split : RectangularSegmentSplitting.SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
+    {split : SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
       (parent.edge.point 1)}
     (retained : ParentSplits.Member split occurrence.compared.entered.mesh.splits)
     {point : InverseRootPolynomial.Gaussian} (present : point ∈ split.points) :
@@ -215,14 +215,14 @@ theorem requested_split_points (selected : SourceCuts
 common-cut construction. -/
 @[expose] def locateInterval (selected : SourceCuts
   prepared previous) {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet} {target : InverseRootPolynomial.Coordinate}
-    (request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet => RegularMeshes.build domains selected.cuts sheet
+    {fixed : (sheet : Fin 2) → Preflights domains sheet} {target : Coordinate}
+    (request : TwoSheetRequest (fun sheet => RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed target)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
-    {occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential} (member : occurrence ∈
+    {occurrence : SurfaceOccurrence regular domains differential} (member : occurrence ∈
       prepared.occurrences)
     {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    (split : RectangularSegmentSplitting.SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
+    (split : SegmentSplit occurrence.compared.entered.domain.cuts (parent.edge.point 0)
       (parent.edge.point 1))
     (retained : ParentSplits.Member split occurrence.compared.entered.mesh.splits)
     (vertical : Bool) (physical : PreparedAxisPartitions.Interval)
@@ -243,14 +243,14 @@ namespace SourceCuts
 set_option genInjectivity false in
 /-- Retain the automatically constructed reciprocal data and the original exterior source preparation alongside the cut
 bank that contains its points. -/
-structure SourcePreparation (domains : DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) where
+structure SourcePreparation (domains : FaceDomainBank lifted.frames base.faces.regulars)
+    (differential : Differential genus) where
   /-- The cached original exterior reciprocal collar. -/ collar : ReciprocalExteriorCollar.Data curve
   /-- The cached inner reciprocal data on that exact retained collar. -/ cap : ReciprocalInnerInverse.Data curve collar
   /-- The cached regular reciprocal bounds on the original cap. -/ regular : RegularBounds.Data cap
   /-- The complete retained original exterior source preparation on these domains. -/ prepared :
-    ExteriorProgram.AllSurfacePreparation regular domains differential
-  /-- The original shared common cuts before adding exterior source points. -/ previous : RegularMeshes.CommonCuts
+    AllSurfacePreparation regular domains differential
+  /-- The original shared common cuts before adding exterior source points. -/ previous : CommonCuts
     domains
   /-- The retained enlarged cut bank containing these exact original exterior source points. -/ selected :
     SourceCuts prepared previous
@@ -263,9 +263,9 @@ namespace SourceCuts.SourcePreparation
 
 /-- Cache the original reciprocal geometry and complete exterior source preparation, then extend the original common
 cuts with its retained mesh points. -/
-@[expose] def build (domains : DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceCuts.SourcePreparation domains differential :=
+@[expose] def build (domains : FaceDomainBank lifted.frames base.faces.regulars)
+    (differential : Differential genus) :
+      SourcePreparation domains differential :=
   let collar := ReciprocalExteriorCollar.Data.build curve
   let cap := ReciprocalInnerInverse.Data.build curve collar 0
   let regular := RegularBounds.Data.build cap

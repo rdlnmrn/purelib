@@ -57,7 +57,7 @@ inductive LogSlot (client : Client) : Type 2
   /-- Cache the ready logarithm child state, anchored chart and validity certificate. -/ | ready (state :
     LogarithmState.State client.argument)
       (output : Anchored.AnchoredChart (preparedTarget state))
-      (valid : Purelib.Approximation.Gaussian.Logarithm.Chart.Partial.Ready client.sourceInput client.argument
+      (valid : Ready client.sourceInput client.argument
         client.source
         state output)
 
@@ -67,11 +67,11 @@ set_option genInjectivity false in
 /-- Retained state of denominator-only apartness acquisition. -/
 inductive DenominatorSlot (client : Client) : Type
   /-- Retain the pending denominator child state. -/ | searching (state :
-    Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State client.denominator)
+    Name.Coherent.Refinement.State client.denominator)
   /-- Cache denominator apartness at the exact retained child state. -/ | ready (state :
-    Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State client.denominator)
+    Name.Coherent.Refinement.State client.denominator)
       (evidence : Possible.PossibleApart
-        (Gaussian.Process.Based.based client.denominator.name.process
+        (Process.Based.based client.denominator.name.process
           state.source))
 
 constructive_injectivity DenominatorSlot
@@ -98,16 +98,16 @@ namespace State
 @[expose] def initial (client : Client) :
   State client where
   log := .searching
-    (Purelib.Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State.initial client.argument)
+    (LogarithmState.State.initial client.argument)
   denominator := .searching
-    (Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State.initial client.denominator)
+    (Name.Coherent.Refinement.State.initial client.denominator)
   cursor := false
 
 /-- Assemble a scheduler state with the supplied pending logarithm state and retained denominator slot. -/
 @[expose] def withLogSearching {client :
   Client}
     (logState : LogarithmState.State client.argument)
-    (denominator : Approximation.Gaussian.Logarithm.Quotient.State.DenominatorSlot client) (cursor : Bool) :
+    (denominator : DenominatorSlot client) (cursor : Bool) :
       State client :=
   { log := .searching logState, denominator := denominator, cursor := cursor }
 
@@ -115,10 +115,10 @@ namespace State
 @[expose] def withLogReady {client : Client}
     (logState : LogarithmState.State client.argument)
     (output : Anchored.AnchoredChart (preparedTarget logState))
-    (valid : Purelib.Approximation.Gaussian.Logarithm.Chart.Partial.Ready client.sourceInput client.argument
+    (valid : Ready client.sourceInput client.argument
       client.source
       logState output)
-    (denominator : Approximation.Gaussian.Logarithm.Quotient.State.DenominatorSlot client) (cursor : Bool) :
+    (denominator : DenominatorSlot client) (cursor : Bool) :
       State client :=
   { log := .ready logState output valid
     denominator := denominator
@@ -127,18 +127,18 @@ namespace State
 /-- Assemble a scheduler state with the supplied pending denominator state and retained logarithm slot. -/
 @[expose] def withDenominatorSearching {client :
   Client}
-    (log : Approximation.Gaussian.Logarithm.Quotient.State.LogSlot client)
-    (denominatorState : Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State client.denominator)
+    (log : LogSlot client)
+    (denominatorState : Name.Coherent.Refinement.State client.denominator)
     (cursor : Bool) : State client :=
   { log := log, denominator := .searching denominatorState, cursor := cursor }
 
 /-- Assemble a scheduler state retaining the supplied denominator apartness proof and logarithm slot. -/
 @[expose] def withDenominatorReady {client :
   Client}
-    (log : Approximation.Gaussian.Logarithm.Quotient.State.LogSlot client)
-    (denominatorState : Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State client.denominator)
+    (log : LogSlot client)
+    (denominatorState : Name.Coherent.Refinement.State client.denominator)
     (evidence : Possible.PossibleApart
-      (Gaussian.Process.Based.based client.denominator.name.process
+      (Process.Based.based client.denominator.name.process
         denominatorState.source))
     (cursor : Bool) : State client :=
   { log := log

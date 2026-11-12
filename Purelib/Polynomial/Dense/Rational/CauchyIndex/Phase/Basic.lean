@@ -7,6 +7,7 @@ import Purelib.Polynomial.Dense.Rational.Basic
 public import Purelib.Polynomial.Dense.Rational.CauchyIndex.Basic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Evaluation
+import Purelib.Data.Int.Arithmetic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
@@ -57,6 +58,25 @@ structure PhaseFormula
 
 constructive_injectivity PhaseFormula
 
+/-- Two phase formulas on the same original coordinate pair and interval have the same retained integer correction. -/
+theorem PhaseFormula.turns_eq {R S : CoordinatePolynomial} {a b : Fraction.Rational}
+    (first last : PhaseFormula R S a b) : first.turns = last.turns := by
+  have equal : 4 * first.turns = 4 * last.turns := by
+    calc
+      4 * first.turns = Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 R S a b -
+          endpointQuarterPhase R S b + endpointQuarterPhase R S a := by rw [first.index_eq]; ring1
+      _ = 4 * last.turns := by rw [last.index_eq]; ring1
+  exact Data.Int.Arithmetic.eq_of_mul_eq_mul_left (by decide : (4 : Int) ≠ 0) equal
+
+/-- Phase formulas on the same original pair and interval agree as complete retained records. -/
+theorem PhaseFormula.unique {R S : CoordinatePolynomial} {a b : Fraction.Rational}
+    (first last : PhaseFormula R S a b) : first = last := by
+  have same := first.turns_eq last
+  cases first
+  cases last
+  cases same
+  rfl
+
 /-- Adjacent phase formulas telescope at their common rational endpoint. -/
 def PhaseFormula.add
     {R S : CoordinatePolynomial} {a b c : Fraction.Rational}
@@ -68,6 +88,22 @@ def PhaseFormula.add
     rw [Dense.Rational.CauchyIndex.Basic.cauchyIndex2_add R S a b c,
       left.index_eq, right.index_eq]
     ring1
+
+/-- Two oriented chart formulas with matching joins have an exactly divisible raw difference.
+
+The second chart is traversed in reverse. Its two endpoint quarter phases
+cancel the first chart's phases, leaving four times the difference of the
+same retained integral corrections.
+-/
+theorem PhaseFormula.closedDifference
+    {A B C D : CoordinatePolynomial} {a b : Fraction.Rational}
+    (first : PhaseFormula A B a b) (last : PhaseFormula C D a b)
+    (start : endpointQuarterPhase A B a = endpointQuarterPhase C D a)
+    (stop : endpointQuarterPhase A B b = endpointQuarterPhase C D b) :
+    Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 A B a b -
+      Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 C D a b = 4 * (first.turns - last.turns) := by
+  rw [first.index_eq, last.index_eq, start, stop]
+  ring1
 end Purelib.Polynomial.Dense.Rational.CauchyIndex.Phase.Basic
 
 end

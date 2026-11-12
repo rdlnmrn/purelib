@@ -62,6 +62,8 @@ import Purelib.Topology.Mesh.CoordinateTriangulation
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 
 open Purelib
@@ -139,7 +141,7 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -154,19 +156,19 @@ set_option genInjectivity false in
 
 The retained derivative bounds determine a finite mesh depth before the common model index; exact distance and
 face-count payments keep the final surface error below the supplied target. -/
-structure EnergyRequest (preflight : DomainBasisBounds.EnergyPreflight domain) (coarse :
-  RectangularObservationMesh.ObservationMesh domain.cuts box) (target : InverseRootPolynomial.Coordinate) where
+structure EnergyRequest (preflight : EnergyPreflight domain) (coarse :
+  ObservationMesh domain.cuts box) (target : InverseRootPolynomial.Coordinate) where
   /-- The supplied total energy-error target is positive. -/ target_positive : 0 < target
   /-- The cached squared-diameter ceiling of the original observation box. -/ diameter :
     InverseRootPolynomial.Coordinate
   /-- The diameter ceiling equals the original squared diagonal plus one. -/ diameter_eq : diameter = box.diagonalSq + 1
   /-- The retained surface tolerance pays the original coarse box count and coefficient scale. -/ tolerance :
-    PrimitiveSurfaceBudget.SurfaceTolerance preflight.coefficientScale ((coarse.partition.boxes.length :
+    SurfaceTolerance preflight.coefficientScale ((coarse.partition.boxes.length :
     InverseRootPolynomial.Coordinate) * diameter) target
   /-- The cached dyadic spatial refinement depth. -/ depth : Nat
   /-- The cached squared movement ceiling at the retained depth. -/ distance : InverseRootPolynomial.Coordinate
   /-- The movement ceiling is the exact quarter-radius refinement of the retained diameter. -/ distance_eq : distance =
-    Geometric.Basic.quarterRadius diameter depth
+    Basic.quarterRadius diameter depth
   /-- The retained Taylor scale times the movement ceiling fits the squared surface tolerance. -/ taylor_small :
     preflight.taylorScale * distance ≤ tolerance.epsilon ^ 2
   /-- The cached common target for every basis-row model request. -/ readingTarget : InverseRootPolynomial.Coordinate
@@ -176,7 +178,7 @@ structure EnergyRequest (preflight : DomainBasisBounds.EnergyPreflight domain) (
   /-- The synchronized retained model requests for all original basis rows. -/ modelRequest : preflight.Request
     readingTarget
   /-- The cached actual refined observation mesh on the original domain cuts. -/ mesh :
-    RectangularObservationMesh.ObservationMesh domain.cuts box
+    ObservationMesh domain.cuts box
   /-- The retained mesh is exactly the original coarse mesh refined to the cached depth. -/ mesh_eq : mesh =
     coarse.atDepth depth
 
@@ -186,36 +188,36 @@ namespace EnergyRequest
 
 variable {preflight : EnergyPreflight domain}
   {coarse : ObservationMesh domain.cuts box} {target :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+  InverseRootPolynomial.Coordinate}
 
 /-- Select the finite spatial depth from retained Taylor bounds, then acquire all basis-row model requests at the
 resulting paid reading target. -/
-@[expose] def build (preflight : DomainBasisBounds.EnergyPreflight domain) (coarse :
-  RectangularObservationMesh.ObservationMesh domain.cuts box)
+@[expose] def build (preflight : EnergyPreflight domain) (coarse :
+  ObservationMesh domain.cuts box)
     (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target := by
+      EnergyRequest preflight coarse target := by
   let diameter := box.diagonalSq + 1
-  have diameterPositive : 0 < diameter := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  have diameterPositive : 0 < diameter := Arithmetic.add_pos_of_nonneg_of_pos_direct
     box.diagonalSq_nonneg (by decide)
   let tolerance := SurfaceTolerance.build preflight.coefficientScale
     ((coarse.partition.boxes.length : InverseRootPolynomial.Coordinate) * diameter) target
       preflight.coefficientScale_nonnegative
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) diameterPositive.le) positive
-  have squaredPositive := Fraction.Order.Arithmetic.pow_pos_direct tolerance.positive 2
+  have squaredPositive := Arithmetic.pow_pos_direct tolerance.positive 2
   let depth := Search.firstQuarterBelow (preflight.taylorScale * diameter) 0 (tolerance.epsilon ^ 2)
-  let distance := Geometric.Basic.quarterRadius diameter depth
-  have distancePositive : 0 < distance := Geometric.Basic.quarterRadius_pos diameterPositive depth
+  let distance := Basic.quarterRadius diameter depth
+  have distancePositive : 0 < distance := Basic.quarterRadius_pos diameterPositive depth
   let factor := 32 * Aggregate.countCoordinate genus ^ 2
   have factorEq : factor = 32 * (genus : InverseRootPolynomial.Coordinate) ^ 2 := by dsimp only [factor]; rw
     [Aggregate.countCoordinate_eq]
-  have factorNonnegative : 0 ≤ factor := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-  have denominatorPositive : 0 < factor + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  have factorNonnegative : 0 ≤ factor := Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.sq_nonneg_direct _)
+  have denominatorPositive : 0 < factor + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct
     factorNonnegative (by decide)
   let readingTarget := tolerance.epsilon ^ 2 * distance / (factor + 1)
-  have readingPositive : 0 < readingTarget := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.mul_pos_direct squaredPositive distancePositive) denominatorPositive
+  have readingPositive : 0 < readingTarget := Field.div_pos_direct
+    (Arithmetic.mul_pos_direct squaredPositive distancePositive) denominatorPositive
   exact
     { target_positive := positive
       diameter := diameter
@@ -226,10 +228,10 @@ resulting paid reading target. -/
       distance_eq := rfl
       taylor_small := by
         have selected := (Search.firstQuarterBelow_accurate _
-          (Fraction.Order.Arithmetic.mul_nonneg_direct preflight.taylorScale_nonnegative diameterPositive.le) 0 _
+          (Arithmetic.mul_nonneg_direct preflight.taylorScale_nonnegative diameterPositive.le) 0 _
             squaredPositive).le
         apply le_trans (le_of_eq ?_) selected
-        simp only [distance, Geometric.Basic.quarterRadius_eq_mul_pow]
+        simp only [distance, Basic.quarterRadius_eq_mul_pow]
         ring1
       readingTarget := readingTarget
       reading_positive := readingPositive
@@ -237,7 +239,7 @@ resulting paid reading target. -/
         rw [← factorEq]
         calc
           factor * readingTarget ≤ (factor + 1) * readingTarget :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
+            Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
               readingPositive.le
           _ = readingTarget * (factor + 1) := by ring1
           _ = _ := Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne'
@@ -246,19 +248,19 @@ resulting paid reading target. -/
       mesh_eq := rfl }
 
 /-- The retained movement ceiling is strictly positive at every selected finite depth. -/
-theorem distance_positive (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+theorem distance_positive (request : EnergyRequest
   preflight coarse target) : 0 < request.distance := by
   rw [request.distance_eq, request.diameter_eq]
-  exact Geometric.Basic.quarterRadius_pos (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  exact Basic.quarterRadius_pos (Arithmetic.add_pos_of_nonneg_of_pos_direct
     box.diagonalSq_nonneg (by decide)) request.depth
 
 /-- The cached observation mesh has exactly the retained refinement depth. -/
-theorem mesh_depth (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight
+theorem mesh_depth (request : EnergyRequest preflight
   coarse target) : request.mesh.depth = request.depth := by
   rw [request.mesh_eq]; rfl
 
 /-- Both actual outgoing edges of every retained observation triangle satisfy the cached squared movement ceiling. -/
-theorem movement_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight
+theorem movement_le (request : EnergyRequest preflight
   coarse target)
     (index : Fin (request.mesh.triangles.map ModelTriangle.triangle).length) :
     let triangle := request.mesh.surface.mesh.triangulation.faces index
@@ -267,41 +269,41 @@ theorem movement_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainE
       Data.Gaussian.Norm.Basic.normSq (request.mesh.surface.mesh.coordinate triangle.third -
         request.mesh.surface.mesh.coordinate triangle.first) ≤ request.distance := by
   have estimate := request.mesh.face_movement_le index
-  have larger : Geometric.Basic.quarterRadius box.diagonalSq request.mesh.depth ≤ request.distance := by
+  have larger : Basic.quarterRadius box.diagonalSq request.mesh.depth ≤ request.distance := by
     rw [request.mesh_depth, request.distance_eq, request.diameter_eq,
-      Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) request.depth)
+      Basic.quarterRadius_eq_mul_pow, Basic.quarterRadius_eq_mul_pow]
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
+      (Arithmetic.pow_nonneg_direct (by decide) request.depth)
   exact ⟨estimate.1.trans larger, estimate.2.trans larger⟩
 
 /-- Synchronize with a later global period request without changing this spatial mesh, face count, or any of its fixed
 error allowances. -/
-@[expose] def refineIndex (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+@[expose] def refineIndex (request : EnergyRequest
   preflight coarse target) (index : Nat) (later : request.modelRequest.index ≤ index) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target :=
+    EnergyRequest preflight coarse target :=
   { request with modelRequest := request.modelRequest.refineIndex index later }
 
 /-- A shared finer spatial depth requires a correspondingly smaller owner-reading allowance. The fixed derivative
 ceilings and surface tolerance are reused. -/
-@[expose] def refineDepth (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+@[expose] def refineDepth (request : EnergyRequest
   preflight coarse target) (depth : Nat) (later : request.depth ≤ depth) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target := by
+    EnergyRequest preflight coarse target := by
   have diameterPositive : 0 < request.diameter := by
     rw [request.diameter_eq]
-    exact Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct box.diagonalSq_nonneg (by decide)
-  let distance := Geometric.Basic.quarterRadius request.diameter depth
-  have distancePositive : 0 < distance := Geometric.Basic.quarterRadius_pos diameterPositive depth
+    exact Arithmetic.add_pos_of_nonneg_of_pos_direct box.diagonalSq_nonneg (by decide)
+  let distance := Basic.quarterRadius request.diameter depth
+  have distancePositive : 0 < distance := Basic.quarterRadius_pos diameterPositive depth
   let factor := 32 * Aggregate.countCoordinate genus ^ 2
   have factorEq : factor = 32 * (genus : InverseRootPolynomial.Coordinate) ^ 2 := by
     dsimp only [factor]
     rw [Aggregate.countCoordinate_eq]
-  have factorNonnegative : 0 ≤ factor := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-  have denominatorPositive : 0 < factor + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  have factorNonnegative : 0 ≤ factor := Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.sq_nonneg_direct _)
+  have denominatorPositive : 0 < factor + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct
     factorNonnegative (by decide)
   let readingTarget := request.tolerance.epsilon ^ 2 * distance / (factor + 1)
-  have readingPositive : 0 < readingTarget := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.mul_pos_direct (Fraction.Order.Arithmetic.pow_pos_direct request.tolerance.positive 2)
+  have readingPositive : 0 < readingTarget := Field.div_pos_direct
+    (Arithmetic.mul_pos_direct (Arithmetic.pow_pos_direct request.tolerance.positive 2)
       distancePositive) denominatorPositive
   refine { request with
     depth := depth
@@ -317,30 +319,30 @@ ceilings and surface tolerance are reused. -/
   · have distanceLe : distance ≤ request.distance := by
       rw [request.distance_eq]
       exact quarterRadius_antitone diameterPositive.le later
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe
+    exact (Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe
       preflight.taylorScale_nonnegative).trans request.taylor_small
   · rw [← factorEq]
     calc
       factor * readingTarget ≤ (factor + 1) * readingTarget :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
+        Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
           readingPositive.le
       _ = readingTarget * (factor + 1) := by ring1
       _ = _ := Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne'
 
 /-- Refining the retained request to a supplied later spatial depth keeps that exact depth. -/
-@[simp] theorem refineDepth_depth (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+@[simp] theorem refineDepth_depth (request : EnergyRequest
   preflight coarse target) (depth : Nat) (later : request.depth ≤ depth) :
     (request.refineDepth depth later).depth = depth := rfl
 
 variable {stage : Nat} {cached : (row : Fin genus) →
   DomainPrimitives domain
-  (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential row) stage}
+  (Riemann.Periods.PeriodMatrix.standardDifferential row) stage}
 
 /-- Build the actual triangle's affine energy budget from its retained readings, Taylor bound and paid common model
 request. -/
-@[expose] def triangleBudget (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+@[expose] def triangleBudget (request : EnergyRequest
   preflight coarse target) (stage_eq : stage = request.modelRequest.index)
-    (readings : DomainBasisEnergy.BasisReadings cached request.mesh.surface)
+    (readings : BasisReadings cached request.mesh.surface)
     (index : Fin (request.mesh.triangles.map ModelTriangle.triangle).length) : AffineBasis.TriangleBudget
       readings.affine index := by
   have movement (last) (which : last = (request.mesh.surface.mesh.triangulation.faces index).second ∨
@@ -365,15 +367,15 @@ request. -/
     · exact (request.mesh.surface.face_inside index).2.2
   have estimate := readings.error_scale_bound preflight request.modelRequest stage_eq index last inside (movement last
     which)
-  have taylor := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct request.taylor_small
+  have taylor := Arithmetic.mul_le_mul_of_nonneg_right_direct request.taylor_small
     request.distance_positive.le
   have bound := add_le_add request.reading_small taylor
   exact estimate.trans (by convert bound using 1 <;> ring1)
 
 /-- Each actual retained triangle budget has the same exact tolerance-times-distance coefficient ceiling. -/
-theorem triangleBudget_total (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+theorem triangleBudget_total (request : EnergyRequest
   preflight coarse target) (stage_eq : stage = request.modelRequest.index)
-    (readings : DomainBasisEnergy.BasisReadings cached request.mesh.surface)
+    (readings : BasisReadings cached request.mesh.surface)
     (index : Fin (request.mesh.triangles.map ModelTriangle.triangle).length) :
     (request.triangleBudget stage_eq readings index).total = request.tolerance.epsilon * request.distance * (2 *
       preflight.coefficientScale + 3) := rfl
@@ -387,9 +389,9 @@ private theorem sum_constant (count : Nat) (value : InverseRootPolynomial.Coordi
 
 /-- The same affine surface interface now carries a proved requested total, not merely an error budget which might
 dominate the observation signal. -/
-@[expose] def surfaceBudget (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+@[expose] def surfaceBudget (request : EnergyRequest
   preflight coarse target) (stage_eq : stage = request.modelRequest.index)
-    (readings : DomainBasisEnergy.BasisReadings cached request.mesh.surface) : AffineBasis.SurfaceBudget readings.affine
+    (readings : BasisReadings cached request.mesh.surface) : AffineBasis.SurfaceBudget readings.affine
       :=
   let triangles := DependentVector.ofFn fun index => request.triangleBudget stage_eq readings index
   { triangles := triangles
@@ -401,65 +403,65 @@ dominate the observation signal. -/
       exact (sum_constant _ _).symm }
 
 /-- The actual cached total surface budget is strictly below the original requested energy target. -/
-theorem surfaceBudget_total_lt (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+theorem surfaceBudget_total_lt (request : EnergyRequest
   preflight coarse target) (stage_eq : stage = request.modelRequest.index)
-    (readings : DomainBasisEnergy.BasisReadings cached request.mesh.surface) : (request.surfaceBudget stage_eq
+    (readings : BasisReadings cached request.mesh.surface) : (request.surfaceBudget stage_eq
       readings).total < target := by
   change Aggregate.countCoordinate (request.mesh.triangles.map ModelTriangle.triangle).length *
     (request.tolerance.epsilon * request.distance * (2 * preflight.coefficientScale + 3)) < target
   rw [Aggregate.countCoordinate_eq, request.mesh.face_count, request.mesh_depth, request.distance_eq]
   have partition : request.mesh.partition.boxes = coarse.partition.boxes := by rw [request.mesh_eq]; rfl
-  rw [partition, Purelib.Algebra.NatCast.mul]
+  rw [partition, NatCast.mul]
   calc
     _ = request.tolerance.epsilon * (2 * preflight.coefficientScale + 3) * (coarse.partition.boxes.length :
       InverseRootPolynomial.Coordinate) *
-        (((2 * 4 ^ request.depth : Nat) : InverseRootPolynomial.Coordinate) * Geometric.Basic.quarterRadius
+        (((2 * 4 ^ request.depth : Nat) : InverseRootPolynomial.Coordinate) * Basic.quarterRadius
           request.diameter request.depth) := by ring1
     _ = request.tolerance.epsilon * (2 * preflight.coefficientScale + 3) * (coarse.partition.boxes.length :
       InverseRootPolynomial.Coordinate) *
-        (2 * request.diameter) := by rw [Riemann.Topology.PrimitiveSurfaceBudget.face_count_cancel]
+        (2 * request.diameter) := by rw [PrimitiveSurfaceBudget.face_count_cancel]
     _ = 2 * ((coarse.partition.boxes.length : InverseRootPolynomial.Coordinate) * request.diameter) *
         (2 * preflight.coefficientScale + 3) * request.tolerance.epsilon := by ring1
     _ < target := request.tolerance.accurate
 
 /-- The original energy-cell contribution minus the coefficient-scaled paid target bounds the actual retained boundary
 energy. -/
-theorem energy_lower (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight
+theorem energy_lower (request : EnergyRequest preflight
   coarse target) (stage_eq : stage = request.modelRequest.index)
-    (readings : DomainBasisEnergy.BasisReadings cached request.mesh.surface) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector
+    (readings : BasisReadings cached request.mesh.surface) (coefficients :
+      GaussianVector
       genus)
-    (cell : PreparedEnergy.SurfaceCell curve coefficients) (box_eq : cell.box = box) :
+    (cell : SurfaceCell curve coefficients) (box_eq : cell.box = box) :
     cell.toEnergyCell.contribution / 4 - PreparedObservationCoercivity.coefficientNormSq coefficients * target ≤
       ((request.surfaceBudget stage_eq readings).sample coefficients).boundaryArea.im / 4 := by
   have nonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have estimate := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate))
-      (fun row => Data.Gaussian.Basic.Canonical.normSq (coefficients row)) (fun row => by
+      (fun row => Gaussian.normSq (coefficients row)) (fun row => by
         have scalar := Data.Gaussian.Norm.Basic.normSq_nonneg (coefficients row)
         rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
         exact scalar)
     simpa only [PreparedObservationCoercivity.coefficientNormSq, FiniteSum.Fin.sumFin_zero] using estimate
-  have error := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have error := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (request.surfaceBudget_total_lt stage_eq readings).le nonnegative
   have lower := readings.contribution_sub_error_le_boundaryEnergy (request.surfaceBudget stage_eq readings) coefficients
     cell box_eq
-  exact (Fraction.Order.Arithmetic.sub_le_sub_left_direct error _).trans lower
+  exact (Arithmetic.sub_le_sub_left_direct error _).trans lower
 
 /-- The erased equality permits a surrounding cached mesh vector to reuse this exact surface without rebuilding its
 coordinate or primitive data. -/
-@[expose] def surfaceBudgetOn (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+@[expose] def surfaceBudgetOn (request : EnergyRequest
   preflight coarse target) (stage_eq : stage = request.modelRequest.index)
-    {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box} (equal : mesh = request.mesh)
-    (readings : DomainBasisEnergy.BasisReadings cached mesh.surface) : AffineBasis.SurfaceBudget readings.affine := by
+    {mesh : ObservationMesh domain.cuts box} (equal : mesh = request.mesh)
+    (readings : BasisReadings cached mesh.surface) : AffineBasis.SurfaceBudget readings.affine := by
   cases equal
   exact request.surfaceBudget stage_eq readings
 
 /-- Transporting the retained surface budget along equality of its actual mesh preserves the original strict target
 payment. -/
-theorem surfaceBudgetOn_total_lt (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest
+theorem surfaceBudgetOn_total_lt (request : EnergyRequest
   preflight coarse target) (stage_eq : stage = request.modelRequest.index)
-    {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box} (equal : mesh = request.mesh)
-    (readings : DomainBasisEnergy.BasisReadings cached mesh.surface) : (request.surfaceBudgetOn stage_eq equal
+    {mesh : ObservationMesh domain.cuts box} (equal : mesh = request.mesh)
+    (readings : BasisReadings cached mesh.surface) : (request.surfaceBudgetOn stage_eq equal
       readings).total < target := by
   cases equal
   exact request.surfaceBudget_total_lt stage_eq readings

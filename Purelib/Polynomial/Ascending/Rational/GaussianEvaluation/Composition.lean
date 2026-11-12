@@ -31,32 +31,32 @@ namespace Purelib.Polynomial.Ascending.Rational.GaussianEvaluation.Composition
 
 Evaluate the inner polynomial first, then use that Gaussian value as the argument of the outer coefficient list. -/
 theorem eval_composeCoefficients (inner :
-  Ascending.Rational.Basic.CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
+  Basic.CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
     ∀ outer,
-      Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Composition.composeCoefficients outer inner) z =
-        Ascending.Rational.GaussianEvaluation.evalCoefficients (Ascending.Rational.GaussianEvaluation.eval inner z)
+      eval (Composition.composeCoefficients outer inner) z =
+        evalCoefficients (eval inner z)
           outer
   | [] => rfl
   | coefficient :: remaining => by
-      rw [Ascending.Rational.Composition.composeCoefficients, Ascending.Rational.GaussianEvaluation.eval_add,
-        Ascending.Rational.GaussianEvaluation.eval_mul,
+      rw [Composition.composeCoefficients, eval_add,
+        eval_mul,
         eval_composeCoefficients inner z remaining]
       change
-        (Purelib.Data.Gaussian.Scale.scale coefficient 1 + z * 0) +
-            Ascending.Rational.GaussianEvaluation.eval inner z * Ascending.Rational.GaussianEvaluation.evalCoefficients
-              (Ascending.Rational.GaussianEvaluation.eval inner z) remaining =
-          Purelib.Data.Gaussian.Scale.scale coefficient 1 +
-            Ascending.Rational.GaussianEvaluation.eval inner z * Ascending.Rational.GaussianEvaluation.evalCoefficients
-              (Ascending.Rational.GaussianEvaluation.eval inner z) remaining
+        (Gaussian.Scale.scale coefficient 1 + z * 0) +
+            eval inner z * evalCoefficients
+              (eval inner z) remaining =
+          Gaussian.Scale.scale coefficient 1 +
+            eval inner z * evalCoefficients
+              (eval inner z) remaining
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
           Gaussian.Basic.zero_re, Gaussian.Basic.zero_im] <;> ring1
 
 /-- Evaluating a composition equals evaluating the outer polynomial at the inner value. -/
 @[simp] theorem eval_compose (outer inner :
-  Ascending.Rational.Basic.CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
-    Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Composition.compose outer inner) z =
-      Ascending.Rational.GaussianEvaluation.eval outer (Ascending.Rational.GaussianEvaluation.eval inner z) :=
+  Basic.CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
+    eval (Composition.compose outer inner) z =
+      eval outer (eval inner z) :=
   eval_composeCoefficients inner z outer.coefficients
 end Purelib.Polynomial.Ascending.Rational.GaussianEvaluation.Composition
 

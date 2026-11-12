@@ -9,6 +9,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Rational quadratic bounds on a unit square
 
@@ -43,49 +45,49 @@ public theorem concave_table_positive
     (farCornerNonnegative : 0 ≤ 2 * A + B + C + D)
     (realNonnegative : 0 ≤ x) (realSmall : x < 1)
     (imagNonnegative : 0 ≤ y) (imagSmall : y < 1) :
-    0 < Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
+    0 < tablePolynomial A B C D x y := by
   have oneMinusRealPositive : 0 < 1 - x :=
-    Fraction.Order.Arithmetic.sub_pos_direct realSmall
+    Arithmetic.sub_pos_direct realSmall
   have oneMinusImagPositive : 0 < 1 - y :=
-    Fraction.Order.Arithmetic.sub_pos_direct imagSmall
+    Arithmetic.sub_pos_direct imagSmall
   have originTermPositive : 0 < D * (1 - x) * (1 - y) :=
-    Fraction.Order.Arithmetic.mul_pos_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct originPositive
+    Arithmetic.mul_pos_direct
+      (Arithmetic.mul_pos_direct originPositive
         oneMinusRealPositive)
       oneMinusImagPositive
   have realCornerTermNonnegative :
       0 ≤ (A + B + D) * x * (1 - y) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         realCornerNonnegative realNonnegative)
       oneMinusImagPositive.le
   have imagCornerTermNonnegative :
       0 ≤ (A + C + D) * (1 - x) * y :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         imagCornerNonnegative oneMinusRealPositive.le)
       imagNonnegative
   have farCornerTermNonnegative :
       0 ≤ (2 * A + B + C + D) * x * y :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         farCornerNonnegative realNonnegative)
       imagNonnegative
   have negativeAlphaNonnegative : 0 ≤ -A := by
-    have difference := Fraction.Order.Arithmetic.sub_nonneg_direct
+    have difference := Arithmetic.sub_nonneg_direct
       alphaNonpositive
     rw [show (0 : Fraction.Rational) - A = -A by ring1] at difference
     exact difference
   have interiorSumNonnegative :
       0 ≤ x * (1 - x) + y * (1 - y) :=
     add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct realNonnegative
+      (Arithmetic.mul_nonneg_direct realNonnegative
         oneMinusRealPositive.le)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct imagNonnegative
+      (Arithmetic.mul_nonneg_direct imagNonnegative
         oneMinusImagPositive.le)
   have correctionNonnegative :
       0 ≤ (-A) * (x * (1 - x) + y * (1 - y)) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct negativeAlphaNonnegative
+    Arithmetic.mul_nonneg_direct negativeAlphaNonnegative
       interiorSumNonnegative
   have remainingNonnegative :
       0 ≤ (A + B + D) * x * (1 - y) +
@@ -102,8 +104,8 @@ public theorem concave_table_positive
           (A + C + D) * (1 - x) * y +
           (2 * A + B + C + D) * x * y +
           (-A) * (x * (1 - x) + y * (1 - y))) :=
-      Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct originTermPositive remainingNonnegative
-    _ = Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
+      Arithmetic.add_pos_of_pos_of_nonneg_direct originTermPositive remainingNonnegative
+    _ = tablePolynomial A B C D x y := by
       unfold tablePolynomial
       ring1
 
@@ -115,9 +117,9 @@ private theorem convex_x_term_nonnegative
     {A B x : Fraction.Rational} (alphaNonnegative : 0 ≤ A)
     (betaNonnegative : 0 ≤ B) (realNonnegative : 0 ≤ x) :
     0 ≤ x * (A * x + B) := by
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct realNonnegative
+  exact Arithmetic.mul_nonneg_direct realNonnegative
     (add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct alphaNonnegative
+      (Arithmetic.mul_nonneg_direct alphaNonnegative
         realNonnegative)
       betaNonnegative)
 
@@ -131,21 +133,21 @@ public theorem convex_table_positive_up
     (alphaPositive : 0 < A) (betaNonnegative : 0 ≤ B)
     (etaNonnegative : 0 ≤ C) (originPositive : 0 < D)
     (realNonnegative : 0 ≤ x) (imagNonnegative : 0 ≤ y) :
-    0 < Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
-  have xTermNonnegative := Multivariate.Rational.QuadraticBox.convex_x_term_nonnegative alphaPositive.le
+    0 < tablePolynomial A B C D x y := by
+  have xTermNonnegative := convex_x_term_nonnegative alphaPositive.le
     betaNonnegative realNonnegative
   have yTermNonnegative : 0 ≤ y * (A * y + C) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct imagNonnegative
+    Arithmetic.mul_nonneg_direct imagNonnegative
       (add_nonneg
-        (Fraction.Order.Arithmetic.mul_nonneg_direct alphaPositive.le
+        (Arithmetic.mul_nonneg_direct alphaPositive.le
           imagNonnegative)
         etaNonnegative)
   calc
     0 < D + y * (A * y + C) + x * (A * x + B) :=
-      Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
-        (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct originPositive yTermNonnegative)
+      Arithmetic.add_pos_of_pos_of_nonneg_direct
+        (Arithmetic.add_pos_of_pos_of_nonneg_direct originPositive yTermNonnegative)
         xTermNonnegative
-    _ = Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
+    _ = tablePolynomial A B C D x y := by
       unfold tablePolynomial
       ring1
 
@@ -155,7 +157,7 @@ Translating the retained weak coordinate bound by one keeps its original
 endpoints; the upper endpoint is the scalar sum one plus one. -/
 private theorem y_plus_one_le_two {y : Fraction.Rational} (small : y < 1) :
     y + 1 ≤ 2 := by
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+  have shifted := Arithmetic.add_le_add_right_direct
     small.le 1
   calc
     y + 1 ≤ 1 + 1 := shifted
@@ -169,9 +171,9 @@ private theorem down_second_le_slope
     {A C y : Fraction.Rational} (alphaNonnegative : 0 ≤ A)
     (imagSmall : y < 1) :
     A * (y + 1) + C ≤ 2 * A + C := by
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Multivariate.Rational.QuadraticBox.y_plus_one_le_two imagSmall) alphaNonnegative
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct scaled C
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (y_plus_one_le_two imagSmall) alphaNonnegative
+  have shifted := Arithmetic.add_le_add_right_direct scaled C
   exact shifted.trans_eq (by ring1)
 
 /-- A nonpositive upper-edge slope bounds A(y+1)+C by zero for y below one.
@@ -182,7 +184,7 @@ private theorem down_second_nonpositive
     {A C y : Fraction.Rational} (alphaNonnegative : 0 ≤ A)
     (imagSmall : y < 1) (slopeNonpositive : 2 * A + C ≤ 0) :
     A * (y + 1) + C ≤ 0 :=
-  (Multivariate.Rational.QuadraticBox.down_second_le_slope alphaNonnegative imagSmall).trans slopeNonpositive
+  (down_second_le_slope alphaNonnegative imagSmall).trans slopeNonpositive
 
 /-- A convex radial quadratic with nonpositive upper-edge slope and positive upper corner is positive for nonnegative x
 and y below one.
@@ -196,22 +198,22 @@ public theorem convex_table_positive_down_corner
     (cornerPositive : 0 < A + C + D)
     (realNonnegative : 0 ≤ x)
     (imagSmall : y < 1) :
-    0 < Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
-  have xTermNonnegative := Multivariate.Rational.QuadraticBox.convex_x_term_nonnegative alphaPositive.le
+    0 < tablePolynomial A B C D x y := by
+  have xTermNonnegative := convex_x_term_nonnegative alphaPositive.le
     betaNonnegative realNonnegative
   have firstNonpositive : y - 1 ≤ 0 :=
-    (Fraction.Order.Arithmetic.sub_neg_direct imagSmall).le
-  have secondNonpositive := Multivariate.Rational.QuadraticBox.down_second_nonpositive alphaPositive.le
+    (Arithmetic.sub_neg_direct imagSmall).le
+  have secondNonpositive := down_second_nonpositive alphaPositive.le
     imagSmall slopeNonpositive
-  have yDifferenceNonnegative := Fraction.Order.Arithmetic.product_nonnegative_of_both_nonpositive
+  have yDifferenceNonnegative := Arithmetic.product_nonnegative_of_both_nonpositive
     firstNonpositive secondNonpositive
   calc
     0 < (A + C + D) +
         (y - 1) * (A * (y + 1) + C) + x * (A * x + B) :=
-      Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
-        (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct cornerPositive yDifferenceNonnegative)
+      Arithmetic.add_pos_of_pos_of_nonneg_direct
+        (Arithmetic.add_pos_of_pos_of_nonneg_direct cornerPositive yDifferenceNonnegative)
         xTermNonnegative
-    _ = Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
+    _ = tablePolynomial A B C D x y := by
       unfold tablePolynomial
       ring1
 
@@ -227,21 +229,21 @@ public theorem convex_table_positive_down_slope
     (cornerNonnegative : 0 ≤ A + C + D)
     (realNonnegative : 0 ≤ x)
     (imagSmall : y < 1) :
-    0 < Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
-  have xTermNonnegative := Multivariate.Rational.QuadraticBox.convex_x_term_nonnegative alphaPositive.le
+    0 < tablePolynomial A B C D x y := by
+  have xTermNonnegative := convex_x_term_nonnegative alphaPositive.le
     betaNonnegative realNonnegative
-  have firstNegative := Fraction.Order.Arithmetic.sub_neg_direct imagSmall
+  have firstNegative := Arithmetic.sub_neg_direct imagSmall
   have secondNegative : A * (y + 1) + C < 0 :=
-    (Multivariate.Rational.QuadraticBox.down_second_le_slope alphaPositive.le imagSmall).trans_lt slopeNegative
-  have yDifferencePositive := Fraction.Order.Arithmetic.product_positive_of_both_negative
+    (down_second_le_slope alphaPositive.le imagSmall).trans_lt slopeNegative
+  have yDifferencePositive := Arithmetic.product_positive_of_both_negative
     firstNegative secondNegative
-  have basePositive := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct cornerNonnegative
+  have basePositive := Arithmetic.add_pos_of_nonneg_of_pos_direct cornerNonnegative
     yDifferencePositive
   calc
     0 < (A + C + D) +
         (y - 1) * (A * (y + 1) + C) + x * (A * x + B) :=
-      Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct basePositive xTermNonnegative
-    _ = Multivariate.Rational.QuadraticBox.tablePolynomial A B C D x y := by
+      Arithmetic.add_pos_of_pos_of_nonneg_direct basePositive xTermNonnegative
+    _ = tablePolynomial A B C D x y := by
       unfold tablePolynomial
       ring1
 

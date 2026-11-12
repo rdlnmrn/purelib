@@ -101,37 +101,37 @@ open Purelib.Riemann.Paths.RectangularSegmentSplitting (GridCuts)
 open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRange)
 open Purelib.Geometry.Rectangle.SourceIntervals (axisCoordinate)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 /-- Every physical axis interval retains its original-parent index and split. The finite bank is prepared before
 acquiring numerical source samples. -/
-def ParentBlockBank (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+def ParentBlockBank (occurrence : SurfaceOccurrence regular domains differential)
     {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
-    {cuts : RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
+    {cuts : GridCuts geometry} {meshBox : Rational.Box}
     (mesh : RectangularObservationMesh.ObservationMesh cuts meshBox) (vertical forward : Bool) :=
-  Data.Vector.DependentVector (fun i : Fin (SourceIntervals.axisIntervals mesh vertical).length =>
+  DependentVector (fun i : Fin (SourceIntervals.axisIntervals mesh vertical).length =>
     ParentBlocks.ParentBlock occurrence vertical forward ((SourceIntervals.axisIntervals mesh vertical)[i.val]'i.isLt))
 
 /-- One occurrence-span comparison locates every interval on the requested shared mesh. Parent search and source-piece
 selection are cached together. -/
 def ParentBlock.buildBank
-    {prepared : ExteriorProgram.AllSurfacePreparation regular domains differential} {previous : RegularMeshes.CommonCuts
+    {prepared : AllSurfacePreparation regular domains differential} {previous : CommonCuts
       domains}
     (selected : SourceCuts prepared previous) (member : occurrence ∈ prepared.occurrences)
-    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet} {meshTarget :
-      InverseRootPolynomial.Coordinate}
-    (request : TwoSheetBilinearRequest.TwoSheetRequest
+    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights domains sheet} {meshTarget :
+      Coordinate}
+    (request : TwoSheetRequest
       (fun sheet => RegularMeshes.build domains selected.cuts sheet coarseDepth) fixed meshTarget)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
     (vertical forward : Bool)
@@ -141,7 +141,7 @@ def ParentBlock.buildBank
     (upper : (FragmentFamilies.signedMeshSpan ((request.entries.get sheet).meshes.entries.get position) vertical
       forward).upper ≤
       SourceBlockParameters.signedAxis vertical forward occurrence.finish) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank occurrence ((request.entries.get
+    ParentBlockBank occurrence ((request.entries.get
       sheet).meshes.entries.get position) vertical forward :=
   DependentVector.ofFn (fun i =>
     let mesh := (request.entries.get sheet).meshes.entries.get position
@@ -154,17 +154,17 @@ def ParentBlock.buildBank
 /-- The actual occurrence supplies its own face, sheet, orientation and span. No per-interval parent assignment or
 endpoint alignment is supplied by a caller. -/
 def ParentBlock.forOccurrence
-    {prepared : ExteriorProgram.AllSurfacePreparation regular domains differential} {previous : RegularMeshes.CommonCuts
+    {prepared : AllSurfacePreparation regular domains differential} {previous : CommonCuts
       domains}
     (selected : SourceCuts prepared previous) (member : occurrence ∈ prepared.occurrences)
-    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet} {meshTarget :
-      InverseRootPolynomial.Coordinate}
-    (request : TwoSheetBilinearRequest.TwoSheetRequest
+    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights domains sheet} {meshTarget :
+      Coordinate}
+    (request : TwoSheetRequest
       (fun sheet => RegularMeshes.build domains selected.cuts sheet coarseDepth) fixed meshTarget) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank occurrence
+    ParentBlockBank occurrence
       ((request.entries.get occurrence.sideOccurrence.sheet).meshes.entries.get occurrence.sideOccurrence.position)
       (SurfaceOccurrence.sourceVertical occurrence) (SurfaceOccurrence.sourceForward occurrence) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlock.buildBank selected member request
+  ParentBlock.buildBank selected member request
     occurrence.sideOccurrence.sheet occurrence.sideOccurrence.position
     (SurfaceOccurrence.sourceVertical occurrence) (SurfaceOccurrence.sourceForward occurrence)
       (SurfaceOccurrence.source_span_endpoints occurrence).1.le

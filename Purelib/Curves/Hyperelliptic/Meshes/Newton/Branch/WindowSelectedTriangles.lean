@@ -87,25 +87,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.Bra
   (compileResplit_two_sheets)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedTrianglePartition (selectedFullTriangleArea)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_succ)
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
-  {grid : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-    {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {current : Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+  {preparation : NewtonPreparation original} {target
+    radius : Rational}
+  {grid : NewtonGrid preparation target radius}
+    {index : Branches.BranchIsolation.Data.Index branches}
+  {current : LiftedPuncturedGrid grid.punctured}
+  {domains : FaceDomainBank current.frames
     grid.faces.regulars} {i j : Fin genus}
-  {stage : Nat} {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+  {stage : Nat} {cache : Numerics
     domains stage}
 
 /-- Both initial sheets together cover the retained face triangles, even when the compiler transports them along
 different stems. -/
-theorem fine_triangles_selected (region : NewtonOriginalAnnularFaces.OriginalAnnularFaces grid index)
+theorem fine_triangles_selected (region : OriginalAnnularFaces grid index)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh) :
     CellBoundary.sumValues (FinePolygonAggregate.fineTriangleArea left right) (WindowCircuits.fineCompiler (current :=
@@ -155,7 +155,7 @@ theorem fine_triangles_selected (region : NewtonOriginalAnnularFaces.OriginalAnn
     rw [add_zero]
   · rw [if_neg selected]
     symm
-    refine Eq.trans (b := FiniteSum.Fin.sumFin (fun _ : Fin 2 => (0 : Data.Gaussian.Basic.Canonical))) ?_
+    refine Eq.trans (b := FiniteSum.Fin.sumFin (fun _ : Fin 2 => (0 : Gaussian))) ?_
       FiniteSum.Fin.sumFin_zero
     apply FiniteSum.Fin.sumFin_congr
     intro sheet

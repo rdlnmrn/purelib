@@ -64,6 +64,8 @@ import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Branches
@@ -116,7 +118,7 @@ open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -163,10 +165,10 @@ variable (excision : AllHoleExcision grid lifted) (traces :
 
 set_option genInjectivity false in
 /-- The original interface and hole requests for one retained grid side with a common paid stage. -/
-structure SideRequests (side : GridLiftedDualSteps.GridSide) where
-  /-- The request on retained-to-removed regular interfaces for this side. -/ interfaces : RetainedBandBank.Request
+structure SideRequests (side : GridSide) where
+  /-- The request on retained-to-removed regular interfaces for this side. -/ interfaces : Request
     excision traces side false
-  /-- The request on retained physical-hole neighbors for this side. -/ holes : RetainedBandBank.Request excision traces
+  /-- The request on retained physical-hole neighbors for this side. -/ holes : Request excision traces
     side true
   /-- The common threshold of the original interface and hole requests. -/ index : Nat
   /-- The retained interface request is paid at the side stage. -/ interfaces_le : interfaces.index ≤ index
@@ -175,11 +177,11 @@ structure SideRequests (side : GridLiftedDualSteps.GridSide) where
 constructive_injectivity SideRequests
 
 /-- Retain the original interface and hole requests and cache the maximum of their thresholds. -/
-@[expose] def SideRequests.build (side : GridLiftedDualSteps.GridSide) :
+@[expose] def SideRequests.build (side : GridSide) :
   SideRequests
   excision traces side :=
-  let interfaces := RetainedBandBank.Request.build excision traces side false
-  let holes := RetainedBandBank.Request.build excision traces side true
+  let interfaces := Request.build excision traces side false
+  let holes := Request.build excision traces side true
   ⟨interfaces, holes, max interfaces.index holes.index, Data.Nat.Order.le_max_left _ _, Data.Nat.Order.le_max_right _ _⟩
 
 end RetainedBandBank
@@ -187,11 +189,11 @@ end RetainedBandBank
 set_option genInjectivity false in
 /-- All four original non-exterior side requests and a common stage paying the surface and requested floor. -/
 structure RemainingBandRequest (excision : Excision.AllHoleExcision grid lifted) (traces :
-  SynchronizedSurfaceRequests.PerimeterTraces requests)
+  PerimeterTraces requests)
     (floor : Nat) where
   /-- The retained interface and hole request pair for each of the four grid sides. -/ sides : (side :
-    GridLiftedDualSteps.GridSide) →
-    Curves.Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RetainedBandBank.SideRequests
+    GridSide) →
+    RetainedBandBank.SideRequests
     excision traces side
   /-- The common threshold of all four side requests, the original surface request and floor. -/ index : Nat
   /-- Every original side request is paid at the common stage. -/ sides_le : ∀ side, (sides side).index ≤ index
@@ -206,8 +208,8 @@ variable {excision : AllHoleExcision grid lifted} {floor :
 
 /-- Prepare every original side request and retain their common threshold together with the surface and floor bounds. -/
 @[expose] def build (excision : Excision.AllHoleExcision grid lifted) (traces :
-  SynchronizedSurfaceRequests.PerimeterTraces requests) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest excision
+  PerimeterTraces requests) (floor : Nat) :
+    RemainingBandRequest excision
       traces floor := by
   let bottom :=
     RetainedBandBank.SideRequests.build
@@ -221,8 +223,8 @@ variable {excision : AllHoleExcision grid lifted} {floor :
   let left :=
     RetainedBandBank.SideRequests.build
     excision traces .left
-  let sides : (side : GridLiftedDualSteps.GridSide) →
-    Curves.Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RetainedBandBank.SideRequests
+  let sides : (side : GridSide) →
+    RetainedBandBank.SideRequests
     excision traces side
     | .bottom => bottom
     | .right => right
@@ -264,10 +266,10 @@ private theorem removed_of_not_keep (excision : Excision.AllHoleExcision grid li
 /-- Every non-exterior term is bounded on the computed common tail. The remaining hypothesis is the pre-grid payment for
 each original band radius. -/
 theorem accurate (request :
-  Curves.Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest excision
+  RemainingBandRequest excision
   traces floor) (later : request.index ≤ stage)
     (samples : SynchronizedSurfaceRequests.PerimeterSamples requests traces cache coefficients)
-    (neighbors : PuncturedFaces.NeighborBank grid.faces) {component : Fraction.Rational}
+    (neighbors : PuncturedFaces.NeighborBank grid.faces) {component : Rational}
     (nonnegative : 0 ≤ component)
     (paid : ∀ index, PreparedBandFamily.areaCoefficient (curve := curve) (current := (BranchCellWinding.state original
       index).raw)
@@ -276,22 +278,22 @@ theorem accurate (request :
     Data.Gaussian.Norm.Basic.normSq (PerimeterSamples.remainingBoundaryCentered excision samples neighbors -
       SelectedPhysicalComponents.componentEvaluation neighbors (ObservationLower.remainingFaceMask excision)
         (PerimeterSamples.centeredSideSum samples) .exterior) ≤
-      128 * ((grid.faces.regulars.length : Fraction.Rational) ^ 4 +
-        (grid.faces.holes.length : Fraction.Rational) ^ 2 * (grid.faces.regulars.length : Fraction.Rational) ^ 2) *
-        ((genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * component)
+      128 * ((grid.faces.regulars.length : Rational) ^ 4 +
+        (grid.faces.holes.length : Rational) ^ 2 * (grid.faces.regulars.length : Rational) ^ 2) *
+        ((genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * component)
           := by
-  let weight := (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2
-  have weightNonnegative : 0 ≤ weight := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  let weight := (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2
+  have weightNonnegative : 0 ≤ weight := Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct _) (Arithmetic.sq_nonneg_direct _)
   have allowanceNonnegative : 0 ≤ 4 * (weight * component) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.mul_nonneg_direct
       weightNonnegative nonnegative)
-  have sideBound (side : GridLiftedDualSteps.GridSide) (isHole : Bool) (position : Fin grid.faces.regulars.length)
-      (next : RetainedBandBank.NeighborIndex (grid := grid) isHole)
-      (present : RetainedBandBank.Condition excision side position isHole next) :
+  have sideBound (side : GridSide) (isHole : Bool) (position : Fin grid.faces.regulars.length)
+      (next : NeighborIndex (grid := grid) isHole)
+      (present : Condition excision side position isHole next) :
       Data.Gaussian.Norm.Basic.normSq (PerimeterSamples.centeredSideSum samples side position) ≤ 4 * (weight *
         component) := by
-    let bank : RetainedBandBank.Request excision traces side isHole :=
+    let bank : Request excision traces side isHole :=
       match isHole with
       | false => (request.sides side).interfaces
       | true => (request.sides side).holes
@@ -301,10 +303,10 @@ theorem accurate (request :
       | false => exact (request.sides side).interfaces_le
       | true => exact (request.sides side).holes_le
     have bound := bank.centered_bound bankLater samples position next present
-    exact bound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (paid (((bank.entries.get position).get next).request
+    exact bound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (paid (((bank.entries.get position).get next).request
         present).entry.hole.index)
-        weightNonnegative) (by decide : (0 : Fraction.Rational) ≤ 4))
+        weightNonnegative) (by decide : (0 : Rational) ≤ 4))
   have bound := SelectedBoundaryBounds.boundary_sub_exterior_bound neighbors (ObservationLower.remainingFaceMask
     excision)
     (PerimeterSamples.centeredSideSum samples) allowanceNonnegative

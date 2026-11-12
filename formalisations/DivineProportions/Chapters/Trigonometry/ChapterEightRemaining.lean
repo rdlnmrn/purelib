@@ -6,6 +6,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Recurrence.Spread
+
 open Purelib.Algebra
 
 open Purelib
@@ -68,22 +70,22 @@ def cyclotomicTwelve (value : K) : K :=
 
 /-- The displayed divisor products through index eight. -/
 theorem exercise_8_13_first_eight (value : K) :
-    Polynomial.Recurrence.Spread.Basic.spreadPolynomial 1 value = cyclotomicOne value ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 2 value =
+    Basic.spreadPolynomial 1 value = cyclotomicOne value ∧
+      Basic.spreadPolynomial 2 value =
         cyclotomicOne value * cyclotomicTwo value ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 3 value =
+      Basic.spreadPolynomial 3 value =
         cyclotomicOne value * cyclotomicThree value ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 4 value =
+      Basic.spreadPolynomial 4 value =
         cyclotomicOne value * cyclotomicTwo value *
           cyclotomicFour value ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 value =
+      Basic.spreadPolynomial 5 value =
         cyclotomicOne value * cyclotomicFive value ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 6 value =
+      Basic.spreadPolynomial 6 value =
         cyclotomicOne value * cyclotomicTwo value *
           cyclotomicThree value * cyclotomicSix value ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value =
+      Basic.spreadPolynomial 7 value =
         cyclotomicOne value * cyclotomicSeven value ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 8 value =
+      Basic.spreadPolynomial 8 value =
         cyclotomicOne value * cyclotomicTwo value *
           cyclotomicFour value * cyclotomicEight value := by
   unfold cyclotomicOne cyclotomicTwo cyclotomicThree cyclotomicFour
@@ -91,35 +93,35 @@ theorem exercise_8_13_first_eight (value : K) :
   constructor
   · rfl
   constructor
-  · simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  · simp only [Basic.spreadPolynomial]
     ring1
   constructor
-  · simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  · simp only [Basic.spreadPolynomial]
     ring1
   constructor
-  · simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  · simp only [Basic.spreadPolynomial]
     ring1
   constructor
-  · simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  · simp only [Basic.spreadPolynomial]
     ring1
   constructor
-  · simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  · simp only [Basic.spreadPolynomial]
     ring1
   constructor
-  · simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  · simp only [Basic.spreadPolynomial]
     ring1
-  · simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  · simp only [Basic.spreadPolynomial]
     ring1
 
 /-- The source's worked `n=12` divisor product. -/
 theorem exercise_8_13_twelve (value : K) :
-    Polynomial.Recurrence.Spread.Basic.spreadPolynomial 12 value =
+    Basic.spreadPolynomial 12 value =
       cyclotomicOne value * cyclotomicTwo value *
         cyclotomicThree value * cyclotomicFour value *
         cyclotomicSix value * cyclotomicTwelve value := by
   unfold cyclotomicOne cyclotomicTwo cyclotomicThree cyclotomicFour
     cyclotomicSix cyclotomicTwelve
-  simp only [Polynomial.Recurrence.Spread.Basic.spreadPolynomial]
+  simp only [Basic.spreadPolynomial]
   ring1
 
 end ExerciseEightThirteen

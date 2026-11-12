@@ -72,64 +72,64 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent)
 open Purelib.Integration.Path.BoundaryRibbon (area)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
     Differential genus}
   {target : Coordinate} {index : Nat} {box :
-    Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+    Geometry.Rational.Box}
+  {capSample : Primitives.Sample cap differential index box}
 
 namespace Vertex
 
 /-- Read consecutive differences of the cached original cap-chart vertex values. -/
-@[expose] public def steps (first : FineCharts.Vertex capSample target) : List (FineCharts.Vertex capSample target) →
-  List InverseRootPolynomial.Gaussian
+@[expose] public def steps (first : Vertex capSample target) : List (Vertex capSample target) →
+  List Gaussian
   | [] => []
   | next :: remaining => (next.value - first.value) ::
     steps next remaining
 
 /-- Read the ordered increments of the original retained vertex polygon. -/
-@[expose] public def increments : List (FineCharts.Vertex capSample target) → List InverseRootPolynomial.Gaussian
+@[expose] public def increments : List (Vertex capSample target) → List Gaussian
   | [] => []
   | first :: remaining => steps first remaining
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex in
 /-- Read the last original retained vertex, using the supplied first vertex when the tail is empty. -/
-@[expose] public def finish (first : FineCharts.Vertex capSample target) : List (FineCharts.Vertex capSample target) →
-  FineCharts.Vertex capSample target
+@[expose] public def finish (first : Vertex capSample target) : List (Vertex capSample target) →
+  Vertex capSample target
   | [] => first
   | next :: remaining => finish next remaining
 
 /-- Sum the oriented edge areas along the original retained open vertex chain. -/
-@[expose] public def openArea (first : FineCharts.Vertex capSample target) : List (FineCharts.Vertex capSample target) →
-  InverseRootPolynomial.Gaussian
+@[expose] public def openArea (first : Vertex capSample target) : List (Vertex capSample target) →
+  Gaussian
   | [] => 0
-  | next :: remaining => BoundaryRibbon.area first.value next.value +
+  | next :: remaining => area first.value next.value +
     openArea next remaining
 
 section
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex
 /-- The closing edge is explicit and need not be a zero edge. -/
-@[expose] public def closedArea : List (FineCharts.Vertex capSample target) → InverseRootPolynomial.Gaussian
+@[expose] public def closedArea : List (Vertex capSample target) → Gaussian
   | [] => 0
   | first :: remaining => openArea first remaining +
-    BoundaryRibbon.area (finish first remaining).value first.value
+    area (finish first remaining).value first.value
 
 /-- The original retained vertex increments telescope to the last value minus the first. -/
-theorem steps_sum (first : FineCharts.Vertex capSample target) (remaining : List (FineCharts.Vertex capSample target)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (steps
+theorem steps_sum (first : Vertex capSample target) (remaining : List (Vertex capSample target)) :
+    gaussianSum (steps
       first remaining) = (finish first remaining).value - first.value := by
   induction remaining generalizing first with
-  | nil => change (0 : InverseRootPolynomial.Gaussian) = first.value - first.value; ring1
+  | nil => change (0 : Gaussian) = first.value - first.value; ring1
   | cons next remaining previous =>
       simp only [steps,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum, finish, previous]
+        gaussianSum, finish, previous]
       ring1
 
 end
 
 /-- Tracing the original retained increments from the first value gives the open vertex-chain area. -/
-theorem steps_area (first : FineCharts.Vertex capSample target) (remaining : List (FineCharts.Vertex capSample target))
+theorem steps_area (first : Vertex capSample target) (remaining : List (Vertex capSample target))
   :
     IncrementArea.traceArea first.value (steps first
       remaining) = openArea first remaining := by
@@ -143,7 +143,7 @@ theorem steps_area (first : FineCharts.Vertex capSample target) (remaining : Lis
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex in
 /-- The original increment path area equals the retained vertex polygon area with its explicit closing edge. -/
-theorem area_eq (vertices : List (FineCharts.Vertex capSample target)) :
+theorem area_eq (vertices : List (Vertex capSample target)) :
     IncrementArea.pathArea (increments vertices) =
       closedArea vertices := by
   cases vertices with
@@ -153,9 +153,9 @@ theorem area_eq (vertices : List (FineCharts.Vertex capSample target)) :
         (steps first remaining)
       rw [steps_area,
         steps_sum, BoundaryRibbon.area_sub_self_right] at translated
-      have reverse : BoundaryRibbon.area (finish first remaining).value first.value = -BoundaryRibbon.area first.value
+      have reverse : area (finish first remaining).value first.value = -area first.value
         (finish first remaining).value := by
-        unfold BoundaryRibbon.area
+        unfold area
         ring1
       simp only [increments,
         closedArea, reverse, translated]
@@ -168,29 +168,29 @@ set_option genInjectivity false in
 specification; root closure is not a precondition of this data. -/
 structure Polygon (capSample : Primitives.Sample cap differential index box) where
   /-- The original square-residual target shared by the retained chart vertices. -/ target :
-    InverseRootPolynomial.Coordinate
-  /-- The original ordered chart vertices at the retained square-residual target. -/ vertices : List (FineCharts.Vertex
+    Coordinate
+  /-- The original ordered chart vertices at the retained square-residual target. -/ vertices : List (Vertex
     capSample target)
-  /-- The cached sum of the original retained polygon increments. -/ total : InverseRootPolynomial.Gaussian
+  /-- The cached sum of the original retained polygon increments. -/ total : Gaussian
   /-- The cached total is exactly the sum of the actual vertex increments. -/ total_eq : total =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.increments vertices)
-  /-- The cached oriented area including the original explicit closing edge. -/ area : InverseRootPolynomial.Gaussian
+    gaussianSum
+    (Vertex.increments vertices)
+  /-- The cached oriented area including the original explicit closing edge. -/ area : Gaussian
   /-- The cached area equals the closed area of these exact original vertices. -/ area_eq : area =
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.closedArea vertices
+    Vertex.closedArea vertices
 
 constructive_injectivity Polygon
 
 variable {center : Gaussian} {owner :
-  Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-  ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval center)}
+  Riemann.Topology.SquareRootContinuationChain.Owner
+  ((HyperellipticReciprocal.polynomial curve).eval center)}
   {count : Nat} {terminal : Terminal cap owner count} {comparison :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data terminal differential}
-  {floor : Nat} {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample
+    TerminalComparison.Data terminal differential}
+  {floor : Nat} {source : PolynomialPullback.Sample
     terminal.preparation capSample}
 
 /-- The two actual endpoint chart values differ by the retained original child increment. -/
-private theorem child_step {child : Parent curve differential} {request : FineCharts.ChildRequest comparison child
+private theorem child_step {child : Parent curve differential} {request : ChildRequest comparison child
   target floor}
     (evaluated : ChildRequest.Evaluation request source) : evaluated.last.vertex.value - evaluated.first.vertex.value =
       evaluated.increment := by
@@ -201,25 +201,25 @@ private theorem child_step {child : Parent curve differential} {request : FineCh
 namespace Samples
 
 /-- Read the retained terminal chart vertex of every original evaluated child. -/
-@[expose] public def finishes : {children : List (Parent curve differential)} → {requests : FineCharts.Requests
+@[expose] public def finishes : {children : List (Parent curve differential)} → {requests : Requests
   comparison target floor children} →
-    FineCharts.Samples source requests → List (FineCharts.Vertex capSample target)
+    Samples source requests → List (Vertex capSample target)
   | _, .nil, _ => []
   | _, .cons _ _, samples => samples.1.last.vertex ::
     finishes samples.2
 
 /-- Read the original first chart vertex followed by every retained child's terminal vertex. -/
-@[expose] public def vertices : {children : List (Parent curve differential)} → {requests : FineCharts.Requests
+@[expose] public def vertices : {children : List (Parent curve differential)} → {requests : Requests
   comparison target floor children} →
-    FineCharts.Samples source requests → List (FineCharts.Vertex capSample target)
+    Samples source requests → List (Vertex capSample target)
   | _, .nil, _ => []
   | _, .cons _ _, samples => samples.1.first.vertex ::
     finishes samples
 
 /-- The retained terminal chart vertices display exactly the original child endpoint coordinates. -/
-theorem finishes_points : {children : List (Parent curve differential)} → {requests : FineCharts.Requests comparison
+theorem finishes_points : {children : List (Parent curve differential)} → {requests : Requests comparison
   target floor children} →
-    (samples : FineCharts.Samples source requests) →
+    (samples : Samples source requests) →
       (finishes samples).map Vertex.point = children.map
       (fun child => child.edge.point 1)
   | _, .nil, _ => rfl
@@ -227,9 +227,9 @@ theorem finishes_points : {children : List (Parent curve differential)} → {req
     (finishes_points samples.2)
 
 /-- There is exactly one retained terminal chart vertex for each original child. -/
-theorem finishes_length : {children : List (Parent curve differential)} → {requests : FineCharts.Requests comparison
+theorem finishes_length : {children : List (Parent curve differential)} → {requests : Requests comparison
   target floor children} →
-    (samples : FineCharts.Samples source requests) →
+    (samples : Samples source requests) →
       (finishes samples).length = children.length
   | _, .nil, _ => rfl
   | _, .cons _ _, samples => congrArg Nat.succ
@@ -237,7 +237,7 @@ theorem finishes_length : {children : List (Parent curve differential)} → {req
 
 /-- A nonempty original child chain has one more retained chart vertex than children. -/
 theorem vertices_length {child : Parent curve differential} {children : List (Parent curve differential)}
-    {requests : FineCharts.Requests comparison target floor (child :: children)} (samples : FineCharts.Samples source
+    {requests : Requests comparison target floor (child :: children)} (samples : Samples source
       requests) :
     samples.vertices.length = (child :: children).length + 1 := by
   cases requests with
@@ -246,7 +246,7 @@ theorem vertices_length {child : Parent curve differential} {children : List (Pa
 
 /-- The original nonempty retained child chain has exactly its child count plus one vertices. -/
 theorem vertices_length_of_nonempty {children : List (Parent curve differential)}
-    {requests : FineCharts.Requests comparison target floor children} (samples : FineCharts.Samples source requests)
+    {requests : Requests comparison target floor children} (samples : Samples source requests)
       (nonempty : children ≠ []) :
     samples.vertices.length = children.length + 1 := by
   cases children with
@@ -255,9 +255,9 @@ theorem vertices_length_of_nonempty {children : List (Parent curve differential)
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Samples in
 /-- The retained polygon points are the original chain start followed by its actual child endpoints. -/
-theorem vertices_points {children : List (Parent curve differential)} {requests : FineCharts.Requests comparison target
+theorem vertices_points {children : List (Parent curve differential)} {requests : Requests comparison target
   floor children}
-    (samples : FineCharts.Samples source requests) (nonempty : children ≠ []) {start finish : Lifted.Basic.LiftedPoint
+    (samples : Samples source requests) (nonempty : children ≠ []) {start finish : Lifted.Basic.LiftedPoint
       2}
     (chain : PreparedDirectDyadicRefinements.DirectPathChain children (start := start) (finish := finish)) :
     samples.vertices.map Vertex.point = start.coordinate :: children.map (fun child => child.edge.point 1) := by
@@ -271,31 +271,31 @@ theorem vertices_points {children : List (Parent curve differential)} {requests 
           exact congrArg (fun first => first :: _) child.edge.point_zero
 
 /-- With exactly shared chart vertices, the original polygon increments equal the retained child increment rows. -/
-theorem increments_eq : {children : List (Parent curve differential)} → {requests : FineCharts.Requests comparison
+theorem increments_eq : {children : List (Parent curve differential)} → {requests : Requests comparison
   target floor children} →
-    (samples : FineCharts.Samples source requests) → samples.Shared →
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.increments samples.vertices = samples.rows.map
+    (samples : Samples source requests) → samples.Shared →
+      Vertex.increments samples.vertices = samples.rows.map
       Prod.fst
   | _, .nil, _, _ => rfl
   | _, .cons _ .nil, samples, _ => by
       change [samples.1.last.vertex.value - samples.1.first.vertex.value] = [samples.1.increment]
-      exact congrArg (fun value => [value]) (Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.child_step samples.1)
+      exact congrArg (fun value => [value]) (child_step samples.1)
   | _, .cons _ (.cons _ _), samples, shared => by
       change (samples.1.last.vertex.value - samples.1.first.vertex.value) ::
-        Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.steps samples.1.last.vertex
+        Vertex.steps samples.1.last.vertex
         (finishes samples.2) =
         samples.1.increment :: samples.2.rows.map Prod.fst
-      rw [Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.child_step, shared.1]
+      rw [child_step, shared.1]
       exact congrArg (List.cons samples.1.increment)
         (increments_eq samples.2 shared.2)
 
 /-- The retained child increment area equals the original closed chart-vertex polygon area. -/
-theorem polygon_area {children : List (Parent curve differential)} {requests : FineCharts.Requests comparison target
+theorem polygon_area {children : List (Parent curve differential)} {requests : Requests comparison target
   floor children}
-    (samples : FineCharts.Samples source requests) (shared : samples.Shared) :
+    (samples : Samples source requests) (shared : samples.Shared) :
     IncrementArea.pathArea (samples.rows.map Prod.fst) =
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.closedArea samples.vertices := by
-  rw [← samples.increments_eq shared, Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.area_eq]
+      Vertex.closedArea samples.vertices := by
+  rw [← samples.increments_eq shared, Vertex.area_eq]
 
 end Samples
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts

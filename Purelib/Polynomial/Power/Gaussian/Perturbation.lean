@@ -2,6 +2,7 @@ module
 
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Nat.Positive
+public import Purelib.Geometry.Rational.Affine
 import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
@@ -123,6 +124,35 @@ theorem polynomial_target_eq_add_perturbation
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im] <;>
     ring1
+
+/-- Scaling the retained parameter perturbation gives exactly the power polynomial on the original affine chord.
+
+The equality concerns the complete normalized coefficient table for every
+rational parameter, without an interval or squarefreeness assumption.
+-/
+theorem polynomial_affine_eq_add_scaled_perturbation
+    (source target : Gaussian.Basic.Canonical) (degree : Nat.Positive.RootDegree)
+    (time : Rat.Fraction.Rational) :
+    Power.Gaussian.rootPolynomial
+        (Geometry.Rational.Affine.line source (target - source) time) degree =
+      Power.Gaussian.rootPolynomial source degree +
+        DensePolynomial.scale (⟨time, 0⟩ : Gaussian.Basic.Canonical)
+          (parameterPerturbation source target) := by
+  apply Dense.Extensionality.normalized_eq_of_sub_isZero
+    (Power.Gaussian.rootPolynomial_normalized _ degree)
+    (DensePolynomial.normalize_add _ _)
+  apply Dense.Gaussian.NonzeroEvaluation.difference_isZero_of_candidate_evals
+  intro point _member
+  rw [DensePolynomial.eval_add, DensePolynomial.eval_scale,
+    Power.Gaussian.rootPolynomial_eval, Power.Gaussian.rootPolynomial_eval,
+    parameterPerturbation_eval]
+  apply Gaussian.Basic.ext <;>
+    simp only [Geometry.Rational.Affine.line, Gaussian.Cast.ofCoordinate_re,
+      Gaussian.Cast.ofCoordinate_im, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
+      Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re,
+      Gaussian.Basic.mul_im] <;>
+    ring1
+
 end Purelib.Polynomial.Power.Gaussian.Perturbation
 
 end

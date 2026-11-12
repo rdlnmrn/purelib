@@ -46,8 +46,8 @@ space, infimum, completed vector, or quantified family of all coefficients.
 -/
 
 /-- Fold a visible target through the finitely many semantic-coherence moduli. -/
-@[expose] def requestTarget : List Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed →
-  Purelib.Data.Rat.Fraction.Rational → Purelib.Data.Rat.Fraction.Rational
+@[expose] def requestTarget : List CoherentNamed →
+  Fraction.Rational → Fraction.Rational
   | [], target => target
   | channel :: remaining, target =>
       Coherent.commonRequest
@@ -83,7 +83,7 @@ theorem requestTarget_lt_accuracy_of_mem :
   | [], _channel, member, _target, _positive => by
       nomatch member
   | head :: remaining, channel, member, target, positive => by
-      rcases Purelib.Data.List.Membership.mem_cons.mp member with equal | tailMember
+      rcases Data.List.Membership.mem_cons.mp member with equal | tailMember
       · subst head
         exact
           Coherent.commonRequest_lt_right
@@ -125,7 +125,7 @@ structure PreparedEntry (channels : List CoherentNamed) (channel : CoherentNamed
   /-- The actual name returned by the shared positive request. -/ name : Named
   /-- The retained name is the refinement selected by the original shared table. -/ name_eq :
     name = sharedName channels channel target positive
-  /-- The enclosure evaluated once at the retained name's selected state. -/ ball : Gaussian.Enclosure.Ball
+  /-- The enclosure evaluated once at the retained name's selected state. -/ ball : Enclosure.Ball
   /-- The cached enclosure is the exact ball of the retained name. -/ ball_eq : ball = name.process.ball name.state
   /-- The evaluated enclosure meets the original strict squared-radius target. -/ accurate : ball.radiusSq < target
 
@@ -202,35 +202,35 @@ namespace Purelib.Approximation.Gaussian.Table.Basic.ChannelTable
 /-- Compute the common positive-request budget for all channels in the retained finite table. -/
 @[expose] def sharedTarget (table :
   ChannelTable) (target : Fraction.Rational) : Fraction.Rational :=
-  Purelib.Approximation.Gaussian.Table.Request.requestTarget table.channels target
+  Request.requestTarget table.channels target
 
 /-- The table's common request budget is positive when the target is positive. -/
 theorem sharedTarget_pos (table :
   ChannelTable) {target : Fraction.Rational}
     (positive : 0 < target) : 0 < table.sharedTarget target :=
-  Purelib.Approximation.Gaussian.Table.Request.requestTarget_pos table.channels positive
+  Request.requestTarget_pos table.channels positive
 
 /-- The actual list of same-budget CCL names returned by one table request. -/
 @[expose] def requestNames (table :
   ChannelTable) (target : Fraction.Rational)
     (positive : 0 < target) : List Named :=
   table.channels.map
-    (fun channel => Purelib.Approximation.Gaussian.Table.Request.sharedName table.channels channel target positive)
+    (fun channel => Request.sharedName table.channels channel target positive)
 
 /-- A shared table request preserves the number of channels. -/
 @[simp] theorem requestNames_length (table :
   ChannelTable) (target : Fraction.Rational)
     (positive : 0 < target) :
     (table.requestNames target positive).length = table.length := by
-  exact Purelib.Data.List.Map.length_map _ _
+  exact Data.List.Map.length_map _ _
 
 /-- Centres of all channels after the table's one shared request. -/
 @[expose] def requestCenters (table :
   ChannelTable) (target : Fraction.Rational)
     (positive : 0 < target) : List Data.Gaussian.Basic.Canonical :=
   table.channels.map fun channel =>
-    ((Purelib.Approximation.Gaussian.Table.Request.sharedName table.channels channel target positive).process.ball
-      (Purelib.Approximation.Gaussian.Table.Request.sharedName table.channels channel target positive).state).center
+    ((Request.sharedName table.channels channel target positive).process.ball
+      (Request.sharedName table.channels channel target positive).state).center
 
 end Purelib.Approximation.Gaussian.Table.Basic.ChannelTable
 

@@ -29,13 +29,13 @@ namespace Purelib.Approximation.Gaussian.Table.LinearCombination
 
 /-- Add the finite lists of coherent partial coefficients using the existing productive coefficient addition. -/
 def addPartials : List CoherentNamed → List
-  CoherentNamed → List Coherent.CoherentNamed :=
+  CoherentNamed → List CoherentNamed :=
   Coefficients.addCoefficients
 
 /-- Multiply each finite partial coefficient by the same retained coherent factor. -/
 def scalePartials (factor : CoherentNamed)
   (partials : List CoherentNamed) :
-    List Coherent.CoherentNamed :=
+    List CoherentNamed :=
   Coefficients.scaleCoefficients factor partials
 
 set_option backward.match.sparseCases false in
@@ -44,14 +44,14 @@ set_option backward.match.sparseCases false in
 The recursion consumes the common prefix of the two finite lists and returns exact zero when either remaining list is
 empty. -/
 def directionalSum : List
-  Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed → List Purelib.Data.Gaussian.Basic.Canonical →
-  Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
+  CoherentNamed → List Data.Gaussian.Basic.Canonical →
+  CoherentNamed
   | coefficient :: coefficients, direction :: directions =>
-      Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.add
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul coefficient
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.Coherence.exact direction))
+      CoherentNamed.add
+        (CoherentNamed.mul coefficient
+        (CoherentNamed.Coherence.exact direction))
         (directionalSum coefficients directions)
-  | _, _ => Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.Coherence.exact 0
+  | _, _ => CoherentNamed.Coherence.exact 0
 
 end Purelib.Approximation.Gaussian.Table.LinearCombination
 

@@ -35,7 +35,7 @@ open Purelib.Data.List Purelib.Data.Nat
 The original descending table retains its leading one, degree-minus-one zero
 padding and negative trailing value. No normalization or coefficient selection
 is performed by this builder. -/
-@[expose] public def powerPolynomial (value : Fraction.Rational) (degree : Nat) : Dense.Basic.DensePolynomial
+@[expose] public def powerPolynomial (value : Fraction.Rational) (degree : Nat) : Basic.DensePolynomial
   Fraction.Rational :=
   ⟨1 :: (List.replicate (degree - 1) 0 ++ [-value])⟩
 
@@ -46,7 +46,7 @@ leading-zero scan, preserving its entire padding and trailing constant. -/
 public theorem powerPolynomial_normalized (value : Fraction.Rational) (degree : Nat) :
     (powerPolynomial value degree).normalize = powerPolynomial value degree := by
   have oneNonzero : (1 : Fraction.Rational) ≠ 0 := by decide
-  apply Dense.Basic.DensePolynomial.ext
+  apply Basic.DensePolynomial.ext
   change
     (1 :: (List.replicate (degree - 1) 0 ++ [-value])).dropWhile
         (· = 0) =
@@ -85,12 +85,12 @@ accumulator then consumes the supplied trailing coefficient exactly once. -/
 private theorem evalCoeffs_append_singleton
     (point : Fraction.Rational) (coefficients : List Fraction.Rational)
     (trailing : Fraction.Rational) :
-    Dense.Basic.DensePolynomial.evalCoeffs point
+    Basic.DensePolynomial.evalCoeffs point
         (coefficients ++ [trailing]) =
-      Dense.Basic.DensePolynomial.evalCoeffs point coefficients *
+      Basic.DensePolynomial.evalCoeffs point coefficients *
         point + trailing := open Purelib in by
-  unfold Dense.Basic.DensePolynomial.evalCoeffs
-  rewrite [Purelib.Data.List.Fold.foldl_append]
+  unfold Basic.DensePolynomial.evalCoeffs
+  rewrite [Fold.foldl_append]
   exact Eq.refl _
 
 /-- For a positive exponent, the displayed polynomial evaluates as the point power minus the supplied value.
@@ -102,7 +102,7 @@ public theorem powerPolynomial_eval (value point : Fraction.Rational) (degree : 
     (powerPolynomial value degree).eval point = point ^ degree - value := by
   have predecessor : degree - 1 + 1 = degree :=
     (Nat.add_comm _ 1).trans (Subtraction.add_sub_of_le positive)
-  change Dense.Basic.DensePolynomial.evalCoeffs point
+  change Basic.DensePolynomial.evalCoeffs point
       (1 :: (List.replicate (degree - 1) 0 ++ [-value])) =
     point ^ degree - value
   rw [show
@@ -110,7 +110,7 @@ public theorem powerPolynomial_eval (value point : Fraction.Rational) (degree : 
         ([1] ++ List.replicate (degree - 1) 0) ++ [-value] by
       exact Eq.refl _]
   rw [evalCoeffs_append_singleton,
-    Dense.Basic.DensePolynomial.evalCoeffs_append_replicate_zero]
+    Basic.DensePolynomial.evalCoeffs_append_replicate_zero]
   change ((0 * point + 1) * point ^ (degree - 1)) * point + -value =
     point ^ degree - value
   calc

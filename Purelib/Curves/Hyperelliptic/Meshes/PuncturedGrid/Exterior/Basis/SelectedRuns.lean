@@ -143,27 +143,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSou
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains (SourceChain)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains (ReverseSourceChain)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
-variable {bounds : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
   {retained : CommonBasisPreparation
     prepared}
-  {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {target coefficientTarget : Coordinate} {coverFloor floor index
     minimum stage energyFloor radialDepth : Nat}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {capSample :
+    Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
@@ -190,29 +190,29 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable (sample :
   Sampled fans
   coefficients radialDepth) (comparisons :
-  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  PreparedComparisons
   sample)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
   (data : RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
   (group : IndexedRun retained inputs
     outer data coefficients)
 
 /-- Reuse the selected parent acquisition; the fragments already have its exact original primitive bank as their owner.
 -/
-def selectedRun (chain : SourceChains.SourceChain group.fragments 0 1) :
+def selectedRun (chain : SourceChain group.fragments 0 1) :
     SourceRuns.SourceRun (Sampled.parentPrepared sample comparisons outer group.parent).integrals data :=
   SourceRun.ofChain group.fragments chain
 
 /-- Descending physical traversal uses the same parent acquisition, with a signed source comparison rather than newly
 acquired reversed primitives. -/
-def selectedReverseRun (chain : ReverseSourceChains.ReverseSourceChain group.fragments 1 0) :
-    ReverseSourceRuns.ReverseSourceRun (Sampled.parentPrepared sample comparisons outer group.parent).integrals data :=
+def selectedReverseRun (chain : ReverseSourceChain group.fragments 1 0) :
+    ReverseSourceRun (Sampled.parentPrepared sample comparisons outer group.parent).integrals data :=
   ReverseSourceRun.ofChain group.fragments chain
 
 /-- The selected original forward source run bounds the squared area discrepancy of its complete physical fragments. -/
-theorem selectedRun_area (chain : SourceChains.SourceChain group.fragments 0 1) :
+theorem selectedRun_area (chain : SourceChain group.fragments 0 1) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((group.fragments.map OwnedFragment.pair).map
       Prod.fst).flatten -
       (Sampled.parentPrepared sample comparisons outer group.parent).weighted.source.area) ≤
@@ -224,7 +224,7 @@ theorem selectedRun_area (chain : SourceChains.SourceChain group.fragments 0 1) 
     (Sampled.parentPrepared sample comparisons outer group.parent).weighted
 
 /-- The selected original descending source run bounds the squared discrepancy from the negative source area. -/
-theorem selectedReverseRun_area (chain : ReverseSourceChains.ReverseSourceChain group.fragments 1 0) :
+theorem selectedReverseRun_area (chain : ReverseSourceChain group.fragments 1 0) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((group.fragments.map OwnedFragment.pair).map
       Prod.fst).flatten +
       (Sampled.parentPrepared sample comparisons outer group.parent).weighted.source.area) ≤
@@ -237,7 +237,7 @@ theorem selectedReverseRun_area (chain : ReverseSourceChains.ReverseSourceChain 
     (Sampled.parentPrepared sample comparisons outer group.parent).weighted
 
 /-- The complete physical forward run differs from its original source total by the retained total-error allowance. -/
-theorem selectedRun_total (chain : SourceChains.SourceChain group.fragments 0 1) :
+theorem selectedRun_total (chain : SourceChain group.fragments 0 1) :
     PrimitivePoint.Bounded ((PairedIncrementArea.total ((group.fragments.map OwnedFragment.pair).map
       Prod.fst).flatten).sub
       (ConjugatePathReadback.conjugateDiagonal
@@ -251,7 +251,7 @@ theorem selectedRun_total (chain : SourceChains.SourceChain group.fragments 0 1)
 
 /-- The complete physical descending run differs from the negative original source total by the retained total-error
 allowance. -/
-theorem selectedReverseRun_total (chain : ReverseSourceChains.ReverseSourceChain group.fragments 1 0) :
+theorem selectedReverseRun_total (chain : ReverseSourceChain group.fragments 1 0) :
     PrimitivePoint.Bounded ((PairedIncrementArea.total ((group.fragments.map OwnedFragment.pair).map
       Prod.fst).flatten).sub
       (PrimitivePoint.zero.sub (ConjugatePathReadback.conjugateDiagonal
@@ -266,7 +266,7 @@ theorem selectedReverseRun_total (chain : ReverseSourceChains.ReverseSourceChain
 
 /-- The complete physical parent magnitude includes the endpoint error, which is needed for the cross-parent joining
 wedges. -/
-theorem selectedRun_bounded (chain : SourceChains.SourceChain group.fragments 0 1) :
+theorem selectedRun_bounded (chain : SourceChain group.fragments 0 1) :
     PrimitivePoint.Bounded (PairedIncrementArea.total ((group.fragments.map OwnedFragment.pair).map Prod.fst).flatten)
       (2 *
         ((selectedRun
@@ -279,7 +279,7 @@ theorem selectedRun_bounded (chain : SourceChains.SourceChain group.fragments 0 
 
 /-- The complete descending physical run has the retained magnitude bound from its original source slope and endpoint
 error. -/
-theorem selectedReverseRun_bounded (chain : ReverseSourceChains.ReverseSourceChain group.fragments 1 0) :
+theorem selectedReverseRun_bounded (chain : ReverseSourceChain group.fragments 1 0) :
     PrimitivePoint.Bounded (PairedIncrementArea.total ((group.fragments.map OwnedFragment.pair).map Prod.fst).flatten)
       (2 *
         ((selectedReverseRun
@@ -291,15 +291,15 @@ theorem selectedReverseRun_bounded (chain : ReverseSourceChains.ReverseSourceCha
     (Sampled.parentPrepared sample comparisons outer group.parent).weighted
 
 /-- Group width certificates apply directly to the selected run. -/
-theorem selectedRun_width (chain : SourceChains.SourceChain group.fragments 0 1) {width :
-  InverseRootPolynomial.Coordinate}
+theorem selectedRun_width (chain : SourceChain group.fragments 0 1) {width :
+  Coordinate}
     (bounded : PairedFragmentBlocks.maximum OwnedFragment.sourceWidth group.fragments ≤ width) :
     (selectedRun sample
       comparisons outer data group chain).width ≤ width := bounded
 
 /-- The grouped reverse source-width certificate bounds the exact selected descending run. -/
-theorem selectedReverseRun_width (chain : ReverseSourceChains.ReverseSourceChain group.fragments 1 0) {width :
-  InverseRootPolynomial.Coordinate}
+theorem selectedReverseRun_width (chain : ReverseSourceChain group.fragments 1 0) {width :
+  Coordinate}
     (bounded : PairedFragmentBlocks.maximum OwnedFragment.reverseSourceWidth group.fragments ≤ width) :
     (selectedReverseRun
       sample comparisons outer data group chain).width ≤ width := bounded

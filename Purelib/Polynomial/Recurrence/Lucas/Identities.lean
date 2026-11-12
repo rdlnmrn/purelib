@@ -38,35 +38,35 @@ section
 substitution. -/
 theorem lucas_product_add_sub_doubled
     (offset step : Nat) (value : K) :
-    Recurrence.Lucas.Basic.lucas (offset + step) (2 * value) *
-        Recurrence.Lucas.Basic.lucas step (2 * value) =
-      Recurrence.Lucas.Basic.lucas (offset + step + step) (2 * value) +
-        Recurrence.Lucas.Basic.lucas offset (2 * value) := by
-  have product := Recurrence.Chebyshev.First.Basic.chebyshevFirst_product_add_sub
+    Basic.lucas (offset + step) (2 * value) *
+        Basic.lucas step (2 * value) =
+      Basic.lucas (offset + step + step) (2 * value) +
+        Basic.lucas offset (2 * value) := by
+  have product := Chebyshev.First.Basic.chebyshevFirst_product_add_sub
     (K := K) offset step value
-  rw [Recurrence.Lucas.Chebyshev.ExerciseEightThirteen.lucas_at_double,
-    Recurrence.Lucas.Chebyshev.ExerciseEightThirteen.lucas_at_double,
-    Recurrence.Lucas.Chebyshev.ExerciseEightThirteen.lucas_at_double,
-      Recurrence.Lucas.Chebyshev.ExerciseEightThirteen.lucas_at_double]
+  rw [Chebyshev.ExerciseEightThirteen.lucas_at_double,
+    Chebyshev.ExerciseEightThirteen.lucas_at_double,
+    Chebyshev.ExerciseEightThirteen.lucas_at_double,
+      Chebyshev.ExerciseEightThirteen.lucas_at_double]
   calc
-    (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (offset + step) value) *
-        (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst step value) =
-      2 * (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (offset + step) value *
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst step value) := by ring1
-    _ = 2 * (Recurrence.Chebyshev.First.Basic.chebyshevFirst (offset + step + step) value +
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst offset value) := by rw [product]
-    _ = 2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (offset + step + step) value +
-        2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst offset value := by ring1
+    (2 * Chebyshev.First.Basic.chebyshevFirst (offset + step) value) *
+        (2 * Chebyshev.First.Basic.chebyshevFirst step value) =
+      2 * (2 * Chebyshev.First.Basic.chebyshevFirst (offset + step) value *
+        Chebyshev.First.Basic.chebyshevFirst step value) := by ring1
+    _ = 2 * (Chebyshev.First.Basic.chebyshevFirst (offset + step + step) value +
+        Chebyshev.First.Basic.chebyshevFirst offset value) := by rw [product]
+    _ = 2 * Chebyshev.First.Basic.chebyshevFirst (offset + step + step) value +
+        2 * Chebyshev.First.Basic.chebyshevFirst offset value := by ring1
 
 /-- Odd Lucas indices have one simple endpoint factor and a square remaining
 factor.  This is equation (13) in the finite algebraic reduction of the
 Goh--Wildberger conjecture. -/
 theorem lucas_odd_square_identity
     (half : Nat) (value : K) :
-    (Recurrence.Lucas.Basic.lucas (half + half + 1) (2 * value) - 2) *
+    (Basic.lucas (half + half + 1) (2 * value) - 2) *
         (2 * value - 2) =
-      (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) -
-        Recurrence.Lucas.Basic.lucas half (2 * value)) ^ 2 := by
+      (Basic.lucas (half + 1) (2 * value) -
+        Basic.lucas half (2 * value)) ^ 2 := by
   have upperSquare := lucas_product_add_sub_doubled
     (K := K) 0 (half + 1) value
   have lowerSquare := lucas_product_add_sub_doubled
@@ -77,41 +77,41 @@ theorem lucas_odd_square_identity
     (K := K) (half + half) 1 value
   rw [show 0 + (half + 1) = half + 1 by omega0] at upperSquare
   rw [show half + 1 + (half + 1) = half + half + 2 by omega0,
-    Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_zero] at upperSquare
-  rw [show 0 + half = half by omega0, Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_zero] at lowerSquare
+    Basic.ExerciseEightThirteen.lucas_zero] at upperSquare
+  rw [show 0 + half = half by omega0, Basic.ExerciseEightThirteen.lucas_zero] at lowerSquare
   rw [show 1 + half = half + 1 by omega0] at adjacentProduct
   rw [show half + 1 + half = half + half + 1 by omega0,
-    Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_one] at adjacentProduct
+    Basic.ExerciseEightThirteen.lucas_one] at adjacentProduct
   rw [show half + half + 1 + 1 = half + half + 2 by omega0,
-    Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_one] at neighborSum
+    Basic.ExerciseEightThirteen.lucas_one] at neighborSum
   calc
-    (Recurrence.Lucas.Basic.lucas (half + half + 1) (2 * value) - 2) *
+    (Basic.lucas (half + half + 1) (2 * value) - 2) *
         (2 * value - 2) =
-      Recurrence.Lucas.Basic.lucas (half + half + 1) (2 * value) *
+      Basic.lucas (half + half + 1) (2 * value) *
           (2 * value) -
-        2 * Recurrence.Lucas.Basic.lucas (half + half + 1) (2 * value) -
+        2 * Basic.lucas (half + half + 1) (2 * value) -
           4 * value + 4 := by ring1
-    _ = Recurrence.Lucas.Basic.lucas (half + half + 2) (2 * value) +
-          Recurrence.Lucas.Basic.lucas (half + half) (2 * value) -
-        2 * Recurrence.Lucas.Basic.lucas (half + half + 1) (2 * value) -
+    _ = Basic.lucas (half + half + 2) (2 * value) +
+          Basic.lucas (half + half) (2 * value) -
+        2 * Basic.lucas (half + half + 1) (2 * value) -
           4 * value + 4 := by rw [neighborSum]
-    _ = (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) -
-        Recurrence.Lucas.Basic.lucas half (2 * value)) ^ 2 := by
+    _ = (Basic.lucas (half + 1) (2 * value) -
+        Basic.lucas half (2 * value)) ^ 2 := by
           calc
-            Recurrence.Lucas.Basic.lucas (half + half + 2) (2 * value) +
-                  Recurrence.Lucas.Basic.lucas (half + half) (2 * value) -
-                2 * Recurrence.Lucas.Basic.lucas (half + half + 1) (2 * value) -
+            Basic.lucas (half + half + 2) (2 * value) +
+                  Basic.lucas (half + half) (2 * value) -
+                2 * Basic.lucas (half + half + 1) (2 * value) -
                   4 * value + 4 =
-              Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) *
-                  Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) +
-                Recurrence.Lucas.Basic.lucas half (2 * value) *
-                  Recurrence.Lucas.Basic.lucas half (2 * value) -
-                2 * (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) *
-                  Recurrence.Lucas.Basic.lucas half (2 * value)) := by
+              Basic.lucas (half + 1) (2 * value) *
+                  Basic.lucas (half + 1) (2 * value) +
+                Basic.lucas half (2 * value) *
+                  Basic.lucas half (2 * value) -
+                2 * (Basic.lucas (half + 1) (2 * value) *
+                  Basic.lucas half (2 * value)) := by
                     rw [upperSquare, lowerSquare, adjacentProduct]
                     ring1
-            _ = (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) -
-                Recurrence.Lucas.Basic.lucas half (2 * value)) ^ 2 := by
+            _ = (Basic.lucas (half + 1) (2 * value) -
+                Basic.lucas half (2 * value)) ^ 2 := by
                   rw [pow_two]
                   ring1
 
@@ -119,10 +119,10 @@ theorem lucas_odd_square_identity
 remaining factor.  This is equation (14) in the same finite reduction. -/
 theorem lucas_even_square_identity
     (half : Nat) (halfPositive : 1 ≤ half) (value : K) :
-    (Recurrence.Lucas.Basic.lucas (half + half) (2 * value) - 2) *
+    (Basic.lucas (half + half) (2 * value) - 2) *
         ((2 * value - 2) * (2 * value + 2)) =
-      (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) -
-        Recurrence.Lucas.Basic.lucas (half - 1) (2 * value)) ^ 2 := by
+      (Basic.lucas (half + 1) (2 * value) -
+        Basic.lucas (half - 1) (2 * value)) ^ 2 := by
   have upperSquare := lucas_product_add_sub_doubled
     (K := K) 0 (half + 1) value
   have lowerSquare := lucas_product_add_sub_doubled
@@ -131,53 +131,53 @@ theorem lucas_even_square_identity
     (K := K) 2 (half - 1) value
   have twoTimesMiddle := lucas_product_add_sub_doubled
     (K := K) (half + half - 2) 2 value
-  have lucasTwo : Recurrence.Lucas.Basic.lucas 2 (2 * value) = 4 * value ^ 2 - 2 := by
-    rw [Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_succ_succ,
-      Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_one, Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_zero]
+  have lucasTwo : Basic.lucas 2 (2 * value) = 4 * value ^ 2 - 2 := by
+    rw [Basic.ExerciseEightThirteen.lucas_succ_succ,
+      Basic.ExerciseEightThirteen.lucas_one, Basic.ExerciseEightThirteen.lucas_zero]
     ring1
   rw [show 0 + (half + 1) = half + 1 by omega0] at upperSquare
   rw [show half + 1 + (half + 1) = half + half + 2 by omega0,
-    Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_zero] at upperSquare
+    Basic.ExerciseEightThirteen.lucas_zero] at upperSquare
   rw [show 0 + (half - 1) = half - 1 by omega0] at lowerSquare
   rw [show half - 1 + (half - 1) = half + half - 2 by omega0,
-    Recurrence.Lucas.Basic.ExerciseEightThirteen.lucas_zero] at lowerSquare
+    Basic.ExerciseEightThirteen.lucas_zero] at lowerSquare
   rw [show 2 + (half - 1) = half + 1 by omega0] at separatedProduct
   rw [show half + 1 + (half - 1) = half + half by omega0]
     at separatedProduct
   rw [show half + half - 2 + 2 = half + half by omega0]
     at twoTimesMiddle
   calc
-    (Recurrence.Lucas.Basic.lucas (half + half) (2 * value) - 2) *
+    (Basic.lucas (half + half) (2 * value) - 2) *
         ((2 * value - 2) * (2 * value + 2)) =
-      (Recurrence.Lucas.Basic.lucas (half + half) (2 * value) - 2) *
+      (Basic.lucas (half + half) (2 * value) - 2) *
         (4 * value ^ 2 - 4) := by ring1
-    _ = (Recurrence.Lucas.Basic.lucas (half + half) (2 * value) - 2) *
-        (Recurrence.Lucas.Basic.lucas 2 (2 * value) - 2) := by
+    _ = (Basic.lucas (half + half) (2 * value) - 2) *
+        (Basic.lucas 2 (2 * value) - 2) := by
           rw [lucasTwo]
           ring1
-    _ = Recurrence.Lucas.Basic.lucas (half + half + 2) (2 * value) +
-          Recurrence.Lucas.Basic.lucas (half + half - 2) (2 * value) -
-        2 * Recurrence.Lucas.Basic.lucas (half + half) (2 * value) -
-          2 * Recurrence.Lucas.Basic.lucas 2 (2 * value) + 4 := by
+    _ = Basic.lucas (half + half + 2) (2 * value) +
+          Basic.lucas (half + half - 2) (2 * value) -
+        2 * Basic.lucas (half + half) (2 * value) -
+          2 * Basic.lucas 2 (2 * value) + 4 := by
             rw [mul_sub, sub_mul, twoTimesMiddle]
             ring1
-    _ = (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) -
-        Recurrence.Lucas.Basic.lucas (half - 1) (2 * value)) ^ 2 := by
+    _ = (Basic.lucas (half + 1) (2 * value) -
+        Basic.lucas (half - 1) (2 * value)) ^ 2 := by
           calc
-            Recurrence.Lucas.Basic.lucas (half + half + 2) (2 * value) +
-                  Recurrence.Lucas.Basic.lucas (half + half - 2) (2 * value) -
-                2 * Recurrence.Lucas.Basic.lucas (half + half) (2 * value) -
-                  2 * Recurrence.Lucas.Basic.lucas 2 (2 * value) + 4 =
-              Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) *
-                  Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) +
-                Recurrence.Lucas.Basic.lucas (half - 1) (2 * value) *
-                  Recurrence.Lucas.Basic.lucas (half - 1) (2 * value) -
-                2 * (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) *
-                  Recurrence.Lucas.Basic.lucas (half - 1) (2 * value)) := by
+            Basic.lucas (half + half + 2) (2 * value) +
+                  Basic.lucas (half + half - 2) (2 * value) -
+                2 * Basic.lucas (half + half) (2 * value) -
+                  2 * Basic.lucas 2 (2 * value) + 4 =
+              Basic.lucas (half + 1) (2 * value) *
+                  Basic.lucas (half + 1) (2 * value) +
+                Basic.lucas (half - 1) (2 * value) *
+                  Basic.lucas (half - 1) (2 * value) -
+                2 * (Basic.lucas (half + 1) (2 * value) *
+                  Basic.lucas (half - 1) (2 * value)) := by
                     rw [upperSquare, lowerSquare, separatedProduct]
                     ring1
-            _ = (Recurrence.Lucas.Basic.lucas (half + 1) (2 * value) -
-                Recurrence.Lucas.Basic.lucas (half - 1) (2 * value)) ^ 2 := by
+            _ = (Basic.lucas (half + 1) (2 * value) -
+                Basic.lucas (half - 1) (2 * value)) ^ 2 := by
                   rw [pow_two]
                   ring1
 end

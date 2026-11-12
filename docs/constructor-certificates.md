@@ -58,7 +58,7 @@ visibility, including private constructors. Public certificates remain opaque
 inside exposed public sections. Generation changes neither constructor data
 nor executable operations and derived equality helpers.
 
-`Test.Elab.ConstructiveInjectivity` and the supporting constructor-certificate
+`TestPurelib.Elab.ConstructiveInjectivity` and the supporting constructor-certificate
 regressions cover dependent and indexed claims, private and rooted owners,
 opacity, universe scopes, dictionaries, named arguments, original field domains,
 polymorphic functions, empty APIs and failed-family rollback. Lean kernel checks
@@ -66,7 +66,8 @@ and the normal authoritative axiom audit establish the generated mathematical
 proofs and their complete transitive dependencies. Full build, axiom and nanoda
 checks verify the complete project and configured script owners.
 
-The normal audit does not select every independent internal metaprogramming
-helper. Strict `--all-helpers` auditing of the provider is deferred to a separate
-follow-up. Clean generated certificates alone do not
-establish that the provider's entire internal helper closure is axiom-free.
+The generator is an untrusted producer. Its independent internal helpers need
+not be axiom-free or satisfy the mathematical construction policy. The emitted
+certificates, their intended types and their complete retained proof dependencies
+must satisfy that policy. `--all-helpers` remains available as an optional
+diagnostic; producer axiom-freedom is not an acceptance requirement.

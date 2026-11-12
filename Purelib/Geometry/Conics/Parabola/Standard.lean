@@ -52,7 +52,7 @@ namespace Purelib.Geometry.Conics.Parabola.Standard
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 namespace ExampleNineteenFour
 
@@ -68,13 +68,13 @@ def parabola [Nontrivial K] : Conic K
   quadratic_nonzero := Or.inr (Or.inr one_ne_zero)
 
 /-- The book's parametrized point `[t²,2t]`. -/
-def point (parameter : K) : Geometry.Plane.Point
+def point (parameter : K) : Point
   K :=
   ⟨parameter ^ 2, 2 * parameter⟩
 
 /-- The normalized tangent representative `⟨1:-t:t²⟩`. -/
 def normalizedTangent [Nontrivial K] (parameter :
-  K) : Geometry.Plane.Line K where
+  K) : Line K where
   a := 1
   b := -parameter
   c := parameter ^ 2
@@ -132,7 +132,7 @@ theorem example_19_4 [Nontrivial K]
     parameter) := by
     unfold tangent source basePoint Conic.tangentLine parabola
       point
-      normalizedTangent Geometry.Plane.Line.Equivalent
+      normalizedTangent Equivalent
     exact ⟨by ring1, by ring1, by ring1⟩
   exact ⟨onParabola, tangentEquivalent,
     Conic.tangentLine_contains source basePoint onParabola nonSingular⟩
@@ -140,7 +140,7 @@ theorem example_19_4 [Nontrivial K]
 /-- Away from characteristic two, every point—not merely a parametrized one—lying on the displayed parabola is
 first-order non-singular. -/
 theorem every_point_nonSingular [Nontrivial K]
-    (fourNonzero : (4 : K) ≠ 0) (candidate : Geometry.Plane.Point K)
+    (fourNonzero : (4 : K) ≠ 0) (candidate : Point K)
     (_onParabola : (parabola (K := K)).Contains candidate) :
     (parabola (K := K)).IsNonSingularAt candidate := by
   unfold Conic.IsNonSingularAt parabola
@@ -156,12 +156,12 @@ end ExampleNineteenFour
 namespace ExerciseNineteenOne
 
 /-- Focus `[a,0]` for the parabola `y²=4ax`. -/
-def focus (parameter : K) : Geometry.Plane.Point
+def focus (parameter : K) : Point
   K := ⟨parameter, 0⟩
 
 /-- Directrix `x=-a`, displayed as `⟨1:0:a⟩`. -/
 def directrix [Nontrivial K] (parameter : K) :
-  Geometry.Plane.Line K where
+  Line K where
   a := 1
   b := 0
   c := parameter
@@ -178,7 +178,7 @@ theorem directrix_nonNull [Nontrivial K] (parameter
   : K) :
     ¬ (directrix parameter).IsNull := by
   intro nullLine
-  unfold directrix Geometry.Plane.Line.IsNull at nullLine
+  unfold directrix IsNull at nullLine
   have oneEqualsZero : (1 : K) = 0 := by
     calc
       (1 : K) = 1 ^ 2 + 0 ^ 2 := by ring1
@@ -194,7 +194,7 @@ theorem focus_not_on_directrix [Nontrivial K]
   intro incidence
   have twiceParameterZero : 2 * parameter = 0 := by
     unfold directrix focus
-      Geometry.Plane.Line.Contains at incidence
+      Contains at incidence
     calc
       2 * parameter = 1 * parameter + 0 * 0 + parameter := by ring1
       _ = 0 := incidence
@@ -231,7 +231,7 @@ theorem parabola_coefficients [Nontrivial K]
 theorem exercise_19_1 [Nontrivial K] [DecidableEq
   K]
     (parameter : K) (twoNonzero : (2 : K) ≠ 0)
-    (parameterNonzero : parameter ≠ 0) (basePoint : Geometry.Plane.Point K)
+    (parameterNonzero : parameter ≠ 0) (basePoint : Point K)
     (onParabola : (parabola parameter).Contains basePoint)
     (focusLineNonNull :
       ¬ (Incidence.lineThrough basePoint (focus parameter)
@@ -274,16 +274,16 @@ end ExerciseNineteenOne
 namespace ExerciseNineteenTwo
 
 /-- The focus `[1,0]` of `y²=4x`. -/
-def focus : Geometry.Plane.Point K := ⟨1, 0⟩
+def focus : Point K := ⟨1, 0⟩
 
 /-- The parameter point `[t²,2t]`. -/
-def point (parameter : K) : Geometry.Plane.Point
+def point (parameter : K) : Point
   K :=
   ⟨parameter ^ 2, 2 * parameter⟩
 
 /-- The tangent `⟨1:-t:t²⟩` at the parameter point. -/
 def tangent [Nontrivial K] (parameter : K) :
-  Geometry.Plane.Line K where
+  Line K where
   a := 1
   b := -parameter
   c := parameter ^ 2
@@ -291,28 +291,28 @@ def tangent [Nontrivial K] (parameter : K) :
 
 /-- The explicit intersection `[t₁t₂,t₁+t₂]` of two parameter tangents. -/
 def tangentIntersection (firstParameter
-  secondParameter : K) : Geometry.Plane.Point K :=
+  secondParameter : K) : Point K :=
   ⟨firstParameter * secondParameter, firstParameter + secondParameter⟩
 
 /-- Each normalized tangent contains its parameter point. -/
 theorem tangent_contains_point [Nontrivial K]
   (parameter : K) :
-    (Conics.Parabola.Standard.ExerciseNineteenTwo.tangent parameter).Contains
+    (ExerciseNineteenTwo.tangent parameter).Contains
       (point parameter) := by
-  unfold Conics.Parabola.Standard.ExerciseNineteenTwo.tangent point
-    Geometry.Plane.Line.Contains
+  unfold ExerciseNineteenTwo.tangent point
+    Contains
   ring1
 
 /-- The explicit intersection lies on both displayed tangents. -/
 theorem tangent_intersection
     [Nontrivial K]
     (firstParameter secondParameter : K) :
-    (Conics.Parabola.Standard.ExerciseNineteenTwo.tangent firstParameter).Contains
+    (ExerciseNineteenTwo.tangent firstParameter).Contains
         (tangentIntersection firstParameter secondParameter) ∧
-      (Conics.Parabola.Standard.ExerciseNineteenTwo.tangent secondParameter).Contains
+      (ExerciseNineteenTwo.tangent secondParameter).Contains
         (tangentIntersection firstParameter secondParameter) := by
-  unfold Conics.Parabola.Standard.ExerciseNineteenTwo.tangent
-    tangentIntersection Geometry.Plane.Line.Contains
+  unfold ExerciseNineteenTwo.tangent
+    tangentIntersection Contains
   constructor <;> ring1
 
 /-- Distinct parameters give genuinely distinct line proportions. -/
@@ -320,12 +320,12 @@ theorem tangents_not_equivalent
     [Nontrivial K]
     (firstParameter secondParameter : K)
     (parametersDistinct : firstParameter ≠ secondParameter) :
-    ¬ (Conics.Parabola.Standard.ExerciseNineteenTwo.tangent firstParameter).Equivalent
-      (Conics.Parabola.Standard.ExerciseNineteenTwo.tangent secondParameter) := by
+    ¬ (ExerciseNineteenTwo.tangent firstParameter).Equivalent
+      (ExerciseNineteenTwo.tangent secondParameter) := by
   intro equivalent
   apply parametersDistinct
   have firstEquation := equivalent.1
-  unfold Conics.Parabola.Standard.ExerciseNineteenTwo.tangent at firstEquation
+  unfold ExerciseNineteenTwo.tangent at firstEquation
   change (1 : K) * (-secondParameter) = 1 * (-firstParameter) at firstEquation
   have negativesEqual : -firstParameter = -secondParameter := by
     simpa only [one_mul] using firstEquation.symm

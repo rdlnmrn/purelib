@@ -1,4 +1,6 @@
 module
+import Purelib.Approximation.Gaussian.Process.Route
+import Purelib.Approximation.Gaussian.Process.Observation
 import Purelib.Data.CCL.Encoding.Block.Homogeneous
 import Purelib.Data.CCL.Encoding.Parser.Matrix.Chunks
 import Purelib.Data.CCL.Encoding.Parser.Semantics.Basic
@@ -30,88 +32,87 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Gaussian.Norm.Basic
 
-section
-@[expose] public section
-
 /-!
-# Exact projective semantics of progressive arithmetic cursors
+# Exact semantics of retained low-state emissions
 
-The raw `Machine` remains the original bit-only cursor.  This module adds a
-separate proof wrapper relating its quantitative mode to the ordinary raw
-parser matrix.  In particular, residual modes are interpreted homogeneously
-as `[1 : γr]`; this is an affine inverse tail when `r ≠ 0` and is exactly
-`ω` when `r = 0`.  No equality decision on a completed value is needed.
+A retained low-state selection preserves the original possible source tails
+and the same exact parser matrix chunk, using its cached source observation.
 -/
+
+public section
 
 namespace Purelib.Data.CCL.Transducer.Emission.Semantics.Low
 
-open Purelib.Approximation.Gaussian in
-open Purelib.Data.CCL.Encoding in
-open Purelib.Data.CCL.Transducer in
-open Purelib.Data.ComplexContinuedFraction.Encoding in
-open Purelib.Data.Gaussian in
-open Purelib.Geometry.Projective in
-/-- The low-state emission preserves the exact projective parser representation of every possible next tail.
+open Purelib.Approximation.Gaussian
+open Purelib.Data.CCL.Encoding
+open Purelib.Data.CCL.Transducer
+open Purelib.Data.Gaussian
+open Purelib.Geometry.Projective
+open Mode.Semantics
 
-Sector completion uses the same selected sector, residual source and reciprocal gamma normalization. Unary emission uses
-the retained upscaled source and successor-count identity without changing the parser matrix. -/
-theorem lowStep_exact (current : Mode.Basic.LowState) :
-    Emission.Semantics.Basic.ExactEmission (.low current) (Emission.Step.step (.low current)) := by
-  change Emission.Semantics.Basic.ExactEmission (.low current) (Emission.Low.lowStep current)
-  generalize hStep : Emission.Low.lowStep current = emission
-  unfold Emission.Semantics.Basic.ExactEmission
+/-- Every retained sound low-state selection preserves the original exact projective cursor. -/
+private theorem selection_exact (current : Mode.Basic.LowState) (base : current.process.State)
+    (observation : Process.Observation current.process base)
+    (accurate : (current.process.ball base).radiusSq < Initial.Budget.initialRadiusSq)
+    (selected : Low.Selection observation.ball)
+    (persists : ∀ {value}, current.process.Possible base value → current.process.Possible current.state value) :
+    Basic.ExactEmission (.low current) (selected.emission current base observation accurate) := by
   intro parser _determinant phase tail possible
-  unfold Emission.Low.lowStep at hStep
-  simp only at hStep
-  split at hStep
-  · cases hStep
-    simp only [Mode.Semantics.SemanticMode.possible] at possible
-    rcases possible with
-      ⟨sourceValue, sourcePossible, residualEqual⟩
-    have previousPossible :
-        current.process.Possible current.state sourceValue :=
-      current.process.refine_persists current.state _ _ sourcePossible
-    refine ⟨sourceValue, previousPossible, ?_⟩
-    let rawValue := (Power.natPow Basic.Canonical.gamma current.count)⁻¹ * sourceValue
-    have normalizedIdentity :
-        Parser.Semantics.Basic.normalizedValue .initialLow
-          current.count rawValue = sourceValue :=
-      Parser.Semantics.Basic.lowNormalized_unscaled current.count sourceValue
-    have blockExact :=
-      Block.Homogeneous.blockHomogeneous_exact
-        Parser.Syntax.BlockKind.initialLow current.count
-          (Data.ComplexContinuedFraction.Encoding.Sector.select
-            (current.process.ball
-              (Emission.Initial.Preparation.initialRefinedState current.process current.state)).center)
-          rawValue
-    rw [Parser.Matrix.Chunks.fold_low_sector_matrix parser current.count phase
-      (Data.ComplexContinuedFraction.Encoding.Sector.select
-        (current.process.ball
-          (Emission.Initial.Preparation.initialRefinedState current.process current.state)).center),
-      Line.Matrix.act_mul]
-    apply Line.Matrix.act_respects_equivalent
-    simp only [Mode.Semantics.SemanticMode.parserTail]
-    rw [residualEqual]
-    rw [normalizedIdentity] at blockExact
-    exact blockExact
-  · cases hStep
-    simp only [Mode.Semantics.SemanticMode.possible] at possible
-    rcases Process.Gamma.Upscale.upscaled_candidate_semantics current.process
-        (Emission.Initial.Preparation.initialRefinedState current.process current.state) 1 possible with
-      ⟨sourceValue, sourcePossible, tailEqual⟩
-    have previousPossible :
-        current.process.Possible current.state sourceValue :=
-      current.process.refine_persists current.state _ _ sourcePossible
-    refine ⟨sourceValue, previousPossible, ?_⟩
-    rw [Parser.Matrix.Chunks.fold_low_unary_matrix parser current.count phase]
-    simp only [Mode.Semantics.SemanticMode.parserTail]
-    rw [tailEqual, Emission.Low.Preparation.nextLowState_count]
-    have unaryIdentity := Power.Gamma.lowUnary_value current.count sourceValue
-    simp only [Power.natPow_succ, Power.natPow_zero,
-      Basic.one_mul] at unaryIdentity ⊢
-    rw [unaryIdentity]
-    exact Line.Proj.Equivalent.refl _
+  cases selected with
+  | low small =>
+      dsimp only [Low.Selection.emission, SemanticMode.possible] at possible
+      rcases Process.Gamma.Upscale.upscaled_candidate_semantics current.process base 1 possible with
+        ⟨sourceValue, sourcePossible, tailEqual⟩
+      refine ⟨sourceValue, persists sourcePossible, ?_⟩
+      dsimp only [Low.Selection.emission]
+      rw [Parser.Matrix.Chunks.fold_low_unary_matrix parser current.count phase]
+      simp only [SemanticMode.parserTail]
+      rw [tailEqual, Low.Preparation.nextLowState_count]
+      have unaryIdentity := Power.Gamma.lowUnary_value current.count sourceValue
+      simp only [Power.natPow_succ, Power.natPow_zero, Basic.one_mul] at unaryIdentity ⊢
+      rw [unaryIdentity]
+      exact Line.Proj.Equivalent.refl _
+  | sector chosen certificate =>
+      dsimp only [Low.Selection.emission, SemanticMode.possible] at possible
+      rcases possible with ⟨sourceValue, sourcePossible, residualEqual⟩
+      refine ⟨sourceValue, persists sourcePossible, ?_⟩
+      let rawValue := (Power.natPow Basic.Canonical.gamma current.count)⁻¹ * sourceValue
+      have normalizedIdentity :
+          Parser.Semantics.Basic.normalizedValue .initialLow current.count rawValue = sourceValue :=
+        Parser.Semantics.Basic.lowNormalized_unscaled current.count sourceValue
+      have blockExact := Block.Homogeneous.blockHomogeneous_exact
+        Parser.Syntax.BlockKind.initialLow current.count chosen rawValue
+      dsimp only [Low.Selection.emission]
+      rw [Parser.Matrix.Chunks.fold_low_sector_matrix parser current.count phase chosen, Line.Matrix.act_mul]
+      apply Line.Matrix.act_respects_equivalent
+      simp only [SemanticMode.parserTail]
+      rw [residualEqual]
+      rw [normalizedIdentity] at blockExact
+      exact blockExact
+
+/-- The original low-state emission preserves every possible next tail's exact projective parser image.
+
+The same actual refinement supplies the cached branch and source observation.
+Both the unary chart and the selected-sector chart retain the original source
+witness and its original matrix chunk identity.
+-/
+theorem lowStep_exact (current : Mode.Basic.LowState) :
+    Basic.ExactEmission (.low current) (Step.step (.low current)) := by
+  let route : Process.Route current.process current.process := .input
+  let receipt := route.refine current.state Initial.Budget.initialRadiusSq Initial.Budget.initialRadiusSq_pos
+  have accurate : (current.process.ball receipt.state).radiusSq < Initial.Budget.initialRadiusSq :=
+    receipt.stateEq.symm ▸ current.process.accurate current.state
+      Initial.Budget.initialRadiusSq Initial.Budget.initialRadiusSq_pos
+  have upper : Norm.Basic.normSq (current.process.ball receipt.state).center < 13 / 6 :=
+    receipt.stateEq.symm ▸ Low.Preparation.low_center_lt_extended_upper current
+  have fine := receipt.observation.ballEq.symm ▸ accurate
+  have cachedUpper := receipt.observation.ballEq.symm ▸ upper
+  let selected := Low.Selection.decide receipt.observation.ball cachedUpper
+    (fine.trans Initial.Budget.initialRadiusSq_lt_uniform)
+  change Basic.ExactEmission (.low current) (selected.emission current receipt.state receipt.observation accurate)
+  apply selection_exact current receipt.state receipt.observation accurate selected
+  intro value possible
+  exact current.process.refine_persists current.state Initial.Budget.initialRadiusSq
+    Initial.Budget.initialRadiusSq_pos (receipt.stateEq ▸ possible)
 
 end Purelib.Data.CCL.Transducer.Emission.Semantics.Low
-
-end

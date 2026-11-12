@@ -13,6 +13,10 @@ import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 public import Purelib.Polynomial.Dense.Gaussian.Basic
+public import Purelib.Polynomial.Ascending.Gaussian.Dense.Evaluation
+import Purelib.Algebra.FiniteSum.Prefix
+import Purelib.Data.Vector.Basic
+import Purelib.Polynomial.Ascending.Gaussian.Coefficient
 
 public import Purelib.Polynomial.Dense.Derivative
 import Purelib.Data.List.Fold
@@ -39,6 +43,8 @@ used to differentiate inversion.
 -- Retain exact public scalar/carrier shorthand names after subject placement.
 
 namespace Purelib.Polynomial.Dense.Gaussian.Reciprocal
+
+open Purelib.Polynomial.Ascending.Gaussian.Dense.Evaluation
 
 open Purelib.Algebra
 open Purelib.Data.List
@@ -208,6 +214,95 @@ theorem padded_identity (polynomial : CoefficientPolynomial) (degree : Nat) (bou
       rw [pow_add]; ring1
     _ = _ := by rw [Nat.Subtraction.add_sub_of_le bound]
 
+section CoefficientReadback
+
+open Purelib.Algebra.Field
+open Purelib.Algebra.FiniteSum
+open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
+open Purelib.Polynomial.Ascending.Gaussian
+open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
+
+/-- Cancel one bounded reciprocal power using the original nonzero coordinate. -/
+private theorem inverse_power_clearing (point : Scalar) (nonzero : point ≠ 0) (degree index : Nat)
+    (bound : index ≤ degree) : point ^ degree * (point⁻¹) ^ index = point ^ (degree - index) := by
+  have sum : degree - index + index = degree := by omega0
+  have powers := pow_add point (degree - index) index
+  rewrite [sum] at powers
+  calc
+    _ = (point ^ (degree - index) * point ^ index) * (point⁻¹) ^ index :=
+      congrArg (fun value => value * (point⁻¹) ^ index) powers
+    _ = point ^ (degree - index) * (point ^ index * (point⁻¹) ^ index) := by ring1
+    _ = _ := by
+      rewrite [← Semiring.Normalization.product_pow, ExplicitField.mul_inv_cancel point nonzero,
+        one_pow, Gaussian.Basic.mul_one]
+      rfl
+
+/-- The original bounded normalized coefficients, read in reverse order, clear their displayed denominator. -/
+private theorem padded_values_eval (polynomial : CoefficientPolynomial) (degree : Nat)
+    (bound : polynomial.degreeCount ≤ degree + 1) (point : Scalar) (nonzero : point ≠ 0) :
+    Ascending.Gaussian.Evaluation.eval (fromVector
+      (vectorOfFn fun index : Fin (degree + 1) => Coefficient.coefficient
+        (fromDense polynomial.normalize) (degree - index.val))) point =
+      point ^ degree * polynomial.eval point⁻¹ := by
+  let term := fun index => Coefficient.coefficient
+    (fromDense polynomial.normalize) index
+  let values := vectorOfFn fun index : Fin (degree + 1) => term (degree - index.val)
+  have readback := fromVector_eval_sum values point
+  rewrite [toDense_eval] at readback
+  calc
+    _ = sumFin (fun index : Fin (degree + 1) => term (degree - index.val) * point ^ index.val) :=
+      readback.trans (sumFin_congr fun index => congrArg (fun value => value * point ^ index.val)
+        (vectorOfFn_apply (fun index : Fin (degree + 1) => term (degree - index.val)) index))
+    _ = Prefix.prefixSum (degree + 1) (fun index => term (degree - index) * point ^ index) :=
+      Prefix.sumFin_eq_prefixSum (K := Scalar) (degree + 1)
+        (fun index => term (degree - index) * point ^ index)
+    _ = Prefix.prefixSum (degree + 1) (fun index => term index * point ^ (degree - index)) := by
+      have reverseSum := Prefix.prefixSum_reverse (degree + 1) (fun index => term (degree - index) * point ^ index)
+      exact reverseSum.trans (Prefix.prefixSum_congr (degree + 1) _ _ (fun index inside => by
+        rewrite [show degree + 1 - 1 - index = degree - index by omega0,
+          show degree - (degree - index) = index by omega0]
+        rfl))
+    _ = Prefix.prefixSum (degree + 1) (fun index => point ^ degree * (term index * (point⁻¹) ^ index)) :=
+      Prefix.prefixSum_congr (degree + 1) _ _ (fun index inside => by
+        rewrite [show point ^ degree * (term index * (point⁻¹) ^ index) =
+          term index * (point ^ degree * (point⁻¹) ^ index) by ring1,
+          inverse_power_clearing point nonzero degree index (by omega0)]
+        rfl)
+    _ = point ^ degree * Prefix.prefixSum (degree + 1) (fun index => term index * (point⁻¹) ^ index) :=
+      Prefix.prefixSum_mul_left (degree + 1) (point ^ degree) _
+    _ = _ := congrArg (fun value => point ^ degree * value)
+      (eval_normalized_prefix polynomial (degree + 1) bound point⁻¹).symm
+
+/-- Reading a coefficient of the original padded reciprocal reverses the same bounded normalized coefficient table.
+
+The finite coefficient-count Gaussian probes identify the two actual
+polynomial tables from their guarded reciprocal evaluation law. This
+includes zero polynomials and high zero padding; no semantic equality
+is silently treated as literal coefficient equality.
+-/
+theorem padded_coefficient (polynomial : CoefficientPolynomial) (degree : Nat)
+    (bound : polynomial.degreeCount ≤ degree + 1) (index : Nat) (inside : index ≤ degree) :
+    Coefficient.coefficient
+      (fromDense (padded polynomial degree)) index =
+      Coefficient.coefficient
+        (fromDense polynomial.normalize) (degree - index) := by
+  let values := vectorOfFn fun index : Fin (degree + 1) => Coefficient.coefficient
+    (fromDense polynomial.normalize) (degree - index.val)
+  have naturalDegree : polynomial.natDegree ≤ degree := by
+    change polynomial.degreeCount - 1 ≤ degree
+    omega0
+  have equal := coefficientwise_of_eval_eq_at_nonzero
+    (fromDense (padded polynomial degree))
+    (fromVector values) (fun point nonzero => by
+      rewrite [fromDense_eval,
+        padded_identity polynomial degree naturalDegree point nonzero]
+      exact (padded_values_eval polynomial degree bound point nonzero).symm)
+  exact (equal index).trans
+    ((coefficient_fromVector values ⟨index, by omega0⟩).trans
+      (vectorOfFn_apply _ ⟨index, by omega0⟩))
+
+end CoefficientReadback
+
 /-- Padding above the original degree makes the reciprocal vanish at zero.
 
 The strict degree bound makes the original natural padding difference nonzero.
@@ -222,6 +317,26 @@ theorem padded_origin (polynomial : CoefficientPolynomial) (degree : Nat) (bound
     exact (Nat.ne_of_lt bound) reconstruction
   rw [padded, DensePolynomial.eval_shift,
     zero_pow positivePower, Gaussian.Basic.mul_zero]
+
+/-- A padded reciprocal with at least as many slots as the original coefficient count vanishes at zero.
+
+A nonzero polynomial has degree strictly below that slot count, so the
+original padding contributes a positive power. A zero polynomial retains
+its actual empty normalized table, including the zero-degree case.
+-/
+theorem padded_origin_of_degreeCount_le (polynomial : CoefficientPolynomial) (degree : Nat)
+    (bound : polynomial.degreeCount ≤ degree) : (padded polynomial degree).eval 0 = 0 := by
+  by_cases zero : polynomial.isZero = true
+  · have normalized := DensePolynomial.normalize_eq_zero_of_isZero zero
+    rewrite [padded, DensePolynomial.eval_shift, reversed, normalized]
+    change (0 : Scalar) * 0 ^ (degree - polynomial.natDegree) = 0
+    exact Gaussian.Basic.zero_mul _
+  · have nonzero : polynomial.isZero = false := by
+      cases selected : polynomial.isZero with
+      | false => rfl
+      | true => exact (zero selected).elim
+    have count := DensePolynomial.natDegree_add_one_eq_degreeCount nonzero
+    exact padded_origin polynomial degree (by omega0)
 
 /-- Remove the constant coefficient without assuming it is nonzero. -/
 def originTail (polynomial : CoefficientPolynomial) : CoefficientPolynomial :=

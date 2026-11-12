@@ -27,6 +27,8 @@ import Purelib.Tactic.Ring
 public import Mathlib.Algebra.Field.Defs
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 namespace Purelib.Geometry.Rational.Box.Boundary.Strip
 
 open Purelib
@@ -81,9 +83,9 @@ from the small-box anchor is bounded by the displayed scale times rho squared. -
 public structure NearbyBoundaryPoint
     (ambient small : Box) (rho : Fraction.Rational) where
   /-- The constructed point on the parent boundary. -/ point : Gaussian.Basic.Canonical
-  /-- The point belongs to the parent box and one of its sides. -/ boundary : Boundary.OnBoxBoundary ambient point
+  /-- The point belongs to the parent box and one of its sides. -/ boundary : OnBoxBoundary ambient point
   /-- The squared distance from the small-box anchor satisfies the retained radius bound. -/ distance :
-    Data.Gaussian.Norm.Basic.normSq (point - small.anchor) ≤
+    Gaussian.Norm.Basic.normSq (point - small.anchor) ≤
     protectedBoundaryDistanceScale * rho ^ 2
 
 constructive_injectivity NearbyBoundaryPoint
@@ -102,11 +104,11 @@ diagonal bound control the same selected projection and anchor displacement. -/
   rcases witness with ⟨z, zSmall, side⟩
   have zAmbient := refines.contains zSmall
   have zAnchorDistance := small.normSq_sub_anchor_le zSmall
-  have zAnchorBound : Data.Gaussian.Norm.Basic.normSq (z - small.anchor) ≤ rho ^ 2 :=
+  have zAnchorBound : Gaussian.Norm.Basic.normSq (z - small.anchor) ≤ rho ^ 2 :=
     zAnchorDistance.trans diagonal
   have projectionFinish : ∀ point : Gaussian.Basic.Canonical,
-      Boundary.OnBoxBoundary ambient point →
-      Data.Gaussian.Norm.Basic.normSq (point - z) ≤ 16 * rho ^ 2 →
+      OnBoxBoundary ambient point →
+      Gaussian.Norm.Basic.normSq (point - z) ≤ 16 * rho ^ 2 →
       NearbyBoundaryPoint ambient small rho := by
     intro point boundary projectionBound
     have decomposition : point - small.anchor =
@@ -116,12 +118,12 @@ diagonal bound control the same selected projection and anchor displacement. -/
         ring1
     have sumBound := Gaussian.Norm.Bounds.normSq_add_le_two (point - z) (z - small.anchor)
     have squareNonnegative :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct rho
+      Arithmetic.sq_nonneg_direct rho
     have squareLeProjection : rho ^ 2 ≤ 16 * rho ^ 2 := by
       calc
         rho ^ 2 = 1 * rho ^ 2 := by ring1
         _ ≤ 16 * rho ^ 2 :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (Fraction.Cast.Order.natCast_le_direct
               (m := 1) (n := 16) (by decide)) squareNonnegative
     have twoNonnegative : (0 : Fraction.Rational) ≤ 2 :=
@@ -130,14 +132,14 @@ diagonal bound control the same selected projection and anchor displacement. -/
     refine ⟨point, boundary, ?_⟩
     rw [decomposition]
     calc
-      Data.Gaussian.Norm.Basic.normSq ((point - z) + (z - small.anchor)) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq (point - z) + Data.Gaussian.Norm.Basic.normSq (z - small.anchor))
+      Gaussian.Norm.Basic.normSq ((point - z) + (z - small.anchor)) ≤
+          2 * (Gaussian.Norm.Basic.normSq (point - z) + Gaussian.Norm.Basic.normSq (z - small.anchor))
             := sumBound
       _ ≤ 2 * (16 * rho ^ 2 + rho ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add projectionBound zAnchorBound) (by decide)
       _ ≤ 2 * (16 * rho ^ 2 + 16 * rho ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (le_refl _) squareLeProjection)
           twoNonnegative
       _ = protectedBoundaryDistanceScale * rho ^ 2 := by
@@ -147,84 +149,84 @@ diagonal bound control the same selected projection and anchor displacement. -/
   | left sideBound =>
       let point : Gaussian.Basic.Canonical := ⟨ambient.xLower, z.im⟩
       have deltaNonnegative : 0 ≤ z.re - ambient.xLower :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct zAmbient.1
+        Arithmetic.sub_nonneg_direct zAmbient.1
       have deltaBound : z.re - ambient.xLower ≤ 4 * rho := by
-        have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct sideBound ambient.xLower
+        have shifted := Arithmetic.sub_le_sub_right_direct sideBound ambient.xLower
         calc
           z.re - ambient.xLower ≤
               ambient.xLower + 4 * rho - ambient.xLower := shifted
           _ = 4 * rho := by ring1
-      have squareBound := Fraction.Order.Arithmetic.pow_le_pow_direct
+      have squareBound := Arithmetic.pow_le_pow_direct
         deltaNonnegative deltaBound 2
       apply projectionFinish point
       · exact ⟨⟨le_rfl, ambient.x_valid, zAmbient.2.2.1,
           zAmbient.2.2.2⟩, Or.inl rfl⟩
       · calc
-          Data.Gaussian.Norm.Basic.normSq (point - z) = (z.re - ambient.xLower) ^ 2 := by
-            dsimp only [point, Data.Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
+          Gaussian.Norm.Basic.normSq (point - z) = (z.re - ambient.xLower) ^ 2 := by
+            dsimp only [point, Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
             ring1
           _ ≤ (4 * rho) ^ 2 := squareBound
           _ = 16 * rho ^ 2 := by ring1
   | right sideBound =>
       let point : Gaussian.Basic.Canonical := ⟨ambient.xUpper, z.im⟩
       have deltaNonnegative : 0 ≤ ambient.xUpper - z.re :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct zAmbient.2.1
+        Arithmetic.sub_nonneg_direct zAmbient.2.1
       have deltaBound : ambient.xUpper - z.re ≤ 4 * rho := by
-        have shifted := Fraction.Order.Arithmetic.sub_le_sub_left_direct sideBound ambient.xUpper
+        have shifted := Arithmetic.sub_le_sub_left_direct sideBound ambient.xUpper
         calc
           ambient.xUpper - z.re ≤
               ambient.xUpper - (ambient.xUpper - 4 * rho) := shifted
           _ = 4 * rho := by ring1
-      have squareBound := Fraction.Order.Arithmetic.pow_le_pow_direct
+      have squareBound := Arithmetic.pow_le_pow_direct
         deltaNonnegative deltaBound 2
       apply projectionFinish point
       · exact ⟨⟨ambient.x_valid, le_rfl, zAmbient.2.2.1,
           zAmbient.2.2.2⟩, Or.inr (Or.inl rfl)⟩
       · calc
-          Data.Gaussian.Norm.Basic.normSq (point - z) = (ambient.xUpper - z.re) ^ 2 := by
-            dsimp only [point, Data.Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
+          Gaussian.Norm.Basic.normSq (point - z) = (ambient.xUpper - z.re) ^ 2 := by
+            dsimp only [point, Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
             ring1
           _ ≤ (4 * rho) ^ 2 := squareBound
           _ = 16 * rho ^ 2 := by ring1
   | bottom sideBound =>
       let point : Gaussian.Basic.Canonical := ⟨z.re, ambient.yLower⟩
       have deltaNonnegative : 0 ≤ z.im - ambient.yLower :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct zAmbient.2.2.1
+        Arithmetic.sub_nonneg_direct zAmbient.2.2.1
       have deltaBound : z.im - ambient.yLower ≤ 4 * rho := by
-        have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct sideBound ambient.yLower
+        have shifted := Arithmetic.sub_le_sub_right_direct sideBound ambient.yLower
         calc
           z.im - ambient.yLower ≤
               ambient.yLower + 4 * rho - ambient.yLower := shifted
           _ = 4 * rho := by ring1
-      have squareBound := Fraction.Order.Arithmetic.pow_le_pow_direct
+      have squareBound := Arithmetic.pow_le_pow_direct
         deltaNonnegative deltaBound 2
       apply projectionFinish point
       · exact ⟨⟨zAmbient.1, zAmbient.2.1, le_rfl,
           ambient.y_valid⟩, Or.inr (Or.inr (Or.inl rfl))⟩
       · calc
-          Data.Gaussian.Norm.Basic.normSq (point - z) = (z.im - ambient.yLower) ^ 2 := by
-            dsimp only [point, Data.Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
+          Gaussian.Norm.Basic.normSq (point - z) = (z.im - ambient.yLower) ^ 2 := by
+            dsimp only [point, Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
             ring1
           _ ≤ (4 * rho) ^ 2 := squareBound
           _ = 16 * rho ^ 2 := by ring1
   | top sideBound =>
       let point : Gaussian.Basic.Canonical := ⟨z.re, ambient.yUpper⟩
       have deltaNonnegative : 0 ≤ ambient.yUpper - z.im :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct zAmbient.2.2.2
+        Arithmetic.sub_nonneg_direct zAmbient.2.2.2
       have deltaBound : ambient.yUpper - z.im ≤ 4 * rho := by
-        have shifted := Fraction.Order.Arithmetic.sub_le_sub_left_direct sideBound ambient.yUpper
+        have shifted := Arithmetic.sub_le_sub_left_direct sideBound ambient.yUpper
         calc
           ambient.yUpper - z.im ≤
               ambient.yUpper - (ambient.yUpper - 4 * rho) := shifted
           _ = 4 * rho := by ring1
-      have squareBound := Fraction.Order.Arithmetic.pow_le_pow_direct
+      have squareBound := Arithmetic.pow_le_pow_direct
         deltaNonnegative deltaBound 2
       apply projectionFinish point
       · exact ⟨⟨zAmbient.1, zAmbient.2.1, ambient.y_valid,
           le_rfl⟩, Or.inr (Or.inr (Or.inr rfl))⟩
       · calc
-          Data.Gaussian.Norm.Basic.normSq (point - z) = (ambient.yUpper - z.im) ^ 2 := by
-            dsimp only [point, Data.Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
+          Gaussian.Norm.Basic.normSq (point - z) = (ambient.yUpper - z.im) ^ 2 := by
+            dsimp only [point, Gaussian.Norm.Basic.normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
             ring1
           _ ≤ (4 * rho) ^ 2 := squareBound
           _ = 16 * rho ^ 2 := by ring1

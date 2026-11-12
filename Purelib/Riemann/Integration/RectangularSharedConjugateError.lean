@@ -61,17 +61,17 @@ variable {polynomial firstNumerator secondNumerator : Polynomial} {ambient : Box
   {clearance : RegionClearance polynomial ambient}
   {firstBounds : PrimitiveOverlapBounds clearance firstNumerator}
   {secondBounds : PrimitiveOverlapBounds clearance secondNumerator}
-  {columns rows : Nat} {firstTarget secondTarget : Purelib.Data.Rat.Fraction.Rational}
+  {columns rows : Nat} {firstTarget secondTarget : Data.Rat.Fraction.Rational}
   {geometry : Geometry columns rows} {bank : Bank polynomial geometry}
   (firstRequest : GridPrimitiveAccuracy firstBounds columns firstTarget)
   (secondRequest : GridPrimitiveAccuracy secondBounds columns secondTarget)
   {firstTransitions : Transitions (bank.refine firstRequest.index)}
   {secondTransitions : Transitions (bank.refine secondRequest.index)}
-  {firstGauge : Purelib.Topology.Grid.Signs.Gauge firstTransitions.flatGrid}
-  {secondGauge : Purelib.Topology.Grid.Signs.Gauge secondTransitions.flatGrid}
-  {firstPrimitives : Primitives (Purelib.Riemann.Branches.RectangularSheetGauge.Transitions.oriented firstTransitions
+  {firstGauge : Topology.Grid.Signs.Gauge firstTransitions.flatGrid}
+  {secondGauge : Topology.Grid.Signs.Gauge secondTransitions.flatGrid}
+  {firstPrimitives : Primitives (Branches.RectangularSheetGauge.Transitions.oriented firstTransitions
     firstGauge) firstNumerator}
-  {secondPrimitives : Primitives (Purelib.Riemann.Branches.RectangularSheetGauge.Transitions.oriented secondTransitions
+  {secondPrimitives : Primitives (Branches.RectangularSheetGauge.Transitions.oriented secondTransitions
     secondGauge) secondNumerator}
   (firstAnchors : PrimitiveAnchors firstPrimitives) (secondAnchors : PrimitiveAnchors secondPrimitives)
   (firstOffsets : LinearAlgebra.Grid.Offsets firstAnchors.edges)
@@ -119,13 +119,13 @@ theorem shared_triangle_conjugate_error {triangles : List (ModelTriangle geometr
     secondPrimitives.value source.column source.row (surface.mesh.coordinate vertex)⟩ : PrimitivePoint)
   let changed := fun vertex => (⟨conj (left.values vertex), right.values vertex⟩ : PrimitivePoint)
   have inside := surface.face_inside face
-  have conjugateNorm (value : Gaussian.Basic.Canonical) :
-      Basic.Canonical.normSq (Basic.Canonical.conj value) = Basic.Canonical.normSq value := by
-    have conjugateEq : Basic.Canonical.conj value = Data.Gaussian.Basic.conj value := rfl
+  have conjugateNorm (value : Basic.Canonical) :
+      normSq (conj value) = normSq value := by
+    have conjugateEq : conj value = Basic.conj value := rfl
     rw [conjugateEq, ← Basic.normSq_eq_canonical, Basic.normSq_conj, Basic.normSq_eq_canonical]
   have firstNonnegative := firstRequest.edgeBound_nonnegative.trans firstRequest.edgeBound_le_globalBound
   have errorNonnegative : 0 ≤ 16 * max firstRequest.globalBound secondRequest.globalBound :=
-    Arithmetic.mul_nonneg_direct (by decide) (firstNonnegative.trans (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left
+    Arithmetic.mul_nonneg_direct (by decide) (firstNonnegative.trans (Basic.le_max_left
       _ _))
   have bound (vertex) (contained : (geometry.box source.column source.row).Contains (surface.mesh.coordinate vertex)) :
       Bounded (PrimitivePoint.sub (original vertex) (original t.first))
@@ -133,12 +133,12 @@ theorem shared_triangle_conjugate_error {triangles : List (ModelTriangle geometr
     ⟨by
       have estimate := (Primitives.local_increment_bound
         firstPrimitives firstBounds refines _ _ inside.1 contained).trans
-        (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ (boundarySlope secondBounds))
+        (Basic.le_max_left _ (boundarySlope secondBounds))
       simpa only [-eq_self, -iff_self, original, PrimitivePoint.sub,
         ← conjugate_sub, Basic.normSq_eq_canonical, conjugateNorm] using estimate,
       (Primitives.local_increment_bound
         secondPrimitives secondBounds refines _ _ inside.1 contained).trans
-          (Purelib.Data.Rat.Fraction.Order.Basic.le_max_right _ _)⟩
+          (Basic.le_max_right _ _)⟩
   have error (vertex) (contained : (geometry.box source.column source.row).Contains (surface.mesh.coordinate vertex)) :
       Bounded (PrimitivePoint.sub
         (PrimitivePoint.sub (changed vertex) (changed t.first))
@@ -147,13 +147,13 @@ theorem shared_triangle_conjugate_error {triangles : List (ModelTriangle geometr
     ⟨by
       have estimate := (GridPrimitiveAccuracy.shared_local_increment_bound
         firstRequest left refines _ _ _ _ inside.1 contained).trans
-        (Arithmetic.mul_le_mul_of_nonneg_left_direct (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_left _
           secondRequest.globalBound) (by decide))
       simpa only [-eq_self, -iff_self, original, changed, PrimitivePoint.sub,
         ← conjugate_sub, Basic.normSq_eq_canonical, conjugateNorm] using estimate,
       (GridPrimitiveAccuracy.shared_local_increment_bound
         secondRequest right refines _ _ _ _ inside.1 contained).trans
-      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Purelib.Data.Rat.Fraction.Order.Basic.le_max_right _ _) (by
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_right _ _) (by
         decide))⟩
   have boundedFirst := bound t.second inside.2.1
   have boundedLast := bound t.third inside.2.2
@@ -162,10 +162,10 @@ theorem shared_triangle_conjugate_error {triangles : List (ModelTriangle geometr
     (last := PrimitivePoint.sub (original t.third) (original t.first))
     (changedFirst := PrimitivePoint.sub (changed t.second) (changed t.first))
     (changedLast := PrimitivePoint.sub (changed t.third) (changed t.first))
-    ((Basic.Canonical.normSq_nonneg _).trans boundedFirst.1) errorNonnegative small
+    ((normSq_nonneg _).trans boundedFirst.1) errorNonnegative small
     boundedFirst boundedLast (error t.second inside.2.1) (error t.third inside.2.2)
-  simpa only [-eq_self, -iff_self, Basic.normSq_eq_canonical, Polygon.Stokes.triangleWedgeArea,
-    Polygon.Stokes.edgeArea, PrimitivePoint.sub] using scalar
+  simpa only [-eq_self, -iff_self, Basic.normSq_eq_canonical, triangleWedgeArea,
+    edgeArea, PrimitivePoint.sub] using scalar
 
 open Purelib.Algebra in
 open Purelib.Data in

@@ -131,17 +131,17 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Riemann.Periods.PreparedRootClosedPeriodBank
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : Meshes.FramedPuncturedGrid curve (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
+  {base : Meshes.FramedPuncturedGrid curve (Branches.BranchConfiguration.configurationOfData curve
     branches).branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-  {index differential : Fin genus} {row : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow
-    lifted integral index} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutChordPrograms lifted source}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential}
+  {index differential : Fin genus} {row : TourIntersection.IntersectionRow
+    lifted integral index} {source : Differentials.Basic.Differential genus}
+  {prepared : Cut.CyclePrograms.CutChordPrograms lifted source}
+  {components : Cut.ChainPeriods.ComponentSamples prepared.programs differential}
 
 namespace HoleReadings
 
@@ -150,20 +150,20 @@ set_option genInjectivity false in
 
 Both requests retain the same boundary contacts and the computed integer hole coefficients. -/
 structure HolePreparation
-    (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods row.span prepared components)
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
+    (periods : TourChordPeriods.ChordPeriods row.span prepared components)
+    (domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
       (target : Fraction.Rational) (floor : Nat) where
   /-- The original shared physical-loop decomposition for both period rows. -/ loops :
     PhysicalLoops periods
   /-- The retained boundary contact preparations on the same domain bank. -/ contacts :
-    Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+    BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
     lifted.cutBoundaryPairs
     (Periods.PeriodMatrix.standardDifferential differential) domains
   /-- The quarter-target hole request using the actual A-row coefficients. -/ a :
-    Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest contacts loops.aSplit.coefficients
+    HolePhysicalCorrection.HolePhysicalRequest contacts loops.aSplit.coefficients
     (target / 4) floor
   /-- The quarter-target hole request using the actual B-row coefficients. -/ b :
-    Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest contacts loops.bSplit.coefficients
+    HolePhysicalCorrection.HolePhysicalRequest contacts loops.bSplit.coefficients
     (target / 4) floor
 
 constructive_injectivity HolePreparation
@@ -174,19 +174,19 @@ namespace HoleReadings.HolePreparation
 
 /-- Compute the original physical-loop split and prepare both weighted hole corrections before acquiring numerical
 readings. -/
-@[expose] def build (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods row.span
+@[expose] def build (periods : TourChordPeriods.ChordPeriods row.span
   prepared components)
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
+    (domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
       (target : Fraction.Rational) (positive : 0 < target) (floor : Nat) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.HoleReadings.HolePreparation periods domains target floor :=
+    HolePreparation periods domains target floor :=
   let loops := PhysicalLoops.build periods
-  let contacts := Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations.build
+  let contacts := BoundaryContacts.BoundaryContactPreparations.build
     lifted.cutPolygon.patch lifted.cutBoundaryPairs
     (Periods.PeriodMatrix.standardDifferential differential) domains
   let positiveQuarter := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
-  ⟨loops, contacts, Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest.build contacts
+  ⟨loops, contacts, HolePhysicalCorrection.HolePhysicalRequest.build contacts
     loops.aSplit.coefficients (target / 4) positiveQuarter floor,
-    Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest.build contacts
+    HolePhysicalCorrection.HolePhysicalRequest.build contacts
       loops.bSplit.coefficients (target / 4) positiveQuarter floor⟩
 
 end HoleReadings.HolePreparation
@@ -194,41 +194,41 @@ end HoleReadings.HolePreparation
 set_option genInjectivity false in
 /-- The original period-relation readings acquired after both weighted hole requests are paid. -/
 structure HoleReadings
-    (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods row.span prepared components)
-    (segments : Data.Vector.DependentVector (fun entry =>
-      Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period))
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
+    (periods : TourChordPeriods.ChordPeriods row.span prepared components)
+    (segments : Vector.DependentVector (fun entry =>
+      PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period))
+    (domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
     (minimum floor : Nat) (target : Fraction.Rational) (extraPoints : List Gaussian.Basic.Canonical) where
   /-- The retained original loop, contact and weighted-hole preparation. -/ preparation :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.HoleReadings.HolePreparation periods domains target floor
+    HoleReadings.HolePreparation periods domains target floor
   /-- The period comparison whose numerical floor includes both original hole requests. -/ comparison :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodRelation.PeriodRelationReadings periods segments domains minimum
+    PeriodRelation.PeriodRelationReadings periods segments domains minimum
     (max preparation.a.index preparation.b.index) (target / 4) extraPoints
 
 constructive_injectivity HoleReadings
 
 namespace HoleReadings
 
-variable {periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods row.span prepared
+variable {periods : TourChordPeriods.ChordPeriods row.span prepared
   components}
-  {segments : Data.Vector.DependentVector (fun entry =>
-    Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period)}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {segments : Vector.DependentVector (fun entry =>
+    PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period)}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {minimum floor : Nat} {target : Fraction.Rational} {extraPoints : List Gaussian.Basic.Canonical}
 
 /-- Prepare both original weighted hole requests and acquire the period comparison at their common numerical floor. -/
-@[expose] def build (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods row.span
+@[expose] def build (periods : TourChordPeriods.ChordPeriods row.span
   prepared components)
-    (segments : Data.Vector.DependentVector (fun entry =>
-      Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period))
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
+    (segments : Vector.DependentVector (fun entry =>
+      PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period))
+    (domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
       (minimum floor : Nat)
     (target : Fraction.Rational) (positive : 0 < target) (extraPoints : List Gaussian := []) :
     HoleReadings periods segments domains minimum floor target
       extraPoints :=
-  let preparation := Hyperelliptic.Meshes.PuncturedGrid.Standard.HoleReadings.HolePreparation.build periods domains
+  let preparation := HolePreparation.build periods domains
     target positive floor
-  let readings := Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodRelation.PeriodRelationReadings.build periods
+  let readings := PeriodRelation.PeriodRelationReadings.build periods
     segments domains minimum
     (max preparation.a.index preparation.b.index) (target / 4)
     (Fraction.Order.Field.div_pos_direct positive (by decide)) extraPoints
@@ -252,10 +252,10 @@ theorem numerical_later
 @[expose] def AHolesAccurate
     (request : HoleReadings periods segments domains minimum
       floor target extraPoints) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (request.preparation.loops.aSplit.coefficients.combine (fun hole : Fin
+    Gaussian.Norm.Basic.normSq (request.preparation.loops.aSplit.coefficients.combine (fun hole : Fin
       base.faces.holes.length =>
       Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+        (CanonicalEdgeValues.edgeValuation lifted.mesh
         request.comparison.readings.standard.triangles.values)
         (base.faces.holes[hole.val].liftedBoundary lifted.vertices lifted.edges))) < target / 4
 
@@ -264,18 +264,18 @@ theorem a_holes_accurate
     (request : HoleReadings periods segments domains minimum
       floor target extraPoints) :
     AHolesAccurate request :=
-  Hyperelliptic.Meshes.PuncturedGrid.CanonicalHoleCorrection.canonical_accurate request.preparation.a
-    ((Data.Nat.Order.le_max_left _ _).trans request.numerical_later)
+  CanonicalHoleCorrection.canonical_accurate request.preparation.a
+    ((Nat.Order.le_max_left _ _).trans request.numerical_later)
     request.comparison.readings.standard.triangles
 
 /-- The original weighted B-row two-lap hole correction meets its quarter-target allocation. -/
 @[expose] def BHolesAccurate
     (request : HoleReadings periods segments domains minimum
       floor target extraPoints) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (request.preparation.loops.bSplit.coefficients.combine (fun hole : Fin
+    Gaussian.Norm.Basic.normSq (request.preparation.loops.bSplit.coefficients.combine (fun hole : Fin
       base.faces.holes.length =>
       Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+        (CanonicalEdgeValues.edgeValuation lifted.mesh
         request.comparison.readings.standard.triangles.values)
         (base.faces.holes[hole.val].liftedBoundary lifted.vertices lifted.edges))) < target / 4
 
@@ -284,40 +284,40 @@ theorem b_holes_accurate
     (request : HoleReadings periods segments domains minimum
       floor target extraPoints) :
     BHolesAccurate request :=
-  Hyperelliptic.Meshes.PuncturedGrid.CanonicalHoleCorrection.canonical_accurate request.preparation.b
-    ((Data.Nat.Order.le_max_right _ _).trans request.numerical_later)
+  CanonicalHoleCorrection.canonical_accurate request.preparation.b
+    ((Nat.Order.le_max_right _ _).trans request.numerical_later)
     request.comparison.readings.standard.triangles
 
 /-- A quarter-target comparison and quarter-target hole estimate pay the corrected comparison with the physical exterior
 retained. -/
 private theorem pay_holes {standard cached exterior holes : Gaussian.Basic.Canonical} {target : Fraction.Rational}
-    (comparison : Data.Gaussian.Norm.Basic.normSq (standard - (cached + (exterior + holes))) < target / 4)
-    (small : Data.Gaussian.Norm.Basic.normSq holes < target / 4) : Data.Gaussian.Norm.Basic.normSq (standard -
+    (comparison : Gaussian.Norm.Basic.normSq (standard - (cached + (exterior + holes))) < target / 4)
+    (small : Gaussian.Norm.Basic.normSq holes < target / 4) : Gaussian.Norm.Basic.normSq (standard -
       (cached + exterior)) < target := by
   have bound := (Gaussian.Norm.Bounds.normSq_add_le_two
     (standard - (cached + (exterior + holes))) holes).trans_lt
     (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct comparison small))
   have equal : standard - (cached + (exterior + holes)) + holes = standard - (cached + exterior) := by ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).symm.trans_lt
+  exact (congrArg Gaussian.Norm.Basic.normSq equal).symm.trans_lt
     (bound.trans_eq ((by ring1 : 2 * (target / 4 + target / 4) = (target / 4) * 4).trans
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))
 
 variable
   {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-  (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
-  (period : Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodRow curve)
-  (periodEq : period = (Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
+  (normal : NormalForm integral.paired raw)
+  (period : PreparedCycleModels.RootClosedPeriodRow curve)
+  (periodEq : period = (PreparedCycleModels.RootClosedPeriodBank.ofData curve
     branches).rows index)
-  {periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
+  {periods : TourChordPeriods.ChordPeriods
+    (TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
       period periodEq).span prepared components}
 
 /-- Exact cached-value type; keep the dependent comparison behind a named boundary. -/
 @[expose] def AccuracyValues
     (request : HoleReadings periods segments domains minimum
       floor target extraPoints) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodRelation.PeriodRelationReadings.Values request.comparison
+  PeriodRelation.PeriodRelationReadings.Values request.comparison
 
 /-- Every original hole correction is paid; the original exterior remains. -/
 @[expose] def AExteriorAccurate
@@ -325,12 +325,12 @@ variable
       floor target extraPoints)
     (values : AccuracyValues normal period
       periodEq request) : Prop :=
-    let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    let value := CanonicalEdgeValues.edgeValuation lifted.mesh
       request.comparison.readings.standard.triangles.values
-    let exterior := Data.Gaussian.Norm.Sum.Basic.gaussianSum (request.preparation.loops.aSplit.exterior.map
+    let exterior := Gaussian.Norm.Sum.Basic.gaussianSum (request.preparation.loops.aSplit.exterior.map
       (fun entry => (entry.1 : Gaussian.Basic.Canonical) * Topology.Surface.Sewing.SewingRetraction.wordValue value
         entry.2))
-    Data.Gaussian.Norm.Basic.normSq ((((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve
+    Gaussian.Norm.Basic.normSq ((((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve
       branches).aProgram differential index).integral.model
       request.comparison.common.common.stage).integralSample - (values.aValue + exterior)) < target
 
@@ -354,12 +354,12 @@ theorem a_exterior_accurate
       floor target extraPoints)
     (values : AccuracyValues normal period
       periodEq request) : Prop :=
-    let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    let value := CanonicalEdgeValues.edgeValuation lifted.mesh
       request.comparison.readings.standard.triangles.values
-    let exterior := Data.Gaussian.Norm.Sum.Basic.gaussianSum (request.preparation.loops.bSplit.exterior.map
+    let exterior := Gaussian.Norm.Sum.Basic.gaussianSum (request.preparation.loops.bSplit.exterior.map
       (fun entry => (entry.1 : Gaussian.Basic.Canonical) * Topology.Surface.Sewing.SewingRetraction.wordValue value
         entry.2))
-    Data.Gaussian.Norm.Basic.normSq ((((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve
+    Gaussian.Norm.Basic.normSq ((((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve
       branches).bProgram differential index).integral.model
       request.comparison.common.common.stage).integralSample - (values.bValue + exterior)) < target
 

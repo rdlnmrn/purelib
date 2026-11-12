@@ -68,40 +68,40 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords (Lif
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment (RootedWord)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {source : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {axes :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    base.faces.regulars} {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
-  {count : Nat} {target : Purelib.Data.Rat.Fraction.Rational}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {source : Differential genus} {axes :
+    PrimitiveAxes base.bank.grid}
+  {domains : FaceDomainBank frames
+    base.faces.regulars} {mesh : LiftedMesh vertices edges base.faces}
+  {count : Nat} {target : Data.Rat.Fraction.Rational}
 
 /-- At an actual query junction, repeated complete source edges have one lifted occurrence, even across different
 parents and face choices. -/
-def Junction (first last : RootedWords.LiftedFragment axes domains mesh source count target) : Prop :=
-  first.last = last.first ∧ Nonempty (Gaussian.Equivalence.NamedEquivalent first.lastName last.firstName) ∧
+def Junction (first last : LiftedFragment axes domains mesh source count target) : Prop :=
+  first.last = last.first ∧ Nonempty (NamedEquivalent first.lastName last.firstName) ∧
     (first.fragment.source.start = last.fragment.source.start →
       first.fragment.source.finish = last.fragment.source.finish → first.occurrence.side.edge =
         last.occurrence.side.edge)
 
 /-- Every actual consecutive fragment pair retains its original coordinate, root and repeated-edge junction
 certificates. -/
-def Junctions : List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+def Junctions : List (LiftedFragment axes domains mesh source count target) → Prop
   | [] => True
   | [_] => True
-  | first :: next :: rest => Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junction first next ∧
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junctions (next :: rest)
+  | first :: next :: rest => Junction first next ∧
+    Junctions (next :: rest)
 
 /-- Consume the original rooted word, rather than a per-junction root or sheet-alignment premise supplied by the caller.
 -/
-theorem RootedWord.junctions {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+theorem RootedWord.junctions {pieces : List (LiftedFragment axes domains mesh source count target)}
     {first last : Data.Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
     (word : LiftedFragment.RootedWord pieces first firstName last lastName) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junctions pieces := by
+      Junctions pieces := by
   induction word with
   | nil => trivial
   | cons piece coordinate root tail ih =>
@@ -115,10 +115,10 @@ theorem RootedWord.junctions {pieces : List (RootedWords.LiftedFragment axes dom
 
 /-- Doubling a certified closed word includes its last-to-first junction. The original fragments and their
 multiplicities remain explicit. -/
-theorem RootedWord.closed_junctions {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+theorem RootedWord.closed_junctions {pieces : List (LiftedFragment axes domains mesh source count target)}
     {first last : Data.Gaussian.Basic.Canonical} {root : Gaussian.Name.Basic.Named}
     (word : LiftedFragment.RootedWord pieces first root last root) (closed : last = first) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junctions (pieces ++ pieces) :=
+      Junctions (pieces ++ pieces) :=
   junctions ((word.castFinish closed).append (word.castFinish closed))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions

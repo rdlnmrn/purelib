@@ -83,45 +83,45 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
+    PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {radius : Fraction.Rational}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations base.bank.toBranchCellBank}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {newSheet : Fin 2} {floor : Nat}
-  {raw : Hyperelliptic.Meshes.Newton.Regular.RawRequest.RegularRawRequest prepared observations preparation radius
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {newSheet : Fin 2} {floor : Nat}
+  {raw : RawRequest.RegularRawRequest prepared observations preparation radius
     regular newSheet floor}
 
 namespace RegularRawSamples
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+variable {stage : Nat} {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
   raw.grid.domains stage}
 
 variable {box : Rational.Box} {polynomials :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box} {first : Fin genus}
+  PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box} {first : Fin genus}
 
 /-- Combine the actual observation-surface lower bound with the paid regular
 cap and joining comparisons. The conclusion belongs to the same corrected
 resplit period matrices as the original raw comparison. All error allowances
 are chosen independently of coefficients and leave the positive observation margin. -/
 theorem remaining_regular_raw_lower
-    (sampleData : Hyperelliptic.Meshes.Newton.Regular.RawSamples.RegularRawSamples prepared observations preparation
+    (sampleData : RegularRawSamples prepared observations preparation
       radius regular raw polynomials cache first)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
     (commonLater : raw.index ≤ stage)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
     (observationFace : Topology.BranchedCover.Double.Attachment.Face) :
-    let values := fun basis => Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation raw.grid.lifted.mesh
+    let values := fun basis => PuncturedGrid.CanonicalEdgeValues.edgeValuation raw.grid.lifted.mesh
       (sampleData.period.triangles.get basis).values
     let aMatrix := Periods.NewtonCombinedPeriodArea.resplitPeriodMatrix prepared
       raw.grid.allocated.family.single.grid.shrunk.included raw.grid.lifted.edges raw.grid.lifted.vertices newSheet
@@ -145,26 +145,26 @@ theorem remaining_regular_raw_lower
   have joiningLater := raw.joining.joining_le.trans joinedLater
   have positive := RootContinuation.NewtonRawEnergyBudget.rawEnergyAllowance_positive observations
   have annularPaid := RootContinuation.NewtonRawEnergyBudget.rawEnergyGridTarget_annular observations
-    (Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation)
+    (Annulus.AreaRequests.NewtonPreparation.outerCount preparation)
   have remainingPaid := RootContinuation.NewtonRawEnergyBudget.rawEnergyGridTarget_remaining observations
-    (Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation)
+    (Annulus.AreaRequests.NewtonPreparation.outerCount preparation)
   have physicalPaid : (genus : Fraction.Rational)^2 *
-    Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus
+    Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus
     (RootContinuation.NewtonRawEnergyBudget.rawEnergyAllowance observations) ≤
       16 * (RootContinuation.NewtonRawEnergyBudget.rawEnergyAllowance observations)^2 :=
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive).trans_eq (by
+    (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive).trans_eq (by
       ring1)
   let remaining :=
     Complement.CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
     raw.grid.excision surfaceEnergy.remaining raw.grid.neighbors
   have sewnLower :=
-    Hyperelliptic.Meshes.Newton.Complement.SewnEnergy.SynchronizedSurfaceRequests.remaining_sewn_energy_lower
+    Complement.SewnEnergy.SynchronizedSurfaceRequests.remaining_sewn_energy_lower
     raw.grid.excision raw.surface.energy raw.sewing.sewing (raw.surface.energy_le.trans surfaceLater)
     (raw.sewing.sewing_le.trans sewingLater)
     sampleData.surface.surface observationFace surfaceEnergy.faces surfaceEnergy.remaining raw.grid.neighbors positive
       raw.boundary.contacts contactLater
     sampleData.period.triangles sampleData.period.surfaces sampleData.period.pairs sampleData.period.selected positive
-  have capUpper := Hyperelliptic.Meshes.Newton.Complement.CapEnergy.remaining_cap_energy_upper raw.grid.allocated
+  have capUpper := Complement.CapEnergy.remaining_cap_energy_upper raw.grid.allocated
     raw.surface.shared raw.surface.schedule surfaceEnergy.remaining surfaceEnergy.faces
     (fun position sheet => (surfaceEnergy.whole.get sheet).get position)
     (fun position sheet => (surfaceEnergy.wholePerimeters.get sheet).get position)
@@ -176,7 +176,7 @@ theorem remaining_regular_raw_lower
       (RootContinuation.NewtonRawEnergyBudget.rawEnergyAllowance observations) positive.le physicalPaid positive
       remainingPaid
   have exteriorUpper :=
-    Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples.remaining_exterior_energy_upper
+    HomogeneousPhysicalComparison.Request.Samples.remaining_exterior_energy_upper
     sampleData.period.periods raw.joining.joining sampleData.joining.evaluated sampleData.joining.attachments
     joiningLater positive degree
     coefficients remaining capUpper
@@ -191,7 +191,7 @@ theorem remaining_regular_raw_lower
   change _ ≤ (sampleData.period.selected.energy coefficients + remaining).im / 4 -
     (remaining + 2 * sampleData.period.periods.exterior coefficients).im / 4 at reduced
   rw [cancel] at reduced
-  have period := Hyperelliptic.Meshes.Newton.Complement.RawComparison.Request.Samples.remaining_raw_lower
+  have period := Complement.RawComparison.Request.Samples.remaining_raw_lower
     sampleData.period.periods raw.period.cut later positive raw.sewing.annular sampleData.period.annular
     (raw.sewing.annular_le.trans sewingLater) sampleData.period.selected sampleData.period.holes coefficients
     positive annularPaid

@@ -91,7 +91,7 @@ private theorem half_square (slope width : Fraction.Rational) (depth : Nat) :
     _ = Geometric.Basic.quarterRadius slope depth * ((width / 2) * 2) ^ 2 := by ring1
     _ = Geometric.Basic.quarterRadius slope depth * width ^ 2 := by
       rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
-    _ = _ := by rw [← DyadicAreaRefinement.quarter_step slope depth]; ring1
+    _ = _ := by rw [← quarter_step slope depth]; ring1
 
 /-- The doubled sum of two half-width fourth-power costs equals one further quarter-radius decay step. -/
 private theorem half_fourth (slope width : Fraction.Rational) (depth : Nat) :
@@ -103,7 +103,7 @@ private theorem half_fourth (slope width : Fraction.Rational) (depth : Nat) :
     _ = Geometric.Basic.quarterRadius slope depth * ((width / 2) * 2) ^ 4 := by ring1
     _ = Geometric.Basic.quarterRadius slope depth * width ^ 4 := by
       rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
-    _ = _ := by rw [← DyadicAreaRefinement.quarter_step slope depth]; ring1
+    _ = _ := by rw [← quarter_step slope depth]; ring1
 
 /-- The squared dyadic count cancels the original quarter-radius decay.
 
@@ -112,13 +112,13 @@ Each successor count pays exactly one additional quarter-radius step. -/
 private theorem count_cancel (slope : Fraction.Rational) (depth : Nat) :
     (((2 ^ depth : Nat) : Fraction.Rational) ^ 2) * Geometric.Basic.quarterRadius slope depth = slope := by
   induction depth with
-  | zero => rw [DyadicAreaRefinement.quarter_zero]; change (1 : Fraction.Rational) ^ 2 * slope = slope; ring1
+  | zero => rw [quarter_zero]; change (1 : Fraction.Rational) ^ 2 * slope = slope; ring1
   | succ depth ih =>
       calc
         _ = (((2 ^ depth : Nat) : Fraction.Rational) ^ 2) * (Geometric.Basic.quarterRadius slope (depth + 1) * 4) := by
           rw [Nat.pow_succ, NatCast.mul, Nat.cast_ofNat]
           ring1
-        _ = slope := by rw [DyadicAreaRefinement.quarter_step]; exact ih
+        _ = slope := by rw [quarter_step]; exact ih
 
 end
 
@@ -133,16 +133,16 @@ The ordered endpoints stay in the original parameter interval, and the pointwise
 exact subinterval endpoints. -/
 theorem dyadicIncrements_bounded (value : Fraction.Rational → Basic.Canonical) {lower upper slope : Fraction.Rational}
     (bounded : ∀ first last, lower ≤ first ∧ first ≤ upper → lower ≤ last ∧ last ≤ upper →
-      Data.Gaussian.Norm.Basic.normSq (value last - value first) ≤ slope * (last - first) ^ 2)
+      Norm.Basic.normSq (value last - value first) ≤ slope * (last - first) ^ 2)
     (depth : Nat) {first last : Fraction.Rational} (firstInside : lower ≤ first ∧ first ≤ upper)
     (lastInside : lower ≤ last ∧ last ≤ upper) (ordered : first ≤ last) :
     ∀ increment ∈ DyadicPrimitivePaths.dyadicIncrements value depth first last,
-      Data.Gaussian.Norm.Basic.normSq increment ≤ Geometric.Basic.quarterRadius slope depth * (last - first) ^ 2 := by
+      Norm.Basic.normSq increment ≤ Geometric.Basic.quarterRadius slope depth * (last - first) ^ 2 := by
   induction depth generalizing first last with
   | zero =>
       intro increment member
       have equal : increment = value last - value first := Membership.mem_singleton.mp member
-      rw [equal, DyadicAreaRefinement.quarter_zero]
+      rw [equal, quarter_zero]
       exact bounded first last firstInside lastInside
   | succ depth ih =>
       have between := PreparedBoxPartitions.midpoint_between ordered
@@ -150,9 +150,9 @@ theorem dyadicIncrements_bounded (value : Fraction.Rational → Basic.Canonical)
       intro increment member
       rcases Membership.mem_append.mp member with member | member
       · exact (ih firstInside middleInside between.1 increment member).trans_eq (by
-          rw [(DyadicAreaRefinement.half_widths first last).1, DyadicAreaRefinement.half_square])
+          rw [(half_widths first last).1, half_square])
       · exact (ih middleInside lastInside between.2 increment member).trans_eq (by
-          rw [(DyadicAreaRefinement.half_widths first last).2, DyadicAreaRefinement.half_square])
+          rw [(half_widths first last).2, half_square])
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Gaussian in
@@ -166,10 +166,10 @@ The original movement scale is nonnegative, and the ordered endpoints lie within
 theorem dyadicArea_chord_bound (value : Fraction.Rational → Basic.Canonical) {lower upper slope : Fraction.Rational}
     (nonnegative : 0 ≤ slope)
     (bounded : ∀ first last, lower ≤ first ∧ first ≤ upper → lower ≤ last ∧ last ≤ upper →
-      Data.Gaussian.Norm.Basic.normSq (value last - value first) ≤ slope * (last - first) ^ 2)
+      Norm.Basic.normSq (value last - value first) ≤ slope * (last - first) ^ 2)
     (depth : Nat) {first last : Fraction.Rational} (firstInside : lower ≤ first ∧ first ≤ upper)
     (lastInside : lower ≤ last ∧ last ≤ upper) (ordered : first ≤ last) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBoundaryRibbon.dyadicArea value depth first last - BoundaryRibbon.area (value
+    Norm.Basic.normSq (DyadicBoundaryRibbon.dyadicArea value depth first last - BoundaryRibbon.area (value
       first) (value last)) ≤
       4 * slope ^ 2 * (last - first) ^ 4 := by
   have identity : DyadicBoundaryRibbon.dyadicArea value depth first last - BoundaryRibbon.area (value first) (value
@@ -182,14 +182,14 @@ theorem dyadicArea_chord_bound (value : Fraction.Rational → Basic.Canonical) {
   have estimate := IncrementArea.pathArea_bound (DyadicPrimitivePaths.dyadicIncrements value depth first last)
     (Fraction.Order.Arithmetic.mul_nonneg_direct (Geometric.Basic.quarterRadius_nonneg nonnegative depth)
       (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-    (DyadicAreaRefinement.dyadicIncrements_bounded value bounded depth firstInside lastInside ordered)
+    (dyadicIncrements_bounded value bounded depth firstInside lastInside ordered)
   rw [DyadicPrimitivePaths.dyadicIncrements_length] at estimate
   apply estimate.trans_eq
   calc
     _ = 4 * (((((2 ^ depth : Nat) : Fraction.Rational) ^ 2) * Geometric.Basic.quarterRadius slope depth) * (last -
       first) ^ 2) ^ 2 := by
       ring1
-    _ = _ := by rw [DyadicAreaRefinement.count_cancel]; ring1
+    _ = _ := by rw [count_cancel]; ring1
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Gaussian in
@@ -204,16 +204,16 @@ theorem dyadicArea_refinement_bound (value : Fraction.Rational → Basic.Canonic
   Fraction.Rational}
     (nonnegative : 0 ≤ slope)
     (bounded : ∀ first last, lower ≤ first ∧ first ≤ upper → lower ≤ last ∧ last ≤ upper →
-      Data.Gaussian.Norm.Basic.normSq (value last - value first) ≤ slope * (last - first) ^ 2)
+      Norm.Basic.normSq (value last - value first) ≤ slope * (last - first) ^ 2)
     (coarse fine : Nat) {first last : Fraction.Rational} (firstInside : lower ≤ first ∧ first ≤ upper)
     (lastInside : lower ≤ last ∧ last ≤ upper) (ordered : first ≤ last) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBoundaryRibbon.dyadicArea value (coarse + fine) first last -
+    Norm.Basic.normSq (DyadicBoundaryRibbon.dyadicArea value (coarse + fine) first last -
       DyadicBoundaryRibbon.dyadicArea value coarse first last) ≤
       Geometric.Basic.quarterRadius (4 * slope ^ 2) coarse * (last - first) ^ 4 := by
   induction coarse generalizing first last with
   | zero =>
-      simpa only [Nat.zero_add, DyadicBoundaryRibbon.dyadicArea_zero, DyadicAreaRefinement.quarter_zero] using
-        DyadicAreaRefinement.dyadicArea_chord_bound value nonnegative bounded fine firstInside lastInside ordered
+      simpa only [Nat.zero_add, DyadicBoundaryRibbon.dyadicArea_zero, quarter_zero] using
+        dyadicArea_chord_bound value nonnegative bounded fine firstInside lastInside ordered
   | succ coarse ih =>
       have between := PreparedBoxPartitions.midpoint_between ordered
       have middleInside := And.intro (firstInside.1.trans between.1) (between.2.trans lastInside.2)
@@ -231,7 +231,7 @@ theorem dyadicArea_refinement_bound (value : Fraction.Rational → Basic.Canonic
       rw [split]
       apply (Norm.Bounds.normSq_add_le_two _ _).trans
       apply (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left right) (by decide)).trans_eq
-      rw [(DyadicAreaRefinement.half_widths first last).1, (DyadicAreaRefinement.half_widths first last).2]
-      exact DyadicAreaRefinement.half_fourth _ _ _
+      rw [(half_widths first last).1, (half_widths first last).2]
+      exact half_fourth _ _ _
 
 end Purelib.Integration.Path.Dyadic.DyadicAreaRefinement

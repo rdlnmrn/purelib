@@ -28,47 +28,47 @@ def symmetricContinuant {R : Type*} [CommRing R] : Nat → R → R
   | 0, _ => 1
   | 1, diagonal => diagonal
   | index + 2, diagonal =>
-      diagonal * Purelib.Polynomial.Recurrence.Continuant.Basic.symmetricContinuant (index + 1) diagonal -
-        Purelib.Polynomial.Recurrence.Continuant.Basic.symmetricContinuant index diagonal
+      diagonal * Basic.symmetricContinuant (index + 1) diagonal -
+        Basic.symmetricContinuant index diagonal
 
 section
 open Purelib.Polynomial
 /-- The index-zero symmetric continuant value is one. -/
 @[simp] theorem symmetricContinuant_zero
     {R : Type*} [CommRing R] (diagonal : R) :
-    Recurrence.Continuant.Basic.symmetricContinuant 0 diagonal = 1 := rfl
+    symmetricContinuant 0 diagonal = 1 := rfl
 
 /-- The index-one symmetric continuant value is the diagonal. -/
 @[simp] theorem symmetricContinuant_one
     {R : Type*} [CommRing R] (diagonal : R) :
-    Recurrence.Continuant.Basic.symmetricContinuant 1 diagonal = diagonal := rfl
+    symmetricContinuant 1 diagonal = diagonal := rfl
 
 /-- The diagonal times the previous continuant minus its predecessor. -/
 @[simp] theorem symmetricContinuant_succ_succ
     {R : Type*} [CommRing R] (index : Nat) (diagonal : R) :
-    Recurrence.Continuant.Basic.symmetricContinuant (index + 2) diagonal =
-      diagonal * Recurrence.Continuant.Basic.symmetricContinuant (index + 1) diagonal -
-        Recurrence.Continuant.Basic.symmetricContinuant index diagonal := rfl
+    symmetricContinuant (index + 2) diagonal =
+      diagonal * symmetricContinuant (index + 1) diagonal -
+        symmetricContinuant index diagonal := rfl
 
 /-- Sum the first `count` continuants by appending one final cofactor at each
 finite step. -/
 def continuantPrefix {R : Type*} [CommRing R] : Nat → R → R
   | 0, _ => 0
   | count + 1, diagonal =>
-      Purelib.Polynomial.Recurrence.Continuant.Basic.continuantPrefix count diagonal +
-        Recurrence.Continuant.Basic.symmetricContinuant count diagonal
+      Basic.continuantPrefix count diagonal +
+        symmetricContinuant count diagonal
 
 /-- The empty continuant prefix sum is zero. -/
 @[simp] theorem continuantPrefix_zero
     {R : Type*} [CommRing R] (diagonal : R) :
-    Recurrence.Continuant.Basic.continuantPrefix 0 diagonal = 0 := rfl
+    continuantPrefix 0 diagonal = 0 := rfl
 
 /-- Extending the prefix sum adds the next retained continuant value. -/
 @[simp] theorem continuantPrefix_succ
     {R : Type*} [CommRing R] (count : Nat) (diagonal : R) :
-    Recurrence.Continuant.Basic.continuantPrefix (count + 1) diagonal =
-      Recurrence.Continuant.Basic.continuantPrefix count diagonal +
-        Recurrence.Continuant.Basic.symmetricContinuant count diagonal := rfl
+    continuantPrefix (count + 1) diagonal =
+      continuantPrefix count diagonal +
+        symmetricContinuant count diagonal := rfl
 
 end
 
@@ -78,35 +78,35 @@ open Purelib.Polynomial in
 public theorem
   continuantPrefix_recurrence
     {R : Type*} [CommRing R] (index : Nat) (diagonal : R) :
-    diagonal * Recurrence.Continuant.Basic.continuantPrefix (index + 1) diagonal -
-      Recurrence.Continuant.Basic.continuantPrefix index diagonal + 1 =
-      Recurrence.Continuant.Basic.continuantPrefix (index + 2) diagonal := by
+    diagonal * continuantPrefix (index + 1) diagonal -
+      continuantPrefix index diagonal + 1 =
+      continuantPrefix (index + 2) diagonal := by
   induction index with
   | zero =>
-      simp only [Nat.zero_add, Recurrence.Continuant.Basic.continuantPrefix_succ,
-        Recurrence.Continuant.Basic.continuantPrefix_zero, Recurrence.Continuant.Basic.symmetricContinuant_zero,
-        Recurrence.Continuant.Basic.symmetricContinuant_one]
+      simp only [Nat.zero_add, continuantPrefix_succ,
+        continuantPrefix_zero, symmetricContinuant_zero,
+        symmetricContinuant_one]
       ring1
   | succ index inductionHypothesis =>
       rw [show Nat.succ index + 1 = (index + 1) + 1 by omega0]
       rw [show Nat.succ index + 2 = (index + 2) + 1 by omega0]
       calc
-        diagonal * Recurrence.Continuant.Basic.continuantPrefix (index + 2) diagonal -
-              Recurrence.Continuant.Basic.continuantPrefix (index + 1) diagonal + 1 =
-            (diagonal * Recurrence.Continuant.Basic.continuantPrefix (index + 1) diagonal -
-                Recurrence.Continuant.Basic.continuantPrefix index diagonal + 1) +
-              (diagonal * Recurrence.Continuant.Basic.symmetricContinuant (index + 1) diagonal -
-                Recurrence.Continuant.Basic.symmetricContinuant index diagonal) := by
-                  rw [Recurrence.Continuant.Basic.continuantPrefix_succ,
-                    Recurrence.Continuant.Basic.continuantPrefix_succ]
+        diagonal * continuantPrefix (index + 2) diagonal -
+              continuantPrefix (index + 1) diagonal + 1 =
+            (diagonal * continuantPrefix (index + 1) diagonal -
+                continuantPrefix index diagonal + 1) +
+              (diagonal * symmetricContinuant (index + 1) diagonal -
+                symmetricContinuant index diagonal) := by
+                  rw [continuantPrefix_succ,
+                    continuantPrefix_succ]
                   ring1
-        _ = Recurrence.Continuant.Basic.continuantPrefix (index + 2) diagonal +
-              Recurrence.Continuant.Basic.symmetricContinuant (index + 2) diagonal := by
+        _ = continuantPrefix (index + 2) diagonal +
+              symmetricContinuant (index + 2) diagonal := by
                 rw [inductionHypothesis,
-                  Recurrence.Continuant.Basic.symmetricContinuant_succ_succ]
-        _ = Recurrence.Continuant.Basic.continuantPrefix ((index + 2) + 1) diagonal :=
-          (Recurrence.Continuant.Basic.continuantPrefix_succ (index + 2) diagonal).symm
-        _ = Recurrence.Continuant.Basic.continuantPrefix (index + 3) diagonal := rfl
+                  symmetricContinuant_succ_succ]
+        _ = continuantPrefix ((index + 2) + 1) diagonal :=
+          (continuantPrefix_succ (index + 2) diagonal).symm
+        _ = continuantPrefix (index + 3) diagonal := rfl
 end
 
 end Purelib.Polynomial.Recurrence.Continuant.Basic

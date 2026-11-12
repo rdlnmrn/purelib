@@ -35,14 +35,14 @@ open Purelib.Polynomial
 The exact dense coefficient representation is the coordinate; the edge endpoints do not affect this component
 polynomial. -/
 public theorem coordinate_horizontal_real (y a b : Fraction.Rational) :
-    (Dense.Gaussian.Path.Box.Sides.horizontalEdge Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial y a
+    (Sides.horizontalEdge Monomial.Coordinate.coordinatePolynomial y a
       b).realPart =
-      Dense.Rational.Monomial.Coordinate.coordinateVariable := open Purelib.Data in by
-  change Dense.Gaussian.Components.realPart (Dense.Gaussian.Substitution.Affine.composeLine
-    Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      Rational.Monomial.Coordinate.coordinateVariable := open Purelib.Data in by
+  change Components.realPart (Substitution.Affine.composeLine
+    Monomial.Coordinate.coordinatePolynomial
       (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection) =
-        Dense.Rational.Monomial.Coordinate.coordinateVariable
-  rw [Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.Coordinate.composeLine_coordinate
+        Rational.Monomial.Coordinate.coordinateVariable
+  rw [Substitution.Affine.Coordinate.composeLine_coordinate
     (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection (by
     intro equal
     have real := congrArg (fun z : Gaussian.Basic.Canonical => z.re) equal
@@ -55,14 +55,14 @@ public theorem coordinate_horizontal_real (y a b : Fraction.Rational) :
 The exact dense coefficient representation is the line height; the edge endpoints do not affect this component
 polynomial. -/
 public theorem coordinate_horizontal_imag (y a b : Fraction.Rational) :
-    (Dense.Gaussian.Path.Box.Sides.horizontalEdge Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial y a
+    (Sides.horizontalEdge Monomial.Coordinate.coordinatePolynomial y a
       b).imagPart =
-      Dense.Rational.Constants.RawLinear.rawConstant y := open Purelib.Data in by
-  change Dense.Gaussian.Components.imagPart (Dense.Gaussian.Substitution.Affine.composeLine
-    Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      Rational.Constants.RawLinear.rawConstant y := open Purelib.Data in by
+  change Components.imagPart (Substitution.Affine.composeLine
+    Monomial.Coordinate.coordinatePolynomial
       (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection) =
-        Dense.Rational.Constants.RawLinear.rawConstant y
-  rw [Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.Coordinate.composeLine_coordinate
+        Rational.Constants.RawLinear.rawConstant y
+  rw [Substitution.Affine.Coordinate.composeLine_coordinate
     (Gaussian.Cast.Imaginary.horizontalBase y) Gaussian.Constants.horizontalDirection (by
     intro equal
     have real := congrArg (fun z : Gaussian.Basic.Canonical => z.re) equal
@@ -75,14 +75,14 @@ public theorem coordinate_horizontal_imag (y a b : Fraction.Rational) :
 The exact dense coefficient representation is the line position; the edge endpoints do not affect this component
 polynomial. -/
 public theorem coordinate_vertical_real (x a b : Fraction.Rational) :
-    (Dense.Gaussian.Path.Box.Sides.verticalEdge Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial x a b).realPart
+    (Sides.verticalEdge Monomial.Coordinate.coordinatePolynomial x a b).realPart
       =
-      Dense.Rational.Constants.RawLinear.rawConstant x := open Purelib.Data in by
-  change Dense.Gaussian.Components.realPart (Dense.Gaussian.Substitution.Affine.composeLine
-    Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      Rational.Constants.RawLinear.rawConstant x := open Purelib.Data in by
+  change Components.realPart (Substitution.Affine.composeLine
+    Monomial.Coordinate.coordinatePolynomial
       (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit) =
-        Dense.Rational.Constants.RawLinear.rawConstant x
-  rw [Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.Coordinate.composeLine_coordinate
+        Rational.Constants.RawLinear.rawConstant x
+  rw [Substitution.Affine.Coordinate.composeLine_coordinate
     (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit (by
     intro equal
     have imaginary := congrArg (fun z : Gaussian.Basic.Canonical => z.im) equal
@@ -95,14 +95,14 @@ public theorem coordinate_vertical_real (x a b : Fraction.Rational) :
 The exact dense coefficient representation is the coordinate; the edge endpoints do not affect this component
 polynomial. -/
 public theorem coordinate_vertical_imag (x a b : Fraction.Rational) :
-    (Dense.Gaussian.Path.Box.Sides.verticalEdge Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial x a b).imagPart
+    (Sides.verticalEdge Monomial.Coordinate.coordinatePolynomial x a b).imagPart
       =
-      Dense.Rational.Monomial.Coordinate.coordinateVariable := open Purelib.Data in by
-  change Dense.Gaussian.Components.imagPart (Dense.Gaussian.Substitution.Affine.composeLine
-    Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      Rational.Monomial.Coordinate.coordinateVariable := open Purelib.Data in by
+  change Components.imagPart (Substitution.Affine.composeLine
+    Monomial.Coordinate.coordinatePolynomial
       (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit) =
-        Dense.Rational.Monomial.Coordinate.coordinateVariable
-  rw [Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.Coordinate.composeLine_coordinate
+        Rational.Monomial.Coordinate.coordinateVariable
+  rw [Substitution.Affine.Coordinate.composeLine_coordinate
     (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit (by
     intro equal
     have imaginary := congrArg (fun z : Gaussian.Basic.Canonical => z.im) equal

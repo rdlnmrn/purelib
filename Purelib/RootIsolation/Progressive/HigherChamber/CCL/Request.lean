@@ -36,6 +36,8 @@ import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Approximation.Process
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive
+
 open Purelib
 
 open Purelib.Data
@@ -73,7 +75,7 @@ section HigherChamber
 
 /-- Empty-word persistent CCL state for one transported owner. -/
 def persistentInitialAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) :
@@ -108,7 +110,7 @@ section HigherChamber
 
 /-- One persistent bit-and-accuracy request on a transported owner. -/
 def persistentRequestAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -144,7 +146,7 @@ section HigherChamber
 
 /-- The persistent request's retained numerical box meets the supplied positive accuracy target. -/
 theorem persistentRequestAt_accurate
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -184,7 +186,7 @@ section HigherChamber
 transported track.  This supplies the polynomial residual certificate while
 the persistent state supplies the already-running raw CCL word. -/
 def sampleRequestAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -224,7 +226,7 @@ section HigherChamber
 /-- The persistent and exact-sample requests retain exactly the same numerical box. -/
 theorem
   persistentRequestAt_box_eq_sampleRequestAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -260,7 +262,7 @@ section HigherChamber
 
 /-- The persistent request's numerical box refines the same preceding owner box. -/
 theorem persistentRequestAt_box_refines_owner
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -299,18 +301,18 @@ section HigherChamber
 preceding rational root box. -/
 theorem
   persistentRequestAt_candidate_in_owner
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
     (epsilonPositive : 0 < epsilon) (count : Nat)
-    {tail : Gaussian.Basic.Canonical}
-    (possible : Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
+    {tail : Basic.Canonical}
+    (possible : CCL.Transducer.Mode.Semantics.SemanticMode.possible
       (chamber.persistentRequestAt index epsilon epsilonPositive count).cursor.machine.mode
       tail) :
-    ∃ value : Gaussian.Basic.Canonical,
+    ∃ value : Basic.Canonical,
       (chamber.owners.trackAt index).initial.box.Contains value ∧
-        (Data.CCL.Progressive.Cursor.Image.Machine.image
+        (CCL.Progressive.Cursor.Image.Machine.image
           (chamber.persistentRequestAt index epsilon epsilonPositive count).cursor.machine
           tail).Equivalent (Geometry.Projective.Line.Proj.affine value) := by
   exact (chamber.persistentRequestAt index epsilon epsilonPositive count).candidate_in_initial_box
@@ -345,7 +347,7 @@ section HigherChamber
 
 /-- Persistent requests at distinct original indices retain pairwise separated boxes. -/
 theorem persistentRequestAt_pairwiseSeparated
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (left right : chamber.Index) (different : left ≠ right)
@@ -388,7 +390,7 @@ section HigherChamber
 
 /-- The persistent request emits exactly the requested number of bits from its initial empty word. -/
 theorem persistentRequestAt_word_length
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -431,12 +433,12 @@ section HigherChamber
 /-- The requested exact sample's polynomial residual is bounded by the original owner-box residual constant times the
 squared accuracy. -/
 theorem sampleRequestAt_residual_le
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
     (epsilonPositive : 0 < epsilon) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((table.refine target positive).polynomial.eval
           (chamber.sampleRequestAt index epsilon epsilonPositive).sample.point) ≤
       Dense.Gaussian.Bounds.Box.residualConstant

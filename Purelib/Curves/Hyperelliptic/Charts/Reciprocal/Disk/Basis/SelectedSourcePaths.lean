@@ -56,20 +56,20 @@ open Purelib.Riemann
 /-! Indexed readback preserves the complete common-source path bank. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SelectedSourcePaths
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
     Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {data : UniformReciprocalModels.Data patch count}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {allowance coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor : Nat}
   {index minimum readingIndex : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 variable {stage energyFloor radialDepth : Nat} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
   genus}
@@ -80,31 +80,31 @@ The complete path list and parent order are preserved, including the actual inco
 restoration. -/
 theorem Samples.PreparedComparisons.sourcePaths_eq : {parents : List
   (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
     (previous : Normalization.InverseRootPolynomial.Gaussian) →
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors sources
+    (SourceRestorationPairs.Samples.SourceRestoration.pairs anchors sources
       bank plans inputs readings prepared samples comparisons previous).map Prod.snd =
       List.ofFn (fun position : Fin parents.length =>
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedSelection.Samples.PreparedComparisons.select anchors sources
+        (PreparedSelection.Samples.PreparedComparisons.select anchors sources
           bank plans inputs readings prepared samples comparisons position).weighted.values.map Prod.fst)
   | _, .nil, _, _, _, _, _, _, _, _, _ => rfl
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons, previous => by
-      rw [Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs,
-        List.map_cons, Purelib.Data.List.OfFn.Basic.ofFn_succ]
+      rw [SourceRestorationPairs.Samples.SourceRestoration.pairs,
+        List.map_cons, Data.List.OfFn.Basic.ofFn_succ]
       exact congrArg₂ List.cons rfl
         (sourcePaths_eq tail sources.tail bank.2 plans.2 inputs.2 readings.2 prepared.2 samples.2 comparisons.2
           samples.1.endpoints.last.2)
@@ -112,7 +112,7 @@ theorem Samples.PreparedComparisons.sourcePaths_eq : {parents : List
 /-- Parent transport leaves the cached scalar values unchanged. -/
 theorem PreparedSelection.castParent_values {first last : Integration.PreparedSubdivisionModelCore.CenteredEdge curve
   differential} (equal : first = last)
-    {input : Hyperelliptic.Charts.Reciprocal.Disk.Basis.NumericalSelection.SelectedInput first index}
+    {input : NumericalSelection.SelectedInput first index}
     (selected : PreparedSelection input basis allowance
       coefficientTarget coverFloor floor polynomials coefficients) :
     (PreparedSelection.castParent equal

@@ -58,7 +58,7 @@ open Purelib.Topology.Surface.Cut.JumpPaths
     (patch : Topology.Surface.Cut.Patch.CutPatch faces indices boundary) :
     Topology.Surface.Sewing.CutCycleChains.ClosedCutCycle patch.vertexLabels (patch.boundary.map
       (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map patch.vertexLabels)) :=
-  ⟨patch.anchor, patch.anchor, Topology.Surface.Cut.JumpPaths.CutPath.Projected.build patch.vertexLabels patch.boundary
+  ⟨patch.anchor, patch.anchor, CutPath.Projected.build patch.vertexLabels patch.boundary
     patch.closed,
     rfl, fun _ member => Or.inl member⟩
 
@@ -68,8 +68,8 @@ namespace LiftedPuncturedGrid
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
 
 set_option genInjectivity false in
@@ -77,15 +77,15 @@ set_option genInjectivity false in
 
 Positive orientation and source ownership are retained for the actual cached boundary word. -/
 structure BoundaryProgram (lifted : Meshes.LiftedPuncturedGrid base) (source :
-  Hyperelliptic.Differentials.Basic.Differential genus) where
+  Differentials.Basic.Differential genus) where
   /-- The original cut-cycle integration program. -/ program :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted source
+    Cut.CyclePrograms.CutCycleProgram lifted source
   /-- The program starts at the retained cut anchor. -/ start_eq : program.cycle.start =
     lifted.cutPolygon.patch.cut.anchor
   /-- The program uses exactly the actual original cut boundary. -/ edges_eq : program.cycle.path.cutEdges =
     lifted.cutPolygon.patch.cut.boundary
   /-- Every original routed source occurrence has positive orientation. -/ positive :
-    Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive program.routed.spine
+    TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive program.routed.spine
   /-- The cached sources of the literal cut boundary. -/ sources :
     Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut
     lifted.cutPolygon.patch.cut.boundary
@@ -102,22 +102,22 @@ namespace BoundaryProgram
 
 The program, anchor, positive routed sources and count all refer to the same retained cut boundary; the builder stores
 those source occurrences for later readback. -/
-@[expose] def build (lifted : Meshes.LiftedPuncturedGrid base) (source : Hyperelliptic.Differentials.Basic.Differential
+@[expose] def build (lifted : Meshes.LiftedPuncturedGrid base) (source : Differentials.Basic.Differential
   genus) :
-    Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source :=
+    BoundaryProgram lifted source :=
   let patch := lifted.cutPolygon.patch.cut
-  let cycle := Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.CutPatch.boundaryCycle patch
+  let cycle := CutPatch.boundaryCycle patch
   let sources := Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources.build patch patch.boundary
     (fun _ member => Or.inl member)
   have sourcesPositive : sources.Positive :=
     Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources.build_positive patch patch.boundary _ (fun
     _ member => member)
-  let program := Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted cycle source
-  have positive : Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive
+  let program := Cut.CyclePrograms.CutCycleProgram.build lifted cycle source
+  have positive : TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive
     program.routed.spine := by
     change ∀ edge ∈ program.routed.spine.values (fun _ route => route.sourceEdge),
       Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive edge lifted.mesh.triangulation.faces
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Cut.SourceComparison.build_sourceEdges cycle source sources sourcesPositive]
+    rw [Cut.SourceComparison.build_sourceEdges cycle source sources sourcesPositive]
     exact sourcesPositive
   ⟨program, rfl, rfl, positive, sources, sourcesPositive, patch.boundary.length, rfl⟩
 

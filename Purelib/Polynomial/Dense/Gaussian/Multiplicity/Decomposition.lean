@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Extensionality
 
 import Purelib.Data.Gaussian.Basic
 import Purelib.Polynomial.Dense.Basic
@@ -13,6 +14,8 @@ import Purelib.Polynomial.Dense.Gaussian.Multiplicity.CoprimeRelation
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Basic
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Gaussian.Field
+
+open Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis
 
 open Purelib.Data
 
@@ -40,7 +43,7 @@ def multiplicityBasis
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
     (decomposition : Decomposition p) :
     Multiplicity.Basis decomposition.factors :=
-  Dense.Gaussian.Multiplicity.Basis.Build.buildBasis decomposition.factors
+  Build.buildBasis decomposition.factors
 
 /-- The original normalized polynomial is exactly the weighted product of
 the pairwise-coprime squarefree basis at every displayed finite argument. -/
@@ -49,7 +52,7 @@ theorem eval_multiplicityBasis
     (decomposition : Decomposition p)
     (point : Gaussian.Basic.Canonical) :
     p.eval point =
-      Dense.Gaussian.Multiplicity.Basis.Basic.basisValue decomposition.multiplicityBasis.entries point := by
+      Basic.basisValue decomposition.multiplicityBasis.entries point := by
   rw [decomposition.evalIdentity point,
     decomposition.multiplicityBasis.valueIdentity point]
 
@@ -57,9 +60,9 @@ theorem eval_multiplicityBasis
 theorem multiplicityDegree
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
     (decomposition : Decomposition p) :
-    Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree decomposition.multiplicityBasis.entries = p.natDegree := by
+    Basic.basisDegree decomposition.multiplicityBasis.entries = p.natDegree := by
   rw [decomposition.multiplicityBasis.degreeIdentity,
-    Dense.Gaussian.Multiplicity.Basis.Build.occurrenceDegree_eq_sum, decomposition.degreeSum]
+    Build.occurrenceDegree_eq_sum, decomposition.degreeSum]
 
 /-- Read the positive-degree entries of the decomposition's multiplicity basis.
 
@@ -67,8 +70,8 @@ Only degree-zero entries are removed; each retained entry keeps its squarefree f
 def positiveMultiplicityEntries
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
     (decomposition : Decomposition p) :
-    List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry :=
-  Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries decomposition.multiplicityBasis.entries
+    List Positive.PositiveEntry :=
+  Positive.positiveEntries decomposition.multiplicityBasis.entries
 
 /-- The retained positive multiplicity factors are pairwise coprime. -/
 theorem
@@ -77,7 +80,7 @@ theorem
     (decomposition : Decomposition p) :
     decomposition.positiveMultiplicityEntries.Pairwise fun left right =>
       Multiplicity.CoprimeRelation left.part right.part :=
-  Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries_pairwise decomposition.multiplicityBasis.pairwise
+  Positive.positiveEntries_pairwise decomposition.multiplicityBasis.pairwise
 
 /-- Exact multiplicity factorization after deleting only a displayed nonzero
 unit scalar. -/
@@ -87,21 +90,21 @@ theorem
     (decomposition : Decomposition p)
     (point : Gaussian.Basic.Canonical) :
     p.eval point =
-      Dense.Gaussian.Multiplicity.Basis.Positive.unitValue decomposition.multiplicityBasis.entries *
-        Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue decomposition.positiveMultiplicityEntries point := by
+      Positive.unitValue decomposition.multiplicityBasis.entries *
+        Positive.positiveValue decomposition.positiveMultiplicityEntries point := by
   calc
-    p.eval point = Dense.Gaussian.Multiplicity.Basis.Basic.basisValue decomposition.multiplicityBasis.entries point :=
+    p.eval point = Basic.basisValue decomposition.multiplicityBasis.entries point :=
       decomposition.eval_multiplicityBasis point
-    _ = Dense.Gaussian.Multiplicity.Basis.Positive.unitValue decomposition.multiplicityBasis.entries *
-        Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue decomposition.positiveMultiplicityEntries point :=
-      Dense.Gaussian.Multiplicity.Basis.Positive.basisValue_eq_unitValue_mul_positiveValue _ _
+    _ = Positive.unitValue decomposition.multiplicityBasis.entries *
+        Positive.positiveValue decomposition.positiveMultiplicityEntries point :=
+      Positive.basisValue_eq_unitValue_mul_positiveValue _ _
 
 /-- The scalar contributed by degree-zero basis entries is nonzero. -/
 theorem multiplicityUnit_ne_zero
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
     (decomposition : Decomposition p) :
-    Dense.Gaussian.Multiplicity.Basis.Positive.unitValue decomposition.multiplicityBasis.entries ≠ 0 :=
-  Dense.Gaussian.Multiplicity.Basis.Positive.unitValue_ne_zero _
+    Positive.unitValue decomposition.multiplicityBasis.entries ≠ 0 :=
+  Positive.unitValue_ne_zero _
 
 /-- A decomposition with a nonempty list of positive-degree occurrences has a nonempty positive multiplicity basis. -/
 theorem
@@ -109,7 +112,7 @@ theorem
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
     (decomposition : Decomposition p) :
     decomposition.positiveMultiplicityEntries ≠ [] := by
-  apply Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries_ne_nil_of_basisDegree_positive
+  apply Positive.positiveEntries_ne_nil_of_basisDegree_positive
   rw [decomposition.multiplicityDegree]
   cases factorsEquation : decomposition.factors with
   | nil => exact (decomposition.factorsNonempty factorsEquation).elim
@@ -123,12 +126,12 @@ degrees, add exactly to the original positive-degree polynomial degree. -/
 theorem positiveMultiplicityDegree
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
     (decomposition : Decomposition p) :
-    Dense.Gaussian.Multiplicity.Basis.Product.positiveDegree decomposition.positiveMultiplicityEntries = p.natDegree :=
+    Product.positiveDegree decomposition.positiveMultiplicityEntries = p.natDegree :=
       by
   calc
-    Dense.Gaussian.Multiplicity.Basis.Product.positiveDegree decomposition.positiveMultiplicityEntries =
-        Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree decomposition.multiplicityBasis.entries :=
-      (Dense.Gaussian.Multiplicity.Basis.Product.basisDegree_eq_positiveDegree_positiveEntries
+    Product.positiveDegree decomposition.positiveMultiplicityEntries =
+        Basic.basisDegree decomposition.multiplicityBasis.entries :=
+      (Product.basisDegree_eq_positiveDegree_positiveEntries
         decomposition.multiplicityBasis.entries).symm
     _ = p.natDegree := decomposition.multiplicityDegree
 
@@ -139,11 +142,11 @@ theorem eval_positivePolynomial
     (decomposition : Decomposition p)
     (point : Gaussian.Basic.Canonical) :
     p.eval point =
-      Dense.Gaussian.Multiplicity.Basis.Positive.unitValue decomposition.multiplicityBasis.entries *
-        (Dense.Gaussian.Multiplicity.Basis.Product.positivePolynomial
+      Positive.unitValue decomposition.multiplicityBasis.entries *
+        (Product.positivePolynomial
           decomposition.positiveMultiplicityEntries).eval point := by
   rw [decomposition.eval_positiveMultiplicityEntries point,
-    Dense.Gaussian.Multiplicity.Basis.Product.positivePolynomial_eval]
+    Product.positivePolynomial_eval]
 
 /-- The multiplicity basis is an exact finite polynomial factorization:
 the normalized coefficient difference between the source and the displayed
@@ -152,14 +155,44 @@ theorem
   positiveMultiplicityProductIdentity
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
     (decomposition : Decomposition p) :
-    Dense.Gaussian.Factorization.Identity.ProductIdentity p
-      (Dense.Basic.DensePolynomial.constant (Dense.Gaussian.Multiplicity.Basis.Positive.unitValue
+    Factorization.Identity.ProductIdentity p
+      (Basic.DensePolynomial.constant (Positive.unitValue
         decomposition.multiplicityBasis.entries))
-      (Dense.Gaussian.Multiplicity.Basis.Product.positivePolynomial decomposition.positiveMultiplicityEntries) := by
-  apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+      (Product.positivePolynomial decomposition.positiveMultiplicityEntries) := by
+  apply Factorization.Identity.factorizationOfCandidateEvals
   intro point _
-  rw [Dense.Basic.DensePolynomial.eval_constant]
+  rw [Basic.DensePolynomial.eval_constant]
   exact decomposition.eval_positivePolynomial point
+
+/-- The cached original multiplicity preprocessing gives the literal normalized source coefficient factorization. -/
+theorem positiveMultiplicity_factorization
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (decomposition : Decomposition p) :
+    p.normalize = Basic.DensePolynomial.scale (Positive.unitValue decomposition.multiplicityBasis.entries)
+      (Product.positivePolynomial decomposition.positiveMultiplicityEntries) := by
+  apply Extensionality.gaussian_normalized_eq_of_eval_eq
+    (Basic.DensePolynomial.normalize_normalize p) (Basic.DensePolynomial.normalize_scale _ _)
+  intro point
+  rewrite [Basic.DensePolynomial.eval_normalize, Basic.DensePolynomial.eval_scale]
+  exact decomposition.eval_positivePolynomial point
+
+/-- The original discarded scalar and displayed powered factor heads reconstruct the same original source head. -/
+theorem positiveMultiplicity_leadingCoeff
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (decomposition : Decomposition p) :
+    p.leadingCoeff = Positive.unitValue decomposition.multiplicityBasis.entries *
+      (decomposition.positiveMultiplicityEntries.foldr
+        (fun entry total => entry.part.polynomial.leadingCoeff ^ entry.multiplicity * total) 1) := by
+  have same := congrArg Basic.DensePolynomial.leadingCoeff decomposition.positiveMultiplicity_factorization
+  have head : p.normalize.leadingCoeff = p.leadingCoeff := by
+    change p.normalize.normalize.coeffs.headD 0 = p.normalize.coeffs.headD 0
+    rewrite [Basic.DensePolynomial.normalize_normalize]
+    rfl
+  have weighted := Leading.LeadingTerm.ofNormalized
+    (Product.positivePolynomial_nonzero decomposition.positiveMultiplicityEntries)
+    (Product.positivePolynomial_normalized decomposition.positiveMultiplicityEntries)
+  have scaled := Leading.LeadingTerm.scale decomposition.multiplicityUnit_ne_zero weighted
+  exact head.symm.trans (same.trans (scaled.coefficient_eq.trans
+    (congrArg (fun value => Positive.unitValue decomposition.multiplicityBasis.entries * value)
+      (Product.positivePolynomial_leadingCoeff decomposition.positiveMultiplicityEntries))))
 
 end Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition
 

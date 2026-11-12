@@ -44,6 +44,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 open Purelib
@@ -80,28 +82,28 @@ open Purelib.Integration.Path.Dyadic.DyadicBoundaryRibbon (dyadicArea)
 open Purelib.Integration.Path.Dyadic.DyadicPrimitivePaths (dyadicIncrements)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples (Data Sample)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {comparison :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {comparison :
+    Data regular cell}
+  {index : Nat} {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
 
 set_option genInjectivity false in
 /-- Fixed spatial movement and area ceilings for the original retained reciprocal cap arc. -/
-structure SpatialBounds (comparison : ArcSamples.Data regular cell) where
+structure SpatialBounds (comparison : Data regular cell) where
   /-- The cached cap-arc movement ceiling independent of later polynomial stages. -/ slope :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The slope is twice the sum of the original source slope and comparison scale. -/ slope_eq : slope = 2 *
     (data.sourceSlope + comparison.scale)
-  /-- The cached finite dyadic area refinement scale. -/ areaScale : InverseRootPolynomial.Coordinate
+  /-- The cached finite dyadic area refinement scale. -/ areaScale : Coordinate
   /-- The area scale is four times the square of the retained movement ceiling. -/ areaScale_eq : areaScale = 4 * slope
     ^ 2
 
@@ -110,41 +112,41 @@ constructive_injectivity SpatialBounds
 namespace SpatialBounds
 
 /-- Cache the original spatial ceilings and select the first finite dyadic depth paying the requested area target. -/
-@[expose] def build (comparison : ArcSamples.Data regular cell) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialBounds comparison :=
+@[expose] def build (comparison : Data regular cell) :
+  SpatialBounds comparison :=
   let slope := 2 * (data.sourceSlope + comparison.scale)
   ⟨slope, rfl, 4 * slope ^ 2, rfl⟩
 
 /-- The original source slope and comparison scale give a nonnegative retained movement bound. -/
-theorem slope_nonnegative (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialBounds comparison)
+theorem slope_nonnegative (bounds : SpatialBounds comparison)
   : 0 ≤ bounds.slope := by
   rw [bounds.slope_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg data.sourceSlope_nonnegative comparison.scale_nonnegative)
 
 /-- The retained original spatial area refinement scale is nonnegative. -/
-theorem areaScale_nonnegative (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialBounds
+theorem areaScale_nonnegative (bounds : SpatialBounds
   comparison) : 0 ≤ bounds.areaScale := by
   rw [bounds.areaScale_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  exact Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.sq_nonneg_direct _)
 
 /-- Every original cap subarc satisfies the retained spatial movement ceiling times squared parameter width. -/
-theorem increment_bound (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialBounds comparison)
-    (source : UniformReciprocalPrimitives.SourcePrimitive data index) (sample : ArcSamples.Sample comparison capSample)
-    {first last : InverseRootPolynomial.Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
+theorem increment_bound (bounds : SpatialBounds comparison)
+    (source : UniformReciprocalPrimitives.SourcePrimitive data index) (sample : Sample comparison capSample)
+    {first last : Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
       edge.right.parameter)
     (lastInside : edge.left.parameter ≤ last ∧ last ≤ edge.right.parameter) :
     Data.Gaussian.Norm.Basic.normSq (ArcArea.Sample.capValue sample last - ArcArea.Sample.capValue sample
       first) ≤ bounds.slope * (last - first) ^ 2 := by
-  have errorLe : Geometric.Basic.quarterRadius comparison.scale index ≤ comparison.scale := by
-    simpa only [Geometric.Basic.quarterRadius_eq_mul_pow, pow_zero,
+  have errorLe : quarterRadius comparison.scale index ≤ comparison.scale := by
+    simpa only [quarterRadius_eq_mul_pow, pow_zero,
       Fraction.Field.mul_one_direct, -eq_self, -iff_self] using
       quarterRadius_antitone comparison.scale_nonnegative (Nat.zero_le index)
   rw [bounds.slope_eq]
   exact (ArcArea.Sample.cap_increment_bound source sample firstInside lastInside).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add le_rfl errorLe) (by decide))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add le_rfl errorLe) (by decide))
+      (Arithmetic.sq_nonneg_direct _))
 
 end SpatialBounds
 
@@ -153,17 +155,17 @@ set_option genInjectivity false in
 
 The retained bounds depend on the original source geometry and comparison scale, so the same request applies at every
 polynomial stage. -/
-structure SpatialRequest (comparison : ArcSamples.Data regular cell) (target : InverseRootPolynomial.Coordinate) (floor
+structure SpatialRequest (comparison : Data regular cell) (target : Coordinate) (floor
   : Nat) where
   /-- The cached spatial bounds for this exact original cap comparison. -/ bounds :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialBounds comparison
+    SpatialBounds comparison
   /-- The retained finite vertex depth paying the original area target. -/ depth : Nat
   /-- The depth is the first quarter-radius search result above the original floor. -/ depth_eq : depth =
-    Search.firstQuarterBelow bounds.areaScale floor target
+    firstQuarterBelow bounds.areaScale floor target
   /-- The selected depth respects the original spatial floor. -/ floor_le : floor ≤ depth
-  /-- The cached original area refinement discrepancy at the selected depth. -/ error : InverseRootPolynomial.Coordinate
+  /-- The cached original area refinement discrepancy at the selected depth. -/ error : Coordinate
   /-- The cached discrepancy is the original area scale's quarter-radius. -/ error_eq : error =
-    Geometric.Basic.quarterRadius bounds.areaScale depth
+    quarterRadius bounds.areaScale depth
   /-- The retained spatial discrepancy is strictly below the original target. -/ accurate : error < target
 
 constructive_injectivity SpatialRequest
@@ -171,29 +173,29 @@ constructive_injectivity SpatialRequest
 namespace SpatialRequest
 
 /-- Cache the original spatial ceilings and select the first finite dyadic depth paying the requested area target. -/
-@[expose] def build (comparison : ArcSamples.Data regular cell) (target : InverseRootPolynomial.Coordinate) (positive :
+@[expose] def build (comparison : Data regular cell) (target : Coordinate) (positive :
   0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialRequest comparison target floor :=
-  let bounds := Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialBounds.build comparison
-  let depth := Search.firstQuarterBelow bounds.areaScale floor target
-  ⟨bounds, depth, rfl, Search.firstQuarterBelow_ge _ _ _, Geometric.Basic.quarterRadius bounds.areaScale depth, rfl,
+    SpatialRequest comparison target floor :=
+  let bounds := SpatialBounds.build comparison
+  let depth := firstQuarterBelow bounds.areaScale floor target
+  ⟨bounds, depth, rfl, Search.firstQuarterBelow_ge _ _ _, quarterRadius bounds.areaScale depth, rfl,
     Search.firstQuarterBelow_accurate _ bounds.areaScale_nonnegative _ _ positive⟩
 
-variable {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor depth : Nat}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+variable {target : Coordinate} {floor depth : Nat}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
 
 set_option genInjectivity false in
 /-- A coarser cap path retaining the exact original fine path and total.
 
 The new cached summary has the same endpoint increment, and its area differs by less than the paid width-weighted
 tolerance. -/
-structure CoarseArea (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialRequest comparison
+structure CoarseArea (request : SpatialRequest comparison
   target floor)
-    (original : ParentCells.ComparedCell comparison source capSample depth) where
+    (original : ComparedCell comparison source capSample depth) where
   /-- The original fine path meets the retained requested vertex depth. -/ later : request.depth ≤ depth
-  /-- The cached coarser increment path of the original cap polynomial. -/ path : List InverseRootPolynomial.Gaussian
+  /-- The cached coarser increment path of the original cap polynomial. -/ path : List Gaussian
   /-- The path uses the original cap value at the retained requested depth and exact cell endpoints. -/ path_eq : path =
-    DyadicPrimitivePaths.dyadicIncrements (ArcArea.Sample.capValue original.sample) request.depth edge.left.parameter
+    dyadicIncrements (ArcArea.Sample.capValue original.sample) request.depth edge.left.parameter
     edge.right.parameter
   /-- The cached total and area of the original coarser cap path. -/ summary : IncrementArea.Summary path
   /-- The retained coarse total equals the original fine cap path total. -/ total_eq : summary.total =
@@ -206,21 +208,21 @@ constructive_injectivity CoarseArea
 
 /-- Only the new coarse path is evaluated. The supplied original source, cap polynomial, fine path, total and area are
 consumed without rebuilding. -/
-@[expose] def coarsen (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialRequest comparison
+@[expose] def coarsen (request : SpatialRequest comparison
   target floor)
-    (original : ParentCells.ComparedCell comparison source capSample depth)
+    (original : ComparedCell comparison source capSample depth)
     (later : request.depth ≤ depth) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening.SpatialRequest.CoarseArea request original := by
-  let path := DyadicPrimitivePaths.dyadicIncrements (ArcArea.Sample.capValue original.sample) request.depth
+      CoarseArea request original := by
+  let path := dyadicIncrements (ArcArea.Sample.capValue original.sample) request.depth
     edge.left.parameter edge.right.parameter
   let summary := IncrementArea.Summary.build path
   have totalEq : summary.total = original.capSummary.total := by
     rw [summary.total_eq]
-    change Data.Gaussian.Norm.Sum.Basic.gaussianSum (DyadicPrimitivePaths.dyadicIncrements _ _ _ _) = _
+    change Data.Gaussian.Norm.Sum.Basic.gaussianSum (dyadicIncrements _ _ _ _) = _
     rw [DyadicPrimitivePaths.dyadicIncrements_sum, (ArcArea.Sample.capValue_left original.sample),
       Data.Gaussian.Basic.sub_zero,
       (ArcArea.Sample.capValue_right original.sample), ComparedCell.cap_total original]
-  have areaEq : summary.area = DyadicBoundaryRibbon.dyadicArea (ArcArea.Sample.capValue original.sample) request.depth
+  have areaEq : summary.area = dyadicArea (ArcArea.Sample.capValue original.sample) request.depth
     edge.left.parameter edge.right.parameter := by
     rw [summary.area_eq]
     exact DyadicPrimitivePaths.pathArea_dyadicIncrements _ _ _ _ (ArcArea.Sample.capValue_left original.sample)
@@ -231,8 +233,8 @@ consumed without rebuilding. -/
     (fun _ _ firstInside lastInside => request.bounds.increment_bound source original.sample firstInside lastInside)
     request.depth (depth - request.depth) ⟨le_rfl, cell.ordered.le⟩ ⟨cell.ordered.le, le_rfl⟩ cell.ordered.le
   rw [Data.Nat.Subtraction.add_sub_of_le later, ← request.bounds.areaScale_eq, ← request.error_eq] at estimate
-  exact estimate.trans_lt (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct request.accurate
-    (Fraction.Order.Arithmetic.pow_pos_direct (Fraction.Order.Arithmetic.sub_pos_direct cell.ordered) 4))
+  exact estimate.trans_lt (Arithmetic.mul_lt_mul_of_pos_right_direct request.accurate
+    (Arithmetic.pow_pos_direct (Arithmetic.sub_pos_direct cell.ordered) 4))
 
 end SpatialRequest
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening

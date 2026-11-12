@@ -32,15 +32,15 @@ the finite center search. Success retains their exact returned records,
 checks six imaginary endpoint values and four coordinate identities, and
 constructs the corresponding recentered local event certificate. -/
 @[expose] public def localEventData?
-    (A B C D E H : Dense.Rational.Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
-    Option (CauchyIndex.Product.Event.LocalEventData A B C D E H interval) := by
-  match leftFound : CauchyIndex.Events.Prepare.cauchyEventSigns? A B interval with
+    (A B C D E H : Basic.CoordinatePolynomial) (interval : Interval.Bounds) :
+    Option (Event.LocalEventData A B C D E H interval) := by
+  match leftFound : Events.Prepare.cauchyEventSigns? A B interval with
   | none => exact none
   | some left =>
-    match rightFound : CauchyIndex.Events.Prepare.cauchyEventSigns? C D interval with
+    match rightFound : Events.Prepare.cauchyEventSigns? C D interval with
     | none => exact none
     | some right =>
-      match productFound : CauchyIndex.Events.Prepare.cauchyEventSigns? E H interval with
+      match productFound : Events.Prepare.cauchyEventSigns? E H interval with
       | none => exact none
       | some product =>
         match centerFound : ProductCenterSigns.search?
@@ -66,7 +66,7 @@ constructs the corresponding recentered local event certificate. -/
                               if productImagUpperEq : H.eval interval.upper =
                                   A.eval interval.upper * D.eval interval.upper +
                                     B.eval interval.upper * C.eval interval.upper then
-                                exact some (CauchyIndex.Product.Event.LocalEventData.ofRecenteredFactors
+                                exact some (Event.LocalEventData.ofRecenteredFactors
                                   left right product
                                   centers.factorLeftReal centers.factorLeftImag
                                   centers.factorRightReal centers.factorRightImag
@@ -92,10 +92,10 @@ constructs the corresponding recentered local event certificate. -/
 The hypotheses retain three event-sign results, a center-sign result, six nonzero imaginary endpoints and the four
 product-coordinate identities. -/
 public theorem localEventData?_isSome
-    {A B C D E H : Dense.Rational.Basic.CoordinatePolynomial} {interval : Data.Rat.Interval.Bounds}
-    (leftFound : (CauchyIndex.Events.Prepare.cauchyEventSigns? A B interval).isSome = true)
-    (rightFound : (CauchyIndex.Events.Prepare.cauchyEventSigns? C D interval).isSome = true)
-    (productFound : (CauchyIndex.Events.Prepare.cauchyEventSigns? E H interval).isSome = true)
+    {A B C D E H : Basic.CoordinatePolynomial} {interval : Interval.Bounds}
+    (leftFound : (Events.Prepare.cauchyEventSigns? A B interval).isSome = true)
+    (rightFound : (Events.Prepare.cauchyEventSigns? C D interval).isSome = true)
+    (productFound : (Events.Prepare.cauchyEventSigns? E H interval).isSome = true)
     (centerFound :
       (ProductCenterSigns.search? A B C D E H interval).isSome = true)
     (leftImagLower : B.eval interval.lower ≠ 0)
@@ -117,19 +117,19 @@ public theorem localEventData?_isSome
       A.eval interval.upper * D.eval interval.upper +
         B.eval interval.upper * C.eval interval.upper) :
     (localEventData? A B C D E H interval).isSome = true := by
-  cases leftEquation : CauchyIndex.Events.Prepare.cauchyEventSigns? A B interval with
+  cases leftEquation : Events.Prepare.cauchyEventSigns? A B interval with
   | none =>
     have impossible : (false : Bool) = true :=
       (congrArg Option.isSome leftEquation).symm.trans leftFound
     cases impossible
   | some left =>
-    cases rightEquation : CauchyIndex.Events.Prepare.cauchyEventSigns? C D interval with
+    cases rightEquation : Events.Prepare.cauchyEventSigns? C D interval with
     | none =>
       have impossible : (false : Bool) = true :=
         (congrArg Option.isSome rightEquation).symm.trans rightFound
       cases impossible
     | some right =>
-      cases productEquation : CauchyIndex.Events.Prepare.cauchyEventSigns? E H interval with
+      cases productEquation : Events.Prepare.cauchyEventSigns? E H interval with
       | none =>
         have impossible : (false : Bool) = true :=
           (congrArg Option.isSome productEquation).symm.trans productFound
@@ -161,7 +161,7 @@ The Boolean is precisely the `isSome` reading of the retained local
 event-data procedure for the same six coordinate polynomials and interval.
 It does not run a separate search or replace the selected event record. -/
 @[expose] public def localProductCell?
-    (A B C D E H : Dense.Rational.Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) : Bool :=
+    (A B C D E H : Basic.CoordinatePolynomial) (interval : Interval.Bounds) : Bool :=
   (localEventData? A B C D E H interval).isSome
 
 /-- A successful local product-cell check supplies the auxiliary Cauchy product formula on the displayed interval.
@@ -170,9 +170,9 @@ The check is the `isSome` reading of the same retained event-data procedure.
 Its actual successful certificate supplies the formula without replacing
 any selected event, center-sign record or polynomial input. -/
 public theorem auxiliaryProductFormula_of_localProductCell
-    (A B C D E H : Dense.Rational.Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds)
+    (A B C D E H : Basic.CoordinatePolynomial) (interval : Interval.Bounds)
     (checked : localProductCell? A B C D E H interval = true) :
-    CauchyIndex.Product.Basic.AuxiliaryProductFormula A B C D E H
+    Basic.AuxiliaryProductFormula A B C D E H
       interval.lower interval.upper := by
   unfold localProductCell? at checked
   cases found : localEventData? A B C D E H interval with

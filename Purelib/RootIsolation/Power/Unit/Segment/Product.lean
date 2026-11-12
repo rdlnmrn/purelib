@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Geometry.Rational.Box.Basic
 
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Rat.Interval (Bounds)
 
 open Purelib.Data
@@ -52,44 +54,44 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq)
 /-- Product formula for two successive positive coordinate powers along one
 robust lift segment. -/
 theorem unitRobustSegmentProductFormula
-    {parameter start finish : Gaussian.Basic.Canonical}
+    {parameter start finish : Basic.Canonical}
     (parameterNonzero : parameter ≠ 0)
     (parameterUnit : normSq parameter = 1)
     (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value)
-    (startInside : (Power.Unit.Box.unitRobustBox parameterNonzero parameterUnit degree
+    (startInside : (Box.unitRobustBox parameterNonzero parameterUnit degree
       degreeAtLeastTwo index).Contains start)
-    (finishInside : (Power.Unit.Box.unitRobustBox parameterNonzero parameterUnit degree
+    (finishInside : (Box.unitRobustBox parameterNonzero parameterUnit degree
       degreeAtLeastTwo index).Contains finish)
     (exponent : Nat) :
     Winding.Edge.Product.LineProductFormula
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower exponent)
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start (finish - start) 0 1 := by
-  let left := Power.Unit.Segment.Clearance.unitRobustSegmentCoordinatePowerCertificate parameterNonzero
+      (Power.Coordinate.coordinatePositivePower exponent)
+      Monomial.Coordinate.coordinatePolynomial start (finish - start) 0 1 := by
+  let left := Clearance.unitRobustSegmentCoordinatePowerCertificate parameterNonzero
     parameterUnit degree degreeAtLeastTwo index startInside finishInside exponent
-  let right := Power.Unit.Segment.Clearance.unitRobustSegmentCoordinatePowerCertificate parameterNonzero
+  let right := Clearance.unitRobustSegmentCoordinatePowerCertificate parameterNonzero
     parameterUnit degree degreeAtLeastTwo index startInside finishInside 0
   apply Winding.Edge.Product.lineProductFormula_of_clearances
-    (Dense.Gaussian.Power.Coordinate.coordinatePositivePower exponent)
-    Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start (finish - start)
+    (Power.Coordinate.coordinatePositivePower exponent)
+    Monomial.Coordinate.coordinatePolynomial start (finish - start)
     (by decide) left right
   · exact Geometry.Polynomial.Path.Clearance.Nonzero.path_value_ne_zero_of_certificate _ _ _ left
       (show ({ lower := 0, upper := 1, valid := by decide } :
         Bounds).Contains 0 from ⟨le_rfl, by decide⟩)
-  · simpa only [show Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial =
-        Dense.Gaussian.Power.Coordinate.coordinatePositivePower 0 from rfl] using
+  · simpa only [show Monomial.Coordinate.coordinatePolynomial =
+        Power.Coordinate.coordinatePositivePower 0 from rfl] using
       Geometry.Polynomial.Path.Clearance.Nonzero.path_value_ne_zero_of_certificate
-        (Dense.Gaussian.Power.Coordinate.coordinatePositivePower 0) start (finish - start)
+        (Power.Coordinate.coordinatePositivePower 0) start (finish - start)
         right
         (show ({ lower := 0, upper := 1, valid := by decide } :
           Bounds).Contains 0 from ⟨le_rfl, by decide⟩)
   · exact Geometry.Polynomial.Path.Clearance.Nonzero.path_value_ne_zero_of_certificate _ _ _ left
       (show ({ lower := 0, upper := 1, valid := by decide } :
         Bounds).Contains 1 from ⟨by decide, le_rfl⟩)
-  · simpa only [show Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial =
-        Dense.Gaussian.Power.Coordinate.coordinatePositivePower 0 from rfl] using
+  · simpa only [show Monomial.Coordinate.coordinatePolynomial =
+        Power.Coordinate.coordinatePositivePower 0 from rfl] using
       Geometry.Polynomial.Path.Clearance.Nonzero.path_value_ne_zero_of_certificate
-        (Dense.Gaussian.Power.Coordinate.coordinatePositivePower 0) start (finish - start)
+        (Power.Coordinate.coordinatePositivePower 0) start (finish - start)
         right
         (show ({ lower := 0, upper := 1, valid := by decide } :
           Bounds).Contains 1 from ⟨by decide, le_rfl⟩)

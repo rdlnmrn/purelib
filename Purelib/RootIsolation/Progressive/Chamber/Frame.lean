@@ -3,6 +3,7 @@ meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.RootIsolation.Owner.Local.Basic
 import Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table
 public import Purelib.RootIsolation.Progressive.Chamber.Basic
+public import Purelib.RootIsolation.FTA.Squarefree.Input
 import Purelib.Data.Gaussian.Basic
 import Purelib.Geometry.Rational.Box.Separation
 import Purelib.Polynomial.Dense.Basic
@@ -60,6 +61,18 @@ public theorem pairwiseSeparated (frame : Progressive.Chamber.Frame.ChamberFrame
     (left right : frame.Index) (different : left ≠ right) :
     (frame.owner left).box.Separated (frame.owner right).box :=
   frame.chamber.owners.pairwiseSeparated left right different
+
+/-- The original chamber admits its same exact displayed polynomial as a squarefree input.
+
+The retained squarefree certificate and original table degree supply the input
+without another isolation or coefficient producer.
+-/
+public def input (frame : ChamberFrame) : FTA.Squarefree.Input frame.polynomial where
+  squarefree := frame.chamber.squarefree
+  degreeAtLeastTwo := by
+    change 2 ≤ frame.reference.polynomial.natDegree
+    rewrite [frame.reference.polynomial_natDegree]
+    exact frame.chamber.degreeAtLeastTwo
 
 end ChamberFrame
 

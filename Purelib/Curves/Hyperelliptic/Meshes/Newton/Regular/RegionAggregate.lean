@@ -61,6 +61,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -84,160 +86,160 @@ ordered exterior compiler, with cached cut corrections and polygon reads. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+    {differential : Differentials.Basic.Differential genus}
 
 set_option genInjectivity false in
 /-- A dependent bank of original regular-region requests in the exact retained occurrence order.
 
 Every entry keeps its original face, cut words, common error allocation and supplied stage floor. -/
-inductive RegularRegionRequests (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+inductive RegularRegionRequests (fixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
   differential) (error : Fraction.Rational) (floor : Nat) :
     List
-      (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+      (CircuitPartition.ResplitRegularOccurrence
       (faces := base.faces) grid.shrunk.included current.edges current.vertices) → Type 3 where
   /-- The request bank for an empty original occurrence list. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error
+    RegularRegionRequests fixed error
     floor []
   /-- Prepend one original occurrence request to its retained dependent tail. -/ | cons {occurrence rest} (head :
-    Hyperelliptic.Meshes.Newton.Regular.RegionSamples.RegularRegionRequest occurrence fixed error floor)
-      (tail : Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed
+    RegionSamples.RegularRegionRequest occurrence fixed error floor)
+      (tail : RegularRegionRequests fixed
         error floor rest) :
-        Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error
+        RegularRegionRequests fixed error
         floor (occurrence :: rest)
 
 constructive_injectivity RegularRegionRequests
 
 namespace RegularRegionRequests
 
-variable {fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential} {error :
+variable {fixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential} {error :
   Fraction.Rational} {floor : Nat}
   {occurrences : List
-    (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+    (CircuitPartition.ResplitRegularOccurrence
     (faces := base.faces) grid.shrunk.included current.edges current.vertices)}
 
 /-- Prepare one original regular-region request per retained occurrence without changing their order. -/
-def build (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential) (error
+def build (fixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential) (error
   : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
     (occurrences : List
-      (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+      (CircuitPartition.ResplitRegularOccurrence
       (faces := base.faces) grid.shrunk.included current.edges current.vertices)) →
-      Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor occurrences
+      RegularRegionRequests fixed error floor occurrences
   | [] => .nil
-  | occurrence :: rest => .cons (Hyperelliptic.Meshes.Newton.Regular.RegionSamples.RegularRegionRequest.build occurrence
+  | occurrence :: rest => .cons (RegionSamples.RegularRegionRequest.build occurrence
     fixed error positive floor)
-      (Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
+      (RegularRegionRequests.build fixed
         error positive floor rest)
 
 /-- The maximum sufficient stage of all retained requests, with the supplied floor for an empty bank. -/
 def index : {occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+  (CircuitPartition.ResplitRegularOccurrence
   (faces := base.faces) grid.shrunk.included current.edges current.vertices)} →
-    Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor occurrences →
+    RegularRegionRequests fixed error floor occurrences →
       Nat
   | _, .nil => floor
   | _, .cons head tail => max head.request.index tail.index
 
 set_option genInjectivity false in
 /-- The actual numerical receipts for the retained request bank on one shared reading bank and sewn surface. -/
-inductive Samples {stage : Nat} {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+inductive Samples {stage : Nat} {shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
   differential stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
       (surface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values) :
     {occurrences : List
-      (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+      (CircuitPartition.ResplitRegularOccurrence
       (faces := base.faces) grid.shrunk.included current.edges current.vertices)} →
-      Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor occurrences
+      RegularRegionRequests fixed error floor occurrences
         → Type 3 where
   /-- The numerical receipts for an empty original request bank. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples readings
+    Samples readings
     surface .nil
   /-- Prepend the actual sample of the original head request to the retained tail samples. -/ | cons {occurrence rest}
-    {head : Hyperelliptic.Meshes.Newton.Regular.RegionSamples.RegularRegionRequest occurrence fixed error floor}
-      {tail : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor
+    {head : RegionSamples.RegularRegionRequest occurrence fixed error floor}
+      {tail : RegularRegionRequests fixed error floor
         rest}
       (first : head.Sample readings surface) (last :
-        Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+        Samples
         readings surface tail) :
-        Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+        Samples
         readings surface (.cons head tail)
 
 constructive_injectivity Samples
 
 namespace Samples
 
-variable {stage : Nat} {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential
-  stage domains} {readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
+variable {stage : Nat} {shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential
+  stage domains} {readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
   current.mesh}
   {surface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values}
-    {requests : Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests
+    {requests : RegularRegionRequests
     fixed error floor occurrences}
 
 /-- Cache each original region's numerical receipt using the same supplied readings and sewn surface. -/
-def build (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+def build (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
   (surface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values) :
     {occurrences : List
-      (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+      (CircuitPartition.ResplitRegularOccurrence
       (faces := base.faces) grid.shrunk.included current.edges current.vertices)} →
-      (requests : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor
-        occurrences) → Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+      (requests : RegularRegionRequests fixed error floor
+        occurrences) → Samples
         readings surface requests
   | _, .nil => .nil
-  | _, .cons head tail => .cons (Hyperelliptic.Meshes.Newton.Regular.RegionSamples.RegularRegionRequest.Sample.build
+  | _, .cons head tail => .cons (RegionSamples.RegularRegionRequest.Sample.build
     head readings surface)
-    (Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build
+    (Samples.build
     readings surface tail)
 
 /-- Sum the cached original selected region areas in retained occurrence order. -/
 def areas : {occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+  (CircuitPartition.ResplitRegularOccurrence
   (faces := base.faces) grid.shrunk.included current.edges current.vertices)} →
-    {requests : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor
-      occurrences} → Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+    {requests : RegularRegionRequests fixed error floor
+      occurrences} → Samples
       readings surface requests → Gaussian.Basic.Canonical
   | _, _, .nil => 0
   | _, _, .cons first last => first.balance.selected.area + last.areas
 
 /-- Sum every original retained cut correction in occurrence order. -/
 def corrections : {occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+  (CircuitPartition.ResplitRegularOccurrence
   (faces := base.faces) grid.shrunk.included current.edges current.vertices)} →
-    {requests : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor
-      occurrences} → Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+    {requests : RegularRegionRequests fixed error floor
+      occurrences} → Samples
       readings surface requests → Gaussian.Basic.Canonical
   | _, _, .nil => 0
   | _, _, .cons first last => first.correction + last.corrections
 
 /-- Sum the cached actual original occurrence polygons. -/
 def polygons : {occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+  (CircuitPartition.ResplitRegularOccurrence
   (faces := base.faces) grid.shrunk.included current.edges current.vertices)} →
-    {requests : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor
-      occurrences} → Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+    {requests : RegularRegionRequests fixed error floor
+      occurrences} → Samples
       readings surface requests → Gaussian.Basic.Canonical
   | _, _, .nil => 0
   | _, _, .cons first last => first.polygon + last.polygons
 
 /-- List the corrected original region residuals in retained occurrence order. -/
 def residuals : {occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitRegularOccurrence
+  (CircuitPartition.ResplitRegularOccurrence
   (faces := base.faces) grid.shrunk.included current.edges current.vertices)} →
-    {requests : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed error floor
-      occurrences} → Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+    {requests : RegularRegionRequests fixed error floor
+      occurrences} → Samples
       readings surface requests → List Gaussian.Basic.Canonical
   | _, _, .nil => []
   | _, _, .cons first last => first.residual :: last.residuals
 
 /-- There is exactly one cached residual for each original occurrence. -/
 theorem residuals_length (samples :
-  Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples readings surface
+  Samples readings surface
   requests) : samples.residuals.length = occurrences.length := by
   induction samples with
   | nil => rfl
@@ -245,37 +247,37 @@ theorem residuals_length (samples :
 
 /-- Every retained residual meets the common local bound above the bank's sufficient stage. -/
 theorem residuals_small (samples :
-  Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples readings surface
+  Samples readings surface
   requests) (later : requests.index ≤ stage) :
-    ∀ residual ∈ samples.residuals, Data.Gaussian.Norm.Basic.normSq residual ≤ error := by
+    ∀ residual ∈ samples.residuals, Gaussian.Norm.Basic.normSq residual ≤ error := by
   induction samples with
   | nil => intro residual member; exact (List.not_mem_nil member).elim
   | cons first last ih =>
       intro residual member
       rcases Data.List.Membership.mem_cons.mp member with rfl | member
-      · exact first.accurate ((Data.Nat.Order.le_max_left _ _).trans later)
-      · exact ih ((Data.Nat.Order.le_max_right _ _).trans later) residual member
+      · exact first.accurate ((Nat.Order.le_max_left _ _).trans later)
+      · exact ih ((Nat.Order.le_max_right _ _).trans later) residual member
 
 /-- The sum of cached residuals equals the selected areas minus all corrections and twice all retained polygons. -/
 theorem residuals_sum (samples :
-  Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples readings surface
+  Samples readings surface
   requests) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum samples.residuals = samples.areas - samples.corrections - (samples.polygons
+    Gaussian.Norm.Sum.Basic.gaussianSum samples.residuals = samples.areas - samples.corrections - (samples.polygons
       + samples.polygons) := by
   induction samples with
   | nil => change 0 = 0 - 0 - (0 + 0); ring1
   | cons first last ih =>
-      change first.residual + Data.Gaussian.Norm.Sum.Basic.gaussianSum last.residuals =
+      change first.residual + Gaussian.Norm.Sum.Basic.gaussianSum last.residuals =
         (first.balance.selected.area + last.areas) - (first.correction + last.corrections) -
           ((first.polygon + last.polygons) + (first.polygon + last.polygons))
-      rw [ih, Hyperelliptic.Meshes.Newton.Regular.RegionSamples.RegularRegionRequest.Sample.residual,
-        Hyperelliptic.Meshes.Newton.Regular.RegionSamples.RegularRegionRequest.Sample.corrected]
+      rw [ih, RegionSamples.RegularRegionRequest.Sample.residual,
+        RegionSamples.RegularRegionRequest.Sample.corrected]
       ring1
 
 /-- The cached region-area total equals any retained selections with the same original cell masks. -/
-theorem areas_eq (samples : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples
+theorem areas_eq (samples : Samples
   readings surface requests)
-    (selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) →
+    (selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Branches.Cuts.Ambient curve)) →
       Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection surface
       (RootContinuation.NewtonOriginalRegionPartition.NewtonGrid.originalCellMask current cell)) :
     samples.areas = Geometry.Grid.CellBoundary.sumValues (fun occurrence => (selected occurrence.cell).area) occurrences
@@ -286,10 +288,10 @@ theorem areas_eq (samples : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.
 
 /-- The cached polygon total is exactly the sum of the original occurrence word areas. -/
 theorem polygons_eq (samples :
-  Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples readings surface
+  Samples readings surface
   requests) :
     samples.polygons = Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.values)
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.values)
       occurrence.word) occurrences := by
   induction samples with
   | nil => rfl
@@ -298,11 +300,11 @@ theorem polygons_eq (samples :
 /-- Both factors of the actual original-region count are paid. This
 retains every signed cut correction and the literal cached polygon words. -/
 theorem aggregate_accurate {target : Fraction.Rational} (positive : 0 < target)
-    {requests : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests fixed
+    {requests : RegularRegionRequests fixed
       (Rational.Budget.Aggregate.perTerm target occurrences.length) floor occurrences}
-    (samples : Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples readings
+    (samples : Samples readings
       surface requests) (later : requests.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (samples.areas - samples.corrections - (samples.polygons + samples.polygons)) <
+    Gaussian.Norm.Basic.normSq (samples.areas - samples.corrections - (samples.polygons + samples.polygons)) <
       target := by
   rw [← samples.residuals_sum]
   apply Gaussian.Budget.Aggregate.normSq_sum_lt _ positive
@@ -316,48 +318,48 @@ end Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGri
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.Ordered
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {originalLifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank originalLifted} {sheet : Fin
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank originalLifted} {sheet : Fin
     2}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+    {differential : Differentials.Basic.Differential genus}
 
 /-- Consume the exact whole-surface partition and all regular-region
 requests together. Only the actual original branch-region areas and the
 retained cut corrections remain for the global assembly. -/
 theorem regular_regions_accurate (ordered :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
+  PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
   : Fin 2)
-    (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential) (error :
+    (fixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential) (error :
       Fraction.Rational) (positive : 0 < error) (floor : Nat) :
-    let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+    let reference := fun point member => (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
-      reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+      reference (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    let requests := Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
+    let requests := NewtonGrid.RegularRegionRequests.build fixed
       (Rational.Budget.Aggregate.perTerm error compiled.regulars.length)
       (Rational.Budget.Aggregate.perTerm_positive positive _) floor compiled.regulars
-    ∀ stage (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage
-      domains) (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
+    ∀ stage (shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage
+      domains) (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
       current.mesh)
       (surface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values),
         requests.index ≤ stage →
-      let samples := Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build
+      let samples := NewtonGrid.RegularRegionRequests.Samples.build
         readings surface requests
-      ∀ selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) →
+      ∀ selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Branches.Cuts.Ambient curve)) →
         Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection surface
         (RootContinuation.NewtonOriginalRegionPartition.NewtonGrid.originalCellMask current cell),
-      Data.Gaussian.Norm.Basic.normSq (surface.boundaryArea - Geometry.Grid.CellBoundary.sumValues (fun index =>
+      Gaussian.Norm.Basic.normSq (surface.boundaryArea - Geometry.Grid.CellBoundary.sumValues (fun index =>
         (selected (base.bank.cell index)).area) ordered.prepared.labels -
         samples.corrections - (samples.polygons + samples.polygons)) < error := by
   intro reference compiled requests stage shared readings surface later samples selected
@@ -368,7 +370,7 @@ theorem regular_regions_accurate (ordered :
     index)).area) ordered.prepared.labels =
       samples.areas := by
     rw [← partition, ← areaEq, add_sub_cancel_right]
-  exact (congrArg (fun area => Data.Gaussian.Norm.Basic.normSq (area - samples.corrections - (samples.polygons +
+  exact (congrArg (fun area => Gaussian.Norm.Basic.normSq (area - samples.corrections - (samples.polygons +
     samples.polygons))) total).trans_lt
     (samples.aggregate_accurate positive later)
 

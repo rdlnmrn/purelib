@@ -142,24 +142,24 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target :
     Coordinate} {floor : Nat}
-  {index depth stage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+  {index depth stage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
   {request : AreaRequest comparison owners target
     floor}
   {charts : ChartMesh request.mesh capSample minimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample
+  {original : ParentCells.ComparedCell comparison source capSample
     depth}
 
 universe u
@@ -175,7 +175,7 @@ variable {covers : BasisSourceCovers parent}
   {sourceTarget : Coordinate} {sourceFloor : Nat}
   {sources : BasisEndpoints request.mesh
     covers sourceTarget sourceFloor}
-  {basisPlan : BasisEndpoints.Plan
+  {basisPlan : Plan
     sources charts polynomials}
   {numerical : BasisSourceLocations.SampleBank
     covers index}
@@ -183,31 +183,31 @@ variable {covers : BasisSourceCovers parent}
 set_option genInjectivity false in
 /-- Both polygons and their signed discrepancy are cached on the acquired cell. The source summary is inherited from the
 retained vertex combinations. -/
-structure SourcePolygon (evaluated : AreaRequest.Evaluation charts original stage)
+structure SourcePolygon (evaluated : Evaluation charts original stage)
     (endpoints : Plan.Evaluation basisPlan numerical evaluated.vertices)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (allowance : InverseRootPolynomial.Coordinate)
+    (coefficients : GaussianVector genus) (allowance : Coordinate)
       where
   /-- The actual cached source and chart vertex combinations on the original retained cell. -/ values : Basis.PathValues
     endpoints coefficients
   /-- The cached original chart polygon summary on those same paired vertex values. -/ chart : IncrementArea.Summary
     (values.values.pairs.map Prod.snd)
   /-- The cached signed area discrepancy between the actual original source and chart polygons. -/ difference :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The discrepancy cache is exactly the source summary area minus the retained chart summary area. -/ difference_eq :
     difference = values.values.source.area - chart.area
   /-- The original fitted cell allowance pays the actual polygon discrepancy with its retained homogeneous coefficient
     factor. -/ bounded : Data.Gaussian.Norm.Basic.normSq difference ≤ (4 * allowance)^2 *
-    (PreparedObservationCoercivity.coefficientNormSq coefficients)^2
+    (coefficientNormSq coefficients)^2
 
 constructive_injectivity SourcePolygon
 
 /-- Acquire the source combinations once and pay their full polygon error using the preselected cell allowance and
 common parent tolerance. -/
-def sourcePolygon (evaluated : AreaRequest.Evaluation charts original stage)
+def sourcePolygon (evaluated : Evaluation charts original stage)
     (endpoints : Plan.Evaluation basisPlan numerical evaluated.vertices)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : GaussianVector genus)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    {endpointTarget allowance : InverseRootPolynomial.Coordinate} (allocation : AreaRequest.BasisSourceAllowance request
+    {endpointTarget allowance : Coordinate} (allocation : BasisSourceAllowance request
       endpointTarget allowance)
     (nonnegative : 0 ≤ sourceTarget) (fitted : sourceTarget ≤ allocation.sourceTarget) :
     SourcePolygon evaluated
@@ -256,41 +256,41 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap}
 
 variable {target sourceTarget : Coordinate} {floor sourceFloor :
   Nat}
 
 variable {covers : BasisSourceCovers parent}
-  {index minimum depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
   {endpointTarget allowance : Coordinate}
 
 namespace BasisEndpointPlans
 
 /-- Paid source polygons in the exact heterogeneous parent cell order. -/
 def SourcePolygons (numerical : BasisSourceLocations.SampleBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (allowance : InverseRootPolynomial.Coordinate) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+    (coefficients : GaussianVector genus) (allowance : Coordinate) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → BasisEndpointPlans.Samples numerical
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → Samples numerical
       plans cells evaluated sources planned → Type 2
   | _, _, _, _, .nil, .nil, _, _, _, _ => PUnit
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePolygons.AreaRequest.Evaluation.SourcePolygon
+      AreaRequest.Evaluation.SourcePolygon
         evaluated.1 endpoints.1 coefficients allowance ×
         SourcePolygons
           numerical coefficients allowance tail cells evaluated.2 sources.2 planned.2 endpoints.2
@@ -298,25 +298,25 @@ def SourcePolygons (numerical : BasisSourceLocations.SampleBank covers index)
 /-- Evaluate every original coefficient-weighted cell polygon on the cached common endpoint acquisition and retain its
 fitted allowance certificate. -/
 def sourcePolygons (numerical : BasisSourceLocations.SampleBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (branch : HyperellipticReciprocal.originOrder
+    (coefficients : GaussianVector genus) (branch : HyperellipticReciprocal.originOrder
       curve = 1)
     (nonnegative : 0 ≤ sourceTarget) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    (budgets : ParentBasisSourcePreparation.BasisSourceBudgets endpointTarget allowance requests) → budgets.Fits
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    (budgets : BasisSourceBudgets endpointTarget allowance requests) → budgets.Fits
       sourceTarget requests →
     SourcePolygons numerical
       coefficients allowance plans cells evaluated sources planned endpoints
   | _, _, _, _, .nil, .nil, _, _, _, _, _, _ => ⟨⟩
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, budgets, fitted =>
-      ⟨Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePolygons.AreaRequest.Evaluation.sourcePolygon
+      ⟨AreaRequest.Evaluation.sourcePolygon
         evaluated.1 endpoints.1 coefficients branch budgets.1 nonnegative fitted.1,
         sourcePolygons
           numerical coefficients branch nonnegative tail cells evaluated.2 sources.2 planned.2 endpoints.2 budgets.2
@@ -334,12 +334,12 @@ set_option genInjectivity false in
 /-- Keep the selected basis plans with the one shared root acquisition. -/
 structure Acquisition (prepared : ParentBasisSourcePreparation covers endpointTarget
   allowance sourceFloor requests)
-    (numerical : BasisSourceLocations.SampleBank covers index) (plans : ParentChartRequests.ChartPlans capSample minimum
+    (numerical : BasisSourceLocations.SampleBank covers index) (plans : ChartPlans capSample minimum
       requests)
-    (cells : ParentPaths.ComparedCells source capSample depth bank) (polynomials :
-      CapBasisEnergy.RegularBasisPolynomials cap index box) (readingFloor : Nat) where
+    (cells : ComparedCells source capSample depth bank) (polynomials :
+      RegularBasisPolynomials cap index box) (readingFloor : Nat) where
   /-- The original complete basis endpoint plans on the exact retained chart and source requests. -/ planned :
-    ParentBasisEndpoints.BasisEndpointPlans polynomials plans prepared.sources
+    BasisEndpointPlans polynomials plans prepared.sources
   /-- The single shared original root acquisition with all retained basis endpoint transports. -/ acquired :
     BasisEndpointPlans.Acquisition numerical plans cells prepared.sources planned readingFloor
 
@@ -349,10 +349,10 @@ constructive_injectivity Acquisition
 reading floors. -/
 def acquire (prepared : ParentBasisSourcePreparation covers endpointTarget allowance
   sourceFloor requests)
-    (numerical : BasisSourceLocations.SampleBank covers index) (plans : ParentChartRequests.ChartPlans capSample minimum
+    (numerical : BasisSourceLocations.SampleBank covers index) (plans : ChartPlans capSample minimum
       requests)
-    (cells : ParentPaths.ComparedCells source capSample depth bank) (polynomials :
-      CapBasisEnergy.RegularBasisPolynomials cap index box) (readingFloor : Nat)
+    (cells : ComparedCells source capSample depth bank) (polynomials :
+      RegularBasisPolynomials cap index box) (readingFloor : Nat)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (modelLater : requests.maximum ≤ index) (sourceLater : prepared.sources.maximum requests ≤ index)
     (spatial : requests.depthMaximum ≤ depth) :
@@ -367,18 +367,18 @@ at this stage. -/
 def Acquisition.polygons
     {prepared : ParentBasisSourcePreparation covers endpointTarget allowance sourceFloor
       requests}
-    {numerical : BasisSourceLocations.SampleBank covers index} {plans : ParentChartRequests.ChartPlans capSample minimum
+    {numerical : BasisSourceLocations.SampleBank covers index} {plans : ChartPlans capSample minimum
       requests}
-    {cells : ParentPaths.ComparedCells source capSample depth bank} {readingFloor : Nat}
+    {cells : ComparedCells source capSample depth bank} {readingFloor : Nat}
     (acquisition :
       Acquisition
       prepared numerical plans cells polynomials readingFloor)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (branch : HyperellipticReciprocal.originOrder
+    (coefficients : GaussianVector genus) (branch : HyperellipticReciprocal.originOrder
       curve = 1) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePolygons.BasisEndpointPlans.SourcePolygons numerical
+    BasisEndpointPlans.SourcePolygons numerical
       coefficients allowance plans cells acquisition.acquired.original
       prepared.sources acquisition.planned acquisition.acquired.endpoints :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePolygons.BasisEndpointPlans.sourcePolygons numerical
+  BasisEndpointPlans.sourcePolygons numerical
     coefficients branch prepared.positive.le plans cells acquisition.acquired.original
     prepared.sources acquisition.planned acquisition.acquired.endpoints prepared.budgets prepared.fitted
 

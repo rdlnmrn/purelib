@@ -85,30 +85,30 @@ open Purelib.Riemann.Normalization.RectangularInverseModels (Geometry)
 open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies (AxisSourceBank)
 open Purelib.Data.Gaussian.Basic.Canonical
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum
+    SurfaceOccurrence
+    regular domains differential} {target : Coordinate} {minimum
     stage fine : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourcePlan occurrence
     other target minimum}
 
 namespace SourceBlockParameters
 variable {evaluated :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation
+  ParentEvaluation
   plan sample otherSample fine} {vertical : Bool}
-  {beforePhysical afterPhysical : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {beforePhysical afterPhysical : Partition.PreparedAxisPartitions.Interval}
 
 /-- Consecutive forward physical blocks either remain in one retained parent or cross exactly one parent boundary, with
 both endpoint parameters certified. -/
@@ -170,12 +170,12 @@ namespace AxisSourceBank
 open Purelib.Riemann.Normalization.RectangularInverseModels
   Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh
 variable {evaluated :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation
+  ParentEvaluation
   plan sample otherSample fine}
-  {columns rows : Nat} {geometry : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry columns rows} {cuts :
-    Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry}
-  {meshBox : Purelib.Geometry.Rational.Box} {mesh :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
+  {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows} {cuts :
+    GridCuts geometry}
+  {meshBox : Geometry.Rational.Box} {mesh :
+    ObservationMesh cuts meshBox}
 
 /-- Adjacent entries of the cached physical source bank carry the exact parent transition and parameter join, without
 caller-supplied chain evidence. -/

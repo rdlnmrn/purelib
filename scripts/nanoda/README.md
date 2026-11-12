@@ -7,8 +7,10 @@ and no plugins, selects safe source roots and registered global compiler rewrite
 and exports their complete proof dependencies as one shared expression graph.
 Standalone environments with colliding declaration names require separate graphs.
 
-The ordinary verification entrypoint is `scripts/check-nanoda.sh`; it builds the
-selected sources before invoking this package. Build the native tool alone from
+The merge-readiness verification entrypoint is `scripts/check-nanoda.sh`; it builds the
+selected sources before invoking this package. Nanoda is not required for routine
+branch work or checkpoint commits; earlier runs are for explicit requests or a
+specific diagnosis. Build the native tool alone from
 the repository root:
 
 ```sh
@@ -40,12 +42,28 @@ Group inventories use a stable node listing. Older input protocols can be reused
 after exact comparison of every field except that listing order; selected roots,
 each module's ordered imports, artifact paths and bytes must still agree.
 
+`Modules.rs` schedules every serialized declaration once through the pinned
+library's unchanged `check_declar`, retaining its normal parallel worker stacks.
+`module_owners.py` independently reads complete compiled first-owner metadata;
+its component-wise name keys distinguish quoted dots and numeric components.
+The checker rejects missing owners and repeated name records, records each module's elapsed
+checking time and enforces a five-minute watchdog with a fifteen-second
+termination grace. A module reaching 30 seconds fails the current performance
+gate on every branch, including for imported owners. Branch work may retain
+documented timing debt, while integration into `master` requires the project-owned
+timing target; this distinction does not turn a failed check into a pass. See
+[verification policy and current enforcement](../../docs/verification.md).
+Shared parsing and ownership preparation belong to the aggregate run and may
+take longer than five minutes. No transitive graph is duplicated per module.
+Receipts bind the scheduler executable, configuration, stream and ownership map,
+and require the module declaration counts to sum to the complete checked count.
+
 This module is entirely meta, including its generated recursors, projections and
-match functions. The normal audit uses the existing source-facing policy. Its
-strict helper audit still reports Lean reflection dependencies on `propext`,
-`Classical.choice` and `Quot.sound`; independent checking of emitted mathematical
-proofs does not certify the producer's own helper closure. The obligation to
-restore strict checking remains a separate audit obligation.
+match functions. The exporter is an untrusted producer whose independent internal
+helpers need not be axiom-free or satisfy the mathematical construction policy.
+The complete emitted proofs, their intended roots and compiled-input connection
+must be checked. Optional `--all-helpers` diagnostics do not become a requirement
+to certify the producer's own helper closure.
 
 Run the real native import, complete-record comparison, private artifact,
 standalone-owner and cache recovery tests with:

@@ -47,6 +47,8 @@ separate geometric obligation.
 
 namespace Purelib.Riemann.Integration.RectangularSharedPrimitives
 
+variable {pairs : Nat}
+
 open Purelib.Riemann.Normalization.InverseRootPolynomial
 open Purelib.Riemann.Normalization.RectangularInverseModels (Geometry Bank)
 open Purelib.Riemann.Integration.RectangularPrimitiveModels (Primitives)
@@ -68,7 +70,7 @@ Each value is evaluated through its original cell anchor and offset; the vector 
 original owned triangulation. -/
 structure SharedPrimitiveValues {polynomial numerator : Polynomial} {columns rows : Nat}
     {geometry : Geometry columns rows} {models : Bank polynomial geometry}
-    {primitives : Primitives models numerator} (anchors : PrimitiveAnchors primitives)
+    {primitives : Primitives models numerator pairs} (anchors : PrimitiveAnchors primitives)
     (offsets : LinearAlgebra.Grid.Offsets anchors.edges) {triangles : List (ModelTriangle geometry)}
     (surface : OwnedTriangulation triangles) where
   /-- The retained primitive-reading vector indexed by original mesh vertices. -/ values : Data.Vector Gaussian
@@ -82,7 +84,7 @@ constructive_injectivity SharedPrimitiveValues
 namespace SharedPrimitiveValues
 
 variable {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    {models : Bank polynomial geometry} {primitives : Primitives models numerator}
+    {models : Bank polynomial geometry} {primitives : Primitives models numerator pairs}
     {anchors : PrimitiveAnchors primitives} {offsets : LinearAlgebra.Grid.Offsets anchors.edges}
     {triangles : List (ModelTriangle geometry)} {surface : OwnedTriangulation triangles}
 
@@ -102,6 +104,22 @@ theorem coordinate_consistent (readings : SharedPrimitiveValues anchors offsets 
     readings.values first = readings.values last := by
   have owners := surface.owner_consistent first last equal
   rw [readings.value_eq, readings.value_eq, surface.point_eq, surface.point_eq, owners.1, owners.2, equal]
+
+open Purelib.Data.Gaussian in
+/-- Read the retained shared primitive at a present original mesh coordinate, returning zero outside the vertex list. -/
+def atPoint (readings : SharedPrimitiveValues anchors offsets surface)
+    (point : Basic.Canonical) : Basic.Canonical :=
+  if member : point ∈ surface.mesh.vertices then
+    readings.values (Topology.Mesh.CoordinateTriangulation.lookupVertex point surface.mesh.vertices member).index
+  else 0
+
+/-- Coordinate lookup returns the exact retained reading at every original mesh vertex. -/
+theorem atPoint_coordinate (readings : SharedPrimitiveValues anchors offsets surface)
+    (vertex : Fin surface.mesh.vertices.length) : atPoint readings
+      (surface.mesh.coordinate vertex) = readings.values vertex := by
+  have member : surface.mesh.coordinate vertex ∈ surface.mesh.vertices := List.getElem_mem _
+  rw [atPoint, dif_pos member]
+  exact readings.coordinate_consistent _ vertex (Topology.Mesh.CoordinateTriangulation.lookupVertex _ _ _).coordinate_eq
 
 open Purelib.Geometry.Rectangle.Partition in
 /-- A strictly interior original cell reads the shared value through that exact unique owner. -/
@@ -149,9 +167,9 @@ open Purelib in
 open Purelib.Riemann.Branches in
 open Purelib.Riemann.Integration in
 /-- A shared vertex reading differs from any containing original cell reading by at most four global bounds. -/
-theorem shared_value_bound (request : GridPrimitiveAccuracy bounds columns target)
+theorem shared_value_bound (request : GridPrimitiveAccuracy bounds columns target pairs)
     {transitions : Transitions (bank.refine request.index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
-    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} {anchors :
+    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator pairs} {anchors :
       PrimitiveAnchors primitives}
     {offsets : LinearAlgebra.Grid.Offsets anchors.edges} {triangles : List (ModelTriangle geometry)}
     {surface : OwnedTriangulation triangles} (readings : SharedPrimitiveValues anchors offsets surface)
@@ -171,9 +189,9 @@ open Purelib.Data.Rat
 open Purelib.Riemann.Branches
 /-- A retained shared increment differs from the original containing-cell primitive increment by at most sixteen global
 bounds. -/
-theorem shared_local_increment_bound (request : GridPrimitiveAccuracy bounds columns target)
+theorem shared_local_increment_bound (request : GridPrimitiveAccuracy bounds columns target pairs)
     {transitions : Transitions (bank.refine request.index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
-    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} {anchors :
+    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator pairs} {anchors :
       PrimitiveAnchors primitives}
     {offsets : LinearAlgebra.Grid.Offsets anchors.edges} {triangles : List (ModelTriangle geometry)}
     {surface : OwnedTriangulation triangles} (readings : SharedPrimitiveValues anchors offsets surface)
@@ -206,9 +224,9 @@ theorem shared_local_increment_bound (request : GridPrimitiveAccuracy bounds col
 
 The same cell contains both original endpoints, and its exact primitive remainder is combined with their shared-reading
 error. -/
-theorem shared_increment_bound (request : GridPrimitiveAccuracy bounds columns target)
+theorem shared_increment_bound (request : GridPrimitiveAccuracy bounds columns target pairs)
     {transitions : Transitions (bank.refine request.index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
-    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} {anchors :
+    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator pairs} {anchors :
       PrimitiveAnchors primitives}
     {offsets : LinearAlgebra.Grid.Offsets anchors.edges} {triangles : List (ModelTriangle geometry)}
     {surface : OwnedTriangulation triangles} (readings : SharedPrimitiveValues anchors offsets surface)
@@ -249,9 +267,9 @@ open Purelib in
 open Purelib.Data in
 open Purelib.Riemann.Branches in
 /-- Both original first-vertex face increments satisfy the retained shared coefficient and remainder bounds. -/
-theorem shared_face_increment_bounds (request : GridPrimitiveAccuracy bounds columns target)
+theorem shared_face_increment_bounds (request : GridPrimitiveAccuracy bounds columns target pairs)
     {transitions : Transitions (bank.refine request.index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
-    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} {anchors :
+    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator pairs} {anchors :
       PrimitiveAnchors primitives}
     {offsets : LinearAlgebra.Grid.Offsets anchors.edges} {triangles : List (ModelTriangle geometry)}
     {surface : OwnedTriangulation triangles} (readings : SharedPrimitiveValues anchors offsets surface)

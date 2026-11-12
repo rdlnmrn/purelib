@@ -31,12 +31,12 @@ The original monic coordinate and nonzero constant form the complete two-entry c
 normalized degree slot, so the algorithm stops after these two entries. -/
 public theorem signedChain_variable_rawLinearConstant
     {c : Fraction.Rational} (nonzero : c ≠ 0) :
-    Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain
-      Dense.Rational.Monomial.Coordinate.coordinateVariable (Dense.Rational.Constants.RawLinear.rawConstant c) =
-      [Dense.Rational.Monomial.Coordinate.coordinateVariable, Dense.Rational.Constants.RawLinear.rawConstant c] :=
-  Dense.Rational.SignedRemainder.Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
-    (Dense.Rational.Constants.RawLinear.rawConstant_isZero_false nonzero)
-    (Dense.Rational.Constants.RawLinear.rawConstant_degreeCount nonzero)
+    Basic.Sturm.signedRemainderChain
+      Monomial.Coordinate.coordinateVariable (Constants.RawLinear.rawConstant c) =
+      [Monomial.Coordinate.coordinateVariable, Constants.RawLinear.rawConstant c] :=
+  Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
+    (Constants.RawLinear.rawConstant_isZero_false nonzero)
+    (Constants.RawLinear.rawConstant_degreeCount nonzero)
 
 /-- A nonzero raw constant followed by the coordinate has a three-entry signed chain.
 
@@ -44,36 +44,36 @@ The final entry is the negated normalized raw constant, retaining the original c
 entry. -/
 public theorem signedChain_rawLinearConstant_variable
     {c : Fraction.Rational} (nonzero : c ≠ 0) :
-    Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain (⟨[0, c]⟩ : CoordinatePolynomial)
+    Basic.Sturm.signedRemainderChain (⟨[0, c]⟩ : CoordinatePolynomial)
         (⟨[1, 0]⟩ : CoordinatePolynomial) =
       [(⟨[0, c]⟩ : CoordinatePolynomial), (⟨[1, 0]⟩ : CoordinatePolynomial),
         -((⟨[0, c]⟩ : CoordinatePolynomial).normalize)] := by
-  change Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain
-      (Dense.Rational.Constants.RawLinear.rawConstant c)
-      Dense.Rational.Monomial.Coordinate.coordinateVariable =
-    [Dense.Rational.Constants.RawLinear.rawConstant c,
-      Dense.Rational.Monomial.Coordinate.coordinateVariable,
-      -(Dense.Rational.Constants.RawLinear.rawConstant c).normalize]
-  rw [Dense.Rational.SignedRemainder.Basic.signedRemainderChain_eq_cons_of_degree_lt
-    (p := Dense.Rational.Constants.RawLinear.rawConstant c)
-    (q := Dense.Rational.Monomial.Coordinate.coordinateVariable)
-    (Dense.Rational.Constants.RawLinear.rawConstant_isZero_false nonzero)
-    Dense.Rational.Monomial.Coordinate.coordinateVariable_isZero_false (by
-      have coordinateDegree : Dense.Rational.Monomial.Coordinate.coordinateVariable.natDegree = 1 :=
-        Dense.Rational.Monomial.Coordinate.coordinateVariable_natDegree
-      rw [Dense.Rational.Constants.RawLinear.rawConstant_natDegree nonzero, coordinateDegree]
+  change Basic.Sturm.signedRemainderChain
+      (Constants.RawLinear.rawConstant c)
+      Monomial.Coordinate.coordinateVariable =
+    [Constants.RawLinear.rawConstant c,
+      Monomial.Coordinate.coordinateVariable,
+      -(Constants.RawLinear.rawConstant c).normalize]
+  rw [Basic.signedRemainderChain_eq_cons_of_degree_lt
+    (p := Constants.RawLinear.rawConstant c)
+    (q := Monomial.Coordinate.coordinateVariable)
+    (Constants.RawLinear.rawConstant_isZero_false nonzero)
+    Monomial.Coordinate.coordinateVariable_isZero_false (by
+      have coordinateDegree : Monomial.Coordinate.coordinateVariable.natDegree = 1 :=
+        Monomial.Coordinate.coordinateVariable_natDegree
+      rw [Constants.RawLinear.rawConstant_natDegree nonzero, coordinateDegree]
       decide)]
   have negativeNonzero :
-      (-(Dense.Rational.Constants.RawLinear.rawConstant c).normalize).isZero = false := by
-    rewrite [Dense.Basic.DensePolynomial.isZero_neg, Dense.Basic.DensePolynomial.isZero_normalize]
-    exact Dense.Rational.Constants.RawLinear.rawConstant_isZero_false nonzero
+      (-(Constants.RawLinear.rawConstant c).normalize).isZero = false := by
+    rewrite [Basic.DensePolynomial.isZero_neg, Basic.DensePolynomial.isZero_normalize]
+    exact Constants.RawLinear.rawConstant_isZero_false nonzero
   have negativeCount :
-      (-(Dense.Rational.Constants.RawLinear.rawConstant c).normalize).degreeCount = 1 := by
-    rewrite [Dense.Basic.DensePolynomial.degreeCount_neg, Dense.Basic.DensePolynomial.degreeCount_normalize]
-    exact Dense.Rational.Constants.RawLinear.rawConstant_degreeCount nonzero
-  rw [Dense.Rational.SignedRemainder.Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
-    (p := Dense.Rational.Monomial.Coordinate.coordinateVariable)
-    (q := -(Dense.Rational.Constants.RawLinear.rawConstant c).normalize)
+      (-(Constants.RawLinear.rawConstant c).normalize).degreeCount = 1 := by
+    rewrite [Basic.DensePolynomial.degreeCount_neg, Basic.DensePolynomial.degreeCount_normalize]
+    exact Constants.RawLinear.rawConstant_degreeCount nonzero
+  rw [Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
+    (p := Monomial.Coordinate.coordinateVariable)
+    (q := -(Constants.RawLinear.rawConstant c).normalize)
     negativeNonzero negativeCount]
 
 end Purelib.Polynomial.Dense.Rational.SignedRemainder.Linear.Coordinate

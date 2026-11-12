@@ -64,10 +64,10 @@ In particular, nonzero count is never converted into a root-existence claim.
 namespace Purelib.RootIsolation.Curve.Event.Profile.Complete.Located
 section Profile
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
   Geometry.Projective.Hermitian.HermitianForm}
 variable {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-variable {data : Curve.Event.Nontrivial p
+variable {data : Nontrivial p
   chart.parameterization.curve}
 variable {gcdDegreePositive : 0 <
   (Curve.Substitution.gcdPolynomial p
@@ -82,19 +82,19 @@ child of the complete requested subdivision. -/
 theorem completeRequestCell_countNonzero_of_zero
     (leaf : SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis) (epsilon :
       Fraction.Rational)
-    (cell : Data.Rat.Interval.Proper.Cell)
-    (member : cell ∈ (Curve.Event.Profile.Complete.Basic.completeRequestSubdivision leaf epsilon).leaves)
+    (cell : Interval.Proper.Cell)
+    (member : cell ∈ (Basic.completeRequestSubdivision leaf epsilon).leaves)
     (parameter : Fraction.Rational) (inside : cell.interval.Contains parameter)
     (zero : analysis.profile.factor.polynomial.eval parameter = 0) :
     Sturm.Count.Basic.sturmRootCount2
       analysis.profile.factor.polynomial cell.interval.lower
         cell.interval.upper ≠ 0 := by
-  have childLeaf := Curve.Event.Profile.Complete.Basic.completeRequestCell_refines_leaf leaf epsilon member
+  have childLeaf := Basic.completeRequestCell_refines_leaf leaf epsilon member
   have childWidth : (Bounds.width cell.interval) ≤ (Bounds.width
     leaf.cell.interval) :=
     Fraction.Order.Arithmetic.sub_le_sub_direct childLeaf.2 childLeaf.1
   have leafWidthSmall : (Bounds.width leaf.cell.interval) <
-      Curve.Event.Partition.Squarefree.squarefreeLeafWidth
+      Partition.Squarefree.squarefreeLeafWidth
         analysis.profile.factor.polynomial analysis.profile.factor.squarefree
           chart.parameterization.curve box chart.cell := by
     simpa only [leaf.classification_cell] using
@@ -105,14 +105,14 @@ theorem completeRequestCell_countNonzero_of_zero
           analysis.profile.factor.squarefree chart.cell.interval :=
     childWidth.trans_lt
       (leafWidthSmall.trans_le
-        (Curve.Event.Partition.Squarefree.squarefreeLeafWidth_le_orientation
+        (Partition.Squarefree.squarefreeLeafWidth_le_orientation
           analysis.profile.factor.polynomial
             analysis.profile.factor.squarefree
               chart.parameterization.curve box chart.cell))
   exact Sturm.Orientation.Event.sturmRootCount2_ne_zero_of_root
     analysis.profile.factor.polynomial analysis.profile.factor.squarefree
-      (Curve.Event.Profile.Complete.Basic.completeRequestCell_refines_chart leaf epsilon member) cell.proper
-      orientationWidth (Curve.Event.Profile.Complete.Basic.completeRequestResolution leaf epsilon cell member)
+      (Basic.completeRequestCell_refines_chart leaf epsilon member) cell.proper
+      orientationWidth (Basic.completeRequestResolution leaf epsilon cell member)
       parameter inside zero
 
 set_option genInjectivity false in
@@ -122,9 +122,9 @@ structure LocatedCompleteRequestZero
     (leaf : SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis) (epsilon
       parameter : Fraction.Rational) where
   /-- The actual nonzero-count child selected from the complete requested subdivision. -/ entry :
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon
+    Basic.CompleteRequestLeaf leaf epsilon
   /-- The selected child belongs to the original complete requested family. -/ member : entry ∈
-    Curve.Event.Profile.Complete.Basic.completeRequestFamily leaf epsilon
+    Basic.completeRequestFamily leaf epsilon
   /-- The selected original child interval contains the supplied rational parameter. -/ contains :
     entry.cell.interval.Contains parameter
   /-- The supplied rational parameter is a zero of the original profile factor. -/ zero :
@@ -141,19 +141,19 @@ def locateCompleteRequestZero
     (zero : analysis.profile.factor.polynomial.eval parameter = 0) :
     LocatedCompleteRequestZero leaf epsilon parameter := by
   let found :=
-    Curve.Event.Partition.Subdivision.locateBuild
+    Partition.Subdivision.locateBuild
       analysis.profile.factor.polynomial analysis.profile.factor.nonzero
-        chart.parameterization.curve box (Curve.Event.Profile.Complete.Basic.completeRequestDepth leaf epsilon)
+        chart.parameterization.curve box (Basic.completeRequestDepth leaf epsilon)
           leaf.cell parameter inside
   have countNonzero := completeRequestCell_countNonzero_of_zero leaf epsilon
     found.leaf found.member parameter found.contains zero
-  let entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon :=
+  let entry : Basic.CompleteRequestLeaf leaf epsilon :=
     { cell := found.leaf
       member := found.member
       countNonzero := countNonzero }
   exact
     { entry := entry
-      member := Curve.Event.Profile.Complete.Basic.mem_completeRequestFamily entry
+      member := Basic.mem_completeRequestFamily entry
       contains := found.contains
       zero := zero }
 

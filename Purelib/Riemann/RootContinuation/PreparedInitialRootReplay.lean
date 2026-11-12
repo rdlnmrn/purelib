@@ -61,6 +61,8 @@ equations or inside an explicitly requested operational comparison.
 
 namespace Purelib.Riemann.RootContinuation.PreparedInitialRootReplay
 
+open Purelib.Riemann.Integration.PreparedConstantModels.PreparedEdge (CenterState)
+
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge edgeOfStep centeredEdges)
@@ -71,8 +73,8 @@ open Purelib.Riemann.Topology.PreparedRefinementRootChains (RootChain)
 open Purelib.Riemann.Paths.OwnerTraceReadings (ownerName)
 open Purelib.Riemann.Paths.PreparedClearPathModels (CompleteSegment PreparedPath)
 
-variable {genus : Nat} (curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus) (source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus)
+variable {genus : Nat} (curve : HyperellipticCurve genus) (source :
+  Differential genus)
 
 section
 open Purelib.Approximation.Gaussian
@@ -132,9 +134,9 @@ def parentEntry (edge : PreparedConstantModels.PreparedEdge curve source)
 open Purelib.Riemann.Integration in
 /-- The canonical centered parent retains the edge's original entry comparison. -/
 private theorem parentEntry_self (edge : PreparedConstantModels.PreparedEdge curve source)
-    (equal : (⟨edge, PreparedConstantModels.PreparedEdge.CenterState.canonical edge⟩ : CenteredEdge curve source).edge =
+    (equal : (⟨edge, CenterState.canonical edge⟩ : CenteredEdge curve source).edge =
       edge) :
-    parentEntry curve source edge ⟨edge, PreparedConstantModels.PreparedEdge.CenterState.canonical edge⟩ equal =
+    parentEntry curve source edge ⟨edge, CenterState.canonical edge⟩ equal =
       edge.ownerRootEquivalent_baseQuery := by
   exact deferredComparison_eq edge.ownerRootEquivalent_baseQuery
 
@@ -163,9 +165,9 @@ open Purelib.Riemann.Integration in
 open Purelib.Riemann.Topology in
 /-- The canonical centered parent retains the original query-to-advance comparison. -/
 private theorem parentJoin_self (edge : PreparedConstantModels.PreparedEdge curve source)
-    (equal : (⟨edge, PreparedConstantModels.PreparedEdge.CenterState.canonical edge⟩ : CenteredEdge curve source).edge =
+    (equal : (⟨edge, CenterState.canonical edge⟩ : CenteredEdge curve source).edge =
       edge) :
-    parentJoin curve source edge ⟨edge, PreparedConstantModels.PreparedEdge.CenterState.canonical edge⟩ equal =
+    parentJoin curve source edge ⟨edge, CenterState.canonical edge⟩ equal =
       PreparedBankRootChains.queryEquivalentAdvance edge := by
   exact deferredComparison_eq (PreparedBankRootChains.queryEquivalentAdvance edge)
 
@@ -207,7 +209,7 @@ def subdivisionRoots {ambient : Box} {start finish : Basic.Canonical}
         (fun parent rest equal =>
           let edge := edgeOfStep curve source segment within current owner request cached ordered small sheet
           have equalCons : parent :: rest =
-              ⟨edge, PreparedConstantModels.PreparedEdge.CenterState.canonical edge⟩ ::
+              ⟨edge, CenterState.canonical edge⟩ ::
                 (CenteredPathChain.dataOfCanonicalSubdivision curve source segment within sheet remaining).parents :=
                   equal
           have headEqual := (List.cons.inj equalCons).1
@@ -278,7 +280,7 @@ private theorem subdivisionRoots_heq {ambient : Box} {start finish : Basic.Canon
       dsimp only [canonicalCenterStates]
       rw [changeStartStored_eq, parentEntry_self, parentJoin_self]
       let edge := edgeOfStep curve source segment within left owner request cached ordered small sheet
-      exact cons_heq curve source ⟨edge, PreparedConstantModels.PreparedEdge.CenterState.canonical edge⟩
+      exact cons_heq curve source ⟨edge, CenterState.canonical edge⟩
         (CenteredPathChain.dataOfCanonicalSubdivision_parents curve source segment within sheet remaining)
         edge.ownerRootEquivalent_baseQuery
         (changeStart_heq curve source
@@ -361,7 +363,7 @@ Splits the actual list at each segment's retained step count, reuses its prefix 
 corresponding segment and tail chains. -/
 def pathRoots {ambient : Box} (sheet : Fin 2)
     {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
     (prepared : PreparedPath path owner) :
     (parents : List (CenteredEdge curve source)) →
@@ -398,7 +400,7 @@ open Purelib.Riemann.Topology in
 Uses exact take/drop identities and the segment replay certificate while preserving each original append order. -/
 private theorem pathRoots_heq {ambient : Box} (sheet : Fin 2)
     {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
     (prepared : PreparedPath path owner) :
     ∀ (parents : List (CenteredEdge curve source))
@@ -439,7 +441,7 @@ open Purelib.RootIsolation in
 Retains the supplied parent list and its identity with the cached centered-bank readback. -/
 def bankRoots {depth : Nat} {diameter : Fraction.Rational} {positive : 0 < diameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (bank : PreparedPath.DyadicBank depth diameter positive path owner)
     (parents : List (CenteredEdge curve source))
@@ -459,7 +461,7 @@ open Purelib.Riemann.Topology in
 Checks all original bank constructors, retaining the certified executed bank's parent transport. -/
 private theorem bank_canonical_heq {depth : Nat} {diameter : Fraction.Rational} {positive : 0 < diameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (bank : PreparedPath.DyadicBank depth diameter positive path owner) :
     HEq (PreparedBankRootChains.preparedPathRootChain curve source sheet bank.prepared)
@@ -481,7 +483,7 @@ open Purelib.RootIsolation in
 Combines the cached path replay identity with the bank constructor's exact canonical-chain readback. -/
 private theorem bankRoots_heq {depth : Nat} {diameter : Fraction.Rational} {positive : 0 < diameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (bank : PreparedPath.DyadicBank depth diameter positive path owner)
     (parents : List (CenteredEdge curve source))
@@ -501,7 +503,7 @@ open Purelib.Riemann.Topology in
 /-- The centered bank's parent count equals the retained prepared step count. -/
 public theorem bank_length {depth : Nat} {diameter : Fraction.Rational} {positive : 0 < diameter}
     {ambient : Box} {start finish : Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (bank : PreparedPath.DyadicBank depth diameter positive path owner) :
     (CenteredPathChain.ofDyadicBank curve source sheet bank).parents.length = bank.prepared.stepCount :=

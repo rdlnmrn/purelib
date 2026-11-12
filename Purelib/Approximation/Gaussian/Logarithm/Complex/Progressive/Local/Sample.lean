@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Gaussian.Logarithm.Complex.Progressive.Local
@@ -70,7 +72,7 @@ allowance. -/
 theorem sampleFrom_input_effect (source
   : Sequence.DiskSamples)
     {oldIndex newIndex : Nat} (order : oldIndex ≤ newIndex) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (Sample.sample
             (source.value newIndex) oldIndex -
           Sample.sample
@@ -78,28 +80,28 @@ theorem sampleFrom_input_effect (source
       inputEffectScale * (1 / 4 : Fraction.Rational) ^
         oldIndex := by
   have sensitivity :
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (Sample.sample
               (source.value newIndex) oldIndex -
             Sample.sample
               (source.value oldIndex) oldIndex) ≤
         Sensitivity.sampleInputScale *
-          Data.Gaussian.Norm.Basic.normSq (source.value newIndex - source.value oldIndex) :=
+          Basic.normSq (source.value newIndex - source.value oldIndex) :=
     @Sensitivity.sample_input_close
       (source.value newIndex) (source.value oldIndex)
       (source.bound newIndex) (source.bound oldIndex) oldIndex
   have movement :
-      Data.Gaussian.Norm.Basic.normSq (source.value newIndex - source.value oldIndex) ≤
+      Basic.normSq (source.value newIndex - source.value oldIndex) ≤
         Geometric.Basic.quarterRadius 4 oldIndex :=
     source.close order
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (Sample.sample
             (source.value newIndex) oldIndex -
           Sample.sample
             (source.value oldIndex) oldIndex) ≤
         Sensitivity.sampleInputScale *
-          Data.Gaussian.Norm.Basic.normSq (source.value newIndex - source.value oldIndex) := sensitivity
+          Basic.normSq (source.value newIndex - source.value oldIndex) := sensitivity
     _ ≤ Sensitivity.sampleInputScale *
         Geometric.Basic.quarterRadius 4 oldIndex :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movement
@@ -132,13 +134,13 @@ allowance. -/
 theorem sampleFrom_later_close (source
   : Sequence.DiskSamples)
     {oldIndex newIndex : Nat} (order : oldIndex ≤ newIndex) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (sampleFrom source newIndex -
       sampleFrom source oldIndex) ≤
       Geometric.Basic.quarterRadius errorScale
         oldIndex := by
   have truncation :
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (Sample.sample
               (source.value newIndex) newIndex -
             Sample.sample
@@ -147,7 +149,7 @@ theorem sampleFrom_later_close (source
     @Sample.sample_later_close
       (source.value newIndex) (source.bound newIndex) oldIndex newIndex order
   have inputEffect :
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (Sample.sample
               (source.value newIndex) oldIndex -
             Sample.sample
@@ -157,20 +159,20 @@ theorem sampleFrom_later_close (source
     @sampleFrom_input_effect source oldIndex newIndex
       order
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (sampleFrom source newIndex -
       sampleFrom source oldIndex) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq
+        2 * (Basic.normSq
           (Sample.sample
               (source.value newIndex) newIndex -
             Sample.sample
               (source.value newIndex) oldIndex) +
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
           (Sample.sample
               (source.value newIndex) oldIndex -
             Sample.sample
               (source.value oldIndex) oldIndex)) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+      Bounds.normSq_sub_le_via _ _ _
     _ ≤ 2 * (truncationScale * (1 / 4 :
       Fraction.Rational) ^ oldIndex +
         inputEffectScale * (1 / 4 : Fraction.Rational)

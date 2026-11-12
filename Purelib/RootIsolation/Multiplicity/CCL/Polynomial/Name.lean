@@ -11,6 +11,8 @@ import Purelib.Approximation.Gaussian.Name.CCL.Output
 import Purelib.Data.CCL.Transducer.Machine.Basic
 import Purelib.Polynomial.Dense.Gaussian.Unit
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
 open Purelib.Approximation.Gaussian
 
 open Purelib
@@ -46,58 +48,58 @@ namespace NonzeroResult
 
 /-- Productive arithmetic CCL name of one polynomial root site. -/
 @[expose] def rootName
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) : Name.Basic.Named :=
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) : Name.Basic.Named :=
   (ArgumentPrinciple.CCL.Basic.NonzeroResult.zeroArithmeticName result) index
 
 /-- Displayed finite list of the productive names of all root sites. -/
-@[expose] def rootNames {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-  Multiplicity.CCL.Polynomial.Basic.NonzeroResult p) :
+@[expose] def rootNames {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+  Basic.NonzeroResult p) :
     List Name.Basic.Named :=
-  (Multiplicity.CCL.Polynomial.Index.NonzeroResult.rootIndices result).map
-    (Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result)
+  (Index.NonzeroResult.rootIndices result).map
+    (rootName result)
 
 /-- The displayed list of root names has exactly one entry for each retained root-site index. -/
 @[simp] theorem rootNames_length
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p) :
-    (Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootNames result).length =
-      (Multiplicity.CCL.Polynomial.Index.NonzeroResult.rootIndices result).length := by
-  simp only [Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootNames, Purelib.Data.List.Map.length_map, -eq_self,
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p) :
+    (rootNames result).length =
+      (Index.NonzeroResult.rootIndices result).length := by
+  simp only [rootNames, Data.List.Map.length_map, -eq_self,
     -iff_self]
   rfl
 
 /-- The productive name of every indexed root occurs in the displayed root
 name list. -/
 theorem rootName_mem
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) :
-    (Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result) index ∈
-      (Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootNames result) :=
-  Data.List.Map.mem_map.mpr ⟨index, (Multiplicity.CCL.Polynomial.Index.NonzeroResult.mem_rootIndices result) index, rfl⟩
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) :
+    (rootName result) index ∈
+      (rootNames result) :=
+  Data.List.Map.mem_map.mpr ⟨index, (Index.NonzeroResult.mem_rootIndices result) index, rfl⟩
 
 /-- Every root name returns exactly any requested finite number of raw bits. -/
 theorem rootName_productive
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (count : Nat) :
-    ((Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result) index).machine.emitted.IsPrefix
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (count : Nat) :
+    ((rootName result) index).machine.emitted.IsPrefix
         (Data.CCL.Transducer.Machine.Advance.advance
-          ((Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result) index).machine count).emitted ∧
+          ((rootName result) index).machine count).emitted ∧
       (Data.CCL.Transducer.Machine.Advance.advance
-        ((Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result) index).machine count).emitted.length = count
+        ((rootName result) index).machine count).emitted.length = count
           :=
   (ArgumentPrinciple.CCL.Basic.NonzeroResult.zeroArithmeticName_productive result) index count
 
 /-- Every finite prefix of a root name has exact ordinary raw-parser semantics
 for that same exact site or initial RAT box. -/
 theorem rootName_exact
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (count : Nat) :
-    let name := (Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result) index
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (count : Nat) :
+    let name := (rootName result) index
     Data.CCL.Transducer.Machine.Semantics.Basic.ExactCursor
       name.process name.state
       (Data.CCL.Transducer.Machine.Advance.advance name.machine count) :=

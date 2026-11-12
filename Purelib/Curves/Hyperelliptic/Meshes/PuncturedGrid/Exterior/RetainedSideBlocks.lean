@@ -79,6 +79,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 open Purelib
@@ -167,7 +169,7 @@ private theorem paired_right {count : Nat} (pieces : Fin (count + 1) → List St
     simp only
       [pairedBlocks,
       List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil,
-      Data.List.Append.append_nil, OfFn.Basic.ofFn_succ, List.ofFn_zero, -eq_self, -iff_self]
+      Append.append_nil, OfFn.Basic.ofFn_succ, List.ofFn_zero, -eq_self, -iff_self]
     rfl
   | succ count ih =>
     rw [pairedBlocks,
@@ -208,14 +210,14 @@ private theorem paired_all {count : Nat} (pieces : Fin (count + 1) → List Stok
 
 /-- The total of a singleton paired increment is that original increment. -/
 private theorem single_total (point : Stokes.PrimitivePoint) : PairedIncrementArea.total [point] = point := by
-  simp only [PairedIncrementArea.total, List.map_cons, List.map_nil, Data.Gaussian.Norm.Sum.Basic.gaussianSum,
+  simp only [PairedIncrementArea.total, List.map_cons, List.map_nil, Sum.Basic.gaussianSum,
     add_zero, -eq_self, -iff_self]
   rfl
 
 /-- A singleton paired increment has zero internal polygon area. -/
 private theorem single_area (point : Stokes.PrimitivePoint) : PairedIncrementArea.area [point] = 0 := by
   simp only [PairedIncrementArea.area, PairedIncrementArea.terms, PairedIncrementArea.total,
-    List.map_nil, Data.Gaussian.Norm.Sum.Basic.gaussianSum, Stokes.edgeArea, mul_zero, zero_mul, sub_self,
+    List.map_nil, Sum.Basic.gaussianSum, Stokes.edgeArea, mul_zero, zero_mul, sub_self,
       add_zero, -eq_self, -iff_self]
   rfl
 
@@ -228,13 +230,13 @@ private theorem interleave_comparison {count : Nat} (pieces : Fin (count + 1) �
     (joins : Fin count → Stokes.PrimitivePoint) (source : Fin (count + 1) → List Stokes.PrimitivePoint)
     {areaError totalError magnitude : InverseRootPolynomial.Coordinate}
     (areaNonnegative : 0 ≤ areaError) (totalNonnegative : 0 ≤ totalError) (magnitudeNonnegative : 0 ≤ magnitude)
-    (areas : ∀ i, Data.Gaussian.Norm.Basic.normSq
+    (areas : ∀ i, Basic.normSq
       (PairedIncrementArea.area (pieces i) - PairedIncrementArea.area (source i)) ≤ areaError)
     (totals : ∀ i, (PrimitivePoint.Bounded ((PairedIncrementArea.total (pieces i)).sub (PairedIncrementArea.total
       (source i)))) totalError)
     (sources : ∀ i, (PrimitivePoint.Bounded (PairedIncrementArea.total (source i))) magnitude) (junctions : ∀ i,
       (PrimitivePoint.Bounded (joins i)) totalError) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (PairedIncrementArea.area
         (interleave pieces
         joins).flatten - PairedIncrementArea.area (List.ofFn source).flatten) ≤
@@ -262,10 +264,10 @@ private theorem interleave_comparison {count : Nat} (pieces : Fin (count + 1) �
       areas
       (by
         intro i
-        change Data.Gaussian.Norm.Basic.normSq
+        change Basic.normSq
           (PairedIncrementArea.area [joins i] - PairedIncrementArea.area []) ≤ areaError
         rw [single_area]
-        exact (Data.Gaussian.Norm.Basic.normSq_zero).le.trans areaNonnegative))
+        exact (Basic.normSq_zero).le.trans areaNonnegative))
     (paired_all pieces
       joins source _
       totals
@@ -275,7 +277,7 @@ private theorem interleave_comparison {count : Nat} (pieces : Fin (count + 1) �
           totalError
         rw [single_total]
         simpa only [PairedIncrementArea.total, List.map_nil,
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum, PrimitivePoint.sub, Data.Gaussian.Basic.sub_zero, -eq_self,
+          Sum.Basic.gaussianSum, PrimitivePoint.sub, Data.Gaussian.Basic.sub_zero, -eq_self,
             -iff_self] using junctions i))
     (paired_all pieces
       joins source _
@@ -284,7 +286,7 @@ private theorem interleave_comparison {count : Nat} (pieces : Fin (count + 1) �
     (paired_all pieces
       joins source _
       (by intro i; exact ⟨(sources i).1.trans magnitudeLe, (sources i).2.trans magnitudeLe⟩)
-      (by intro i; constructor <;> exact (Data.Gaussian.Norm.Basic.normSq_zero).le.trans boundNonnegative))
+      (by intro i; constructor <;> exact (Basic.normSq_zero).le.trans boundNonnegative))
   rw [paired_left,
     paired_right,
     paired_length] at estimate
@@ -296,7 +298,7 @@ private theorem interleave_comparison {count : Nat} (pieces : Fin (count + 1) �
         intro i
         rw [single_total]
         simpa only [PairedIncrementArea.total, List.map_nil,
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum, PrimitivePoint.sub, Data.Gaussian.Basic.sub_zero, -eq_self,
+          Sum.Basic.gaussianSum, PrimitivePoint.sub, Data.Gaussian.Basic.sub_zero, -eq_self,
             -iff_self] using junctions i)
   let pairs := pairedBlocks
     pieces joins source
@@ -307,15 +309,15 @@ private theorem interleave_comparison {count : Nat} (pieces : Fin (count + 1) �
       intro point member
       obtain ⟨pair, present, rfl⟩ := Map.mem_map.mp member
       exact totalBounds pair present)
-    (count := pairs.length) (by rw [Data.List.Map.length_map])
+    (count := pairs.length) (by rw [Map.length_map])
   have difference := PairedIncrementComparison.total_differences
     (pairs.map (fun pair => (PairedIncrementArea.total pair.1, PairedIncrementArea.total pair.2)))
-  rewrite [Data.List.Map.map_map, Data.List.Map.map_map, Data.List.Map.map_map] at difference
+  rewrite [Map.map_map, Map.map_map, Map.map_map] at difference
   dsimp only [Function.comp_def] at difference
   rw [difference] at totalEstimate
   have left := PairedAreaBlocks.total_flatten (pairs.map Prod.fst)
   have right := PairedAreaBlocks.total_flatten (pairs.map Prod.snd)
-  rewrite [Data.List.Map.map_map] at left right
+  rewrite [Map.map_map] at left right
   dsimp only [Function.comp_def] at left right
   rw [← left, ← right] at totalEstimate
   dsimp only [pairs] at totalEstimate
@@ -348,7 +350,7 @@ private theorem indexed_increments {Vertex : Type} {count : Nat} (vertices : Fin
     (values : Vertex → Stokes.PrimitivePoint) :
     CenteredPathIncrements.increments (fun vertex => values (vertices vertex)) =
       VertexTrace.increments (VertexTrace.ofIndexed vertices) values := by
-  let sample := CenteredBilinearPath.Sample.build (fun vertex => values (vertices vertex))
+  let sample := Sample.build (fun vertex => values (vertices vertex))
   let indexed := VertexTrace.ofIndexedSample vertices values sample
   exact (CenteredPathIncrements.Sample.increments_raw sample).symm.trans ((VertexTrace.ofIndexedSample_increments
     vertices values sample).symm.trans
@@ -357,15 +359,15 @@ private theorem indexed_increments {Vertex : Type} {count : Nat} (vertices : Fin
 
 variable {columns rows : Nat} {geometry : Geometry columns rows}
   {cuts : GridCuts geometry} {box :
-  Purelib.Geometry.Rational.Box}
+  Geometry.Rational.Box}
   {mesh : ObservationMesh cuts box} {traces :
     PerimeterTraces mesh}
   {values : Fin (columns + 1) → Fin (rows + 1) → Canonical →
     PrimitivePoint}
 
 /-- Read the original side's cached physical piece increments and owner junctions in their retained traversal order. -/
-@[expose] def blocks (samples : RectangularCenteredPerimeter.Centered traces values) (side :
-  GridLiftedDualSteps.GridSide) : List (List Stokes.PrimitivePoint) :=
+@[expose] def blocks (samples : Centered traces values) (side :
+  GridSide) : List (List Stokes.PrimitivePoint) :=
   interleave (fun i =>
     RetainedIncrements.increments samples side (RetainedPerimeterPiece.pieceIndex mesh side i))
     (RetainedPerimeterPiece.junction samples side)
@@ -374,12 +376,12 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunction
   Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece in
 /-- Quantitative assembly retains every physical owner junction and pays the complete block-total polygon. Source
 junction slots are empty; this is not an identification with the closed source path. -/
-theorem blocks_comparison (samples : RectangularCenteredPerimeter.Centered traces values) (side :
-  GridLiftedDualSteps.GridSide)
+theorem blocks_comparison (samples : Centered traces values) (side :
+  GridSide)
     (source : Fin (junctionCount mesh side + 1) → List Stokes.PrimitivePoint)
     {areaError totalError magnitude : InverseRootPolynomial.Coordinate}
     (areaNonnegative : 0 ≤ areaError) (totalNonnegative : 0 ≤ totalError) (magnitudeNonnegative : 0 ≤ magnitude)
-    (areas : ∀ i, Data.Gaussian.Norm.Basic.normSq
+    (areas : ∀ i, Basic.normSq
       (PairedIncrementArea.area (RetainedIncrements.increments samples side (RetainedPerimeterPiece.pieceIndex mesh side
         i)) -
         PairedIncrementArea.area (source i)) ≤ areaError)
@@ -388,7 +390,7 @@ theorem blocks_comparison (samples : RectangularCenteredPerimeter.Centered trace
       (PairedIncrementArea.total (source i)))) totalError)
     (sources : ∀ i, (PrimitivePoint.Bounded (PairedIncrementArea.total (source i))) magnitude)
     (junctions : ∀ i, (PrimitivePoint.Bounded (RetainedPerimeterPiece.junction samples side i)) totalError) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (PairedIncrementArea.area (blocks samples side).flatten - PairedIncrementArea.area (List.ofFn source).flatten) ≤
       2 * (((2 * junctionCount mesh side + 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * areaError +
         16 * ((2 * junctionCount mesh side + 1 : Nat) : InverseRootPolynomial.Coordinate)^4 * totalError * (2 *
@@ -403,8 +405,8 @@ theorem blocks_comparison (samples : RectangularCenteredPerimeter.Centered trace
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece in
 /-- Flattening the retained side blocks returns the exact cached centered whole-side increment list. -/
-theorem blocks_flatten (samples : RectangularCenteredPerimeter.Centered traces values) (side :
-  GridLiftedDualSteps.GridSide) :
+theorem blocks_flatten (samples : Centered traces values) (side :
+  GridSide) :
     (blocks samples side).flatten = match side with
       | .bottom => CenteredPathIncrements.Sample.increments samples.bottom
       | .top => CenteredPathIncrements.Sample.increments samples.top
@@ -505,7 +507,7 @@ open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open Purelib.Integration.Path.PairedIncrementArea (area)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -521,39 +523,39 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 /-- The original cached side area is the sum of its retained block areas plus the complete polygon area of block totals.
 -/
 theorem CenteredPerimeters.retained_blocks_area (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : GridLiftedDualSteps.GridSide) :
-    let blocks := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks
+    (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : GridSide) :
+    let blocks := RetainedPerimeterPiece.blocks
       ((samples.samples.get position).get sheet) side
     SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get sheet) side =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) + PairedIncrementArea.area
+      Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) + PairedIncrementArea.area
         (blocks.map PairedIncrementArea.total) := by
   intro blocks
   have same : blocks.flatten = CenteredPerimeters.sideIncrements samples position sheet side := by
     cases side <;> exact
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks_flatten
+      RetainedPerimeterPiece.blocks_flatten
       ((samples.samples.get position).get sheet) _
   exact (CenteredPerimeters.sideIncrements_area samples position sheet side).symm.trans
     ((congrArg PairedIncrementArea.area same).symm.trans (PairedAreaBlocks.area_flatten blocks))
 
 namespace ExteriorProgram.AllSurfacePreparation
 variable {differential : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
 
 /-- The actual exterior correction is assembled from the pieces and owner junctions bounded by the Newton consumer. The
 cross-block polygon remains. -/
-theorem centeredSideArea_retained_blocks (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential)
+theorem centeredSideArea_retained_blocks (prepared : AllSurfacePreparation regular domains differential)
     (samples : RequestedHoleCentering.CenteredPerimeters request cache i j) :
-    prepared.centeredSideArea samples = Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun
+    prepared.centeredSideArea samples = Sum.Basic.gaussianSum (prepared.occurrences.map (fun
       occurrence =>
-      let blocks := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks
+      let blocks := RetainedPerimeterPiece.blocks
         ((samples.samples.get occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet)
         occurrence.sideOccurrence.side
       SideOccurrence.oriented occurrence.sideOccurrence
-        (Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) + PairedIncrementArea.area
+        (Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) + PairedIncrementArea.area
           (blocks.map PairedIncrementArea.total)))) := by
-  apply congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  apply congrArg Sum.Basic.gaussianSum
   apply Map.map_congr_left
   intro occurrence _
   exact congrArg (SideOccurrence.oriented occurrence.sideOccurrence)

@@ -71,6 +71,19 @@ constructive_injectivity BoundProcess
 
 namespace BoundProcess
 
+/-- An exact equality of process owners transports the same state and its original bound. -/
+theorem bound_transport (left right : BoundProcess) (equal : left = right) (state : left.State) :
+    left.bound state = right.bound (equal ▸ state) := by
+  cases equal
+  rfl
+
+/-- An exact equality of process owners transports the original request and its predecessor state. -/
+theorem request_transport (left right : BoundProcess) (equal : left = right) (previous : left.State)
+    (epsilon : Fraction.Rational) (positive : 0 < epsilon) :
+    (equal.symm ▸ right.request (equal ▸ previous) epsilon positive) = left.request previous epsilon positive := by
+  cases equal
+  rfl
+
 /-- Constant exact rational process, useful as a terminal finite name. -/
 def exact (value : Fraction.Rational) : Approximation.BoundProcess where
   State := Unit
@@ -81,6 +94,11 @@ def exact (value : Fraction.Rational) : Approximation.BoundProcess where
   accurate state epsilon positive := by
     simpa only [Interval.exact_width] using positive
   refinesInitial state := Refines.refl _
+
+/-- The finite state of an exact rational process has executable equality. -/
+instance exactStateDecidableEq (value : Fraction.Rational) : DecidableEq (exact value).State := by
+  change DecidableEq Unit
+  infer_instance
 
 /-- Additive inverse of a finite rational enclosure process. -/
 def neg (process : Approximation.BoundProcess) : Approximation.BoundProcess

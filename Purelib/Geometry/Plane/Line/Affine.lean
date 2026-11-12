@@ -30,7 +30,7 @@ open Purelib.Geometry.Plane.Point
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 public section
@@ -47,7 +47,7 @@ introduced: collinearity is the finite three-point determinant relation.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Affine
 
@@ -101,7 +101,7 @@ calculation even when the foot coincides with a diameter endpoint.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Affine
 
@@ -113,7 +113,7 @@ theorem line_contains_midpoint
     (containsSecond : line.Contains second) :
     line.Contains (Affine.midpoint first second) := by
   unfold Contains at containsFirst containsSecond ⊢
-  apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right twoNonzero
+  apply ExplicitField.eq_of_mul_eq_mul_right twoNonzero
   calc
     (line.a * (Affine.midpoint first second).x +
           line.b * (Affine.midpoint first second).y + line.c) * 2 =
@@ -128,8 +128,8 @@ theorem line_contains_midpoint
                 line.b * (((first.y + second.y) / 2) * 2) +
                 line.c * 2 := by ring1
             _ = _ := by
-              rw [Algebra.Field.ExplicitField.div_mul_cancel _ twoNonzero,
-                Algebra.Field.ExplicitField.div_mul_cancel _ twoNonzero]
+              rw [ExplicitField.div_mul_cancel _ twoNonzero,
+                ExplicitField.div_mul_cancel _ twoNonzero]
               ring1
     _ = 0 := by rw [containsFirst, containsSecond]; ring1
     _ = 0 * 2 := by ring1
@@ -153,7 +153,7 @@ by decidable equality rather than by choice.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Affine
 
@@ -273,9 +273,9 @@ theorem affineCombinationThree_weights_unique [Nontrivial K] [DecidableEq K]
                 ring1
       _ = 0 := by rw [xReduced, yReduced]; ring1
   have firstDifferenceZero : firstDifference = 0 :=
-    Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_right determinantNonzero firstProduct
+    ExplicitField.eq_zero_of_mul_eq_zero_right determinantNonzero firstProduct
   have secondDifferenceZero : secondDifference = 0 :=
-    Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_right determinantNonzero
+    ExplicitField.eq_zero_of_mul_eq_zero_right determinantNonzero
       secondProduct
   have thirdDifferenceZero : thirdDifference = 0 := by
     calc
@@ -284,9 +284,9 @@ theorem affineCombinationThree_weights_unique [Nontrivial K] [DecidableEq K]
             rw [firstDifferenceZero, secondDifferenceZero]
             ring1
       _ = 0 := differenceSum
-  exact ⟨Purelib.Algebra.Group.eq_of_sub_eq_zero firstDifferenceZero,
-    Purelib.Algebra.Group.eq_of_sub_eq_zero secondDifferenceZero,
-    Purelib.Algebra.Group.eq_of_sub_eq_zero thirdDifferenceZero⟩
+  exact ⟨Algebra.Group.eq_of_sub_eq_zero firstDifferenceZero,
+    Algebra.Group.eq_of_sub_eq_zero secondDifferenceZero,
+    Algebra.Group.eq_of_sub_eq_zero thirdDifferenceZero⟩
 
 /-- The easy direction of Theorem 9: weights summing to one produce a point on the line through the two source points.
 -/
@@ -308,7 +308,7 @@ theorem affineCombination_on_line [DecidableEq K]
 
 /-- Construct the affine weights of an arbitrary point on a line. -/
 theorem affineWeights_exist [DecidableEq K]
-    (first second point : Plane.Point K) (distinct : first ≠ second)
+    (first second point : Point K) (distinct : first ≠ second)
     (onLine : (Incidence.lineThrough first second distinct).Contains point) :
     ∃ leftWeight rightWeight : K,
       leftWeight + rightWeight = 1 ∧
@@ -339,7 +339,7 @@ theorem affineWeights_exist [DecidableEq K]
     have inverseCancel : denominator⁻¹ * denominator = (1 : K) := by
       calc
         denominator⁻¹ * denominator = denominator * denominator⁻¹ := by ring1
-        _ = 1 := Algebra.Field.ExplicitField.mul_inv_cancel denominator denominatorNonzero
+        _ = 1 := ExplicitField.mul_inv_cancel denominator denominatorNonzero
     let leftWeight := (point.y - second.y) / denominator
     let rightWeight := 1 - leftWeight
     refine ⟨leftWeight, rightWeight, by unfold rightWeight; ring1, ?_⟩
@@ -358,7 +358,7 @@ theorem affineWeights_exist [DecidableEq K]
             rw [onLineExpanded]
             ring1
       dsimp only [Affine.affineCombination, leftWeight, rightWeight]
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [ExplicitField.div_eq_mul_inv]
       calc
         (point.y - second.y) * denominator⁻¹ * first.x +
             (1 - (point.y - second.y) * denominator⁻¹) * second.x =
@@ -370,7 +370,7 @@ theorem affineWeights_exist [DecidableEq K]
           rw [← mul_assoc, inverseCancel]
           ring1
     · dsimp only [Affine.affineCombination, leftWeight, rightWeight]
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [ExplicitField.div_eq_mul_inv]
       calc
         (point.y - second.y) * denominator⁻¹ * first.y +
             (1 - (point.y - second.y) * denominator⁻¹) * second.y =
@@ -386,13 +386,13 @@ theorem affineWeights_exist [DecidableEq K]
     have inverseCancel : denominator⁻¹ * denominator = (1 : K) := by
       calc
         denominator⁻¹ * denominator = denominator * denominator⁻¹ := by ring1
-        _ = 1 := Algebra.Field.ExplicitField.mul_inv_cancel denominator denominatorNonzero
+        _ = 1 := ExplicitField.mul_inv_cancel denominator denominatorNonzero
     let leftWeight := (point.x - second.x) / denominator
     let rightWeight := 1 - leftWeight
     refine ⟨leftWeight, rightWeight, by unfold rightWeight; ring1, ?_⟩
     apply Plane.Point.ext
     · dsimp only [Affine.affineCombination, leftWeight, rightWeight]
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [ExplicitField.div_eq_mul_inv]
       calc
         (point.x - second.x) * denominator⁻¹ * first.x +
             (1 - (point.x - second.x) * denominator⁻¹) * second.x =
@@ -417,7 +417,7 @@ theorem affineWeights_exist [DecidableEq K]
             rw [onLineExpanded]
             ring1
       dsimp only [Affine.affineCombination, leftWeight, rightWeight]
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [ExplicitField.div_eq_mul_inv]
       calc
         (point.x - second.x) * denominator⁻¹ * first.y +
             (1 - (point.x - second.x) * denominator⁻¹) * second.y =
@@ -473,12 +473,12 @@ theorem affineWeights_unique [DecidableEq K]
     · have differentY : first.y ≠ second.y := by
         intro sameYCoordinate
         exact distinct (Point.ext sameXCoordinate sameYCoordinate)
-      have differenceZero := Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_right
+      have differenceZero := ExplicitField.eq_zero_of_mul_eq_zero_right
         (sub_ne_zero_of_ne differentY) yProductZero
       calc
         leftWeight = (leftWeight - otherLeftWeight) + otherLeftWeight := by ring1
         _ = otherLeftWeight := by rw [differenceZero]; ring1
-    · have differenceZero := Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_right
+    · have differenceZero := ExplicitField.eq_zero_of_mul_eq_zero_right
         (sub_ne_zero_of_ne sameXCoordinate) xProductZero
       calc
         leftWeight = (leftWeight - otherLeftWeight) + otherLeftWeight := by ring1
@@ -495,9 +495,9 @@ theorem affineCombination_iff_on_line [DecidableEq K]
         leftWeight + rightWeight = 1 ∧
         Affine.affineCombination leftWeight first rightWeight second = point := by
   constructor
-  · exact Geometry.Plane.Line.Affine.affineWeights_exist first second point distinct
+  · exact affineWeights_exist first second point distinct
   · rintro ⟨leftWeight, rightWeight, weights, rfl⟩
-    exact Geometry.Plane.Line.Affine.affineCombination_on_line first second distinct leftWeight rightWeight weights
+    exact affineCombination_on_line first second distinct leftWeight rightWeight weights
 
 /-- The point a fraction `scale` of the way from `origin` to `target`. -/
 @[expose] def thalesPoint (scale : K) (origin target : Point K) : Point K :=
@@ -512,7 +512,7 @@ namespace Purelib.Geometry.Plane.Line.Affine
 private theorem thales_points_distinct [DecidableEq K]
     (scale : K) (origin second third : Point K)
     (scaleNonzero : scale ≠ 0) (secondThirdDistinct : second ≠ third) :
-    Geometry.Plane.Line.Affine.thalesPoint scale origin second ≠ Geometry.Plane.Line.Affine.thalesPoint scale origin
+    thalesPoint scale origin second ≠ thalesPoint scale origin
       third := by
   intro equalPoints
   have equalX := congrArg Point.x equalPoints
@@ -537,9 +537,9 @@ private theorem thales_points_distinct [DecidableEq K]
   · have differentY : second.y ≠ third.y := by
       intro sameY
       exact secondThirdDistinct (Point.ext sameX sameY)
-    exact (Algebra.Field.ExplicitField.mul_ne_zero scaleNonzero
+    exact (ExplicitField.mul_ne_zero scaleNonzero
       (sub_ne_zero_of_ne differentY)) yProductZero
-  · exact (Algebra.Field.ExplicitField.mul_ne_zero scaleNonzero
+  · exact (ExplicitField.mul_ne_zero scaleNonzero
       (sub_ne_zero_of_ne sameX)) xProductZero
 end Purelib.Geometry.Plane.Line.Affine
 
@@ -551,13 +551,13 @@ namespace Purelib.Geometry.Plane.Line.Affine
 theorem thales_parallel [DecidableEq K]
     (scale : K) (origin second third : Point K)
     (scaleNonzero : scale ≠ 0) (secondThirdDistinct : second ≠ third) :
-    (Incidence.lineThrough (Affine.thalesPoint scale origin second)
-        (Affine.thalesPoint scale origin third)
+    (Incidence.lineThrough (thalesPoint scale origin second)
+        (thalesPoint scale origin third)
         (by
-          exact Purelib.Geometry.Plane.Line.Affine.thales_points_distinct scale origin second third scaleNonzero
+          exact thales_points_distinct scale origin second third scaleNonzero
             secondThirdDistinct)).Parallel
       (Incidence.lineThrough second third secondThirdDistinct) := by
-  unfold Parallel Incidence.lineThrough Affine.thalesPoint Affine.affineCombination
+  unfold Parallel Incidence.lineThrough thalesPoint Affine.affineCombination
   ring1
 
 end Purelib.Geometry.Plane.Line.Affine
@@ -582,7 +582,7 @@ object and no general theorem about a globally collected root set.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 section
 
@@ -592,27 +592,27 @@ namespace Purelib.Geometry.Plane.Line.Affine.Conic
 theorem thalesPoint_exists_of_on_line [DecidableEq K]
     (first second point : Point K) (distinct : first ≠ second)
     (onLine : (Incidence.lineThrough first second distinct).Contains point) :
-    ∃ scale : K, Affine.thalesPoint scale first second = point := by
-  rcases (Geometry.Plane.Line.Affine.affineCombination_iff_on_line first second point distinct).1 onLine with
+    ∃ scale : K, thalesPoint scale first second = point := by
+  rcases (affineCombination_iff_on_line first second point distinct).1 onLine with
     ⟨leftWeight, rightWeight, weights, combination⟩
   have leftFormula : leftWeight = 1 - rightWeight := by
     calc
       leftWeight = (leftWeight + rightWeight) - rightWeight := by ring1
       _ = 1 - rightWeight := by rw [weights]
   refine ⟨rightWeight, ?_⟩
-  unfold Affine.thalesPoint
+  unfold thalesPoint
   rw [← leftFormula]
   exact combination
 
 /-- The affine line parameter at zero is its first endpoint. -/
 @[simp] theorem thalesPoint_zero (first second : Point K) :
-    Affine.thalesPoint 0 first second = first := by
-  apply Point.ext <;> unfold Affine.thalesPoint Affine.affineCombination <;> ring1
+    thalesPoint 0 first second = first := by
+  apply Point.ext <;> unfold thalesPoint Affine.affineCombination <;> ring1
 
 /-- The affine line parameter at one is its second endpoint. -/
 @[simp] theorem thalesPoint_one (first second : Point K) :
-    Affine.thalesPoint 1 first second = second := by
-  apply Point.ext <;> unfold Affine.thalesPoint Affine.affineCombination <;> ring1
+    thalesPoint 1 first second = second := by
+  apply Point.ext <;> unfold thalesPoint Affine.affineCombination <;> ring1
 
 end Purelib.Geometry.Plane.Line.Affine.Conic
 
@@ -638,7 +638,7 @@ characteristic different from two.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Affine
 
@@ -651,7 +651,7 @@ theorem midpoint_segment_parallel [DecidableEq K]
         (Affine.midpoint_pair_distinct first second common distinct twoNonzero)).Parallel
       (Incidence.lineThrough first second distinct) := by
   unfold Parallel Incidence.lineThrough Affine.midpoint
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   ring1
 
 /-- The common-first-endpoint form of `midpoint_segment_parallel`. -/
@@ -663,7 +663,7 @@ theorem midpoint_segment_parallel_left [DecidableEq K]
           twoNonzero)).Parallel
       (Incidence.lineThrough first second distinct) := by
   unfold Parallel Incidence.lineThrough Affine.midpoint
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   ring1
 
 end Purelib.Geometry.Plane.Line.Affine
@@ -685,7 +685,7 @@ stated explicitly: midpoint and Triple-quad arguments require `2 ≠ 0`.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Line.Affine
 
@@ -695,9 +695,9 @@ theorem midpoint_on_line [DecidableEq K]
     (twoNonzero : (2 : K) ≠ 0) :
     (Incidence.lineThrough first second distinct).Contains (Affine.midpoint first second) := by
   have twoInverse : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
+    ExplicitField.mul_inv_cancel 2 twoNonzero
   unfold Contains Incidence.lineThrough Affine.midpoint
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     (first.y - second.y) * ((first.x + second.x) * (2 : K)⁻¹) +
         (second.x - first.x) * ((first.y + second.y) * (2 : K)⁻¹) +

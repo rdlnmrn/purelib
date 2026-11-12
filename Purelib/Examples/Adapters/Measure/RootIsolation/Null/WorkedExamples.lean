@@ -25,6 +25,8 @@ import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 
+open Purelib.Measure.CCL.BoxedName
+
 @[expose] public section
 
 /-!
@@ -65,7 +67,7 @@ example (epsilon : Fraction.Rational) (positive : 0 < epsilon) :
 
 Uses the singleton box-cover construction and its exact conversion to the generic cover scheme. -/
 def displayedPointGenericNull :
-    Measure.EffectiveNull Box.Cover.boxCoverScheme
+    EffectiveNull Box.Cover.boxCoverScheme
       (fun candidate => candidate = displayedPoint) :=
   (Box.Null.singletonNull displayedPoint).toGeneric
 
@@ -146,21 +148,21 @@ def rationalSpike_equalExceptNull :
 example (name : Boxed.Process.ProgressiveName)
     (target : Fraction.Rational) (positive : 0 < target) :
     Box.Content.boxContent
-      (CCL.BoxedName.ProgressiveName.areaCertificate
+      (ProgressiveName.areaCertificate
         name name.initial target positive).box < target :=
-  CCL.BoxedName.ProgressiveName.areaCertificate_content_lt
+  ProgressiveName.areaCertificate_content_lt
     name name.initial target positive
 
 /-- Adding two boxed-name area processes preserves their operational equivalence to zero. -/
 example (name : Boxed.Process.ProgressiveName) :
     Approximation.OperationallyEquivalent
-      ((CCL.BoxedName.ProgressiveName.toAreaProcess name).add
-        (CCL.BoxedName.ProgressiveName.toAreaProcess name))
+      ((ProgressiveName.toAreaProcess name).add
+        (ProgressiveName.toAreaProcess name))
       ((Approximation.BoundProcess.exact 0).add (Approximation.BoundProcess.exact 0)) :=
   Approximation.operationallyEquivalent_add
-    (CCL.BoxedName.ProgressiveName.toAreaProcess_operationallyEquivalent_zero
+    (ProgressiveName.toAreaProcess_operationallyEquivalent_zero
       name)
-    (CCL.BoxedName.ProgressiveName.toAreaProcess_operationallyEquivalent_zero
+    (ProgressiveName.toAreaProcess_operationallyEquivalent_zero
       name)
 
 /-- The sum of two boxed-name area processes is operationally equivalent to exact zero.
@@ -168,17 +170,17 @@ example (name : Boxed.Process.ProgressiveName) :
 Uses their retained zero anchors and the exact addition identity. -/
 example (name : Boxed.Process.ProgressiveName) :
     Approximation.OperationallyEquivalent
-      ((CCL.BoxedName.ProgressiveName.toAreaProcess name).add
-        (CCL.BoxedName.ProgressiveName.toAreaProcess name))
+      ((ProgressiveName.toAreaProcess name).add
+        (ProgressiveName.toAreaProcess name))
       (Approximation.BoundProcess.exact 0) := by
   apply Approximation.operationallyEquivalent_exact_of_anchoredAt
   simpa only [zero_add] using
     Approximation.BoundProcess.anchoredAt_add
-      (CCL.BoxedName.ProgressiveName.toAreaProcess name)
-      (CCL.BoxedName.ProgressiveName.toAreaProcess name)
+      (ProgressiveName.toAreaProcess name)
+      (ProgressiveName.toAreaProcess name)
       0 0
-      (CCL.BoxedName.ProgressiveName.toAreaProcess_anchored name)
-      (CCL.BoxedName.ProgressiveName.toAreaProcess_anchored name)
+      (ProgressiveName.toAreaProcess_anchored name)
+      (ProgressiveName.toAreaProcess_anchored name)
 
 /-- The retained result of a finite accuracy-request list satisfies each member tolerance.
 

@@ -17,6 +17,8 @@ import Purelib.Measure.Weighted.Integral
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -58,7 +60,7 @@ theorem paleyZygmund_mul {α : Type}
     distribution.expectation_nonneg value valueNonnegative
   have fractionMeanNonnegative :
       0 ≤ fraction * distribution.expectation value :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct fractionNonnegative
+    Arithmetic.mul_nonneg_direct fractionNonnegative
       meanNonnegative
   have pointwise : ∀ atom, atom ∈ distribution.atoms →
       value atom.item ≤ selectedValue atom.item +
@@ -77,7 +79,7 @@ theorem paleyZygmund_mul {α : Type}
   have selectedLower :
       (1 - fraction) * distribution.expectation value ≤
         distribution.expectation selectedValue := by
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct averaged
+    have shifted := Arithmetic.sub_le_sub_right_direct averaged
       (fraction * distribution.expectation value)
     calc
       (1 - fraction) * distribution.expectation value =
@@ -90,15 +92,15 @@ theorem paleyZygmund_mul {α : Type}
       _ = distribution.expectation selectedValue := by
         ring1
   have complementNonnegative : 0 ≤ 1 - fraction :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct fractionAtMostOne
+    Arithmetic.sub_nonneg_direct fractionAtMostOne
   have selectedLowerNonnegative :
       0 ≤ (1 - fraction) * distribution.expectation value :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct complementNonnegative
+    Arithmetic.mul_nonneg_direct complementNonnegative
       meanNonnegative
   have squaredLower :
       ((1 - fraction) * distribution.expectation value) ^ 2 ≤
         distribution.expectation selectedValue ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct selectedLowerNonnegative
+    Arithmetic.pow_le_pow_direct selectedLowerNonnegative
       selectedLower 2
   have productPointwise : (fun item =>
       value item * indicator event item) = selectedValue := rfl
@@ -153,16 +155,16 @@ theorem paleyZygmund_bound {α : Type}
         (distribution.aboveFractionOfMeanEvent value fraction) := by
   have secondMomentPositive :
       0 < distribution.expectation (fun item => value item ^ 2) := by
-    exact (Fraction.Order.Arithmetic.pow_pos_direct meanPositive 2).trans_le
+    exact (Arithmetic.pow_pos_direct meanPositive 2).trans_le
       (distribution.expectation_sq_le_secondMoment value)
-  apply (Fraction.Order.Field.div_le_iff_pos secondMomentPositive).2
+  apply (Field.div_le_iff_pos secondMomentPositive).2
   have multiplicative := distribution.paleyZygmund_mul
     (distribution.aboveFractionOfMeanEvent value fraction) value fraction
     fractionNonnegative fractionAtMostOne valueNonnegative
     (by
       intro atom atomMember outside
       unfold aboveFractionOfMeanEvent at outside
-      exact Fraction.Order.Arithmetic.le_of_not_gt_direct
+      exact Arithmetic.le_of_not_gt_direct
         (decide_eq_false_iff_not.mp outside))
   calc
     (1 - fraction) ^ 2 * distribution.expectation value ^ 2 ≤

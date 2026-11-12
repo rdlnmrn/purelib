@@ -31,6 +31,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Topology.PreparedSurfaceCoercivity
 import Purelib.Topology.Mesh.CoordinateTriangulation
 
+open Purelib.Geometry.Rectangle.Partition
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -58,32 +60,32 @@ model cuts and spatial subdivision; no endpoint-chord replacement is made.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyBoundary
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
       {models
-    : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
-  {domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet} {stage : Nat}
-  {cached : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    : Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
+  {domain : Face.Periods.PeriodDomain models sheet} {stage : Nat}
+  {cached : (row : Fin genus) → Face.PrimitiveData.DomainPrimitives domain
     (Periods.PeriodMatrix.standardDifferential row) stage}
   {triangles : List (Integration.RectangularOwnedTriangulation.ModelTriangle domain.geometry)} {surface :
     Integration.RectangularOwnedTriangulation.OwnedTriangulation triangles}
 
 /-- The retained energy-sample boundary area equals the sum of its original coordinate-triangle wedges. -/
-theorem energy_boundary_eq_wedges (readings : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached
+theorem energy_boundary_eq_wedges (readings : DomainBasisEnergy.BasisReadings cached
   surface)
     (budget : Readings.AffineBasisEnergy.AffineBasis.SurfaceBudget readings.affine) (coefficients :
       LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     (budget.sample coefficients).boundaryArea =
-      Rectangle.Partition.PreparedBoxBoundary.sumCoordinateWedges (fun point => Energy.Polygon.energyPrimitivePoint
+      PreparedBoxBoundary.sumCoordinateWedges (fun point => Energy.Polygon.energyPrimitivePoint
         (readings.atPoint coefficients point))
-        (triangles.map Integration.RectangularOwnedTriangulation.ModelTriangle.triangle) := open Purelib.Algebra in by
+        (triangles.map Integration.RectangularOwnedTriangulation.ModelTriangle.triangle) := open Algebra in by
   rw [(budget.sample coefficients).boundaryArea_eq]
   change Topology.Polygon.Stokes.edgeListArea
     (fun vertex => Energy.Polygon.energyPrimitivePoint ((budget.sample coefficients).primitiveValue vertex))
     surface.mesh.triangulation.boundary = _
-  rw [← surface.mesh.wedgeSum_eq_boundaryArea, Rectangle.Partition.PreparedBoxBoundary.sumCoordinateWedges_eq_sumFin]
+  rw [← surface.mesh.wedgeSum_eq_boundaryArea, PreparedBoxBoundary.sumCoordinateWedges_eq_sumFin]
   apply FiniteSum.Fin.sumFin_congr
   intro face
   have coordinates := surface.mesh.face_coordinates face
@@ -102,38 +104,38 @@ theorem energy_boundary_eq_wedges (readings : Hyperelliptic.Meshes.PuncturedGrid
 /-- The retained energy boundary equals the sum of the complete original rectangle boundaries. -/
 theorem energy_boundary_eq_boxes {box : Rational.Box} {mesh :
   Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached mesh.surface) (budget :
+    (readings : DomainBasisEnergy.BasisReadings cached mesh.surface) (budget :
       Readings.AffineBasisEnergy.AffineBasis.SurfaceBudget readings.affine)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    (budget.sample coefficients).boundaryArea = Rectangle.Partition.PreparedBoxBoundary.sumBoxBoundaries
+    (budget.sample coefficients).boundaryArea = PreparedBoxBoundary.sumBoxBoundaries
       (fun point => Energy.Polygon.energyPrimitivePoint (readings.atPoint coefficients point)) mesh.boxes := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyBoundary.energy_boundary_eq_wedges readings budget coefficients,
-    mesh.coordinates, Rectangle.Partition.PreparedBoxBoundary.sumCoordinateWedges_boxTriangles]
+  rw [DomainEnergyBoundary.energy_boundary_eq_wedges readings budget coefficients,
+    mesh.coordinates, PreparedBoxBoundary.sumCoordinateWedges_boxTriangles]
 
 /-- Summing all original refined rectangle boundaries equals the sum of the retained dyadic boundary traces. -/
 private theorem refined_boundaries (primitive : Gaussian.Basic.Canonical →
-  Purelib.Topology.Polygon.Stokes.PrimitivePoint) (depth : Nat) (boxes : List Rational.Box) :
-    Rectangle.Partition.PreparedBoxBoundary.sumBoxBoundaries primitive
-      (boxes.flatMap (Rectangle.Partition.PreparedBoxPartitions.cells depth)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (boxes.map
-        (Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary primitive depth)) := by
+  Topology.Polygon.Stokes.PrimitivePoint) (depth : Nat) (boxes : List Rational.Box) :
+    PreparedBoxBoundary.sumBoxBoundaries primitive
+      (boxes.flatMap (PreparedBoxPartitions.cells depth)) =
+      Gaussian.Norm.Sum.Basic.gaussianSum (boxes.map
+        (PreparedBoxBoundary.rectangleBoundary primitive depth)) := by
   induction boxes with
   | nil => rfl
   | cons box boxes ih =>
-      rw [List.Flatten.flatMap_cons, Rectangle.Partition.PreparedBoxBoundary.sumBoxBoundaries_append,
-        Rectangle.Partition.PreparedBoxBoundary.sumBoxBoundaries_cells, ih]
+      rw [List.Flatten.flatMap_cons, PreparedBoxBoundary.sumBoxBoundaries_append,
+        PreparedBoxBoundary.sumBoxBoundaries_cells, ih]
       rfl
 
 /-- The original energy-sample boundary equals the complete retained exterior partition trace at its actual depth. -/
 theorem energy_boundary_eq_exterior {box : Rational.Box} {mesh :
   Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached mesh.surface) (budget :
+    (readings : DomainBasisEnergy.BasisReadings cached mesh.surface) (budget :
       Readings.AffineBasisEnergy.AffineBasis.SurfaceBudget readings.affine)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     (budget.sample coefficients).boundaryArea = mesh.partition.boundary
       (fun point => Energy.Polygon.energyPrimitivePoint (readings.atPoint coefficients point)) mesh.depth := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyBoundary.energy_boundary_eq_boxes readings budget coefficients,
-    mesh.boxes_eq, Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyBoundary.refined_boundaries,
+  rw [DomainEnergyBoundary.energy_boundary_eq_boxes readings budget coefficients,
+    mesh.boxes_eq, DomainEnergyBoundary.refined_boundaries,
     mesh.partition.boundary_eq_sum]
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyBoundary

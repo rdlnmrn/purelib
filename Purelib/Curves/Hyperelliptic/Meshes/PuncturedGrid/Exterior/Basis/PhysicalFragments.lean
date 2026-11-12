@@ -74,6 +74,10 @@ import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -94,41 +98,41 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest (OwnedReadings
   ownedValue)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
+  {sourceData : UniformReciprocalModels.Data patch count} {cover :
+    UniformReciprocalCover.Cover sourceData}
+  {covers : Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
     depth : Nat}
-  {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {common : Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : InverseRootPolynomial.Coordinate}
+  {request : Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
   {box : Rational.Box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {originals : Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {acquired :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth}
 
-variable {faceIndex : Nat} {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence
+variable {faceIndex : Nat} {data : FragmentQueries.RowData occurrence
   faceIndex}
 
 namespace OwnedFragment
@@ -142,29 +146,29 @@ def ofTrace (member : parent ∈ occurrence.compared.entered.cache.parents)
     {interval : Rectangle.Partition.PreparedAxisPartitions.Interval} (located :
       Paths.RectangularSegmentRefinement.Subinterval split interval)
     {leftColumns leftRows rightColumns rightRows vertices : Nat}
-    {leftGeometry : Normalization.RectangularInverseModels.Geometry leftColumns leftRows}
-    {rightGeometry : Normalization.RectangularInverseModels.Geometry rightColumns rightRows}
+    {leftGeometry : RectangularInverseModels.Geometry leftColumns leftRows}
+    {rightGeometry : RectangularInverseModels.Geometry rightColumns rightRows}
     {physical : Paths.RectangularPairedSegments.PairedSegmentPiece leftGeometry rightGeometry}
     {trace : Integration.RectangularPairedPointBanks.Trace physical vertices}
     (forward : Bool)
     (transport : Paths.RectangularTraceParameterReadings.ParentParameters trace parent
       (if forward then interval.lower else interval.upper) (if forward then interval.upper else interval.lower))
     (increasing : ∀ edge : Fin vertices, trace.parameters edge.castSucc ≤ trace.parameters edge.succ)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget vertices
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget vertices
       allowance)
     (owners : OwnerRequest occurrence budget.tolerance)
       (later : owners.index ≤ faceIndex)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun vertex =>
+    (readings : OwnedReadings data (fun vertex =>
       trace.points vertex))
     (owned : Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
       (⟨ownedValue readings coefficients vertex, ownedValue readings coefficients vertex⟩ :
         Topology.Polygon.Stokes.PrimitivePoint)))
     (source : Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
-      (⟨Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      (⟨PrimitiveBank.value
         originals coefficients (transport.parameters vertex),
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+        PrimitiveBank.value
         originals coefficients (transport.parameters vertex)⟩ : Topology.Polygon.Stokes.PrimitivePoint))) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals)
+    OwnedFragment (originals := originals)
       (coefficients := coefficients) data :=
   { member := member, piece := located.piece, vertices := vertices, parameters := transport.parameters
     inside := by
@@ -194,24 +198,24 @@ def ofMesh (member : parent ∈ occurrence.compared.entered.cache.parents)
     (interval : Rectangle.Partition.PreparedAxisPartitions.Interval) (within : 0 ≤ interval.lower ∧ interval.upper ≤ 1)
     (correspondence : Rectangle.SourceIntervals.AxisCorrespondence vertical
       (parent.edge.point 0) (parent.edge.point 1) interval physical)
-    {vertices : Nat} (parameters : Fin (vertices + 1) → Normalization.InverseRootPolynomial.Coordinate)
+    {vertices : Nat} (parameters : Fin (vertices + 1) → InverseRootPolynomial.Coordinate)
     (inside : ∀ vertex, interval.lower ≤ parameters vertex ∧ parameters vertex ≤ interval.upper)
     (ordered : ∀ edge : Fin vertices, parameters edge.castSucc ≤ parameters edge.succ)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget vertices
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget vertices
       allowance)
     (owners : OwnerRequest occurrence budget.tolerance)
       (later : owners.index ≤ faceIndex)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun vertex =>
+    (readings : OwnedReadings data (fun vertex =>
       parent.edge.point (parameters vertex)))
     (owned : Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
       (⟨ownedValue readings coefficients vertex, ownedValue readings coefficients vertex⟩ :
         Topology.Polygon.Stokes.PrimitivePoint)))
     (source : Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
-      (⟨Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      (⟨PrimitiveBank.value
         originals coefficients (parameters vertex),
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+        PrimitiveBank.value
         originals coefficients (parameters vertex)⟩ : Topology.Polygon.Stokes.PrimitivePoint))) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals)
+    OwnedFragment (originals := originals)
       (coefficients := coefficients) data :=
   let located := Rectangle.SourceIntervals.locateSourceInterval mesh split retained vertical physical present interval
     within correspondence
@@ -225,22 +229,22 @@ its actual nonzero numerical increment. -/
 def atJunction (member : parent ∈ occurrence.compared.entered.cache.parents)
     {cuts : Paths.RectangularSegmentSplitting.GridCuts occurrence.compared.entered.domain.geometry}
     (split : Paths.RectangularSegmentSplitting.SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1))
-    (parameter : Normalization.InverseRootPolynomial.Coordinate) (inside : 0 ≤ parameter ∧ parameter ≤ 1)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget 1
+    (parameter : InverseRootPolynomial.Coordinate) (inside : 0 ≤ parameter ∧ parameter ≤ 1)
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget 1
       allowance)
     (owners : OwnerRequest occurrence budget.tolerance)
       (later : owners.index ≤ faceIndex)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun _ : Fin 2 =>
+    (readings : OwnedReadings data (fun _ : Fin 2 =>
       parent.edge.point parameter))
     (owned : Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
       (⟨ownedValue readings coefficients vertex, ownedValue readings coefficients vertex⟩ :
         Topology.Polygon.Stokes.PrimitivePoint)))
     (source : Periods.CenteredBilinearPath.Sample (fun _ : Fin 2 => Path.ConjugateIncrementComparison.conjugateFirst
-      (⟨Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      (⟨PrimitiveBank.value
         originals coefficients parameter,
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+        PrimitiveBank.value
         originals coefficients parameter⟩ : Topology.Polygon.Stokes.PrimitivePoint))) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals)
+    OwnedFragment (originals := originals)
       (coefficients := coefficients) data :=
   let located := Paths.RectangularSegmentSplitting.SegmentSplit.locate split parameter inside
   { member := member, piece := located.piece, vertices := 1, parameters := fun _ => parameter

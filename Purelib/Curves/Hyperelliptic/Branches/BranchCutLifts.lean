@@ -92,10 +92,10 @@ namespace Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts
 open Purelib.Riemann.Curves.AlgebraicDifferentials
 
 /-- Exact Gaussian rational coordinates for the retained clear paths. -/
-abbrev Gaussian := Data.Gaussian.Basic.Canonical
+abbrev Gaussian := Basic.Canonical
 /-- The finite dense Gaussian polynomial defining the retained clearance problem. -/
 abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- A finite rational rectangular ambient or root owner. -/
 abbrev Box := Rational.Box
 /-- An executable bijection between the retained finite sheet sets. -/
@@ -139,11 +139,11 @@ def sheetSwap : Bijection 2 2 where
 namespace ClearSegment
 
 /-- Reverse a certified segment without changing its clearance line. -/
-def reverse {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
-    ClearPath.ClearSegment polynomial ambient finish start := by
+def reverse {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian}
+    (segment : ClearSegment polynomial ambient start finish) :
+    ClearSegment polynomial ambient finish start := by
   cases segment with
   | horizontal xStart xFinish y startLower startUpper finishLower finishUpper
       clearance =>
@@ -156,25 +156,25 @@ def reverse {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianP
 
 /-- Reversing a segment retains the certified line-clearance cache. -/
 @[simp] theorem reverse_clearanceBound
-    {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
+    {polynomial : GaussianPolynomial} {ambient :
+      Box}
+    {start finish : Gaussian}
+    (segment : ClearSegment polynomial ambient start finish) :
     (reverse segment).clearanceBound = segment.clearanceBound
       := by
   cases segment <;> rfl
 
 /-- Reversal complements the affine segment parameter. -/
 theorem reverse_pointAt
-    {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (segment : ClearPath.ClearSegment polynomial ambient start finish)
+    {polynomial : GaussianPolynomial} {ambient :
+      Box}
+    {start finish : Gaussian}
+    (segment : ClearSegment polynomial ambient start finish)
     (parameter : Fraction.Rational) :
     (reverse segment).pointAt parameter = segment.pointAt (1 -
       parameter) := by
   cases segment <;>
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
     simp only [ClearSegment.pointAt,
       Scale.scale_re, Scale.scale_im,
       Basic.add_re,
@@ -184,46 +184,46 @@ theorem reverse_pointAt
     ring1
 
 /-- Reversing the retained clear geometry preserves containment in its original ambient. -/
-theorem reverse_withinAmbient {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (segment : ClearPath.ClearSegment polynomial ambient start finish)
+theorem reverse_withinAmbient {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian}
+    (segment : ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) :
     (reverse segment).WithinAmbient := by
   cases segment <;> exact within
 
 /-- Lift one clear segment without changing the selected sheet. -/
-def liftOnSheet {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian} (sheet : Fin 2)
-    (_segment : ClearPath.ClearSegment polynomial ambient start finish) :
-    Lifted.Basic.LiftedCell
-      ({ coordinate := start, sheet := sheet } : Lifted.Basic.LiftedPoint 2)
-      ({ coordinate := finish, sheet := sheet } : Lifted.Basic.LiftedPoint 2) where
-  sheetTransport := Data.Fin.Bijection.identity 2
+def liftOnSheet {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian} (sheet : Fin 2)
+    (_segment : ClearSegment polynomial ambient start finish) :
+    LiftedCell
+      ({ coordinate := start, sheet := sheet } : LiftedPoint 2)
+      ({ coordinate := finish, sheet := sheet } : LiftedPoint 2) where
+  sheetTransport := Bijection.identity 2
   finishSheet_eq := rfl
 
 /-- Lift an ordinary clear segment while applying the two-sheet swap across that edge. This is used as the terminal edge
 of a certified winding-one boundary. -/
-def liftWithSwap {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian} (sheet : Fin 2)
-    (_segment : ClearPath.ClearSegment polynomial ambient start finish) :
-    Lifted.Basic.LiftedCell
-      ({ coordinate := start, sheet := sheet } : Lifted.Basic.LiftedPoint 2)
-      ({ coordinate := finish, sheet := Curves.Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet } :
-        Lifted.Basic.LiftedPoint 2) where
-  sheetTransport := Curves.Hyperelliptic.Branches.BranchCutLifts.sheetSwap
+def liftWithSwap {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian} (sheet : Fin 2)
+    (_segment : ClearSegment polynomial ambient start finish) :
+    LiftedCell
+      ({ coordinate := start, sheet := sheet } : LiftedPoint 2)
+      ({ coordinate := finish, sheet := otherSheet sheet } :
+        LiftedPoint 2) where
+  sheetTransport := sheetSwap
   finishSheet_eq := rfl
 
 end ClearSegment
 
 /-- A zero-length base cell implementing the nontrivial local sheet swap. -/
 def switchCell (coordinate : Gaussian) (sheet : Fin 2) :
-    Lifted.Basic.LiftedCell
-      ({ coordinate := coordinate, sheet := sheet } : Lifted.Basic.LiftedPoint 2)
+    LiftedCell
+      ({ coordinate := coordinate, sheet := sheet } : LiftedPoint 2)
       ({ coordinate := coordinate, sheet := otherSheet sheet } :
-        Lifted.Basic.LiftedPoint 2)
+        LiftedPoint 2)
     where
   sheetTransport := sheetSwap
   finishSheet_eq := rfl
@@ -231,22 +231,22 @@ def switchCell (coordinate : Gaussian) (sheet : Fin 2) :
 namespace ClearPath
 
 /-- Reverse a finite clear path and all of its segment orientations. -/
-def reverse {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box} :
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian} ->
-      Polynomial.Geometry.ClearPath polynomial ambient start finish ->
-      Polynomial.Geometry.ClearPath polynomial ambient finish start
+def reverse {polynomial : GaussianPolynomial} {ambient :
+  Box} :
+    {start finish : Gaussian} ->
+      ClearPath polynomial ambient start finish ->
+      ClearPath polynomial ambient finish start
   | _, _, .nil point => .nil point
   | start, _, .cons head tail =>
       (reverse tail).append
-        (.cons (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.reverse head)
+        (.cons (ClearSegment.reverse head)
           (.nil start))
 
 /-- Reversing the retained clear geometry preserves containment in its original ambient. -/
-theorem reverse_withinAmbient {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+theorem reverse_withinAmbient {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian}
+    (path : ClearPath polynomial ambient start finish)
     (within : path.WithinAmbient) :
     (reverse path).WithinAmbient := by
   induction within with
@@ -254,7 +254,7 @@ theorem reverse_withinAmbient {polynomial : Curves.Hyperelliptic.Branches.Branch
   | cons headWithin tailWithin inductionHypothesis =>
       exact inductionHypothesis.append
         (.cons
-          (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.reverse_withinAmbient
+          (ClearSegment.reverse_withinAmbient
             _ headWithin)
           (.nil _))
 
@@ -262,74 +262,74 @@ theorem reverse_withinAmbient {polynomial : Curves.Hyperelliptic.Branches.Branch
 
 The finite path recursion retains its original segment order and sheet indices. The equality follows from the displayed
 head and the corresponding statement for the same retained tail. -/
-@[simp] theorem segmentCount_reverse {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial}
-    {ambient : Curves.Hyperelliptic.Branches.BranchCutLifts.Box} {start finish :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) :
+@[simp] theorem segmentCount_reverse {polynomial : GaussianPolynomial}
+    {ambient : Box} {start finish :
+      Gaussian}
+    (path : ClearPath polynomial ambient start finish) :
     (reverse path).segmentCount =
       path.segmentCount := by
   induction path with
   | nil => rfl
   | @cons start middle finish head tail inductionHypothesis =>
       change ((reverse tail).append
-        (.cons (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.reverse head)
+        (.cons (ClearSegment.reverse head)
           (.nil start))).segmentCount = tail.segmentCount + 1
-      rewrite [ClearPath.segmentCount_append, inductionHypothesis]
+      rewrite [segmentCount_append, inductionHypothesis]
       exact Eq.refl _
 
 /-- Lift every segment of a clear path on one fixed sheet. -/
-def liftOnSheet {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    (sheet : Fin 2) : {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian} ->
-      Polynomial.Geometry.ClearPath polynomial ambient start finish ->
-      Lifted.Basic.LiftedPath 2
+def liftOnSheet {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    (sheet : Fin 2) : {start finish : Gaussian} ->
+      ClearPath polynomial ambient start finish ->
+      LiftedPath 2
         { coordinate := start, sheet := sheet }
         { coordinate := finish, sheet := sheet }
   | _, _, .nil point => .nil { coordinate := point, sheet := sheet }
   | _, _, .cons head tail =>
       .cons
-        (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet head)
+        (ClearSegment.liftOnSheet sheet head)
         (liftOnSheet sheet tail)
 
 /-- Lift a clear path on one sheet and then record one explicit local sheet transition at its finishing coordinate. For
 owner-boundary paths the preceding clear loop carries the separate winding-one certificate. -/
-def liftOnSheetThenSwap {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    (sheet : Fin 2) {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) :
-    Lifted.Basic.LiftedPath 2
+def liftOnSheetThenSwap {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    (sheet : Fin 2) {start finish : Gaussian}
+    (path : ClearPath polynomial ambient start finish) :
+    LiftedPath 2
       { coordinate := start, sheet := sheet }
-      { coordinate := finish, sheet := Curves.Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet } :=
+      { coordinate := finish, sheet := otherSheet sheet } :=
   (liftOnSheet sheet path).append
-    (.cons (Curves.Hyperelliptic.Branches.BranchCutLifts.switchCell finish sheet)
-      (.nil { coordinate := finish, sheet := Curves.Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet }))
+    (.cons (switchCell finish sheet)
+      (.nil { coordinate := finish, sheet := otherSheet sheet }))
 
 /-- Fixed-sheet lifting commutes with transport of the original starting coordinate. -/
 @[simp] theorem liftOnSheet_castStart
-    {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    (sheet : Fin 2) {left right finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
+    {polynomial : GaussianPolynomial} {ambient :
+      Box}
+    (sheet : Fin 2) {left right finish : Gaussian}
     (equal : left = right)
-    (path : Polynomial.Geometry.ClearPath polynomial ambient left finish) :
+    (path : ClearPath polynomial ambient left finish) :
     liftOnSheet sheet (path.castStart equal) =
       (liftOnSheet sheet path).castStart
-        (congrArg (fun coordinate : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian =>
-          ({ coordinate := coordinate, sheet := sheet } : Lifted.Basic.LiftedPoint 2))
+        (congrArg (fun coordinate : Gaussian =>
+          ({ coordinate := coordinate, sheet := sheet } : LiftedPoint 2))
             equal) := by
   subst right
   rfl
 
 /-- Fixed-sheet lifting commutes with transport of the original finishing coordinate. -/
 @[simp] theorem liftOnSheet_castFinish
-    {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    (sheet : Fin 2) {start left right : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
+    {polynomial : GaussianPolynomial} {ambient :
+      Box}
+    (sheet : Fin 2) {start left right : Gaussian}
     (equal : left = right)
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start left) :
+    (path : ClearPath polynomial ambient start left) :
     liftOnSheet sheet (path.castFinish equal) =
       (liftOnSheet sheet path).castFinish
-        (congrArg (fun coordinate : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian =>
-          ({ coordinate := coordinate, sheet := sheet } : Lifted.Basic.LiftedPoint 2))
+        (congrArg (fun coordinate : Gaussian =>
+          ({ coordinate := coordinate, sheet := sheet } : LiftedPoint 2))
             equal) := by
   subst right
   rfl
@@ -339,11 +339,11 @@ def liftOnSheetThenSwap {polynomial : Curves.Hyperelliptic.Branches.BranchCutLif
 The finite path recursion retains its original segment order and sheet indices. The equality follows from the displayed
 head and the corresponding statement for the same retained tail. -/
 @[simp] theorem liftOnSheet_append
-    {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    (sheet : Fin 2) {start middle finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (first : Polynomial.Geometry.ClearPath polynomial ambient start middle)
-    (second : Polynomial.Geometry.ClearPath polynomial ambient middle finish) :
+    {polynomial : GaussianPolynomial} {ambient :
+      Box}
+    (sheet : Fin 2) {start middle finish : Gaussian}
+    (first : ClearPath polynomial ambient start middle)
+    (second : ClearPath polynomial ambient middle finish) :
     liftOnSheet sheet (first.append second) =
       (liftOnSheet sheet first).append
         (liftOnSheet sheet second) := by
@@ -351,11 +351,11 @@ head and the corresponding statement for the same retained tail. -/
   | nil => rfl
   | cons head tail inductionHypothesis =>
       change LiftedPath.cons
-        (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet head)
+        (ClearSegment.liftOnSheet sheet head)
           (liftOnSheet sheet
             (tail.append second)) = _
       exact congrArg (LiftedPath.cons
-        (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet head))
+        (ClearSegment.liftOnSheet sheet head))
           (inductionHypothesis second)
 
 /-- Fixed-sheet lifting creates exactly one lifted cell per original clear segment.
@@ -363,10 +363,10 @@ head and the corresponding statement for the same retained tail. -/
 The finite path recursion retains its original segment order and sheet indices. The equality follows from the displayed
 head and the corresponding statement for the same retained tail. -/
 @[simp] theorem liftOnSheet_cellCount
-    {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    (sheet : Fin 2) {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) :
+    {polynomial : GaussianPolynomial} {ambient :
+      Box}
+    (sheet : Fin 2) {start finish : Gaussian}
+    (path : ClearPath polynomial ambient start finish) :
     (liftOnSheet sheet path).cellCount =
       path.segmentCount := by
   induction path with
@@ -381,10 +381,10 @@ head and the corresponding statement for the same retained tail. -/
 The finite path recursion retains its original segment order and sheet indices. The equality follows from the displayed
 head and the corresponding statement for the same retained tail. -/
 @[simp] theorem liftOnSheetThenSwap_cellCount
-    {polynomial : Curves.Hyperelliptic.Branches.BranchCutLifts.GaussianPolynomial} {ambient :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Box}
-    (sheet : Fin 2) {start finish : Curves.Hyperelliptic.Branches.BranchCutLifts.Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) :
+    {polynomial : GaussianPolynomial} {ambient :
+      Box}
+    (sheet : Fin 2) {start finish : Gaussian}
+    (path : ClearPath polynomial ambient start finish) :
     (liftOnSheetThenSwap sheet path).cellCount =
       path.segmentCount + 1 := by
   unfold liftOnSheetThenSwap
@@ -399,7 +399,7 @@ polynomial whose root occurrence the box owns. -/
 def ownerBoundaryPath {polynomial : GaussianPolynomial} {ambient :
   Box}
     (state : WindingOneState polynomial ambient) :
-    Polynomial.Geometry.ClearPath polynomial state.box state.box.anchor state.box.anchor :=
+    ClearPath polynomial state.box state.box.anchor state.box.anchor :=
   .cons
     (.horizontal state.box.xLower state.box.xUpper state.box.yLower
       le_rfl state.box.x_valid state.box.x_valid le_rfl
@@ -452,41 +452,41 @@ edge records the degree-two monodromy attached to the state's proved winding one
 def ownerBoundarySwapLift {polynomial : GaussianPolynomial} {ambient :
   Box}
     (state : WindingOneState polynomial ambient) (sheet : Fin 2) :
-    Lifted.Basic.LiftedPath 2
+    LiftedPath 2
       { coordinate := state.box.anchor, sheet := sheet }
       { coordinate := state.box.anchor, sheet := otherSheet sheet } := by
-  let bottom : ClearPath.ClearSegment polynomial state.box
+  let bottom : ClearSegment polynomial state.box
       (Components.Basic.point state.box.xLower state.box.yLower)
       (Components.Basic.point state.box.xUpper state.box.yLower) :=
     .horizontal state.box.xLower state.box.xUpper state.box.yLower
       le_rfl state.box.x_valid state.box.x_valid le_rfl
       (Lines.bottomOfBoundary state.clearance)
-  let right : ClearPath.ClearSegment polynomial state.box
+  let right : ClearSegment polynomial state.box
       (Components.Basic.point state.box.xUpper state.box.yLower)
       (Components.Basic.point state.box.xUpper state.box.yUpper) :=
     .vertical state.box.xUpper state.box.yLower state.box.yUpper
       le_rfl state.box.y_valid state.box.y_valid le_rfl
       (Lines.rightOfBoundary state.clearance)
-  let top : ClearPath.ClearSegment polynomial state.box
+  let top : ClearSegment polynomial state.box
       (Components.Basic.point state.box.xUpper state.box.yUpper)
       (Components.Basic.point state.box.xLower state.box.yUpper) :=
     .horizontal state.box.xUpper state.box.xLower state.box.yUpper
       state.box.x_valid le_rfl le_rfl state.box.x_valid
       (Lines.topOfBoundary state.clearance)
-  let left : ClearPath.ClearSegment polynomial state.box
+  let left : ClearSegment polynomial state.box
       (Components.Basic.point state.box.xLower state.box.yUpper)
       (Components.Basic.point state.box.xLower state.box.yLower) :=
     .vertical state.box.xLower state.box.yUpper state.box.yLower
       state.box.y_valid le_rfl le_rfl state.box.y_valid
       (Lines.leftOfBoundary state.clearance)
   exact .cons
-    (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet bottom)
+    (ClearSegment.liftOnSheet sheet bottom)
     (.cons
-      (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet right)
+      (ClearSegment.liftOnSheet sheet right)
       (.cons
-        (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet top)
+        (ClearSegment.liftOnSheet sheet top)
         (.cons
-          (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftWithSwap sheet left)
+          (ClearSegment.liftWithSwap sheet left)
           (.nil _))))
 
 /-- The winding-one owner-boundary lift uses exactly four cells. -/
@@ -504,24 +504,24 @@ def doubleLiftWithBoundaryOwners
     {leftAmbient rightAmbient : Box}
     (leftState : WindingOneState polynomial leftAmbient)
     (rightState : WindingOneState polynomial rightAmbient)
-    (path : Polynomial.Geometry.ClearPath polynomial ambient
-      leftState.box.anchor rightState.box.anchor) : Closed.ClosedLiftedPath 2 := by
-  let startZero : Lifted.Basic.LiftedPoint 2 :=
+    (path : ClearPath polynomial ambient
+      leftState.box.anchor rightState.box.anchor) : ClosedLiftedPath 2 := by
+  let startZero : LiftedPoint 2 :=
     { coordinate := leftState.box.anchor, sheet := 0 }
-  let finishZero : Lifted.Basic.LiftedPoint 2 :=
+  let finishZero : LiftedPoint 2 :=
     { coordinate := rightState.box.anchor, sheet := 0 }
-  let finishOne : Lifted.Basic.LiftedPoint 2 :=
+  let finishOne : LiftedPoint 2 :=
     { coordinate := rightState.box.anchor, sheet := 1 }
-  let startOne : Lifted.Basic.LiftedPoint 2 :=
+  let startOne : LiftedPoint 2 :=
     { coordinate := leftState.box.anchor, sheet := 1 }
-  let forward : Lifted.Basic.LiftedPath 2 startZero finishZero :=
-    Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.liftOnSheet 0 path
-  let rightSwap : Lifted.Basic.LiftedPath 2 finishZero finishOne :=
+  let forward : LiftedPath 2 startZero finishZero :=
+    ClearPath.liftOnSheet 0 path
+  let rightSwap : LiftedPath 2 finishZero finishOne :=
     ownerBoundarySwapLift rightState 0
-  let backward : Lifted.Basic.LiftedPath 2 finishOne startOne :=
-    Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.liftOnSheet 1
-      (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse path)
-  let leftSwap : Lifted.Basic.LiftedPath 2 startOne startZero :=
+  let backward : LiftedPath 2 finishOne startOne :=
+    ClearPath.liftOnSheet 1
+      (ClearPath.reverse path)
+  let leftSwap : LiftedPath 2 startOne startZero :=
     ownerBoundarySwapLift leftState 1
   exact
     { basepoint := startZero
@@ -535,13 +535,13 @@ def doubleLiftWithBoundaryOwners
     {leftAmbient rightAmbient : Box}
     (leftState : WindingOneState polynomial leftAmbient)
     (rightState : WindingOneState polynomial rightAmbient)
-    (path : Polynomial.Geometry.ClearPath polynomial ambient
+    (path : ClearPath polynomial ambient
       leftState.box.anchor rightState.box.anchor) :
     (doubleLiftWithBoundaryOwners leftState rightState path).cellCount =
       2 * path.segmentCount + 8 := by
   simp only [doubleLiftWithBoundaryOwners, ClosedLiftedPath.cellCount,
-    LiftedPath.cellCount_append, Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.liftOnSheet_cellCount,
-    Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.segmentCount_reverse,
+    LiftedPath.cellCount_append, ClearPath.liftOnSheet_cellCount,
+    ClearPath.segmentCount_reverse,
       ownerBoundarySwapLift,
     LiftedPath.cellCount]
   omega0
@@ -550,20 +550,20 @@ def doubleLiftWithBoundaryOwners
 def doubleLift {polynomial : GaussianPolynomial} {ambient :
   Box}
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) :
-    Closed.ClosedLiftedPath 2 := by
-  let startZero : Lifted.Basic.LiftedPoint 2 := { coordinate := start, sheet := 0 }
-  let finishZero : Lifted.Basic.LiftedPoint 2 := { coordinate := finish, sheet := 0 }
-  let finishOne : Lifted.Basic.LiftedPoint 2 := { coordinate := finish, sheet := 1 }
-  let startOne : Lifted.Basic.LiftedPoint 2 := { coordinate := start, sheet := 1 }
-  let forward : Lifted.Basic.LiftedPath 2 startZero finishZero :=
-    Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.liftOnSheet 0 path
-  let switchAtFinish : Lifted.Basic.LiftedPath 2 finishZero finishOne :=
+    (path : ClearPath polynomial ambient start finish) :
+    ClosedLiftedPath 2 := by
+  let startZero : LiftedPoint 2 := { coordinate := start, sheet := 0 }
+  let finishZero : LiftedPoint 2 := { coordinate := finish, sheet := 0 }
+  let finishOne : LiftedPoint 2 := { coordinate := finish, sheet := 1 }
+  let startOne : LiftedPoint 2 := { coordinate := start, sheet := 1 }
+  let forward : LiftedPath 2 startZero finishZero :=
+    ClearPath.liftOnSheet 0 path
+  let switchAtFinish : LiftedPath 2 finishZero finishOne :=
     .cons (switchCell finish 0) (.nil finishOne)
-  let backward : Lifted.Basic.LiftedPath 2 finishOne startOne :=
-    Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.liftOnSheet 1
-      (Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse path)
-  let switchAtStart : Lifted.Basic.LiftedPath 2 startOne startZero :=
+  let backward : LiftedPath 2 finishOne startOne :=
+    ClearPath.liftOnSheet 1
+      (ClearPath.reverse path)
+  let switchAtStart : LiftedPath 2 startOne startZero :=
     .cons (switchCell start 1) (.nil startZero)
   exact
     { basepoint := startZero
@@ -575,21 +575,21 @@ def doubleLift {polynomial : GaussianPolynomial} {ambient :
     {polynomial : GaussianPolynomial} {ambient :
       Box}
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) :
+    (path : ClearPath polynomial ambient start finish) :
     (doubleLift path).cellCount = 2 * path.segmentCount + 2 := by
   simp only [doubleLift, ClosedLiftedPath.cellCount,
-    LiftedPath.cellCount_append, Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.liftOnSheet_cellCount,
-    Curves.Hyperelliptic.Branches.BranchCutLifts.ClearPath.segmentCount_reverse, LiftedPath.cellCount]
+    LiftedPath.cellCount_append, ClearPath.liftOnSheet_cellCount,
+    ClearPath.segmentCount_reverse, LiftedPath.cellCount]
   omega0
 
 /-- The finite lifted loop associated to one requested root-box refinement. For finite branch sites, both switching
 endpoints follow the deterministic nested owner anchors. Thus the persistent family approaches the actual ramification
 names instead of repeatedly switching at one fixed rational surrogate. -/
 def Geometry.closedLiftAt {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve}
+    {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve}
     (geometry : Cuts.Geometry curve branches) (refinement : Nat) :
-    Closed.ClosedLiftedPath 2 := by
+    ClosedLiftedPath 2 := by
   rcases geometry with ⟨leftSite, rightSite, different, certificate⟩
   cases certificate with
   | finite left right different degreeGtOne path =>
@@ -604,26 +604,26 @@ def Geometry.closedLiftAt {genus : Nat}
       exact doubleLift
         (Cuts.infinityExitAt branches degreeGtOne finite refinement).path
   | linearToInfinity finite degreeOne =>
-      let basepoint : Lifted.Basic.LiftedPoint 2 :=
+      let basepoint : LiftedPoint 2 :=
         { coordinate := branches.anchor finite, sheet := 0 }
       exact { basepoint := basepoint, path := .nil basepoint }
   | infinityToLinear finite degreeOne =>
-      let basepoint : Lifted.Basic.LiftedPoint 2 :=
+      let basepoint : LiftedPoint 2 :=
         { coordinate := branches.anchor finite, sheet := 0 }
       exact { basepoint := basepoint, path := .nil basepoint }
 
 /-- If both semantic endpoints of a cut are displayed finite occurrences, its requested lift reduces to the canonical
 owner-boundary construction on those exact occurrences. -/
 theorem Geometry.closedLiftAt_of {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve}
+    {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve}
     (geometry : Cuts.Geometry curve branches)
     (left right : Data.Index branches)
     (left_eq : geometry.leftSite = .finite left)
     (right_eq : geometry.rightSite = .finite right)
     (degreeGtOne : 1 < curve.polynomial.natDegree)
     (refinement : Nat) :
-    Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.closedLiftAt geometry refinement =
+    Geometry.closedLiftAt geometry refinement =
       doubleLiftWithBoundaryOwners
         (Cuts.refinedState branches degreeGtOne left refinement)
         (Cuts.refinedState branches degreeGtOne right refinement)
@@ -649,24 +649,24 @@ theorem Geometry.closedLiftAt_of {genus : Nat}
 
 /-- Initial finite representative of a cut lift. -/
 def Geometry.closedLift {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve}
-    (geometry : Cuts.Geometry curve branches) : Closed.ClosedLiftedPath 2 :=
-  Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.closedLiftAt geometry 0
+    {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve}
+    (geometry : Cuts.Geometry curve branches) : ClosedLiftedPath 2 :=
+  Geometry.closedLiftAt geometry 0
 
 /-- The cut lift is a persistent finite cycle: every request refers to the same labelled combinatorial loop while its
 branch endpoints follow nested winding boxes. -/
 def Geometry.liftedCycle {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve}
+    {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve}
     (geometry : Cuts.Geometry curve branches) : Refinement.LiftedCycleRefinement 2 where
   liftedPath := fun refinement =>
-    Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.closedLiftAt geometry refinement
+    Geometry.closedLiftAt geometry refinement
 
 /-- Every cut has a finite branch-box representative. For a cut to infinity this is its unique finite endpoint. -/
 def Geometry.representative {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve}
+    {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve}
     (geometry : Cuts.Geometry curve branches) : Data.Index branches := by
   rcases geometry with ⟨leftSite, rightSite, different, certificate⟩
   cases certificate with
@@ -681,38 +681,38 @@ set_option genInjectivity false in
 
 The original indexed paths and their retained geometric or cellular evidence determine this finite construction.
 Equality of constructors is characterized directly by equality of their original retained fields. -/
-structure Family {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) where
+structure Family {genus : Nat} (curve : Basic.HyperellipticCurve genus) where
   /-- The original retained degree-shaped cut system for this curve. -/ cuts : Cuts.System curve
   /-- The retained persistent lifted loop for each original cut. -/ cycleAt : Fin (genus + 1) ->
     Refinement.LiftedCycleRefinement 2
   /-- Each retained loop is exactly the canonical lift of its original cut geometry. -/ cycle_eq : forall index, cycleAt
     index =
-    Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.liftedCycle (cuts.cutAt index)
+    Geometry.liftedCycle (cuts.cutAt index)
 
 constructive_injectivity Family
 
 /-- Construct the persistent lifted family from the exact original degree-shaped cut system. -/
-def familyOfCuts {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def familyOfCuts {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (cuts : Cuts.System curve) : Family curve :=
   { cuts := cuts
     cycleAt := fun index =>
-      Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.liftedCycle (cuts.cutAt index)
+      Geometry.liftedCycle (cuts.cutAt index)
     cycle_eq := fun _ => rfl }
 
 /-- Construct the lifted standard cut family directly from explicit degree-complete branch data. -/
-def familyOfData {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (branches : BranchIsolation.Data curve) : Family curve :=
+def familyOfData {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+    (branches : Data curve) : Family curve :=
   familyOfCuts curve (Cuts.systemOfData curve branches)
 
 /-- Fully automatic lifted branch-cut family. -/
-def family {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
+def family {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
   Family curve :=
   familyOfCuts curve (Cuts.system curve)
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts in
 /-- Every lifted cut returns to its starting sheet by its explicit composite transport. -/
 theorem Family.returns_to_startingSheet {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (family : Family
+    {curve : Basic.HyperellipticCurve genus} (family : Family
       curve)
     (index : Fin (genus + 1)) (refinement : Nat) :
     ((family.cycleAt index).liftedPath refinement).path.sheetTransport.forward
@@ -723,7 +723,7 @@ theorem Family.returns_to_startingSheet {genus : Nat}
 /-- The existence of a homology-basis index forces the defining polynomial to have degree greater than one in either
 admitted hyperelliptic shape. -/
 theorem degreeGtOne_of_cycleIndex {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
     1 < curve.polynomial.natDegree := by
   have genusPositive : 0 < genus := Nat.zero_lt_of_lt index.isLt
   cases curve.degreeShape with
@@ -744,7 +744,7 @@ def referenceCutIndex (genus : Nat) : Fin (genus + 1) :=
 
 /-- A constant persistent cycle from one displayed finite lifted path. This remains useful only for genuinely constant
 auxiliary paths. -/
-def constantCycle (path : Closed.ClosedLiftedPath 2) : Refinement.LiftedCycleRefinement 2 where
+def constantCycle (path : ClosedLiftedPath 2) : Refinement.LiftedCycleRefinement 2 where
   liftedPath := fun _ => path
 
 section
@@ -752,7 +752,7 @@ open Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts
 /-- The `b_i` path joins cut `i` to the final reference cut. Both sheet changes follow actual branch-boundary loops; the
 connector-only retrace is not a representative of the standard B class. -/
 def Family.basisBridgeCycle {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (family : Family
+    {curve : Basic.HyperellipticCurve genus} (family : Family
       curve)
     (index : Fin genus) : Refinement.LiftedCycleRefinement 2 := by
   let higher := degreeGtOne_of_cycleIndex curve index
@@ -760,9 +760,9 @@ def Family.basisBridgeCycle {genus : Nat}
   let sourceCut := family.cuts.cutAt (basisCutIndex index)
   let targetCut := family.cuts.cutAt (referenceCutIndex genus)
   let source :=
-    Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.representative sourceCut
+    Geometry.representative sourceCut
   let target :=
-    Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.representative targetCut
+    Geometry.representative targetCut
   exact
     { liftedPath := fun refinement =>
         doubleLiftWithBoundaryOwners
@@ -773,7 +773,7 @@ def Family.basisBridgeCycle {genus : Nat}
 /-- Automatically constructed lifted representatives of the standard symplectic cut basis: `a_i` surrounds cut `i`,
 while `b_i` joins it to the last cut on the two opposite sheets. -/
 def Family.symplecticCycles {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (family : Family
+    {curve : Basic.HyperellipticCurve genus} (family : Family
       curve) :
     Family.PairedCycleRefinements 2 genus where
   aCycle := fun index => family.cycleAt (basisCutIndex index)
@@ -781,7 +781,7 @@ def Family.symplecticCycles {genus : Nat}
 
 /-- The constructed a-cycle is the retained cycle of the corresponding original basis cut. -/
 @[simp] theorem Family.symplecticCycles_aCycle {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (family : Family
+    {curve : Basic.HyperellipticCurve genus} (family : Family
       curve)
     (index : Fin genus) :
     family.symplecticCycles.aCycle index =
@@ -789,7 +789,7 @@ def Family.symplecticCycles {genus : Nat}
 
 /-- The constructed b-cycle is the retained bridge to the original reference cut. -/
 @[simp] theorem Family.symplecticCycles_bCycle {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (family : Family
+    {curve : Basic.HyperellipticCurve genus} (family : Family
       curve)
     (index : Fin genus) :
     family.symplecticCycles.bCycle index =
@@ -800,8 +800,8 @@ end
 /-- The canonical A-cycle at every finite request is the explicit owner-boundary lift between the two finite root
 occurrences of its standard basis pair. -/
 theorem canonicalACycle_liftedPath_ofData {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (branches : BranchIsolation.Data curve) (index : Fin genus)
+    (curve : Basic.HyperellipticCurve genus)
+    (branches : Data curve) (index : Fin genus)
     (refinement : Nat) :
     ((familyOfData curve branches).symplecticCycles.aCycle
       index).liftedPath
@@ -851,8 +851,8 @@ theorem canonicalACycle_liftedPath_ofData {genus : Nat}
           Cuts.systemOfConfiguration, basisCutIndex] using
           BranchConfiguration.configurationOfData_siteAt_basisPair_right
             curve branches index
-  change Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.closedLiftAt cut refinement = _
-  exact Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.closedLiftAt_of cut
+  change Geometry.closedLiftAt cut refinement = _
+  exact Geometry.closedLiftAt_of cut
     (BranchConfiguration.basisPairLeftIndexOfData curve branches index)
     (BranchConfiguration.basisPairRightIndexOfData curve branches index)
     leftSite rightSite (degreeGtOne_of_cycleIndex curve index) refinement
@@ -860,7 +860,7 @@ theorem canonicalACycle_liftedPath_ofData {genus : Nat}
 open Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts in
 /-- The automatic specialization of `canonicalACycle_liftedPath_ofData`. -/
 theorem canonicalACycle_liftedPath {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus)
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus)
     (refinement : Nat) :
     ((family curve).symplecticCycles.aCycle index).liftedPath refinement =
       doubleLiftWithBoundaryOwners
@@ -898,8 +898,8 @@ theorem canonicalACycle_liftedPath {genus : Nat}
           Cuts.systemOfConfiguration, basisCutIndex] using
           BranchConfiguration.configuration_siteAt_basisPair_right curve index
   change
-    Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.closedLiftAt cut refinement = _
-  exact Curves.Hyperelliptic.Branches.BranchCutLifts.Geometry.closedLiftAt_of cut
+    Geometry.closedLiftAt cut refinement = _
+  exact Geometry.closedLiftAt_of cut
     (BranchConfiguration.basisPairLeftIndex curve index)
     (BranchConfiguration.basisPairRightIndex curve index)
     leftSite rightSite (degreeGtOne_of_cycleIndex curve index) refinement
@@ -921,17 +921,17 @@ constructive_injectivity BasisWord
 namespace BasisWord
 
 /-- The exact cellular homology coordinate carried by a construction tag. -/
-def trace {genus : Nat} : Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord genus ->
+def trace {genus : Nat} : BasisWord genus ->
     CellularHomology.FirstHomology genus
   | .a index => CellularHomology.aCycle index
   | .b index => CellularHomology.bCycle index
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts in
 /-- Realize the tagged word by the corresponding automatically constructed sheet-aware path. -/
-def realize {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (family : Curves.Hyperelliptic.Branches.BranchCutLifts.Family curve) :
-      Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord genus -> Refinement.LiftedCycleRefinement 2
-  | .a index => family.cycleAt (Curves.Hyperelliptic.Branches.BranchCutLifts.basisCutIndex index)
+def realize {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (family : Family curve) :
+      BasisWord genus -> Refinement.LiftedCycleRefinement 2
+  | .a index => family.cycleAt (basisCutIndex index)
   | .b index => family.basisBridgeCycle index
 
 /-- Two tagged a-words have zero cellular intersection. -/
@@ -965,7 +965,7 @@ set_option genInjectivity false in
 The original indexed paths and their retained geometric or cellular evidence determine this finite construction.
 Equality of constructors is characterized directly by equality of their original retained fields. -/
 structure SymplecticBasis {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) where
+    (curve : Basic.HyperellipticCurve genus) where
   /-- The original lifted branch-cut family retained by this basis. -/ family :
     Family curve
   /-- The retained paired persistent a- and b-cycle families. -/ cycles : Family.PairedCycleRefinements 2 genus
@@ -976,9 +976,9 @@ structure SymplecticBasis {genus : Nat}
   /-- The retained integral cellular coordinate of each b-word. -/ bTrace : Fin genus -> CellularHomology.FirstHomology
     genus
   /-- Each retained a-trace equals the exact cellular trace of the original tagged word. -/ aTrace_eq : forall index,
-    aTrace index = Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord.trace (.a index)
+    aTrace index = BasisWord.trace (.a index)
   /-- Each retained b-trace equals the exact cellular trace of the original tagged word. -/ bTrace_eq : forall index,
-    bTrace index = Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord.trace (.b index)
+    bTrace index = BasisWord.trace (.b index)
   /-- The retained a-traces have zero pairwise intersection. -/ a_a : forall left right,
     CellularHomology.intersection
       (aTrace left) (aTrace right) = 0
@@ -994,29 +994,29 @@ constructive_injectivity SymplecticBasis
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts in
 /-- Package the original lifted family with its exact paired cycles, cellular traces and symplectic identities. -/
-def symplecticBasisOfFamily {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def symplecticBasisOfFamily {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (family : Family curve) :
       SymplecticBasis curve := by
   exact
     { family := family
       cycles := family.symplecticCycles
       cycles_eq := rfl
-      aTrace := fun index => Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord.trace (.a index)
-      bTrace := fun index => Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord.trace (.b index)
+      aTrace := fun index => BasisWord.trace (.a index)
+      bTrace := fun index => BasisWord.trace (.b index)
       aTrace_eq := fun _ => rfl
       bTrace_eq := fun _ => rfl
-      a_a := Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord.intersection_a_a
-      b_b := Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord.intersection_b_b
-      a_b := Curves.Hyperelliptic.Branches.BranchCutLifts.BasisWord.intersection_a_b }
+      a_a := BasisWord.intersection_a_a
+      b_b := BasisWord.intersection_b_b
+      a_b := BasisWord.intersection_a_b }
 
 /-- Fully constructed finite symplectic basis from explicit degree-complete branch data. -/
-def symplecticBasisOfData {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (branches : BranchIsolation.Data curve) : SymplecticBasis curve :=
+def symplecticBasisOfData {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+    (branches : Data curve) : SymplecticBasis curve :=
   symplecticBasisOfFamily curve
     (familyOfData curve branches)
 
 /-- Fully automatic finite symplectic branch-cut basis. -/
-def symplecticBasis {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
+def symplecticBasis {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
     SymplecticBasis curve :=
   symplecticBasisOfFamily curve
     (family curve)

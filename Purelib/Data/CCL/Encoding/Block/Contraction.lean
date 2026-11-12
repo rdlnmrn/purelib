@@ -48,7 +48,7 @@ open Purelib.Geometry.Projective in
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 /-- The regular decoder matrix is the sector block with the retained gamma-power scale. -/
 theorem regularBlock_eq_block (exponent : Nat) (sector :
-  ComplexContinuedFraction.Encoding.Sector) :
+  Sector) :
     Block.Matrix.regularBlock exponent sector =
       SectorBlock.Basic.block (Power.natPow Basic.Canonical.gamma exponent) sector := by
   apply Matrix2.ext
@@ -64,23 +64,23 @@ open Purelib.Data.Rat in
 open Purelib.Geometry.Projective in
 /-- A regular block reduces chordal squared distance between compatible sector tails by at least a factor of one half.
 -/
-theorem regularBlock_contraction_half {sector : ComplexContinuedFraction.Encoding.Sector}
+theorem regularBlock_contraction_half {sector : Sector}
   (exponent : Nat)
-    (left right : Geometry.Projective.SectorBlock.Tail sector) :
+    (left right : SectorBlock.Tail sector) :
     Chordal.Basic.chordalSq
         (Line.Matrix.act (Block.Matrix.regularBlock exponent sector)
           left.point)
         (Line.Matrix.act (Block.Matrix.regularBlock exponent sector)
           right.point) ≤
       (1 / 2 : Fraction.Rational) * Chordal.Basic.chordalSq left.point right.point := by
-  rw [Block.Contraction.regularBlock_eq_block]
+  rw [regularBlock_eq_block]
   calc
     Chordal.Basic.chordalSq (Line.Matrix.act (SectorBlock.Basic.block (Power.natPow Basic.Canonical.gamma exponent)
       sector) left.point)
         (Line.Matrix.act (SectorBlock.Basic.block (Power.natPow Basic.Canonical.gamma exponent) sector) right.point) ≤
         BalancedRatio.factor (Power.natPow Basic.Canonical.gamma exponent) * Chordal.Basic.chordalSq left.point
           right.point :=
-      Geometry.Projective.SectorBlock.Tail.contraction (Power.natPow Basic.Canonical.gamma exponent)
+      SectorBlock.Tail.contraction (Power.natPow Basic.Canonical.gamma exponent)
         (Power.natPow_ne_zero_direct Basic.Canonical.gamma (by decide) exponent) left right
     _ ≤ (1 / 2 : Fraction.Rational) * Chordal.Basic.chordalSq left.point right.point :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
@@ -93,7 +93,7 @@ open Purelib.Geometry.Projective in
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 /-- The initial-low decoder matrix is the retained gamma power times the sector block with reciprocal scale. -/
 theorem lowBlock_eq_scaledBlock (exponent : Nat) (sector :
-  ComplexContinuedFraction.Encoding.Sector) :
+  Sector) :
     Block.Matrix.lowBlock exponent sector =
       Homography.Scale.scaleMatrix (Power.natPow Basic.Canonical.gamma exponent)
         (SectorBlock.Basic.block (Power.natPow Basic.Canonical.gamma exponent)⁻¹ sector) := by
@@ -125,9 +125,9 @@ open Purelib.Data.Rat in
 open Purelib.Geometry.Projective in
 /-- An initial-low block reduces chordal squared distance between compatible sector tails by at least a factor of one
 half. -/
-theorem lowBlock_contraction_half {sector : ComplexContinuedFraction.Encoding.Sector}
+theorem lowBlock_contraction_half {sector : Sector}
   (exponent : Nat)
-    (left right : Geometry.Projective.SectorBlock.Tail sector) :
+    (left right : SectorBlock.Tail sector) :
     Chordal.Basic.chordalSq
         (Line.Matrix.act (Block.Matrix.lowBlock exponent sector)
           left.point)
@@ -138,13 +138,13 @@ theorem lowBlock_contraction_half {sector : ComplexContinuedFraction.Encoding.Se
   have powerNonzero : power ≠ 0 :=
     Power.natPow_ne_zero_direct Basic.Canonical.gamma (by decide) exponent
   have inverseNonzero : power⁻¹ ≠ 0 := Field.inv_ne_zero_direct powerNonzero
-  rw [Block.Contraction.lowBlock_eq_scaledBlock]
+  rw [lowBlock_eq_scaledBlock]
   rw [Chordal.Scale.chordalSq_act_scaleMatrix power powerNonzero]
   calc
     Chordal.Basic.chordalSq (Line.Matrix.act (SectorBlock.Basic.block power⁻¹ sector) left.point)
         (Line.Matrix.act (SectorBlock.Basic.block power⁻¹ sector) right.point) ≤
         BalancedRatio.factor power⁻¹ * Chordal.Basic.chordalSq left.point right.point :=
-      Geometry.Projective.SectorBlock.Tail.contraction power⁻¹ inverseNonzero left right
+      SectorBlock.Tail.contraction power⁻¹ inverseNonzero left right
     _ ≤ (1 / 2 : Fraction.Rational) * Chordal.Basic.chordalSq left.point right.point :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
         (BalancedRatio.factor_le_half _) (Chordal.Basic.chordalSq_nonneg _ _)
@@ -172,7 +172,7 @@ open Purelib.Data.Rat in
 open Purelib.Geometry.Projective in
 /-- The retained block matrix halves chordal squared distance between tails for its exact sector. -/
 theorem contraction_half (block : Block)
-    (left right : Geometry.Projective.SectorBlock.Tail block.sector) :
+    (left right : SectorBlock.Tail block.sector) :
     Chordal.Basic.chordalSq (Line.Matrix.act block.matrix left.point)
         (Line.Matrix.act block.matrix right.point) ≤
       (1 / 2 : Fraction.Rational) * Chordal.Basic.chordalSq left.point right.point := by
@@ -180,9 +180,9 @@ theorem contraction_half (block : Block)
   | mk kind exponent sector =>
       cases kind with
       | regular =>
-          exact Block.Contraction.regularBlock_contraction_half exponent left right
+          exact Contraction.regularBlock_contraction_half exponent left right
       | initialLow =>
-          exact Block.Contraction.lowBlock_contraction_half exponent left right
+          exact Contraction.lowBlock_contraction_half exponent left right
 end Block
 
 section Block
@@ -192,7 +192,7 @@ open Purelib.Data.CCL.Encoding
 open Purelib.Geometry.Projective
 /-- Acting by the retained block matrix preserves a nonzero coordinate of a valid projective sector tail. -/
 theorem act_projectiveTail_valid (block : Block)
-    (tail : Geometry.Projective.SectorBlock.Tail.ProjectiveTail block.sector) :
+    (tail : SectorBlock.Tail.ProjectiveTail block.sector) :
     Line.Gaussian.Proj.HasNonzeroCoordinate
       (Line.Matrix.act block.matrix tail.point) :=
   Line.Matrix.Gaussian.Mat2.act_hasNonzeroCoordinate
@@ -200,7 +200,7 @@ theorem act_projectiveTail_valid (block : Block)
 
 /-- The block image of the retained model tail has a nonzero projective coordinate. -/
 theorem act_model_valid (block : Block) (tail :
-  Geometry.Projective.SectorBlock.Tail.ProjectiveTail block.sector) :
+  SectorBlock.Tail.ProjectiveTail block.sector) :
     Line.Gaussian.Proj.HasNonzeroCoordinate
       (Line.Matrix.act block.matrix tail.model.point) :=
   Line.Matrix.Gaussian.Mat2.act_hasNonzeroCoordinate
@@ -216,7 +216,7 @@ open Purelib.Geometry.Projective in
 Each representative keeps its own valid model and equivalence witness. The estimate transports through those exact
 witnesses and the original block matrix. -/
 theorem projective_contraction_half (block : Block)
-    (left right : Geometry.Projective.SectorBlock.Tail.ProjectiveTail block.sector) :
+    (left right : SectorBlock.Tail.ProjectiveTail block.sector) :
     Chordal.Basic.chordalSq (Line.Matrix.act block.matrix left.point)
         (Line.Matrix.act block.matrix right.point) ≤
       (1 / 2 : Fraction.Rational) * Chordal.Basic.chordalSq left.point right.point := by

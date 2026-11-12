@@ -39,30 +39,30 @@ theorem conjugate_blocks_total_difference_bound
     {error : PairedIncrementArea.Coordinate} (nonnegative : 0 ≤ error)
     (errors : ∀ pair ∈ pairs,
       PrimitiveAreaBounds.PrimitivePoint.Bounded (Stokes.PrimitivePoint.sub (PairedIncrementArea.total pair.1)
-        (ConjugatePathReadback.conjugateDiagonal (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2))) error) :
+        (ConjugatePathReadback.conjugateDiagonal (Norm.Sum.Basic.gaussianSum pair.2))) error) :
     PrimitiveAreaBounds.PrimitivePoint.Bounded (Stokes.PrimitivePoint.sub (PairedIncrementArea.total (pairs.map
       Prod.fst).flatten)
-      (ConjugatePathReadback.conjugateDiagonal (Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map Prod.snd).flatten)))
+      (ConjugatePathReadback.conjugateDiagonal (Norm.Sum.Basic.gaussianSum (pairs.map Prod.snd).flatten)))
         ((pairs.length : PairedIncrementArea.Coordinate)^2 * error) := by
   have bounded := PairedIncrementArea.total_bound nonnegative (values := pairs.map (fun pair =>
     Stokes.PrimitivePoint.sub (PairedIncrementArea.total pair.1) (ConjugatePathReadback.conjugateDiagonal
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2)))) (by
+      (Norm.Sum.Basic.gaussianSum pair.2)))) (by
       intro point member
       obtain ⟨pair, present, rfl⟩ := Map.mem_map.mp member
       exact errors pair present) (count := pairs.length) (by rw [Map.length_map])
   have difference := PairedIncrementComparison.total_differences
     (pairs.map (fun pair => (PairedIncrementArea.total pair.1, ConjugatePathReadback.conjugateDiagonal
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2))))
+      (Norm.Sum.Basic.gaussianSum pair.2))))
   simp only [Map.map_map] at difference
   dsimp only [Function.comp_def] at difference
   rw [difference] at bounded
   have source : PairedIncrementArea.total (pairs.map (fun pair => ConjugatePathReadback.conjugateDiagonal
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2))) =
-      ConjugatePathReadback.conjugateDiagonal (Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map Prod.snd).flatten)
+    (Norm.Sum.Basic.gaussianSum pair.2))) =
+      ConjugatePathReadback.conjugateDiagonal (Norm.Sum.Basic.gaussianSum (pairs.map Prod.snd).flatten)
         := by
     rw [IncrementArea.sum_flatten, Map.map_map]
     have equality := ConjugateBlockComparison.conjugateDiagonal_total (pairs.map (fun pair =>
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2))
+      Norm.Sum.Basic.gaussianSum pair.2))
     simp only [Map.map_map] at equality
     dsimp only [Function.comp_def] at equality
     exact equality

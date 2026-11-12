@@ -179,7 +179,8 @@ namespace AssignedSegments
 readings or comparison cache. -/
 def cornerIncrements {domains : DomainBanks.FaceDomainBank frames faces.regulars} {differential :
   Differentials.Basic.Differential genus} {index : Nat}
-    (shared : PrimitiveData.FacePrimitiveBank differential index domains) :
+    {numerator : InverseRootPolynomial.Polynomial} {pairs : Nat}
+    (shared : PrimitiveData.FacePrimitiveBank differential index domains numerator pairs) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
       start finish}
       {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :

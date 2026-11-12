@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Polynomial.Geometry.ClearPath
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Curves.Hyperelliptic
+
 @[expose] public section
 
 /-!
@@ -39,20 +41,20 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original square-root continuation owner at its retained radicand. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- The original subdivision parameter with its unit-interval bounds. -/
-abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+abbrev Endpoint := Branches.ClearSheetContinuation.Subdivision.Endpoint
 /-- The retained continuation endpoint and positive root-diameter target. -/
-abbrev StepRequest := Purelib.Riemann.Branches.PreparedSheetContinuation.StepRequest
+abbrev StepRequest := Branches.PreparedSheetContinuation.StepRequest
 open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 /-- A prepared differential edge with its exact retained center state. -/
-abbrev CenteredEdge {genus : Nat} (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+abbrev CenteredEdge {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential
+  PreparedSubdivisionModelCore.CenteredEdge curve differential
 /-- Compatible refinement of the original ordered constant path models. -/
 abbrev CompatibleConstantPathRefinement :=
-  Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel.CompatibleConstantPathRefinement
+  Integration.Polynomial.Gaussian.Path.Basic.PathModel.CompatibleConstantPathRefinement
 
 section
 open Purelib
@@ -64,7 +66,7 @@ open Purelib.Riemann.Integration
 The target differential changes the coefficient interpretation. The original segment, endpoint request, sheet and
 clearance certificates remain the constructor's actual retained fields. -/
 def recastPreparedEdge {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus}
     (target : Basic.Differential genus)
     (edge : PreparedSubdivisionModelCore.PreparedEdge curve source) :
@@ -84,7 +86,7 @@ def recastPreparedEdge {genus : Nat}
 
 /-- Recasting a prepared edge to its original differential returns that exact edge. -/
 @[simp] theorem recastPreparedEdge_self {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (edge : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) :
@@ -97,7 +99,7 @@ def recastPreparedEdge {genus : Nat}
 The edge retains its original geometry, owner and cache, while the returned center is the canonical state for the recast
 coefficient process. -/
 def recastCenteredEdge {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus}
     (target : Basic.Differential genus)
     (centered : CenteredEdge curve source) : CenteredEdge curve target :=
@@ -113,7 +115,7 @@ open Purelib.Riemann.Integration in
 /-- Recasting to the same differential preserves the model's weighted allowance, including when its center is
 recanonicalized. -/
 @[simp] theorem recastCenteredEdge_self_weightedAllowance {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) :
     (PreparedSubdivisionModelCore.CenteredEdge.model
@@ -128,7 +130,7 @@ recanonicalized. -/
 
 /-- The recast centered edge retains the exact original segment. -/
 @[simp] theorem recastCenteredEdge_segment {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus}
     (target : Basic.Differential genus)
     (centered : CenteredEdge curve source) :
@@ -137,7 +139,7 @@ recanonicalized. -/
 
 /-- The recast centered edge retains the exact original request. -/
 @[simp] theorem recastCenteredEdge_request {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus}
     (target : Basic.Differential genus)
     (centered : CenteredEdge curve source) :
@@ -146,7 +148,7 @@ recanonicalized. -/
 
 /-- The recast centered edge retains the original left endpoint. -/
 @[simp] theorem recastCenteredEdge_left {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus}
     (target : Basic.Differential genus)
     (centered : CenteredEdge curve source) :
@@ -155,7 +157,7 @@ recanonicalized. -/
 
 /-- The recast centered edge retains the original sheet. -/
 @[simp] theorem recastCenteredEdge_sheet {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus}
     (target : Basic.Differential genus)
     (centered : CenteredEdge curve source) :
@@ -164,7 +166,7 @@ recanonicalized. -/
 
 /-- The recast centered edge has the exact original local segment. -/
 @[simp] theorem recastCenteredEdge_localSegment {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus}
     (target : Basic.Differential genus)
     (centered : CenteredEdge curve source) :

@@ -48,38 +48,38 @@ that stronger statement to changing-fibre continuation.
 
 The first column is selected only after synchronized named-matrix multiplication; both replicated columns carry the same
 vector. -/
-@[expose] def matrixAction (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix)
+@[expose] def matrixAction (matrix : Basic.IntegralMatrix)
     (periods : Operational.Basic.RawPeriodVector) :
     Operational.Basic.RawPeriodVector := fun row =>
   PeriodMatrix.matrixMul
-    (Integral.Basic.integralNamedMatrix matrix) (Operational.Vector.replicatedPeriods periods) row 0
+    (Basic.integralNamedMatrix matrix) (Operational.Vector.replicatedPeriods periods) row 0
 
 /-- Integral matrix action respects pointwise operational equality. -/
-@[expose] def matrixAction_respects (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix)
+@[expose] def matrixAction_respects (matrix : Basic.IntegralMatrix)
     {left right : Operational.Basic.RawPeriodVector} (equivalent : Operational.Basic.VectorEquivalent left right) :
-    Operational.Basic.VectorEquivalent (Approximation.Matrix.Operational.Integral.Action.matrixAction matrix left)
-      (Approximation.Matrix.Operational.Integral.Action.matrixAction matrix right) := by
+    Operational.Basic.VectorEquivalent (matrixAction matrix left)
+      (matrixAction matrix right) := by
   let matrixEquivalent := PeriodMatrix.matrixMul_respects
-    (Integral.Basic.integralNamedMatrix matrix) (Integral.Basic.integralNamedMatrix matrix)
+    (Basic.integralNamedMatrix matrix) (Basic.integralNamedMatrix matrix)
     (Operational.Vector.replicatedPeriods left) (Operational.Vector.replicatedPeriods right)
     (MatrixEquivalent.refl
-      (Integral.Basic.integralNamedMatrix matrix))
+      (Basic.integralNamedMatrix matrix))
     (Operational.Vector.replicatedPeriods_respects equivalent)
   intro coordinate
   exact matrixEquivalent coordinate 0
 
 /-- Replicating an already acted-on vector agrees with retaining either column of the corresponding named matrix
 product. -/
-@[expose] def replicatedPeriods_matrixAction (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix)
+@[expose] def replicatedPeriods_matrixAction (matrix : Basic.IntegralMatrix)
     (periods : Operational.Basic.RawPeriodVector) :
-    PeriodMatrix.MatrixEquivalent
-      (Operational.Vector.replicatedPeriods (Purelib.Approximation.Matrix.Operational.Integral.Action.matrixAction
+    MatrixEquivalent
+      (Operational.Vector.replicatedPeriods (matrixAction
         matrix periods))
       (PeriodMatrix.matrixMul
-        (Integral.Basic.integralNamedMatrix matrix) (Operational.Vector.replicatedPeriods periods)) := by
+        (Basic.integralNamedMatrix matrix) (Operational.Vector.replicatedPeriods periods)) := by
   intro row column
   rw [Operational.Vector.replicatedPeriods_apply]
-  unfold Purelib.Approximation.Matrix.Operational.Integral.Action.matrixAction
+  unfold matrixAction
   rw [PeriodMatrix.matrixMul_apply,
     PeriodMatrix.matrixMul_apply]
   apply PeriodMatrix.sumNamed_respects
@@ -88,18 +88,18 @@ product. -/
   exact NamedEquivalent.refl _
 
 /-- Successive raw actions compose with exactly the same multiplication order as the locked homology matrices. -/
-@[expose] def matrixAction_mul (left right : LinearAlgebra.Matrix.Basic.IntegralMatrix)
+@[expose] def matrixAction_mul (left right : Basic.IntegralMatrix)
     (periods : Operational.Basic.RawPeriodVector) :
     Operational.Basic.VectorEquivalent
-      (Approximation.Matrix.Operational.Integral.Action.matrixAction (Multiplication.mul left right) periods)
-      (Approximation.Matrix.Operational.Integral.Action.matrixAction left
-        (Approximation.Matrix.Operational.Integral.Action.matrixAction right periods)) := by
+      (matrixAction (Multiplication.mul left right) periods)
+      (matrixAction left
+        (matrixAction right periods)) := by
   let raw := Operational.Vector.replicatedPeriods periods
-  let leftNamed := Integral.Basic.integralNamedMatrix left
-  let rightNamed := Integral.Basic.integralNamedMatrix right
-  let productNamed := Integral.Basic.integralNamedMatrix
+  let leftNamed := Basic.integralNamedMatrix left
+  let rightNamed := Basic.integralNamedMatrix right
+  let productNamed := Basic.integralNamedMatrix
     (Multiplication.mul left right)
-  have exposeProduct : PeriodMatrix.MatrixEquivalent
+  have exposeProduct : MatrixEquivalent
       (PeriodMatrix.matrixMul productNamed raw)
       (PeriodMatrix.matrixMul
         (PeriodMatrix.matrixMul leftNamed rightNamed) raw) :=
@@ -110,19 +110,19 @@ product. -/
       (MatrixEquivalent.refl raw)
   have associate := ScaledInverseCertificate.matrixMul_assoc
     leftNamed rightNamed raw
-  have replaceRight : PeriodMatrix.MatrixEquivalent
+  have replaceRight : MatrixEquivalent
       (PeriodMatrix.matrixMul leftNamed
         (PeriodMatrix.matrixMul rightNamed raw))
       (PeriodMatrix.matrixMul leftNamed
-        (Operational.Vector.replicatedPeriods (Approximation.Matrix.Operational.Integral.Action.matrixAction right
+        (Operational.Vector.replicatedPeriods (matrixAction right
           periods))) :=
     PeriodMatrix.matrixMul_respects leftNamed leftNamed
       (PeriodMatrix.matrixMul rightNamed raw)
-      (Operational.Vector.replicatedPeriods (Approximation.Matrix.Operational.Integral.Action.matrixAction right
+      (Operational.Vector.replicatedPeriods (matrixAction right
         periods))
       (MatrixEquivalent.refl leftNamed)
       (MatrixEquivalent.symm
-        (Approximation.Matrix.Operational.Integral.Action.replicatedPeriods_matrixAction right periods))
+        (replicatedPeriods_matrixAction right periods))
   intro coordinate
   exact NamedEquivalent.trans
     (exposeProduct coordinate 0)
@@ -132,18 +132,18 @@ product. -/
 /-- The identity homology matrix acts identically on raw productive periods. -/
 @[expose] def matrixAction_identity (periods : Operational.Basic.RawPeriodVector) :
     Operational.Basic.VectorEquivalent
-      (Approximation.Matrix.Operational.Integral.Action.matrixAction Multiplication.identity periods) periods := by
+      (matrixAction Multiplication.identity periods) periods := by
   let raw := Operational.Vector.replicatedPeriods periods
   let one := Coherence.exact 1
-  have replaceIdentity : PeriodMatrix.MatrixEquivalent
+  have replaceIdentity : MatrixEquivalent
       (PeriodMatrix.matrixMul
-        (Integral.Basic.integralNamedMatrix Multiplication.identity) raw)
+        (Basic.integralNamedMatrix Multiplication.identity) raw)
       (PeriodMatrix.matrixMul
         (PeriodMatrix.scaleIdentity one) raw) :=
     PeriodMatrix.matrixMul_respects
-      (Integral.Basic.integralNamedMatrix Multiplication.identity)
+      (Basic.integralNamedMatrix Multiplication.identity)
       (PeriodMatrix.scaleIdentity one) raw raw
-      Purelib.Approximation.Matrix.Operational.Integral.Identity.integralNamedMatrix_identity_scaleIdentity
+      Identity.integralNamedMatrix_identity_scaleIdentity
       (MatrixEquivalent.refl raw)
   have exposeScalar :=
     ScaledInverseCertificate.scaleIdentity_mul one raw

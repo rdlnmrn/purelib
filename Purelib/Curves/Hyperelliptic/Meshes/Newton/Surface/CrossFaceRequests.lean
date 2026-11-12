@@ -64,65 +64,65 @@ of the already retained domains. The trace uses the shared spatial depth,
 and every contact index covers the synchronized surface-energy requests. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.CrossFaceRequests
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {partitions
+    SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {partitions
     : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {surfaceCuts : MeshCompatibility.SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
   {start : Gaussian.Basic.Canonical} {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
-  (firstEntry : Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get first).models start owner)
-  (lastEntry : Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models start owner)
+  (firstEntry : PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get first).models start owner)
+  (lastEntry : PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models start owner)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains
     sheet} {error : Fraction.Rational}
 
 variable (requests : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-  (fun sheet => Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
     coarseDepth) fixed error)
 
 /-- Prepare coefficient-independent energy contacts on the actual horizontal cross-face trace, meeting both the
 synchronized request stage and supplied floor. -/
 def horizontalFaceRequest
-    (pieces : Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces (partitions.get first) (partitions.get
+    (pieces : BoundaryPieces.HorizontalPieces (partitions.get first) (partitions.get
       last))
-    (trace : (Hyperelliptic.Meshes.Newton.Surface.CrossFaceSides.horizontalFaceSide (requests.entries.get
+    (trace : (CrossFaceSides.horizontalFaceSide (requests.entries.get
       firstEntry.sheet) (requests.entries.get lastEntry.sheet)
       first last pieces.firstPiece pieces.lastPiece
       pieces.lower_eq pieces.upper_eq pieces.joined).Trace requests.depth)
     (origin : trace.point (trace.vertices.indexed 0) = start)
     (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :
-    let contacts := Hyperelliptic.Meshes.PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation.build
+    let contacts := PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation.build
       (leftEntry := firstEntry) (rightEntry := lastEntry) trace origin
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.ConjugateEnergy.MatchedSidePreparation.EnergyRequest contacts allowance
+    PuncturedGrid.Matched.ConjugateEnergy.MatchedSidePreparation.EnergyRequest contacts allowance
       (max requests.index floor) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.ConjugateEnergy.MatchedSidePreparation.EnergyRequest.build
-    (Hyperelliptic.Meshes.PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation.build (leftEntry := firstEntry)
+  PuncturedGrid.Matched.ConjugateEnergy.MatchedSidePreparation.EnergyRequest.build
+    (PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation.build (leftEntry := firstEntry)
       (rightEntry := lastEntry) trace origin)
     allowance positive (max requests.index floor)
 
 /-- Prepare coefficient-independent energy contacts on the actual vertical cross-face trace, meeting both the
 synchronized request stage and supplied floor. -/
 def verticalFaceRequest
-    (pieces : Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces (partitions.get first) (partitions.get
+    (pieces : BoundaryPieces.VerticalPieces (partitions.get first) (partitions.get
       last))
-    (trace : (Hyperelliptic.Meshes.Newton.Surface.CrossFaceSides.verticalFaceSide (requests.entries.get
+    (trace : (CrossFaceSides.verticalFaceSide (requests.entries.get
       firstEntry.sheet) (requests.entries.get lastEntry.sheet)
       first last pieces.firstPiece pieces.lastPiece
       pieces.lower_eq pieces.upper_eq pieces.joined).Trace requests.depth)
     (origin : trace.point (trace.vertices.indexed 0) = start)
     (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :
     let contacts :=
-      Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation.build
+      PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation.build
       (leftEntry := firstEntry) (rightEntry := lastEntry) trace origin
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyRequest
+    PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyRequest
       contacts allowance (max requests.index floor) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyRequest.build
-    (Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation.build (leftEntry
+  PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyRequest.build
+    (PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation.build (leftEntry
       := firstEntry) (rightEntry := lastEntry) trace origin)
     allowance positive (max requests.index floor)
 

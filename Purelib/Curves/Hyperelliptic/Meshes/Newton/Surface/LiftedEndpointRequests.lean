@@ -93,31 +93,31 @@ open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank (FaceModels)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels (Entry)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    grid.faces.regulars} {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions
+  {domains : FaceDomainBank frames
+    grid.faces.regulars} {partitions : SurfacePartitions
     observations grid}
-  {surfaceCuts : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
-    Purelib.Data.Rat.Fraction.Rational}
+    Preflights domains sheet} {error :
+    Rational}
 
-variable (requests : Purelib.Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-  (fun sheet => Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+variable (requests : SynchronizedSurfaceRequests
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains
     surfaceCuts sheet coarseDepth) fixed error)
 
-variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
-  Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges grid.faces} {sheet : Fin 2}
+variable {vertices : RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
+  RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {mesh : LiftedMesh vertices edges grid.faces} {sheet : Fin 2}
   (source : mesh.LocatedFace first sheet)
 
 /-- Prepare the original horizontal endpoint comparison from its actual retained lifted source face.
@@ -125,8 +125,8 @@ variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.Vertex
 The shared root owner and first polygon point come from the original mesh, with matching partitions and the requested
 tolerance and floor preserved. -/
 def horizontalLiftedEndpointRequest
-    (firstTraces : PerimeterTraces.PiecePerimeterTraces (requests.entries.get sheet) first)
-    (lastTraces : PerimeterTraces.PiecePerimeterTraces (requests.entries.get (HorizontalContact.next (last := last)
+    (firstTraces : PiecePerimeterTraces (requests.entries.get sheet) first)
+    (lastTraces : PiecePerimeterTraces (requests.entries.get (HorizontalContact.next (last := last)
       source).sheet) last)
     (lower : (grid.faces.regulars[first.val]'first.isLt).cell.box.xLower =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.xLower)
@@ -135,7 +135,7 @@ def horizontalLiftedEndpointRequest
     (adjacent : (grid.faces.regulars[first.val]'first.isLt).cell.box.yUpper =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.yLower)
     (equal : (partitions.get first).cuts.x.intervals = (partitions.get last).cuts.x.intervals)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :=
+    (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :=
   EndpointRequests.horizontalEndpointRequest (HorizontalContact.firstEntry (domains := domains) source)
     (HorizontalContact.lastEntry (domains := domains) source lower upper adjacent)
     requests firstTraces lastTraces equal adjacent
@@ -148,8 +148,8 @@ def horizontalLiftedEndpointRequest
 The shared root owner and first polygon point come from the original mesh, with matching partitions and the requested
 tolerance and floor preserved. -/
 def verticalLiftedEndpointRequest
-    (firstTraces : PerimeterTraces.PiecePerimeterTraces (requests.entries.get sheet) first)
-    (lastTraces : PerimeterTraces.PiecePerimeterTraces (requests.entries.get (VerticalContact.next (last := last)
+    (firstTraces : PiecePerimeterTraces (requests.entries.get sheet) first)
+    (lastTraces : PiecePerimeterTraces (requests.entries.get (VerticalContact.next (last := last)
       source).sheet) last)
     (lower : (grid.faces.regulars[first.val]'first.isLt).cell.box.yLower =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.yLower)
@@ -158,7 +158,7 @@ def verticalLiftedEndpointRequest
     (adjacent : (grid.faces.regulars[first.val]'first.isLt).cell.box.xUpper =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.xLower)
     (equal : (partitions.get first).cuts.y.intervals = (partitions.get last).cuts.y.intervals)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :=
+    (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :=
   EndpointRequests.verticalEndpointRequest (VerticalContact.firstEntry (domains := domains) source)
     (VerticalContact.lastEntry (domains := domains) source lower upper adjacent)
     requests firstTraces lastTraces equal adjacent

@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -119,9 +121,9 @@ def realize (pairs : List (Basic.Canonical × Basic.Canonical))
     residual_eq := rfl
     areaBound := areaBound
     areaBound_eq := rfl
-    areaBound_nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
+    areaBound_nonnegative := Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
           errorNonnegative)
       magnitudeNonnegative
     bounded := by
@@ -155,18 +157,18 @@ theorem mixed_error (left right coefficient : Basic.Canonical)
     normSq (conj left + coefficient * right) ≤
       2 * (1 + normSq coefficient) * allowance := by
   have estimate := Norm.Bounds.normSq_add_le_two (conj left) (coefficient * right)
-  change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Basic.conj left + coefficient * right) ≤
-    2 * (Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Basic.conj left) +
-      Data.Gaussian.Norm.Basic.normSq (coefficient * right)) at estimate
+  change Norm.Basic.normSq (Basic.conj left + coefficient * right) ≤
+    2 * (Norm.Basic.normSq (Basic.conj left) +
+      Norm.Basic.normSq (coefficient * right)) at estimate
   rw [Norm.Basic.normSq_conj, Norm.Basic.normSq_mul] at estimate
   simp only [Norm.Basic.normSq_eq_canonical] at estimate
 
   have inner : normSq left + normSq coefficient * normSq right ≤
       allowance + normSq coefficient * allowance :=
-    Fraction.Order.Arithmetic.add_le_add_direct leftBound
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rightBound (Basic.Canonical.normSq_nonneg
+    Arithmetic.add_le_add_direct leftBound
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct rightBound (Basic.Canonical.normSq_nonneg
         coefficient))
-  exact estimate.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inner
+  exact estimate.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct inner
     (by decide : (0 : Fraction.Rational) ≤ 2)).trans_eq (by ring1))
 
 /-- Compose the original outward, opposite-sheet and return displacement bounds along their exact three-step chain. -/
@@ -182,11 +184,11 @@ theorem stem_chain (chartSheet sourceSheet sourceOtherSheet chartOtherSheet : Ba
     exact outward
   rw [← Norm.Basic.normSq_eq_canonical] at opposite other
   have middle := (Norm.Bounds.normSq_sub_le_via sourceSheet sourceOtherSheet chartOtherSheet).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct opposite
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct opposite
       other) (by decide))
   rw [← Norm.Basic.normSq_eq_canonical] at first ⊢
   exact (Norm.Bounds.normSq_sub_le_via chartSheet sourceSheet chartOtherSheet).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct first
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct first
       middle) (by decide))
 
 end

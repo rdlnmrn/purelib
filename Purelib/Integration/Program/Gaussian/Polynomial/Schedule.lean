@@ -50,7 +50,7 @@ def polynomial_scheduled_outputs_equivalent
         leftSchedule).output.name
       (Gaussian.Cached.Schedule.reindexCached (IntegrationPrograms.polynomialProgram source right)
         rightSchedule).output.name := by
-  apply Equivalence.Equivalent.toNamed
+  apply Equivalence.Equivalent.toNamed (inspect := false)
   apply Equivalence.Equivalent.of_constant_samples _ _
     (Source.sourceSample source)
   · intro index

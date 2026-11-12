@@ -33,6 +33,8 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Gaussian.Exponential.Horner
+
 open Purelib.Integration
 
 public section
@@ -64,7 +66,7 @@ name.
 The finite comparison preserves both original starting stages, selects a shared Horner source floor and pays the
 separate two-sided error through a quarter-target bound. -/
 @[expose] def approximation_equivalent_existing (policy :
-  Exponential.Geometry.Policy) (schedule : Data.Nat.Schedule.PositiveStride)
+  Geometry.Policy) (schedule : Schedule.PositiveStride)
   (extraDepth : Nat) :
     Equivalence.Equivalent
       (Program.program policy schedule extraDepth).approximation
@@ -72,7 +74,7 @@ separate two-sided error through a quarter-target bound. -/
   compare := by
     intro leftStart rightStart target positive
     let smallTarget := target / 4
-    have smallPositive : 0 < smallTarget := Purelib.Data.Rat.Bounds.Quarter.quarter_pos positive
+    have smallPositive : 0 < smallTarget := Bounds.Quarter.quarter_pos positive
     let rightIndex := Geometric.Search.firstQuarterBelow 1 rightStart smallTarget
     let sourceIndex := Reference.referenceSourceIndex rightIndex
     let leftIndex := max leftStart sourceIndex
@@ -84,40 +86,40 @@ separate two-sided error through a quarter-target bound. -/
         rightIndex := rightIndex
         left_ge := by
           change leftStart ≤ max leftStart sourceIndex
-          rw [Purelib.Data.Nat.Order.max_eq_natMax]
-          exact Purelib.Data.Nat.Order.le_max_left _ _
+          rw [Data.Nat.Order.max_eq_natMax]
+          exact Data.Nat.Order.le_max_left _ _
         right_ge := Geometric.Search.firstQuarterBelow_ge 1 rightStart smallTarget
         close := by
           intro leftLater rightLater leftOrder rightOrder
-          let leftSource := (Integration.Exponential.Selection.selection policy schedule leftLater).depth + 1
+          let leftSource := (Selection.selection policy schedule leftLater).depth + 1
           let rightSource := Reference.referenceSourceIndex rightLater
           have leftSourceOrder : sourceIndex ≤ leftSource :=
             Nat.le_trans (by
               change sourceIndex ≤ max leftStart sourceIndex
-              rw [Purelib.Data.Nat.Order.max_eq_natMax]
-              exact Purelib.Data.Nat.Order.le_max_right leftStart sourceIndex)
-              (Nat.le_trans leftOrder (Nat.le_trans (Integration.Exponential.Selection.selection policy schedule
+              rw [Data.Nat.Order.max_eq_natMax]
+              exact Data.Nat.Order.le_max_right leftStart sourceIndex)
+              (Nat.le_trans leftOrder (Nat.le_trans (Selection.selection policy schedule
                 leftLater).stage_le_depth (Nat.le_succ _)))
           have rightSourceOrder : sourceIndex ≤ rightSource := Reference.referenceSourceIndex_monotone rightOrder
-          have leftBound := Exponential.Horner.Sample.sample_later_close 1 (by decide) leftSourceOrder
-          have rightBound : Data.Gaussian.Norm.Basic.normSq (Exponential.Horner.Sample.sample 1 sourceIndex -
-              Exponential.Horner.Sample.sample 1 rightSource) ≤ Geometric.Basic.quarterRadius 10 sourceIndex := by
-            have reverse : Exponential.Horner.Sample.sample 1 sourceIndex - Exponential.Horner.Sample.sample 1
+          have leftBound := Sample.sample_later_close 1 (by decide) leftSourceOrder
+          have rightBound : Norm.Basic.normSq (Sample.sample 1 sourceIndex -
+              Sample.sample 1 rightSource) ≤ Geometric.Basic.quarterRadius 10 sourceIndex := by
+            have reverse : Sample.sample 1 sourceIndex - Sample.sample 1
               rightSource =
-                -(Exponential.Horner.Sample.sample 1 rightSource - Exponential.Horner.Sample.sample 1 sourceIndex) := by
+                -(Sample.sample 1 rightSource - Sample.sample 1 sourceIndex) := by
                   ring1
             rw [reverse, Norm.Basic.normSq_neg]
-            have scalar := Exponential.Horner.Sample.sample_later_close 1 (by decide) rightSourceOrder
+            have scalar := Sample.sample_later_close 1 (by decide) rightSourceOrder
             simpa only [Norm.Basic.normSq_eq_canonical] using scalar
           rw [Program.program_sample, Reference.reference_sample, Program.shifted_samples_cancel]
           calc
-            Data.Gaussian.Norm.Basic.normSq (Exponential.Horner.Sample.sample 1 leftSource -
-              Exponential.Horner.Sample.sample
+            Norm.Basic.normSq (Sample.sample 1 leftSource -
+              Sample.sample
               1 rightSource) ≤
-                2 * (Data.Gaussian.Norm.Basic.normSq (Exponential.Horner.Sample.sample 1 leftSource -
-                  Exponential.Horner.Sample.sample 1 sourceIndex) +
-                  Data.Gaussian.Norm.Basic.normSq (Exponential.Horner.Sample.sample 1 sourceIndex -
-                    Exponential.Horner.Sample.sample 1 rightSource)) :=
+                2 * (Norm.Basic.normSq (Sample.sample 1 leftSource -
+                  Sample.sample 1 sourceIndex) +
+                  Norm.Basic.normSq (Sample.sample 1 sourceIndex -
+                    Sample.sample 1 rightSource)) :=
               Norm.Bounds.normSq_sub_le_via _ _ _
             _ ≤ 2 * (Geometric.Basic.quarterRadius 10 sourceIndex + Geometric.Basic.quarterRadius 10 sourceIndex) :=
               Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
@@ -136,13 +138,13 @@ separate two-sided error through a quarter-target bound. -/
 
 The sampling transport retains both output names. Its finite comparison uses
 the same policy, positive-stride schedule and extra observation depth. -/
-@[expose] def output_equivalent_existing (policy : Exponential.Geometry.Policy)
-  (schedule : Data.Nat.Schedule.PositiveStride) (extraDepth : Nat) :
+@[expose] def output_equivalent_existing (policy : Geometry.Policy)
+  (schedule : Schedule.PositiveStride) (extraDepth : Nat) :
     Equivalence.NamedEquivalent (Program.program policy schedule extraDepth).output.name
       Reference.exponentialMinusOne :=
   (Equivalence.Equivalent.toNamed_sampling
     (Program.program policy schedule extraDepth).approximation).trans
-      (Existing.approximation_equivalent_existing policy schedule extraDepth)
+      (approximation_equivalent_existing policy schedule extraDepth)
 
 end Purelib.Integration.Exponential.Equivalence.Existing
 end

@@ -71,92 +71,92 @@ The shared band, source occurrence order, face sheets and fine traces all
 come from the retained excision and numerical banks. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.RequestedSideAreas
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {index :
-    Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {annulus : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index} {lifted : Meshes.LiftedPuncturedGrid
-    grid.punctured} {region : Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    Branches.BranchIsolation.Data.Index branches}
+  {annulus : Faces.AnnularFaces grid index} {lifted : Meshes.LiftedPuncturedGrid
+    grid.punctured} {region : LiftedBoundary.Lifted annulus lifted}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {cuts : PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet}
   {meshTarget : Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     meshTarget}
 
 /-- Prepare the original annular outer-side requests on the supplied trace bank before selecting a shared numerical
 stage. -/
-@[expose] def sideRequests (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
-  region) (traces : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin
+@[expose] def sideRequests (prepared : PrimitiveComparison.Lifted.OuterPreparation
+  region) (traces : PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin
   genus) :=
-  Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank.build traces (grid.bands.entries.get
-    index) i j (Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences prepared)
+  PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank.build traces (grid.bands.entries.get
+    index) i j (SideOccurrences.sideOccurrences prepared)
 
 /-- Bound the centered original annular outer area by its squared occurrence count and retained Newton radius estimate.
 
 The retained annular path certifies every fine-side boundary premise; the exact band requests and common late cache
 determine the area readings. -/
 theorem centeredSideArea_bound (prepared :
-  Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j) (lengths
-      : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank samples.traces
-      (grid.bands.entries.get index) i j (Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences prepared))
+  PrimitiveComparison.Lifted.OuterPreparation region)
+    (samples : PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j) (lengths
+      : PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
+    (references : PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank samples.traces
+      (grid.bands.entries.get index) i j (SideOccurrences.sideOccurrences prepared))
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.Newton.Annulus.FineSideAreas.centeredSideArea prepared
+    Gaussian.Norm.Basic.normSq (FineSideAreas.centeredSideArea prepared
       samples) ≤
       (region.outer.length : Fraction.Rational) * ((region.outer.length : Fraction.Rational) *
         (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient (curve := curve) (current :=
-          (Hyperelliptic.Branches.BranchCellWinding.state original index).raw) (preparation.profiles.get
+          (Branches.BranchCellWinding.state original index).raw) (preparation.profiles.get
           index).differentials *
           (grid.bands.entries.get index).selection.sample.output.radius^2)) := by
-  have estimate := Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank.sum_bound samples
-    lengths references (Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences_onBoundary prepared) later
-  rw [(Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences_count prepared)] at estimate
+  have estimate := PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank.sum_bound samples
+    lengths references (SideOccurrences.sideOccurrences_onBoundary prepared) later
+  rw [(SideOccurrences.sideOccurrences_count prepared)] at estimate
   exact estimate
 
 /-- Bound the fine annular outer area after subtracting its original source chords.
 
 The estimate retains both the endpoint allowance and shrinking Newton contribution at their common late sample stage,
 including the complete fine-path and primitive-origin contributions. -/
-theorem fineSideArea_bound (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem fineSideArea_bound (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j) (lengths
-      : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
+    (samples : PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j) (lengths
+      : PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
     (perimeters : PuncturedGrid.Matched.FacePerimeters (request := request)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank samples.traces
-      (grid.bands.entries.get index) i j (Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences prepared))
+    (left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (references : PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank samples.traces
+      (grid.bands.entries.get index) i j (SideOccurrences.sideOccurrences prepared))
     {error : Fraction.Rational} (endpoints :
       PuncturedGrid.PerimeterEndpointRequest fixed i j error)
     (later : references.index ≤ stage) (endpointsLater : endpoints.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.Newton.Annulus.FineSideAreas.fineSideArea prepared
-      perimeters - Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.sources.map
-      (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right))) ≤
+    Gaussian.Norm.Basic.normSq (FineSideAreas.fineSideArea prepared
+      perimeters - Gaussian.Norm.Sum.Basic.gaussianSum (prepared.sources.map
+      (PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right))) ≤
       2 * ((region.outer.length : Fraction.Rational) * ((region.outer.length : Fraction.Rational) * error) +
         (region.outer.length : Fraction.Rational) * ((region.outer.length : Fraction.Rational) *
           (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient (curve := curve) (current :=
-            (Hyperelliptic.Branches.BranchCellWinding.state original index).raw) (preparation.profiles.get
+            (Branches.BranchCellWinding.state original index).raw) (preparation.profiles.get
             index).differentials *
             (grid.bands.entries.get index).selection.sample.output.radius^2))) := by
-  have discrepancy := Hyperelliptic.Meshes.Newton.Annulus.FineSideAreas.fineSideArea_readback prepared samples
+  have discrepancy := FineSideAreas.fineSideArea_readback prepared samples
     perimeters left right endpoints endpointsLater
-  have centered := Hyperelliptic.Meshes.Newton.Annulus.RequestedSideAreas.centeredSideArea_bound prepared samples
+  have centered := RequestedSideAreas.centeredSideArea_bound prepared samples
     lengths references later
   have estimate := (Gaussian.Norm.Bounds.normSq_add_le_two
-    (Hyperelliptic.Meshes.Newton.Annulus.FineSideAreas.fineSideArea prepared perimeters -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.sources.map
-      (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right)) -
-      Hyperelliptic.Meshes.Newton.Annulus.FineSideAreas.centeredSideArea prepared samples)
-    (Hyperelliptic.Meshes.Newton.Annulus.FineSideAreas.centeredSideArea prepared samples)).trans
+    (FineSideAreas.fineSideArea prepared perimeters -
+      Gaussian.Norm.Sum.Basic.gaussianSum (prepared.sources.map
+      (PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right)) -
+      FineSideAreas.centeredSideArea prepared samples)
+    (FineSideAreas.centeredSideArea prepared samples)).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Fraction.Order.Arithmetic.add_le_add_direct discrepancy centered) (by decide))
   rw [sub_add_cancel] at estimate

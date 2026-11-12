@@ -95,7 +95,7 @@ open _root_.Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest (
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.SeamAreas (seamValues)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -112,8 +112,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {energy : SurfaceRequest partitions coarse fixed error}
   {stage : Nat} {cache : Numerics domains
     stage} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {assemblies : ExteriorRequest.Assemblies energy
-    cache coefficients} {perimeters : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters
+  {assemblies : Assemblies energy
+    cache coefficients} {perimeters : Perimeters
     assemblies}
   {position : Fin grid.faces.regulars.length}
 
@@ -123,38 +123,38 @@ open Purelib.Riemann.Paths.RectangularPerimeterTraces (PerimeterTraces)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_sub)
 
 /-- The dependent bank of perimeter traces on every actual original observation-cut piece. -/
-def PiecePerimeterTraces (energy : NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed error)
+def PiecePerimeterTraces (energy : SurfaceRequest partitions coarse fixed error)
     (position : Fin grid.faces.regulars.length) :=
-  Data.Vector.DependentVector (fun piece : Fin (partitions.get position).cuts.boxes.length =>
+  DependentVector (fun piece : Fin (partitions.get position).cuts.boxes.length =>
     RectangularPerimeterTraces.PerimeterTraces ((energy.meshes.get position).entries.get piece))
 
 /-- The actual owned bottom trace of each original boundary piece. -/
 def PiecePerimeterTraces.bottomPieces (pieces :
   PiecePerimeterTraces energy position)
-    (column : Fin ((PieceIndices.columns (partitions.get position)) + 1)) : JoinedTrace.VertexTrace
-      (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry) :=
+    (column : Fin ((PieceIndices.columns (partitions.get position)) + 1)) : VertexTrace
+      (OwnedVertex ((domains.get position).domain sheet).geometry) :=
   RectangularOwnedPerimeterTraces.bottomOwned (pieces.get (PieceIndices.pieceIndex (partitions.get position) column 0))
 
 /-- The actual owned top trace of each original boundary piece. -/
 def PiecePerimeterTraces.topPieces (pieces :
   PiecePerimeterTraces energy position)
-    (column : Fin ((PieceIndices.columns (partitions.get position)) + 1)) : JoinedTrace.VertexTrace
-      (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry) :=
+    (column : Fin ((PieceIndices.columns (partitions.get position)) + 1)) : VertexTrace
+      (OwnedVertex ((domains.get position).domain sheet).geometry) :=
   RectangularOwnedPerimeterTraces.topOwned (pieces.get (PieceIndices.pieceIndex (partitions.get position) column
     (Fin.last (PieceIndices.rows (partitions.get position)))))
 
 /-- The actual owned left trace of each original boundary piece. -/
 def PiecePerimeterTraces.leftPieces (pieces :
   PiecePerimeterTraces energy position)
-    (column : Fin ((PieceIndices.rows (partitions.get position)) + 1)) : JoinedTrace.VertexTrace
-      (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry) :=
+    (column : Fin ((PieceIndices.rows (partitions.get position)) + 1)) : VertexTrace
+      (OwnedVertex ((domains.get position).domain sheet).geometry) :=
   RectangularOwnedPerimeterTraces.leftOwned (pieces.get (PieceIndices.pieceIndex (partitions.get position) 0 column))
 
 /-- The actual owned right trace of each original boundary piece. -/
 def PiecePerimeterTraces.rightPieces (pieces :
   PiecePerimeterTraces energy position)
-    (column : Fin ((PieceIndices.rows (partitions.get position)) + 1)) : JoinedTrace.VertexTrace
-      (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry) :=
+    (column : Fin ((PieceIndices.rows (partitions.get position)) + 1)) : VertexTrace
+      (OwnedVertex ((domains.get position).domain sheet).geometry) :=
   RectangularOwnedPerimeterTraces.rightOwned (pieces.get (PieceIndices.pieceIndex (partitions.get position) (Fin.last
     (PieceIndices.columns (partitions.get position))) column))
 
@@ -163,24 +163,24 @@ set_option genInjectivity false in
 
 Each trace concatenates the retained piece traces with their actual model vertex owners and every intervening joining
 edge. -/
-structure FacePerimeterTraces (energy : NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed error)
+structure FacePerimeterTraces (energy : SurfaceRequest partitions coarse fixed error)
     (position : Fin grid.faces.regulars.length) where
   /-- The original dependent bank of all retained piece perimeter traces. -/ pieces :
     PiecePerimeterTraces energy position
   /-- The cached complete bottom boundary trace with original vertex owners and joining edges. -/ bottom :
-    JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry)
+    VertexTrace (OwnedVertex ((domains.get position).domain sheet).geometry)
   /-- The retained bottom trace is exactly the concatenation of the actual original piece traces. -/ bottom_eq : bottom
     = VertexTrace.concatenate pieces.bottomPieces
   /-- The cached complete top boundary trace with original vertex owners and joining edges. -/ top :
-    JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry)
+    VertexTrace (OwnedVertex ((domains.get position).domain sheet).geometry)
   /-- The retained top trace is exactly the concatenation of the actual original piece traces. -/ top_eq : top =
     VertexTrace.concatenate pieces.topPieces
   /-- The cached complete left boundary trace with original vertex owners and joining edges. -/ left :
-    JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry)
+    VertexTrace (OwnedVertex ((domains.get position).domain sheet).geometry)
   /-- The retained left trace is exactly the concatenation of the actual original piece traces. -/ left_eq : left =
     VertexTrace.concatenate pieces.leftPieces
   /-- The cached complete right boundary trace with original vertex owners and joining edges. -/ right :
-    JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry)
+    VertexTrace (OwnedVertex ((domains.get position).domain sheet).geometry)
   /-- The retained right trace is exactly the concatenation of the actual original piece traces. -/ right_eq : right =
     VertexTrace.concatenate pieces.rightPieces
 
@@ -190,17 +190,17 @@ namespace FacePerimeterTraces
 
 /-- Build each original piece perimeter once and concatenate the four actual boundary rows while retaining their exact
 readbacks. -/
-def build (energy : NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed error) (position : Fin
+def build (energy : SurfaceRequest partitions coarse fixed error) (position : Fin
   grid.faces.regulars.length) :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy position :=
-  let pieces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces energy position :=
+    FacePerimeterTraces energy position :=
+  let pieces : PiecePerimeterTraces energy position :=
     DependentVector.ofFn fun piece =>
     PerimeterTraces.build ((energy.meshes.get position).entries.get piece)
   ⟨pieces, VertexTrace.concatenate pieces.bottomPieces, rfl, VertexTrace.concatenate pieces.topPieces, rfl,
     VertexTrace.concatenate pieces.leftPieces, rfl, VertexTrace.concatenate pieces.rightPieces, rfl⟩
 
 /-- The first owner of each original bottom piece trace reads its acquired lower-left corner. -/
-private theorem bottom_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+private theorem bottom_first (traces : FacePerimeterTraces
   energy position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.columns (partitions.get
       position)) + 1)) :
@@ -215,7 +215,7 @@ private theorem bottom_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surfac
         position) column 0))).1.symm
 
 /-- The last owner of each original bottom piece trace reads its acquired lower-right corner. -/
-private theorem bottom_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+private theorem bottom_last (traces : FacePerimeterTraces
   energy position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.columns (partitions.get
       position)) + 1)) :
@@ -231,7 +231,7 @@ private theorem bottom_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface
 
 /-- The complete bottom trace area is the sum of its actual original piece areas and every intervening corner-joining
 area. -/
-theorem bottom_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem bottom_area (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     traces.bottom.area (fun owner => SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column
       owner.row owner.point) =
@@ -240,7 +240,7 @@ theorem bottom_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Perimet
       FiniteSum.Fin.sumFin (fun column : Fin (PieceIndices.columns (partitions.get position)) =>
         Stokes.edgeArea (face.corners column.castSucc 0).lowerRight (face.corners column.succ 0).lowerLeft) := by
   rw [traces.bottom_eq, VertexTrace.concatenate_area, VertexTrace.joiningArea_ofFn]
-  apply congrArg₂ (fun a b : Data.Gaussian.Basic.Canonical => a + b)
+  apply congrArg₂ (fun a b : Canonical => a + b)
   · apply FiniteSum.Fin.sumFin_congr
     intro column
     exact RectangularOwnedPerimeterTraces.bottomOwned_area (traces.pieces.get (PieceIndices.pieceIndex (partitions.get
@@ -253,7 +253,7 @@ theorem bottom_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Perimet
     exact congrArg₂ Stokes.edgeArea (traces.bottom_last face column.castSucc) (traces.bottom_first face column.succ)
 
 /-- The first owner of each original top piece trace reads its acquired upper-left corner. -/
-private theorem top_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+private theorem top_first (traces : FacePerimeterTraces
   energy position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.columns (partitions.get
       position)) + 1)) :
@@ -268,7 +268,7 @@ private theorem top_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.P
         position) column (Fin.last (PieceIndices.rows (partitions.get position)))))).2.2.1.symm
 
 /-- The last owner of each original top piece trace reads its acquired upper-right corner. -/
-private theorem top_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+private theorem top_last (traces : FacePerimeterTraces energy
   position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.columns (partitions.get
       position)) + 1)) :
@@ -284,7 +284,7 @@ private theorem top_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Pe
 
 /-- The complete top trace area is the sum of its actual original piece areas and every intervening corner-joining area.
 -/
-theorem top_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem top_area (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     traces.top.area (fun owner => SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column
       owner.row owner.point) =
@@ -296,7 +296,7 @@ theorem top_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterT
           position)))).upperRight (face.corners column.succ (Fin.last (PieceIndices.rows (partitions.get
           position)))).upperLeft) := by
   rw [traces.top_eq, VertexTrace.concatenate_area, VertexTrace.joiningArea_ofFn]
-  apply congrArg₂ (fun a b : Data.Gaussian.Basic.Canonical => a + b)
+  apply congrArg₂ (fun a b : Canonical => a + b)
   · apply FiniteSum.Fin.sumFin_congr
     intro column
     exact RectangularOwnedPerimeterTraces.topOwned_area (traces.pieces.get (PieceIndices.pieceIndex (partitions.get
@@ -311,7 +311,7 @@ theorem top_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterT
     exact congrArg₂ Stokes.edgeArea (traces.top_last face column.castSucc) (traces.top_first face column.succ)
 
 /-- The first owner of each original left piece trace reads its acquired lower-left corner. -/
-private theorem left_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+private theorem left_first (traces : FacePerimeterTraces
   energy position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.rows (partitions.get position))
       + 1)) :
@@ -326,7 +326,7 @@ private theorem left_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.
         position) 0 column))).1.symm
 
 /-- The last owner of each original left piece trace reads its acquired upper-left corner. -/
-private theorem left_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+private theorem left_last (traces : FacePerimeterTraces
   energy position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.rows (partitions.get position))
       + 1)) :
@@ -342,7 +342,7 @@ private theorem left_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.P
 
 /-- The complete left trace area is the sum of its actual original piece areas and every intervening corner-joining
 area. -/
-theorem left_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem left_area (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     traces.left.area (fun owner => SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column
       owner.row owner.point) =
@@ -351,7 +351,7 @@ theorem left_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Perimeter
       FiniteSum.Fin.sumFin (fun column : Fin (PieceIndices.rows (partitions.get position)) =>
         Stokes.edgeArea (face.corners 0 column.castSucc).upperLeft (face.corners 0 column.succ).lowerLeft) := by
   rw [traces.left_eq, VertexTrace.concatenate_area, VertexTrace.joiningArea_ofFn]
-  apply congrArg₂ (fun a b : Data.Gaussian.Basic.Canonical => a + b)
+  apply congrArg₂ (fun a b : Canonical => a + b)
   · apply FiniteSum.Fin.sumFin_congr
     intro column
     exact RectangularOwnedPerimeterTraces.leftOwned_area (traces.pieces.get (PieceIndices.pieceIndex (partitions.get
@@ -364,7 +364,7 @@ theorem left_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Perimeter
     exact congrArg₂ Stokes.edgeArea (traces.left_last face column.castSucc) (traces.left_first face column.succ)
 
 /-- The first owner of each original right piece trace reads its acquired lower-right corner. -/
-private theorem right_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+private theorem right_first (traces : FacePerimeterTraces
   energy position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.rows (partitions.get position))
       + 1)) :
@@ -379,7 +379,7 @@ private theorem right_first (traces : Curves.Hyperelliptic.Meshes.Newton.Surface
         position) (Fin.last (PieceIndices.columns (partitions.get position))) column))).2.1.symm
 
 /-- The last owner of each original right piece trace reads its acquired upper-right corner. -/
-private theorem right_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+private theorem right_last (traces : FacePerimeterTraces
   energy position)
     (face : FaceAssembly perimeters position) (column : Fin ((PieceIndices.rows (partitions.get position))
       + 1)) :
@@ -395,7 +395,7 @@ private theorem right_last (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.
 
 /-- The complete right trace area is the sum of its actual original piece areas and every intervening corner-joining
 area. -/
-theorem right_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem right_area (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     traces.right.area (fun owner => SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column
       owner.row owner.point) =
@@ -407,7 +407,7 @@ theorem right_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Perimete
           column.castSucc).upperRight (face.corners (Fin.last (PieceIndices.columns (partitions.get position)))
           column.succ).lowerRight) := by
   rw [traces.right_eq, VertexTrace.concatenate_area, VertexTrace.joiningArea_ofFn]
-  apply congrArg₂ (fun a b : Data.Gaussian.Basic.Canonical => a + b)
+  apply congrArg₂ (fun a b : Canonical => a + b)
   · apply FiniteSum.Fin.sumFin_congr
     intro column
     exact RectangularOwnedPerimeterTraces.rightOwned_area (traces.pieces.get (PieceIndices.pieceIndex (partitions.get
@@ -422,7 +422,7 @@ theorem right_area (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Perimete
     exact congrArg₂ Stokes.edgeArea (traces.right_last face column.castSucc) (traces.right_first face column.succ)
 
 /-- The first owner of the complete bottom trace reads the original exterior lower-left corner. -/
-theorem bottom_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+theorem bottom_first_value (traces : FacePerimeterTraces
   energy position) (face : FaceAssembly perimeters position) :
     let owner := traces.bottom.first
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -432,7 +432,7 @@ theorem bottom_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.
   exact traces.bottom_first face 0
 
 /-- The last owner of the complete bottom trace reads the original exterior lower-right corner. -/
-theorem bottom_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+theorem bottom_last_value (traces : FacePerimeterTraces
   energy position) (face : FaceAssembly perimeters position) :
     let owner := traces.bottom.last
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -442,7 +442,7 @@ theorem bottom_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.P
   exact traces.bottom_last face (Fin.last (PieceIndices.columns (partitions.get position)))
 
 /-- The first owner of the complete top trace reads the original exterior upper-left corner. -/
-theorem top_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem top_first_value (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     let owner := traces.top.first
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -452,7 +452,7 @@ theorem top_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Per
   exact traces.top_first face 0
 
 /-- The last owner of the complete top trace reads the original exterior upper-right corner. -/
-theorem top_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem top_last_value (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     let owner := traces.top.last
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -463,7 +463,7 @@ theorem top_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Peri
   exact traces.top_last face (Fin.last (PieceIndices.columns (partitions.get position)))
 
 /-- The first owner of the complete left trace reads the original exterior lower-left corner. -/
-theorem left_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem left_first_value (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     let owner := traces.left.first
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -473,7 +473,7 @@ theorem left_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Pe
   exact traces.left_first face 0
 
 /-- The last owner of the complete left trace reads the original exterior upper-left corner. -/
-theorem left_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem left_last_value (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     let owner := traces.left.last
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -483,7 +483,7 @@ theorem left_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Per
   exact traces.left_last face (Fin.last (PieceIndices.rows (partitions.get position)))
 
 /-- The first owner of the complete right trace reads the original exterior lower-right corner. -/
-theorem right_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces
+theorem right_first_value (traces : FacePerimeterTraces
   energy position) (face : FaceAssembly perimeters position) :
     let owner := traces.right.first
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -493,7 +493,7 @@ theorem right_first_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.P
   exact traces.right_first face 0
 
 /-- The last owner of the complete right trace reads the original exterior upper-right corner. -/
-theorem right_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem right_last_value (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     let owner := traces.right.last
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point =
@@ -505,7 +505,7 @@ theorem right_last_value (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.Pe
 
 /-- The assembled original exterior area equals the signed areas of its four complete retained boundary traces,
 including all joining edges. -/
-theorem exterior_eq (traces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces energy
+theorem exterior_eq (traces : FacePerimeterTraces energy
   position) (face : FaceAssembly perimeters position) :
     let values := fun owner => SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row
       owner.point

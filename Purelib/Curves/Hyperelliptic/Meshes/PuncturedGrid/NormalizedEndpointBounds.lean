@@ -77,6 +77,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Mesh.IndexedQuadrilaterals
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face
@@ -114,24 +116,24 @@ open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh (MatchedHorizontalSide
   MatchedVerticalSide)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
   {faces : PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
+    Preflights domains sheet}
+    {target : Rational}
   {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable {request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target}
 
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
@@ -139,19 +141,19 @@ open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 namespace HorizontalCrossing
 variable {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
   {firstUpper lastUpper : Bool} {joined :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedSides.HorizontalCrossing request first nextPosition
+    LiftedSides.HorizontalCrossing request first nextPosition
     firstUpper lastUpper}
-  {firstDifferential secondDifferential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+  {firstDifferential secondDifferential : Differential genus}
     {firstParent secondParent : Fin 2}
-  {tolerance : Purelib.Data.Rat.Fraction.Rational} {floor : Nat}
+  {tolerance : Rational} {floor : Nat}
 
 /-- The exact retained left horizontal endpoint sample on the original normalized primitive bank. -/
 def
   AreaRequest.NormalizedLeftSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.leftReadings firstLeft.normalize.anchors firstLeft.normalize.offsets).values vertex,
@@ -162,9 +164,9 @@ def
   AreaRequest.NormalizedRightSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.rightReadings firstRight.normalize.anchors firstRight.normalize.offsets).values vertex,
@@ -175,8 +177,8 @@ def
   AreaRequest.LeftSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.leftReadings firstLeft.anchors firstLeft.offsets).values vertex,
@@ -187,9 +189,9 @@ def
   AreaRequest.RightSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.rightReadings firstRight.anchors firstRight.offsets).values vertex,
@@ -200,16 +202,16 @@ def
   AreaRequest.NormalizedEndpointErrorBound
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) ≤
+    Basic.normSq (left.endpointIncrementError right) ≤
       16 * allocated.accuracy.request.budget.error
 
 /-- The paid original request bounds the actual normalized endpoint error using its retained destination-origin
@@ -218,19 +220,19 @@ theorem
   AreaRequest.normalized_endpoint_error_bound
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) :
     allocated.NormalizedEndpointErrorBound firstLeft firstRight secondLeft secondRight left right := by
   dsimp only
     [AreaRequest.NormalizedEndpointErrorBound]
-  have origin : PrimitivePoint.Bounded (⟨(allocated.trace.rightReadings firstRight.normalize.anchors
+  have origin : Bounded (⟨(allocated.trace.rightReadings firstRight.normalize.anchors
     firstRight.normalize.offsets).values 0,
       (allocated.trace.rightReadings secondRight.normalize.anchors secondRight.normalize.offsets).values 0⟩ :
       Topology.Polygon.Stokes.PrimitivePoint) 4 := by
@@ -240,7 +242,7 @@ theorem
     have secondOrigin := HorizontalCrossing.normalized_right_origin_bound joined allocated.trace
       (GridPrimitiveAccuracy.atIndex allocated.accuracy.secondGrid stage (allocated.accuracy.second_le.trans later))
         secondRight
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstOrigin secondOrigin
+    rw [Basic.normSq_eq_canonical] at firstOrigin secondOrigin
     exact ⟨firstOrigin, secondOrigin⟩
   have estimate := allocated.accuracy.request.endpointIncrementError_bound (allocated.accuracy.request_le.trans later)
     firstLeft.normalize firstRight.normalize secondLeft.normalize secondRight.normalize
@@ -255,28 +257,28 @@ def
   AreaRequest.NormalizedEndpointErrorAccurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) < tolerance
+    Basic.normSq (left.endpointIncrementError right) < tolerance
 
 /-- The original contact budget pays the actual normalized endpoint error at every retained later stage. -/
 theorem
   AreaRequest.normalized_endpoint_error_accurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) :
@@ -290,16 +292,16 @@ def
   AreaRequest.NormalizedJumpAccurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((left.originalArea - right.originalArea) - left.endpointJump right) < 4 * tolerance
 
 /-- The original normalized area comparison and paid endpoint error bound the actual retained jump discrepancy. -/
@@ -307,12 +309,12 @@ theorem
   AreaRequest.normalized_jump_accurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) :
@@ -327,16 +329,16 @@ def
   AreaRequest.EndpointErrorBoundOfZero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.LeftSample firstLeft secondLeft)
     (right : allocated.RightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) ≤
+    Basic.normSq (left.endpointIncrementError right) ≤
       16 * allocated.accuracy.request.budget.error
 
 /-- Zero original destination anchors give the retained contact-budget bound on the actual endpoint error. -/
@@ -344,12 +346,12 @@ theorem
   AreaRequest.endpoint_error_bound_of_zero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (firstZero : firstRight.corners.values 0 = 0) (secondZero : secondRight.corners.values 0 = 0)
     (left : allocated.LeftSample firstLeft secondLeft)
@@ -357,7 +359,7 @@ theorem
     allocated.EndpointErrorBoundOfZero firstLeft firstRight secondLeft secondRight left right := by
   dsimp only
     [AreaRequest.EndpointErrorBoundOfZero]
-  have origin : PrimitivePoint.Bounded (⟨(allocated.trace.rightReadings firstRight.anchors firstRight.offsets).values 0,
+  have origin : Bounded (⟨(allocated.trace.rightReadings firstRight.anchors firstRight.offsets).values 0,
       (allocated.trace.rightReadings secondRight.anchors secondRight.offsets).values 0⟩ :
       Topology.Polygon.Stokes.PrimitivePoint) 4 := by
     have firstOrigin := HorizontalCrossing.right_origin_bound_of_zero joined allocated.trace
@@ -366,7 +368,7 @@ theorem
     have secondOrigin := HorizontalCrossing.right_origin_bound_of_zero joined allocated.trace
       (GridPrimitiveAccuracy.atIndex allocated.accuracy.secondGrid stage (allocated.accuracy.second_le.trans later))
         secondRight secondZero
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstOrigin secondOrigin
+    rw [Basic.normSq_eq_canonical] at firstOrigin secondOrigin
     exact ⟨firstOrigin, secondOrigin⟩
   have estimate := allocated.accuracy.request.endpointIncrementError_bound (allocated.accuracy.request_le.trans later)
     firstLeft firstRight secondLeft secondRight
@@ -381,28 +383,28 @@ def
   AreaRequest.EndpointErrorAccurateOfZero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.LeftSample firstLeft secondLeft)
     (right : allocated.RightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) < tolerance
+    Basic.normSq (left.endpointIncrementError right) < tolerance
 
 /-- The original contact budget pays the actual endpoint error when both retained destination anchors vanish. -/
 theorem
   AreaRequest.endpoint_error_accurate_of_zero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (firstZero : firstRight.corners.values 0 = 0) (secondZero : secondRight.corners.values 0 = 0)
     (left : allocated.LeftSample firstLeft secondLeft)
@@ -418,16 +420,16 @@ def
   AreaRequest.JumpAccurateOfZero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.LeftSample firstLeft secondLeft)
     (right : allocated.RightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((left.originalArea - right.originalArea) - left.endpointJump right) < 4 * tolerance
 
 /-- The original area comparison and paid endpoint error bound the retained jump discrepancy when both destination
@@ -436,12 +438,12 @@ theorem
   AreaRequest.jump_accurate_of_zero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (firstZero : firstRight.corners.values 0 = 0) (secondZero : secondRight.corners.values 0 = 0)
     (left : allocated.LeftSample firstLeft secondLeft)
@@ -457,19 +459,19 @@ end HorizontalCrossing
 namespace VerticalCrossing
 variable {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
   {firstUpper lastUpper : Bool} {joined :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedSides.VerticalCrossing request first nextPosition
+    LiftedSides.VerticalCrossing request first nextPosition
     firstUpper lastUpper}
-  {firstDifferential secondDifferential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+  {firstDifferential secondDifferential : Differential genus}
     {firstParent secondParent : Fin 2}
-  {tolerance : Purelib.Data.Rat.Fraction.Rational} {floor : Nat}
+  {tolerance : Rational} {floor : Nat}
 
 /-- The exact retained left vertical endpoint sample on the original normalized primitive bank. -/
 def
   AreaRequest.NormalizedLeftSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.leftReadings firstLeft.normalize.anchors firstLeft.normalize.offsets).values vertex,
@@ -480,9 +482,9 @@ def
   AreaRequest.NormalizedRightSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.rightReadings firstRight.normalize.anchors firstRight.normalize.offsets).values vertex,
@@ -493,8 +495,8 @@ def
   AreaRequest.LeftSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.leftReadings firstLeft.anchors firstLeft.offsets).values vertex,
@@ -505,9 +507,9 @@ def
   AreaRequest.RightSample
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage) :=
   CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.rightReadings firstRight.anchors firstRight.offsets).values vertex,
@@ -518,16 +520,16 @@ def
   AreaRequest.NormalizedEndpointErrorBound
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) ≤
+    Basic.normSq (left.endpointIncrementError right) ≤
       16 * allocated.accuracy.request.budget.error
 
 /-- The paid original request bounds the actual normalized endpoint error using its retained destination-origin
@@ -536,19 +538,19 @@ theorem
   AreaRequest.normalized_endpoint_error_bound
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) :
     allocated.NormalizedEndpointErrorBound firstLeft firstRight secondLeft secondRight left right := by
   dsimp only
     [AreaRequest.NormalizedEndpointErrorBound]
-  have origin : PrimitivePoint.Bounded (⟨(allocated.trace.rightReadings firstRight.normalize.anchors
+  have origin : Bounded (⟨(allocated.trace.rightReadings firstRight.normalize.anchors
     firstRight.normalize.offsets).values 0,
       (allocated.trace.rightReadings secondRight.normalize.anchors secondRight.normalize.offsets).values 0⟩ :
       Topology.Polygon.Stokes.PrimitivePoint) 4 := by
@@ -558,7 +560,7 @@ theorem
     have secondOrigin := VerticalCrossing.normalized_right_origin_bound joined allocated.trace
       (GridPrimitiveAccuracy.atIndex allocated.accuracy.secondGrid stage (allocated.accuracy.second_le.trans later))
         secondRight
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstOrigin secondOrigin
+    rw [Basic.normSq_eq_canonical] at firstOrigin secondOrigin
     exact ⟨firstOrigin, secondOrigin⟩
   have estimate := allocated.accuracy.request.endpointIncrementError_bound (allocated.accuracy.request_le.trans later)
     firstLeft.normalize firstRight.normalize secondLeft.normalize secondRight.normalize
@@ -573,28 +575,28 @@ def
   AreaRequest.NormalizedEndpointErrorAccurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) < tolerance
+    Basic.normSq (left.endpointIncrementError right) < tolerance
 
 /-- The original contact budget pays the actual normalized endpoint error at every retained later stage. -/
 theorem
   AreaRequest.normalized_endpoint_error_accurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) :
@@ -608,16 +610,16 @@ def
   AreaRequest.NormalizedJumpAccurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((left.originalArea - right.originalArea) - left.endpointJump right) < 4 * tolerance
 
 /-- The original normalized area comparison and paid endpoint error bound the actual retained jump discrepancy. -/
@@ -625,12 +627,12 @@ theorem
   AreaRequest.normalized_jump_accurate
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.NormalizedLeftSample firstLeft secondLeft)
     (right : allocated.NormalizedRightSample firstRight secondRight) :
@@ -645,16 +647,16 @@ def
   AreaRequest.EndpointErrorBoundOfZero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.LeftSample firstLeft secondLeft)
     (right : allocated.RightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) ≤
+    Basic.normSq (left.endpointIncrementError right) ≤
       16 * allocated.accuracy.request.budget.error
 
 /-- Zero original destination anchors give the retained contact-budget bound on the actual endpoint error. -/
@@ -662,12 +664,12 @@ theorem
   AreaRequest.endpoint_error_bound_of_zero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (firstZero : firstRight.corners.values 0 = 0) (secondZero : secondRight.corners.values 0 = 0)
     (left : allocated.LeftSample firstLeft secondLeft)
@@ -675,7 +677,7 @@ theorem
     allocated.EndpointErrorBoundOfZero firstLeft firstRight secondLeft secondRight left right := by
   dsimp only
     [AreaRequest.EndpointErrorBoundOfZero]
-  have origin : PrimitivePoint.Bounded (⟨(allocated.trace.rightReadings firstRight.anchors firstRight.offsets).values 0,
+  have origin : Bounded (⟨(allocated.trace.rightReadings firstRight.anchors firstRight.offsets).values 0,
       (allocated.trace.rightReadings secondRight.anchors secondRight.offsets).values 0⟩ :
       Topology.Polygon.Stokes.PrimitivePoint) 4 := by
     have firstOrigin := VerticalCrossing.right_origin_bound_of_zero joined allocated.trace
@@ -684,7 +686,7 @@ theorem
     have secondOrigin := VerticalCrossing.right_origin_bound_of_zero joined allocated.trace
       (GridPrimitiveAccuracy.atIndex allocated.accuracy.secondGrid stage (allocated.accuracy.second_le.trans later))
         secondRight secondZero
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstOrigin secondOrigin
+    rw [Basic.normSq_eq_canonical] at firstOrigin secondOrigin
     exact ⟨firstOrigin, secondOrigin⟩
   have estimate := allocated.accuracy.request.endpointIncrementError_bound (allocated.accuracy.request_le.trans later)
     firstLeft firstRight secondLeft secondRight
@@ -699,28 +701,28 @@ def
   AreaRequest.EndpointErrorAccurateOfZero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.LeftSample firstLeft secondLeft)
     (right : allocated.RightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) < tolerance
+    Basic.normSq (left.endpointIncrementError right) < tolerance
 
 /-- The original contact budget pays the actual endpoint error when both retained destination anchors vanish. -/
 theorem
   AreaRequest.endpoint_error_accurate_of_zero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (firstZero : firstRight.corners.values 0 = 0) (secondZero : secondRight.corners.values 0 = 0)
     (left : allocated.LeftSample firstLeft secondLeft)
@@ -736,16 +738,16 @@ def
   AreaRequest.JumpAccurateOfZero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat}
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (left : allocated.LeftSample firstLeft secondLeft)
     (right : allocated.RightSample firstRight secondRight) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((left.originalArea - right.originalArea) - left.endpointJump right) < 4 * tolerance
 
 /-- The original area comparison and paid endpoint error bound the retained jump discrepancy when both destination
@@ -754,12 +756,12 @@ theorem
   AreaRequest.jump_accurate_of_zero
     (allocated : AreaRequest joined firstDifferential secondDifferential firstParent secondParent tolerance floor)
     {stage : Nat} (later : allocated.accuracy.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (firstLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) firstDifferential stage)
+    (firstRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
+    (secondLeft : DomainPrimitives ((domains.get firstPosition).domain firstSheet) secondDifferential
       stage)
-    (secondRight : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
+    (secondRight : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet)
       secondDifferential stage)
     (firstZero : firstRight.corners.values 0 = 0) (secondZero : secondRight.corners.values 0 = 0)
     (left : allocated.LeftSample firstLeft secondLeft)

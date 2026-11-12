@@ -82,18 +82,18 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyBlocks
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {index : Nat} {box : Rational.Box} {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {index : Nat} {box : Rational.Box} {sample : Cap.Primitives.Sample cap
     differential index box}
 
 set_option genInjectivity false in
 /-- A cached odd-cap chart energy with its original path, radial endpoints and paid error.
 
 Keep the actual sample, depth, endpoint evaluations, finite path summary and imaginary-energy lower bound. -/
-structure EnergyBlock (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
+structure EnergyBlock (sample : Cap.Primitives.Sample cap differential index box)
     (depth : Nat) (target energyTarget : Normalization.InverseRootPolynomial.Coordinate) where
   /-- The original first retained root-coordinate reading. -/ firstRoot : Normalization.InverseRootPolynomial.Gaussian
   /-- The original final retained root-coordinate reading. -/ lastRoot : Normalization.InverseRootPolynomial.Gaussian
@@ -124,7 +124,7 @@ structure EnergyBlock (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.S
   /-- The residual is exactly fan energy minus the original path, endpoint and radial boundary expression. -/ error_eq :
     error = energy - (-summary.area - Path.BoundaryRibbon.area firstValue lastValue + lastRadial - firstRadial)
   /-- The retained residual squared norm is at most the original comparison target. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq error ≤ target
+    Gaussian.Norm.Basic.normSq error ≤ target
 
 constructive_injectivity EnergyBlock
 
@@ -132,27 +132,27 @@ namespace EnergyBlock
 
 variable {count : Nat} {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target energyTarget :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target energyTarget :
     Normalization.InverseRootPolynomial.Coordinate} {floor energyFloor : Nat}
   {depth stage minimum energyDepth : Nat} {source :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest comparison owners target floor} {charts :
-    Hyperelliptic.Charts.Reciprocal.Disk.VertexTree.ChartMesh request.mesh sample minimum}
-  {original : Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source sample depth}
+    UniformReciprocalPrimitives.SourcePrimitive data index}
+  {request : ChartAreaRequest.AreaRequest comparison owners target floor} {charts :
+    VertexTree.ChartMesh request.mesh sample minimum}
+  {original : ParentCells.ComparedCell comparison source sample depth}
 
 /-- Package the original chart evaluation and requested fan energy at the retained common depth. -/
-@[expose] def build (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest.Evaluation charts
+@[expose] def build (evaluated : ChartAreaRequest.AreaRequest.Evaluation charts
   original stage)
-    (energy : Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.RequestedEnergy evaluated
+    (energy : ChartEnergy.AreaRequest.Evaluation.RequestedEnergy evaluated
       energyTarget energyFloor)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (sameDepth :
+    (branch : HyperellipticReciprocal.originOrder curve = 1) (sameDepth :
       energy.request.depth = energyDepth) :
-    Hyperelliptic.Charts.Reciprocal.Disk.EnergyBlocks.EnergyBlock sample energyDepth target energyTarget := by
+    EnergyBlock sample energyDepth target energyTarget := by
   let firstRadial := RootContinuation.RootRadialGeometry.radialArea sample.primitive.value.eval energyDepth
     evaluated.vertices.first.root.coordinate
   let terminalRadial := RootContinuation.RootRadialGeometry.radialArea sample.primitive.value.eval energyDepth
@@ -161,7 +161,7 @@ variable {count : Nat} {parent : Integration.PreparedSubdivisionModelCore.Center
     evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
     terminalRadial - firstRadial)
   have estimate :=
-    Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergyBoundary.AreaRequest.Evaluation.RequestedEnergy.chart_boundary_close
+    ChartEnergyBoundary.AreaRequest.Evaluation.RequestedEnergy.chart_boundary_close
     energy branch
   rw [sameDepth] at estimate
   refine ⟨evaluated.vertices.first.root.coordinate, evaluated.vertices.last.root.coordinate,

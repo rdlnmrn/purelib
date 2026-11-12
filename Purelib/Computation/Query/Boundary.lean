@@ -49,6 +49,50 @@ same query. -/
   | some reply => reply
   | none => fallback query
 
+/-- A successful finite lookup returns an actual retained exchange at that same question. -/
+theorem lookup_eq_some_member [DecidableEq Query] (trace : Basic.Trace Query Reply)
+    (query : Query) (reply : Reply) (found : lookup trace query = some reply) :
+    ∃ entry ∈ trace, entry.query = query ∧ entry.reply = reply := by
+  induction trace with
+  | nil => nomatch found
+  | cons head rest induction =>
+      unfold lookup at found
+      by_cases same : query = head.query
+      · rewrite [if_pos same] at found
+        have replyEq : head.reply = reply :=
+          congrArg (fun result : Option Reply => result.getD reply) found
+        exact ⟨head, List.Mem.head rest, same.symm, replyEq⟩
+      · rewrite [if_neg same] at found
+        rcases induction found with ⟨entry, member, queryEq, replyEq⟩
+        exact ⟨entry, List.Mem.tail head member, queryEq, replyEq⟩
+
+/-- Consistent repeated exchanges make lookup recover every recorded reply without an original oracle.
+
+The supplied finite consistency certificate compares the complete retained
+replies of identical questions. The first occurrence chosen by lookup
+therefore equals each later occurrence's reply.
+-/
+theorem lookup_of_consistent [DecidableEq Query] (trace : Basic.Trace Query Reply)
+    (consistent : ∀ left ∈ trace, ∀ right ∈ trace, left.query = right.query → left.reply = right.reply)
+    (entry : Basic.Exchange Query Reply) (member : entry ∈ trace) :
+    lookup trace entry.query = some entry.reply := by
+  induction trace with
+  | nil => nomatch member
+  | cons head rest induction =>
+      unfold lookup
+      by_cases same : entry.query = head.query
+      · rewrite [if_pos same]
+        exact congrArg some (consistent head (List.Mem.head rest) entry member same.symm)
+      · rewrite [if_neg same]
+        have tailMember : entry ∈ rest := by
+          rcases Membership.mem_cons.mp member with equal | tail
+          · exact (same (congrArg Basic.Exchange.query equal)).elim
+          · exact tail
+        exact induction
+          (fun left leftMember right rightMember equal =>
+            consistent left (List.Mem.tail head leftMember) right (List.Mem.tail head rightMember) equal)
+          tailMember
+
 /-- Lookup recovers the reply of any entry in an oracle-consistent trace.
 
 Although lookup chooses the first occurrence, the agreement hypothesis forces every occurrence of that query to have the

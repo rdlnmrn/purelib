@@ -93,15 +93,15 @@ open Purelib
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
-    Fraction.Rational} (allocated : Hyperelliptic.Meshes.Newton.AllHoles.FineAreaRequests.FamilyFineAreaRequest
+    Fraction.Rational} (allocated : AllHoles.FineAreaRequests.FamilyFineAreaRequest
     preparation target radius)
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {lifted :
     Meshes.LiftedPuncturedGrid allocated.family.single.grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
     allocated.family.single.grid.faces.regulars} {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions
     observations allocated.family.single.grid}
   {coarse : (sheet : Fin 2) → Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
@@ -112,7 +112,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 
 namespace SynchronizedSurfaceRequests
 
-variable {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision allocated.family.single.grid lifted}
+variable {excision : AllHoles.Excision.AllHoleExcision allocated.family.single.grid lifted}
   {requests : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed error} {traces :
     Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces requests}
   {position : Fin allocated.family.single.grid.faces.regulars.length} {side : Meshes.GridLiftedDualSteps.GridSide}
@@ -123,15 +123,15 @@ namespace RemainingBandRequest
 
 variable {floor : Nat} {allowance : Fraction.Rational}
 
-variable {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus}
+variable {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+  Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {differential :
+    Differentials.Basic.Differential genus}
 
 /-- Pay the remaining-band error against the acquired canonical component bounds.
 The estimate retains the canonical joining polygons and their original endpoint corrections. -/
 theorem canonical_energy_upper
-    (request : Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
+    (request : BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
       (grid := allocated.family.single.grid) excision traces floor)
     (later : request.index ≤ stage) (samples :
       Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests traces cache
@@ -144,42 +144,42 @@ theorem canonical_energy_upper
     (positive : 0 < allowance)
     (targetLe : target ≤
       BoundaryBudget.ProtectedObservations.SynchronizedSurfaceRequests.remainingBoundaryTarget
-      genus (Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation) allowance)
-    (readings : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+      genus (Annulus.AreaRequests.NewtonPreparation.outerCount preparation) allowance)
+    (readings : (row : Fin genus) → PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
       (cache.get row) lifted.mesh)
     {componentAllowance : Fraction.Rational}
     (bounded : ∀ component ∈
       (PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
       (lifted := lifted) regular domains differential).components,
       (component.prepared.observedSides samples -
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
+        PuncturedGrid.Exterior.Basis.EndpointComponents.componentCachedEndpoints component cache
         coefficients +
         Path.PairedIncrementArea.area (component.program.indexed.map
           (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-            Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+            PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
               edge)))).im / 4 ≤
         componentAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :
 
       (CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
-      excision samples neighbors + Data.Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word =>
+      excision samples neighbors + Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word =>
       Path.PairedIncrementArea.area (word.map (fun edge => Path.ConjugatePathReadback.conjugateDiagonal
         (FiniteSum.Fin.sumFin fun row => coefficients row *
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
           edge)))))).im / 4 ≤
 
         (((PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
         (lifted := lifted) regular domains differential).components.length : Fraction.Rational) *
         componentAllowance + allowance) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  let joining := Data.Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word =>
+  let joining := Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word =>
       Path.PairedIncrementArea.area (word.map (fun edge => Path.ConjugatePathReadback.conjugateDiagonal
         (FiniteSum.Fin.sumFin fun row => coefficients row *
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
           edge)))))
   have comparison :=
     ExteriorComparison.SynchronizedSurfaceRequests.RemainingBandRequest.exterior_energy_lower
     allocated request later samples faces neighbors positive targetLe joining
   have upper :=
-    Hyperelliptic.Meshes.Newton.Basis.ObservationBoundary.AllSurfacePreparation.canonical_observation_energy_upper
+    Basis.ObservationBoundary.AllSurfacePreparation.canonical_observation_energy_upper
     samples neighbors readings bounded
   rw [Gaussian.Basic.add_comm joining
     (CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered

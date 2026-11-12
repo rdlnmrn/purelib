@@ -63,22 +63,22 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalControlled
   CoupledLocalPlan)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalBoundaryArea
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : CenteredEdge curve differential} {patch :
+    PreparedPatch parent} {data :
+    Data patch count}
 
 set_option genInjectivity false in
 /-- The original controlled integral, reciprocal primitive and complete area requests sharing one source cache.
 
 Exact stage, primitive and total identities retain the common original computation while keeping the five error targets
 separate. -/
-structure CoupledLocalAreaRequest (cover : UniformReciprocalCover.Cover data) (sourceTarget reciprocalTarget
-  coefficientTarget areaTarget totalTarget : InverseRootPolynomial.Coordinate)
+structure CoupledLocalAreaRequest (cover : Cover data) (sourceTarget reciprocalTarget
+  coefficientTarget areaTarget totalTarget : Coordinate)
     (minimum depth : Nat) where
   /-- The retained original source and reciprocal primitive comparison request. -/ compared :
-    PreparedReciprocalControlledRequests.CoupledLocalRequest cover sourceTarget reciprocalTarget coefficientTarget
+    CoupledLocalRequest cover sourceTarget reciprocalTarget coefficientTarget
     minimum
   /-- The complete area request built from those same original primitive caches. -/ area : Cover.AreaRequest cover depth
     areaTarget
@@ -99,61 +99,61 @@ set_option genInjectivity false in
 /-- A numerical plan paying original controlled primitive, complete area and total-discrepancy targets before sampling.
 
 The selected common stage extends the retained primitive plan and preserves its original minimum floor. -/
-structure CoupledLocalAreaPlan (data : UniformReciprocalModels.Data patch count)
-    (sourceTarget reciprocalTarget coefficientTarget areaTarget totalTarget : InverseRootPolynomial.Coordinate) (minimum
+structure CoupledLocalAreaPlan (data : Data patch count)
+    (sourceTarget reciprocalTarget coefficientTarget areaTarget totalTarget : Coordinate) (minimum
       : Nat) where
   /-- The retained coupled source and reciprocal primitive accuracy plan. -/ primitive :
-    PreparedReciprocalControlledRequests.CoupledLocalPlan data sourceTarget reciprocalTarget coefficientTarget minimum
+    CoupledLocalPlan data sourceTarget reciprocalTarget coefficientTarget minimum
   /-- The common selected polynomial stage paying primitive, area and total obligations. -/ index : Nat
   /-- The common stage extends the retained original primitive-plan stage. -/ local_le : primitive.index ≤ index
   /-- The selected common stage pays the complete original boundary-area error target. -/ area_accurate :
-    Geometric.Basic.quarterRadius (ReciprocalBoundaryArea.Data.boundaryAreaScale data) index < areaTarget
+    quarterRadius (Data.boundaryAreaScale data) index < areaTarget
   /-- The retained original total-discrepancy bound pays its separate target. -/ total_accurate :
-    Geometric.Basic.quarterRadius (UniformReciprocalPrimitives.Data.errorScale data) index < totalTarget
+    quarterRadius (Data.errorScale data) index < totalTarget
 
 constructive_injectivity CoupledLocalAreaPlan
 
 namespace CoupledLocalAreaPlan
 
 /-- Select one common stage extending the original primitive plan and paying separate area and total targets. -/
-@[expose] def build (data : UniformReciprocalModels.Data patch count) (sourceTarget reciprocalTarget coefficientTarget
-  areaTarget totalTarget : InverseRootPolynomial.Coordinate)
+@[expose] def build (data : Data patch count) (sourceTarget reciprocalTarget coefficientTarget
+  areaTarget totalTarget : Coordinate)
     (sourcePositive : 0 < sourceTarget) (reciprocalPositive : 0 < reciprocalTarget)
     (coefficientPositive : 0 < coefficientTarget) (areaPositive : 0 < areaTarget) (totalPositive : 0 < totalTarget)
-    (minimum : Nat) : Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalAreaRequests.CoupledLocalAreaPlan data
+    (minimum : Nat) : CoupledLocalAreaPlan data
       sourceTarget reciprocalTarget coefficientTarget areaTarget totalTarget minimum := by
   let primitive := CoupledLocalPlan.build data sourceTarget reciprocalTarget coefficientTarget
     sourcePositive reciprocalPositive coefficientPositive minimum
-  let areaIndex := Search.firstQuarterBelow (ReciprocalBoundaryArea.Data.boundaryAreaScale data) 0 areaTarget
-  let totalIndex := Search.firstQuarterBelow (UniformReciprocalPrimitives.Data.errorScale data) 0 totalTarget
+  let areaIndex := Search.firstQuarterBelow (Data.boundaryAreaScale data) 0 areaTarget
+  let totalIndex := Search.firstQuarterBelow (Data.errorScale data) 0 totalTarget
   let index := max primitive.index (max areaIndex totalIndex)
   exact ⟨primitive, index, Data.Nat.Order.le_max_left _ _,
-    (quarterRadius_antitone (ReciprocalBoundaryArea.Data.boundaryAreaScale_nonnegative data)
+    (quarterRadius_antitone (Data.boundaryAreaScale_nonnegative data)
       ((Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_right _ _))).trans_lt
-        (Search.firstQuarterBelow_accurate _ (ReciprocalBoundaryArea.Data.boundaryAreaScale_nonnegative data) 0 _
+        (Search.firstQuarterBelow_accurate _ (Data.boundaryAreaScale_nonnegative data) 0 _
           areaPositive),
-    (quarterRadius_antitone (UniformReciprocalPrimitives.Data.errorScale_nonnegative data)
+    (quarterRadius_antitone (Data.errorScale_nonnegative data)
       ((Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_right _ _))).trans_lt
-        (Search.firstQuarterBelow_accurate _ (UniformReciprocalPrimitives.Data.errorScale_nonnegative data) 0 _
+        (Search.firstQuarterBelow_accurate _ (Data.errorScale_nonnegative data) 0 _
           totalPositive)⟩
 
 variable {sourceTarget reciprocalTarget coefficientTarget areaTarget totalTarget :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+  Coordinate} {minimum : Nat}
 
 /-- Materialize the retained source and reciprocal cells at the shared stage, then build their full fine paths from
 those exact cached primitives. -/
 @[expose] def evaluate (plan :
-  Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalAreaRequests.CoupledLocalAreaPlan data sourceTarget
+  CoupledLocalAreaPlan data sourceTarget
   reciprocalTarget coefficientTarget areaTarget totalTarget minimum)
-    (cover : UniformReciprocalCover.Cover data) (proper : parent.edge.left.parameter <
+    (cover : Cover data) (proper : parent.edge.left.parameter <
       parent.edge.request.endpoint.parameter)
     (index depth : Nat) (later : plan.index ≤ index) :
-    Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalAreaRequests.CoupledLocalAreaRequest cover sourceTarget
+    CoupledLocalAreaRequest cover sourceTarget
       reciprocalTarget coefficientTarget areaTarget totalTarget minimum depth := by
   let compared := plan.primitive.evaluate cover proper (SourcePrimitive.build data index) (plan.local_le.trans later)
-  have accurate : Geometric.Basic.quarterRadius (ReciprocalBoundaryArea.Data.boundaryAreaScale data)
+  have accurate : quarterRadius (Data.boundaryAreaScale data)
     compared.reciprocal.index < areaTarget :=
-    (quarterRadius_antitone (ReciprocalBoundaryArea.Data.boundaryAreaScale_nonnegative data) later).trans_lt
+    (quarterRadius_antitone (Data.boundaryAreaScale_nonnegative data) later).trans_lt
       plan.area_accurate
   let area := Cover.AreaRequest.ofPrimitives cover compared.reciprocal.source compared.reciprocal.cells depth areaTarget
     accurate
@@ -162,14 +162,14 @@ those exact cached primitives. -/
   · exact (AreaCells.build_right_total compared.reciprocal.source depth compared.reciprocal.cells).trans
       compared.reciprocal.reciprocalIncrement_eq.symm
   · rw [compared.reciprocal.error_eq]
-    exact (quarterRadius_antitone (UniformReciprocalPrimitives.Data.errorScale_nonnegative data)
+    exact (quarterRadius_antitone (Data.errorScale_nonnegative data)
       later).trans_lt plan.total_accurate
 
 /-- The materialized original area request uses exactly the supplied shared polynomial stage. -/
 theorem evaluate_index (plan :
-  Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalAreaRequests.CoupledLocalAreaPlan data sourceTarget
+  CoupledLocalAreaPlan data sourceTarget
   reciprocalTarget coefficientTarget areaTarget totalTarget minimum)
-    (cover : UniformReciprocalCover.Cover data) (proper : parent.edge.left.parameter <
+    (cover : Cover data) (proper : parent.edge.left.parameter <
       parent.edge.request.endpoint.parameter)
     (index depth : Nat) (later : plan.index ≤ index) : (plan.evaluate cover proper index depth later).area.index = index
       := rfl
@@ -179,14 +179,14 @@ end CoupledLocalAreaPlan
 namespace CoupledLocalAreaRequest
 
 /-- Select and materialize the original coupled primitive and area caches at their shared paid stage. -/
-@[expose] def build (cover : UniformReciprocalCover.Cover data) (sourceTarget reciprocalTarget coefficientTarget
-  areaTarget totalTarget : InverseRootPolynomial.Coordinate)
+@[expose] def build (cover : Cover data) (sourceTarget reciprocalTarget coefficientTarget
+  areaTarget totalTarget : Coordinate)
     (sourcePositive : 0 < sourceTarget) (reciprocalPositive : 0 < reciprocalTarget)
     (coefficientPositive : 0 < coefficientTarget) (areaPositive : 0 < areaTarget) (totalPositive : 0 < totalTarget)
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum depth : Nat) :
-    Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalAreaRequests.CoupledLocalAreaRequest cover sourceTarget
+    CoupledLocalAreaRequest cover sourceTarget
       reciprocalTarget coefficientTarget areaTarget totalTarget minimum depth :=
-  let plan := Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalAreaRequests.CoupledLocalAreaPlan.build data
+  let plan := CoupledLocalAreaPlan.build data
     sourceTarget reciprocalTarget coefficientTarget areaTarget totalTarget
     sourcePositive reciprocalPositive coefficientPositive areaPositive totalPositive minimum
   plan.evaluate cover proper plan.index depth le_rfl

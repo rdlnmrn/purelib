@@ -49,23 +49,23 @@ that lets later gcd splits retain pairwise coprimality.
 The retained entry list carries the original evaluation and degree identities and the same external coprimality
 invariant. -/
 structure Insertion (new : Squarefree.Part) (source : List
-  Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry) where
+  Basic.BasisEntry) where
   /-- The resulting retained multiplicity basis after inserting the new squarefree occurrence. -/ entries : List
-    Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry
-  /-- The resulting parts are pairwise coprime. -/ pairwise : Dense.Gaussian.Multiplicity.Basis.Basic.BasisPairwise
+    Basic.BasisEntry
+  /-- The resulting parts are pairwise coprime. -/ pairwise : Basic.BasisPairwise
     entries
   /-- The resulting weighted evaluation product equals the source product times the inserted polynomial value. -/
     valueIdentity : ∀ point : Gaussian.Basic.Canonical,
-    Dense.Gaussian.Multiplicity.Basis.Basic.basisValue entries point =
-      Dense.Gaussian.Multiplicity.Basis.Basic.basisValue source point * new.polynomial.eval point
+    Basic.basisValue entries point =
+      Basic.basisValue source point * new.polynomial.eval point
   /-- The resulting weighted degree is the source weighted degree plus the inserted polynomial degree. -/ degreeIdentity
-    : Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree entries =
-    Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree source + new.polynomial.natDegree
+    : Basic.basisDegree entries =
+    Basic.basisDegree source + new.polynomial.natDegree
   /-- A part coprime to the inserted part and every source entry remains coprime to every resulting entry. -/
     preservesExternal : ∀ (external : Squarefree.Part),
     CoprimeRelation external new →
-    Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime external source →
-    Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime external entries
+    Basic.AllCoprime external source →
+    Basic.AllCoprime external entries
 
 constructive_injectivity Insertion
 
@@ -77,8 +77,8 @@ the tail.  Recursion is solely on the finite source list.
 The original finite list recursion retains every coprime head and uses the same common-gcd factors, multiplicities and
 residual insertion when overlap occurs. -/
 @[expose] def insertPart : (new : Squarefree.Part) → (source : List
-  Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry) →
-    Dense.Gaussian.Multiplicity.Basis.Basic.BasisPairwise source → Insertion new source
+  Basic.BasisEntry) →
+    Basic.BasisPairwise source → Insertion new source
   | new, [], _ => by
       exact
         { entries :=
@@ -88,11 +88,11 @@ residual insertion when overlap occurs. -/
           pairwise := Data.List.Pairwise.pairwise_singleton _ _
           valueIdentity := by
             intro point
-            simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisValue, pow_one, mul_one, one_mul,
+            simp only [Basic.basisValue, pow_one, mul_one, one_mul,
               -eq_self, -iff_self]
             rfl
           degreeIdentity := by
-            simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree, Nat.one_mul, Nat.add_zero,
+            simp only [Basic.basisDegree, Nat.one_mul, Nat.add_zero,
               Nat.zero_add, -eq_self, -iff_self]
             rfl
           preservesExternal := by
@@ -102,17 +102,17 @@ residual insertion when overlap occurs. -/
             exact externalNew }
   | new, head :: tail, pairwise => by
       have pairwiseParts := List.pairwise_cons.mp pairwise
-      have headTail : Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime head.part tail := pairwiseParts.1
-      have tailPairwise : Dense.Gaussian.Multiplicity.Basis.Basic.BasisPairwise tail := pairwiseParts.2
-      match outcome : Dense.Gaussian.Coprime.Decision.coprimeOutcome
+      have headTail : Basic.AllCoprime head.part tail := pairwiseParts.1
+      have tailPairwise : Basic.BasisPairwise tail := pairwiseParts.2
+      match outcome : Coprime.Decision.coprimeOutcome
           new.polynomial head.part.polynomial (Or.inl new.nonzero) with
       | .coprime certificate =>
-          let recursive := Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Insert.insertPart new tail tailPairwise
+          let recursive := Insert.insertPart new tail tailPairwise
           have newHead : CoprimeRelation new head.part :=
-            Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelationOfCertificate certificate
+            CoprimeRelation.coprimeRelationOfCertificate certificate
           have headNew : CoprimeRelation head.part new :=
-            Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm newHead
-          have headRest : Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime head.part recursive.entries :=
+            CoprimeRelation.coprimeRelation_symm newHead
+          have headRest : Basic.AllCoprime head.part recursive.entries :=
             recursive.preservesExternal head.part headNew headTail
           exact
             { entries := head :: recursive.entries
@@ -120,11 +120,11 @@ residual insertion when overlap occurs. -/
                 ⟨headRest, recursive.pairwise⟩
               valueIdentity := by
                 intro point
-                simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisValue, -eq_self, -iff_self]
+                simp only [Basic.basisValue, -eq_self, -iff_self]
                 rw [recursive.valueIdentity point]
                 ring1
               degreeIdentity := by
-                simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree, -eq_self, -iff_self]
+                simp only [Basic.basisDegree, -eq_self, -iff_self]
                 rw [recursive.degreeIdentity]
                 ring1
               preservesExternal := by
@@ -145,46 +145,46 @@ residual insertion when overlap occurs. -/
               (common.result.degreeLeRight head.part.nonzero)
           let newFactor := new.toFactor newPositive
           let headFactor := head.part.toFactor headPositive
-          let split := Dense.Gaussian.Multiplicity.CommonSplit.commonSplit newFactor headFactor common
-          let recursive := Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Insert.insertPart split.leftRemainder
+          let split := CommonSplit.commonSplit newFactor headFactor common
+          let recursive := Insert.insertPart split.leftRemainder
             tail tailPairwise
-          let commonEntry : Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry :=
-            { part := (Dense.Gaussian.Squarefree.Part.Factor.toPart split.common)
+          let commonEntry : Basic.BasisEntry :=
+            { part := (Squarefree.Part.Factor.toPart split.common)
               multiplicity := head.multiplicity + 1
               multiplicityPositive := by omega }
-          let rightEntry : Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry :=
+          let rightEntry : Basic.BasisEntry :=
             { part := split.rightRemainder
               multiplicity := head.multiplicity
               multiplicityPositive := head.multiplicityPositive }
           have commonLeft : CoprimeRelation commonEntry.part
               split.leftRemainder :=
-            Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelationOfCertificate split.commonLeftCoprime
+            CoprimeRelation.coprimeRelationOfCertificate split.commonLeftCoprime
           have commonRight : CoprimeRelation commonEntry.part
               rightEntry.part :=
-            Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelationOfCertificate split.commonRightCoprime
+            CoprimeRelation.coprimeRelationOfCertificate split.commonRightCoprime
           have leftRight : CoprimeRelation split.leftRemainder
               rightEntry.part :=
-            Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelationOfCertificate split.remaindersCoprime
+            CoprimeRelation.coprimeRelationOfCertificate split.remaindersCoprime
           have rightLeft : CoprimeRelation rightEntry.part
-              split.leftRemainder := Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm leftRight
-          have commonTail : Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime commonEntry.part tail := by
+              split.leftRemainder := CoprimeRelation.coprimeRelation_symm leftRight
+          have commonTail : Basic.AllCoprime commonEntry.part tail := by
             intro entry member
             have headEntry := headTail entry member
-            have childEntry := Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_leftFactor
+            have childEntry := CoprimeRelation.coprimeRelation_leftFactor
               (parent := head.part) (other := entry.part)
               (child := commonEntry.part) headEntry
                 split.rightFactorization
             exact childEntry
-          have rightTail : Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime rightEntry.part tail := by
+          have rightTail : Basic.AllCoprime rightEntry.part tail := by
             intro entry member
             have headEntry := headTail entry member
-            exact Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_rightFactor
+            exact CoprimeRelation.coprimeRelation_rightFactor
               (parent := head.part) (other := entry.part)
               (child := rightEntry.part) headEntry
                 split.rightFactorization
-          have commonRest : Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime commonEntry.part recursive.entries :=
+          have commonRest : Basic.AllCoprime commonEntry.part recursive.entries :=
             recursive.preservesExternal commonEntry.part commonLeft commonTail
-          have rightRest : Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime rightEntry.part recursive.entries :=
+          have rightRest : Basic.AllCoprime rightEntry.part recursive.entries :=
             recursive.preservesExternal rightEntry.part rightLeft rightTail
           exact
             { entries := commonEntry :: rightEntry :: recursive.entries
@@ -200,10 +200,10 @@ residual insertion when overlap occurs. -/
               valueIdentity := by
                 intro point
                 have newValue :=
-                  Dense.Gaussian.Factorization.Identity.eval_factorization
+                  Factorization.Identity.eval_factorization
                     split.leftFactorization point
                 have headValue :=
-                  Dense.Gaussian.Factorization.Identity.eval_factorization
+                  Factorization.Identity.eval_factorization
                     split.rightFactorization point
                 have newValue' : new.polynomial.eval point =
                     split.common.polynomial.eval point *
@@ -213,9 +213,9 @@ residual insertion when overlap occurs. -/
                     split.common.polynomial.eval point *
                       split.rightRemainder.polynomial.eval point := by
                   exact headValue
-                simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisValue, -eq_self, -iff_self]
+                simp only [Basic.basisValue, -eq_self, -iff_self]
                 rw [recursive.valueIdentity point]
-                dsimp only [commonEntry, rightEntry, Dense.Gaussian.Squarefree.Part.Factor.toPart]
+                dsimp only [commonEntry, rightEntry, Squarefree.Part.Factor.toPart]
                 rw [newValue', headValue',
                   Algebra.Semiring.Normalization.product_pow, pow_succ]
                 ring1
@@ -230,41 +230,41 @@ residual insertion when overlap occurs. -/
                         split.rightRemainder.polynomial.natDegree =
                       head.part.polynomial.natDegree := by
                   exact split.rightDegreeSum
-                simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree, -eq_self, -iff_self]
+                simp only [Basic.basisDegree, -eq_self, -iff_self]
                 rw [recursive.degreeIdentity, ← newDegree, ← headDegree]
-                dsimp only [commonEntry, rightEntry, Dense.Gaussian.Squarefree.Part.Factor.toPart]
+                dsimp only [commonEntry, rightEntry, Squarefree.Part.Factor.toPart]
                 ring1
               preservesExternal := by
                 intro external externalNew externalSource entry member
                 have externalHead :
                     CoprimeRelation external head.part :=
                   externalSource head List.mem_cons_self
-                have externalTail : Dense.Gaussian.Multiplicity.Basis.Basic.AllCoprime external tail :=
+                have externalTail : Basic.AllCoprime external tail :=
                   fun tailEntry tailMember => externalSource tailEntry
                     (List.mem_cons_of_mem head tailMember)
                 have externalCommon :
                     CoprimeRelation external commonEntry.part := by
-                  apply Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm
-                  exact Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_leftFactor
+                  apply CoprimeRelation.coprimeRelation_symm
+                  exact CoprimeRelation.coprimeRelation_leftFactor
                     (parent := new) (other := external)
                     (child := commonEntry.part)
-                      (Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm externalNew)
+                      (CoprimeRelation.coprimeRelation_symm externalNew)
                         split.leftFactorization
                 have externalRight :
                     CoprimeRelation external rightEntry.part := by
-                  apply Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm
-                  exact Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_rightFactor
+                  apply CoprimeRelation.coprimeRelation_symm
+                  exact CoprimeRelation.coprimeRelation_rightFactor
                     (parent := head.part) (other := external)
                     (child := rightEntry.part)
-                      (Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm externalHead)
+                      (CoprimeRelation.coprimeRelation_symm externalHead)
                         split.rightFactorization
                 have externalLeft :
                     CoprimeRelation external split.leftRemainder := by
-                  apply Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm
-                  exact Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_rightFactor
+                  apply CoprimeRelation.coprimeRelation_symm
+                  exact CoprimeRelation.coprimeRelation_rightFactor
                     (parent := new) (other := external)
                     (child := split.leftRemainder)
-                      (Dense.Gaussian.Multiplicity.CoprimeRelation.coprimeRelation_symm externalNew)
+                      (CoprimeRelation.coprimeRelation_symm externalNew)
                         split.leftFactorization
                 rcases Data.List.Membership.mem_cons.mp member with rfl | member
                 · exact externalCommon

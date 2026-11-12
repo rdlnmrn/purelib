@@ -14,8 +14,10 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Basic
+public import Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Compute
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 open Purelib.Data
@@ -38,10 +40,25 @@ finite shifted coefficient-list calculation.
 
 namespace Purelib.Polynomial.Elimination.Separated.Scalar
 
+/-- Compute the original separated Sylvester scalar without its unused inverse matrix. -/
+def scalar (p : CoefficientPolynomial) : Dense.Basic.DensePolynomial Gaussian.Basic.Canonical :=
+  Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Compute.scaledScalar
+    (p.natDegree + p.natDegree) (Elimination.Separated.Sylvester.separatedSylvester p)
+
+/-- The scalar-only computation retains the exact original separated inverse scalar. -/
+theorem scalar_eq (p : CoefficientPolynomial) :
+    scalar p = (Elimination.Separated.Bezout.separatedData p).scalar :=
+  Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Compute.scaledScalar_eq _ _
+
 /-- Select a rational coordinate polynomial from the retained separated Sylvester scalar. -/
-def scalarEliminant (p :
-  CoefficientPolynomial) : (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  Dense.Gaussian.Components.Selection.selectedCoordinate (Elimination.Separated.Bezout.separatedData p).scalar
+def scalarEliminant (p : CoefficientPolynomial) : Dense.Basic.DensePolynomial Fraction.Rational :=
+  Components.Selection.selectedCoordinate (scalar p)
+
+/-- Scalar-only selection agrees with the original complete inverse's coordinate polynomial. -/
+theorem scalarEliminant_eq (p : CoefficientPolynomial) :
+    scalarEliminant p = Components.Selection.selectedCoordinate
+      (Elimination.Separated.Bezout.separatedData p).scalar :=
+  congrArg Components.Selection.selectedCoordinate (scalar_eq p)
 end Purelib.Polynomial.Elimination.Separated.Scalar
 
 end
@@ -66,8 +83,9 @@ namespace Purelib.Polynomial.Elimination.Separated.Scalar
 theorem scalarEliminant_nonzero (p :
   CoefficientPolynomial)
     (nonzero : p.isZero = false) :
-    (scalarEliminant p).isZero = false :=
-  Dense.Gaussian.Components.Selection.selectedCoordinate_nonzero _
+    (scalarEliminant p).isZero = false := by
+  rewrite [scalarEliminant_eq]
+  exact Components.Selection.selectedCoordinate_nonzero _
     (Elimination.Separated.Sylvester.separatedScalar_nonzero p nonzero)
 end Purelib.Polynomial.Elimination.Separated.Scalar
 
@@ -98,7 +116,7 @@ theorem scalar_ne_zero_of_eliminant_eval_ne_zero
       (Gaussian.Cast.Path.ofCoordinate parameter) ≠ 0 := by
   intro scalarZero
   apply nonzeroEvaluation
-  rw [scalarEliminant, Dense.Gaussian.Components.Selection.eval_selectedCoordinate]
+  rw [scalarEliminant_eq, Components.Selection.eval_selectedCoordinate]
   rw [scalarZero]
   split <;> rfl
 end Purelib.Polynomial.Elimination.Separated.Scalar
@@ -126,7 +144,12 @@ def normalizedScalar (polynomial :
   CoefficientPolynomial) : (Dense.Basic.DensePolynomial
     Gaussian.Basic.Canonical)
   :=
-  (Elimination.Separated.Bezout.separatedData (id polynomial)).scalar
+  scalar (id polynomial)
+
+/-- The normalized scalar is exactly the original separated inverse scalar. -/
+theorem normalizedScalar_eq (polynomial : CoefficientPolynomial) :
+    normalizedScalar polynomial = (Elimination.Separated.Bezout.separatedData polynomial).scalar :=
+  scalar_eq polynomial
 end Purelib.Polynomial.Elimination.Separated.Scalar
 
 end
@@ -151,11 +174,10 @@ Use the imaginary coordinate when its leading coefficient has zero real part, an
 def normalizedEliminant (polynomial :
   CoefficientPolynomial) :
     (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  if (Dense.Basic.DensePolynomial.leadingCoeff
-      (Elimination.Separated.Bezout.separatedData polynomial).scalar).re =
-      0 then
-    Dense.Gaussian.Components.imagPart (normalizedScalar polynomial)
-  else Dense.Gaussian.Components.realPart (normalizedScalar polynomial)
+  let retained := normalizedScalar polynomial
+  if retained.leadingCoeff.re = 0 then
+    Components.imagPart retained
+  else Components.realPart retained
 end Purelib.Polynomial.Elimination.Separated.Scalar
 
 end

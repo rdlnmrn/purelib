@@ -45,6 +45,8 @@ import Purelib.Topology.Polygon.Stokes
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A full side request pays internal areas and the parent-endpoint polygon. -/
@@ -69,10 +71,10 @@ open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational} {request : PreparedBandRequest fixed target}
+  {target : Fraction.Rational} {request : PreparedBandRequest fixed target}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -83,14 +85,14 @@ open Purelib.Riemann.Readings in
 
 The retained local target and requested parent bank index both actual increment lists, with separate guarantees against
 the same overall target. -/
-@[expose] def FullAreaRequest (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential
+@[expose] def FullAreaRequest (request : PreparedBandRequest fixed target) (other : Differential
   genus)
     (count : Nat) (parents : List (CenteredEdge curve differential)) (areaTarget : Fraction.Rational) :=
   (localTarget : Fraction.Rational) ×
   (prepared : RequestedPrimitiveParents request other count localTarget parents) ×
   (numerical : PairedIncrementArea.Summary prepared.bank.incrementBlocks.flatten) ×
     { primitive : PairedIncrementArea.Summary prepared.primitives.primitiveBlocks.flatten //
-      Data.Gaussian.Norm.Basic.normSq (primitive.areaValue - numerical.areaValue) ≤ areaTarget ∧
+      normSq (primitive.areaValue - numerical.areaValue) ≤ areaTarget ∧
       PrimitiveAreaBounds.PrimitivePoint.Bounded
         (primitive.totalValue.sub numerical.totalValue) areaTarget }
 
@@ -107,10 +109,10 @@ open Purelib.Riemann.RootContinuation in
 
 A unit-capped allowance uses the exact parent count and numerical magnitude weight; the resulting original bank supplies
 both cached summaries and their separate payments. -/
-@[expose] def fullAcquire (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential genus)
+@[expose] def fullAcquire (request : PreparedBandRequest fixed target) (other : Differential genus)
     (otherProfile : DifferentialProfile profile other.exponent)
     {parents : List (CenteredEdge curve differential)}
-    (covered : Observation.UniformPreparedMesh.CoveredParents count parents)
+    (covered : CoveredParents count parents)
     (boundary : ∀ parent ∈ parents, PreparedBoundarySegments.ParentOnBoundary parent request.sample.output.box)
     (proper : PreparedDyadicRefinements.AllParentsProper parents)
     (movement : Fraction.Rational) (movementNonnegative : 0 ≤ movement)
@@ -119,7 +121,7 @@ both cached summaries and their separate payments. -/
     FullAreaRequest request other count parents areaTarget := by
   let magnitude := (PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
     PreparedNewtonBandSamples.Sample.preparedDensity request.sample otherProfile request.error) * movement
-  have magnitudeNonnegative : 0 ≤ magnitude := Fraction.Order.Arithmetic.mul_nonneg_direct
+  have magnitudeNonnegative : 0 ≤ magnitude := Arithmetic.mul_nonneg_direct
     (add_nonneg (PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample fixed
       request.errorPositive.le)
       (PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample otherProfile
@@ -127,28 +129,28 @@ both cached summaries and their separate payments. -/
   let n : Fraction.Rational := parents.length
   have nNonnegative : 0 ≤ n := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
   let weight := 2 * (n^2 + 32 * n^4 * (magnitude + 1))
-  have weightNonnegative : 0 ≤ weight := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (add_nonneg (Fraction.Order.Arithmetic.pow_nonneg_direct nNonnegative 2)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct nNonnegative 4))
+  have weightNonnegative : 0 ≤ weight := Arithmetic.mul_nonneg_direct (by decide)
+    (add_nonneg (Arithmetic.pow_nonneg_direct nNonnegative 2)
+      (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide +kernel)
+        (Arithmetic.pow_nonneg_direct nNonnegative 4))
         (add_nonneg magnitudeNonnegative (by decide))))
   let localTarget := min (1 : Fraction.Rational) (Budget.Weighted.allowance areaTarget weight)
-  have localPositive : 0 < localTarget := Fraction.Order.Basic.lt_min (by decide)
+  have localPositive : 0 < localTarget := Basic.lt_min (by decide)
     (Budget.Weighted.allowance_positive positive weightNonnegative)
   have paid : weight * localTarget ≤ areaTarget :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_right _ _)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_right _ _)
       weightNonnegative).trans
       (Budget.Weighted.mul_allowance_le positive.le weightNonnegative)
   let prepared := build request other otherProfile count localTarget localPositive covered boundary proper
-  have bounded := prepared.full_area_error_le magnitudeNonnegative localPositive.le (Fraction.Order.Basic.min_le_left _
+  have bounded := prepared.full_area_error_le magnitudeNonnegative localPositive.le (Basic.min_le_left _
     _)
     (prepared.endpointPairs_numerical otherProfile movements)
   let numerical := PairedIncrementArea.Summary.build prepared.bank.incrementBlocks.flatten
   let primitive := PairedIncrementArea.Summary.build prepared.primitives.primitiveBlocks.flatten
-  have squareNonnegative : 0 ≤ n^2 := Fraction.Order.Arithmetic.pow_nonneg_direct nNonnegative 2
+  have squareNonnegative : 0 ≤ n^2 := Arithmetic.pow_nonneg_direct nNonnegative 2
   have polygonNonnegative : 0 ≤ 32 * n^4 * (magnitude + 1) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-      (Fraction.Order.Arithmetic.pow_nonneg_direct nNonnegative 4))
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide +kernel)
+      (Arithmetic.pow_nonneg_direct nNonnegative 4))
       (add_nonneg magnitudeNonnegative (by decide))
   have weightGe : n^2 ≤ weight :=
     (le_add_of_nonneg_right polygonNonnegative).trans
@@ -156,7 +158,7 @@ both cached summaries and their separate payments. -/
           dsimp only [weight, -eq_self, -iff_self];
           ring1))
   have endpointPaid : n^2 * localTarget ≤ areaTarget :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct weightGe localPositive.le).trans paid
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct weightGe localPositive.le).trans paid
   have endpoints := prepared.total_error_le localPositive.le primitive numerical
   refine ⟨localTarget, prepared, numerical, primitive, ?_, endpoints.1.trans endpointPaid, endpoints.2.trans
     endpointPaid⟩
@@ -174,7 +176,7 @@ open Purelib.Riemann.Paths in
 /-- Acquire the full comparison for an original covered side using its endpoint movement bound.
 
 The retained side, coverage, owner and sheet supply the exact parent geometry and properness witnesses. -/
-@[expose] def fullOfCovered (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential
+@[expose] def fullOfCovered (request : PreparedBandRequest fixed target) (other : Differential
   genus)
     (otherProfile : DifferentialProfile profile other.exponent)
     {start finish : Basic.Canonical}
@@ -182,7 +184,7 @@ The retained side, coverage, owner and sheet supply the exact parent geometry an
     {within : segment.WithinAmbient}
     {owner : Observation.UniformPreparedMesh.Owner (curve.polynomial.eval (segment.pointAt
       UniformPrimitiveMesh.firstEndpoint.parameter))}
-    {sheet : Fin 2} (covered : Observation.UniformPreparedMesh.CoveredSegment segment within owner differential sheet
+    {sheet : Fin 2} (covered : CoveredSegment segment within owner differential sheet
       count)
     (side : PreparedBoundarySegments.SameSide request.sample.output.box start finish)
     (areaTarget : Fraction.Rational) (positive : 0 < areaTarget) :
@@ -190,13 +192,13 @@ The retained side, coverage, owner and sheet supply the exact parent geometry an
   fullAcquire request other otherProfile covered.covered
     (fun _ member => UniformPreparedBoundarySegments.CoveredSegment.parent_boundary covered side member)
       covered.parents_proper
-    (Data.Gaussian.Norm.Basic.normSq (finish - start)) (Norm.Basic.normSq_nonneg _)
+    (normSq (finish - start)) (normSq_nonneg _)
     (fun _ member => by
       have scalar := UniformPreparedBoundarySegments.CoveredSegment.parent_movement covered member
       rw [← Norm.Basic.normSq_eq_canonical] at scalar
       exact scalar.le.trans
         (Geometric.Basic.quarterRadius_le_scale
-          (Norm.Basic.normSq_nonneg _) covered.mesh.depth))
+          (normSq_nonneg _) covered.mesh.depth))
     areaTarget positive
 
 open Purelib.Curves.Hyperelliptic.Integration in

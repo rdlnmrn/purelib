@@ -11,6 +11,8 @@ public import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Topology.Surface.Boundary.BoundaryDefectReadings
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -37,29 +39,29 @@ abbrev AreaCoordinate := Rat.Fraction.Rational
 namespace PrimitivePoint
 
 /-- Both Gaussian coordinates of a primitive point have quadrance at most the same bound. -/
-@[expose] def Bounded (point : PrimitivePoint) (bound : Readings.PrimitiveAreaBounds.AreaCoordinate) : Prop :=
-  Gaussian.Basic.Canonical.normSq point.left ≤ bound ∧ Gaussian.Basic.Canonical.normSq point.right ≤ bound
+@[expose] def Bounded (point : PrimitivePoint) (bound : AreaCoordinate) : Prop :=
+  normSq point.left ≤ bound ∧ normSq point.right ≤ bound
 
 /-- The primitive point's left coordinate is the conjugate of its right coordinate. -/
-@[expose] def Conjugate (point : PrimitivePoint) : Prop := point.left = Gaussian.Basic.Canonical.conj point.right
+@[expose] def Conjugate (point : PrimitivePoint) : Prop := point.left = conj point.right
 
 /-- The difference of two conjugate primitive points remains conjugate. -/
-theorem sub_conjugate {first last : PrimitivePoint} (left : (PrimitivePoint.Conjugate first)) (right :
-  (PrimitivePoint.Conjugate last)) :
-    (PrimitivePoint.Conjugate ((Polygon.Stokes.PrimitivePoint.sub first) last)) := by
-  change first.left - last.left = Gaussian.Basic.Canonical.conj (first.right - last.right)
+theorem sub_conjugate {first last : PrimitivePoint} (left : (Conjugate first)) (right :
+  (Conjugate last)) :
+    (Conjugate ((PrimitivePoint.sub first) last)) := by
+  change first.left - last.left = conj (first.right - last.right)
   rw [left, right]
   apply Gaussian.Basic.ext
   · rfl
-  · simp only [Gaussian.Basic.Canonical.conj, Gaussian.Basic.sub_im]; ring1
+  · simp only [conj, Gaussian.Basic.sub_im]; ring1
 
 /-- A right-coordinate quadrance bound controls both coordinates of a conjugate primitive point.
 
 Conjugation retains the real coordinate and negates the imaginary coordinate.
 Their two squared contributions therefore give the same retained quadrance bound. -/
-theorem bounded_of_conjugate {point : PrimitivePoint} (conjugate : (PrimitivePoint.Conjugate point)) {bound :
-  Readings.PrimitiveAreaBounds.AreaCoordinate}
-    (right : Gaussian.Basic.Canonical.normSq point.right ≤ bound) : (PrimitivePoint.Bounded point) bound :=
+theorem bounded_of_conjugate {point : PrimitivePoint} (conjugate : (Conjugate point)) {bound :
+  AreaCoordinate}
+    (right : normSq point.right ≤ bound) : (Bounded point) bound :=
   ⟨by
     rw [conjugate]
     change point.right.re * point.right.re + (-point.right.im) * (-point.right.im) ≤ bound
@@ -71,39 +73,39 @@ theorem bounded_of_conjugate {point : PrimitivePoint} (conjugate : (PrimitivePoi
 
 Each point retains a common bound on its left and right coordinates; the product bound pays both terms in the
 antisymmetric pairing. -/
-theorem area_bound {first last : PrimitivePoint} {firstBound lastBound : Readings.PrimitiveAreaBounds.AreaCoordinate}
-    (left : (PrimitivePoint.Bounded first) firstBound) (right : (PrimitivePoint.Bounded last) lastBound) :
-    Gaussian.Basic.Canonical.normSq (edgeArea first last) ≤ 4 * firstBound * lastBound := by
-  have firstProduct := Rat.Fraction.Order.Arithmetic.mul_le_mul_direct left.1 right.2
-    (Gaussian.Basic.Canonical.normSq_nonneg _) ((Gaussian.Basic.Canonical.normSq_nonneg _).trans left.1)
-  have lastProduct := Rat.Fraction.Order.Arithmetic.mul_le_mul_direct right.1 left.2
-    (Gaussian.Basic.Canonical.normSq_nonneg _) ((Gaussian.Basic.Canonical.normSq_nonneg _).trans right.1)
+theorem area_bound {first last : PrimitivePoint} {firstBound lastBound : AreaCoordinate}
+    (left : (Bounded first) firstBound) (right : (Bounded last) lastBound) :
+    normSq (edgeArea first last) ≤ 4 * firstBound * lastBound := by
+  have firstProduct := Arithmetic.mul_le_mul_direct left.1 right.2
+    (normSq_nonneg _) ((normSq_nonneg _).trans left.1)
+  have lastProduct := Arithmetic.mul_le_mul_direct right.1 left.2
+    (normSq_nonneg _) ((normSq_nonneg _).trans right.1)
   have estimate := Gaussian.Norm.Bounds.normSq_sub_le_two (first.left * last.right) (last.left * first.right)
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-  rw [Gaussian.Basic.Canonical.normSq_mul, Gaussian.Basic.Canonical.normSq_mul] at estimate
-  exact estimate.trans ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  rw [normSq_mul, normSq_mul] at estimate
+  exact estimate.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct
     (add_le_add firstProduct lastProduct) (by decide)).trans_eq (by ring1))
 
 /-- Adding primitive points costs twice the sum of their component norm bounds.
 
 Both retained coordinates satisfy their supplied Gaussian norm bounds. The
 quadrance bound for each coordinate sum pays the exact factor two. -/
-theorem bounded_add {first last : Polygon.Stokes.PrimitivePoint} {leftBound rightBound :
-  PrimitiveAreaBounds.AreaCoordinate}
-    (left : (PrimitivePoint.Bounded first) leftBound) (right : (PrimitivePoint.Bounded last) rightBound) :
-    (PrimitivePoint.Bounded (first.add last)) (2 * (leftBound + rightBound)) := by
-  change Gaussian.Basic.Canonical.normSq (first.left + last.left) ≤ _ ∧ Gaussian.Basic.Canonical.normSq (first.right +
+theorem bounded_add {first last : PrimitivePoint} {leftBound rightBound :
+  AreaCoordinate}
+    (left : (Bounded first) leftBound) (right : (Bounded last) rightBound) :
+    (Bounded (first.add last)) (2 * (leftBound + rightBound)) := by
+  change normSq (first.left + last.left) ≤ _ ∧ normSq (first.right +
     last.right) ≤ _
   constructor
   · rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
     exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
         (by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using left.1) (by
             simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
               using right.1)) (by decide))
   · rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
     exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
         (by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using left.2) (by
             simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
               using right.2)) (by decide))
@@ -115,7 +117,7 @@ namespace ProjectedEdgePair.Sample
 variable {source target : Nat} {labels : Fin source → Fin target} {primitive : Fin source → PrimitivePoint}
 
 /-- Conjugate primitive endpoint readings give a conjugate edge defect. -/
-theorem defect_conjugate (sample : Surface.Cut.PrimitiveJumps.ProjectedEdgePair.Sample (labels := labels) primitive)
+theorem defect_conjugate (sample : Sample (labels := labels) primitive)
   (conjugate : ∀ vertex, (PrimitivePoint.Conjugate (primitive vertex))) :
     (PrimitivePoint.Conjugate sample.defect) := by
   rw [sample.defect_eq, sample.finishJump_eq, sample.startJump_eq]
@@ -125,11 +127,11 @@ theorem defect_conjugate (sample : Surface.Cut.PrimitiveJumps.ProjectedEdgePair.
 /-- The endpoint defect term has quadrance at most four times error times magnitude.
 
 The defect is bounded by the supplied error and the actual second sample's finishing point by the supplied magnitude. -/
-theorem defectTerm_bound (sample : Surface.Cut.PrimitiveJumps.ProjectedEdgePair.Sample (labels := labels) primitive)
-  {error magnitude : Readings.PrimitiveAreaBounds.AreaCoordinate}
+theorem defectTerm_bound (sample : Sample (labels := labels) primitive)
+  {error magnitude : AreaCoordinate}
     (defect : (PrimitivePoint.Bounded sample.defect) error) (endpoint : (PrimitivePoint.Bounded (primitive
       sample.pair.second.finish)) magnitude) :
-    Gaussian.Basic.Canonical.normSq sample.defectTerm ≤ 4 * error * magnitude := by
+    normSq sample.defectTerm ≤ 4 * error * magnitude := by
   rw [sample.defectTerm_eq]
   exact PrimitivePoint.area_bound defect endpoint
 

@@ -52,8 +52,8 @@ namespace ChamberContinuationState
 def next
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
-    (positive : 0 < epsilon) : Progressive.Chamber.State.ChamberContinuationState chamber where
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (positive : 0 < epsilon) : ChamberContinuationState chamber where
   table := state.nextTable epsilon positive
   same := state.reference_same_nextTable epsilon positive
   chamberSmall := state.nextTable_chamberSmall epsilon positive
@@ -99,7 +99,7 @@ namespace ChamberContinuationState
 theorem next_accurate
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     ((state.next epsilon positive).family.owner index).box.diagonalSq ≤
       epsilon ^ 2 :=
@@ -136,7 +136,7 @@ namespace ChamberContinuationState
 theorem next_nested
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     ((state.next epsilon positive).family.owner index).box.Refines
       (state.family.owner index).box :=
@@ -172,7 +172,7 @@ namespace ChamberContinuationState
 theorem next_strict
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     ((state.next epsilon positive).family.owner index).box.StrictInterior
       (state.family.owner index).box :=
@@ -208,7 +208,7 @@ namespace ChamberContinuationState
 @[simp] theorem next_table
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     (state.next epsilon positive).table = state.nextTable epsilon positive := rfl
 end ChamberContinuationState

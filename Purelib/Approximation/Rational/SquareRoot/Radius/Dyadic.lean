@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -60,15 +62,15 @@ theorem Geometric.dyadicSquareRadius_positive (target :
   Fraction.Rational) :
     0 < Geometric.dyadicSquareRadius target := by
   unfold Geometric.dyadicSquareRadius
-  exact Fraction.Order.Arithmetic.pow_pos_direct (by decide) _
+  exact Arithmetic.pow_pos_direct (by decide) _
 
 /-- The selected dyadic radius squared equals the quarter-radius at its retained search stage. -/
 theorem dyadicSquareRadius_sq_eq (target :
   Fraction.Rational) :
     Geometric.dyadicSquareRadius target ^ 2 =
-      Geometric.Basic.quarterRadius 1 (Search.firstQuarterBelow 1 0 target) := by
+      Basic.quarterRadius 1 (Search.firstQuarterBelow 1 0 target) := by
   unfold Geometric.dyadicSquareRadius
-  rw [Geometric.Basic.quarterRadius_eq_mul_pow]
+  rw [Basic.quarterRadius_eq_mul_pow]
   simp only [_root_.one_mul]
   rw [← pow_mul, Nat.mul_comm (Search.firstQuarterBelow 1 0 target) 2,
     pow_mul, show (1 / 2 : Fraction.Rational) ^ 2 = 1 / 4 by decide]
@@ -86,7 +88,7 @@ theorem dyadicSquareRadius_le_one (target :
   Fraction.Rational) :
     Geometric.dyadicSquareRadius target <= 1 := by
   unfold Geometric.dyadicSquareRadius
-  have bound := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have bound := Arithmetic.pow_le_pow_direct
     (by decide : (0 : Fraction.Rational) <= 1 / 2)
     (by decide : (1 / 2 : Fraction.Rational) <= 1)
     (Search.firstQuarterBelow 1 0 target)
@@ -121,18 +123,18 @@ inherit the request's coefficient complexity. Rejected proposals refine it; this
 guarantee acceptance. -/
 def gridFor (target :
   Fraction.Rational) : Fraction.Rational :=
-  Approximation.Rational.SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius target
+  Geometric.dyadicSquareRadius target
 
 /-- The initial checked square-root grid is strictly positive. -/
 theorem gridFor_positive (target
   : Fraction.Rational) : 0 < gridFor target :=
-  Approximation.Rational.SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive target
+  Geometric.dyadicSquareRadius_positive target
 
 /-- For a positive target, the initial grid size squared is strictly below that target. -/
 theorem gridFor_sq_lt {target :
   Fraction.Rational} (positive : 0 < target) :
     gridFor target ^ 2 < target :=
-  Approximation.Rational.SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_sq_lt positive
+  Geometric.dyadicSquareRadius_sq_lt positive
 end Purelib.Approximation.Rational.SquareRoot.Radius.Dyadic.CheckedSquareRootNewton
 
 end
@@ -172,10 +174,10 @@ public theorem dyadicSquareRadius_le_oneSixtyFour
     · have exponentLe : exponent ≤ 5 := by omega
       have fifthLe := Power.halfPow_antitone exponentLe
       have fifthNonnegative : (0 : Fraction.Rational) ≤ (1 / 2 : Fraction.Rational) ^ 5 :=
-        Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) 5
+        Arithmetic.pow_nonneg_direct (by decide) 5
       have fifthSquareLe : ((1 / 2 : Fraction.Rational) ^ 5) ^ 2 ≤
           ((1 / 2 : Fraction.Rational) ^ exponent) ^ 2 :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct fifthNonnegative fifthLe 2
+        Arithmetic.pow_le_pow_direct fifthNonnegative fifthLe 2
       have oneOver1024Le : (1 / 1024 : Fraction.Rational) ≤
           ((1 / 2 : Fraction.Rational) ^ exponent) ^ 2 := by
         calc
@@ -190,10 +192,10 @@ public theorem dyadicSquareRadius_le_oneSixtyFour
         squareLt.le.trans targetUpper
       have strictConstant : (1 / 2304 : Fraction.Rational) < 1 / 1024 := by
         have productPositive : (0 : Fraction.Rational) < 2304 * 1024 :=
-          Fraction.Order.Arithmetic.mul_pos_direct
-            (Fraction.Order.NatCast.natCast_pos_direct 2304 (by omega)) (Fraction.Order.NatCast.natCast_pos_direct 1024
+          Arithmetic.mul_pos_direct
+            (NatCast.natCast_pos_direct 2304 (by omega)) (NatCast.natCast_pos_direct 1024
               (by omega))
-        apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+        apply Arithmetic.lt_of_mul_lt_mul_right_direct
           (c := (2304 : Fraction.Rational) * 1024) _ productPositive
         calc
           (1 / 2304 : Fraction.Rational) * (2304 * 1024) = 1024 := by
@@ -201,7 +203,7 @@ public theorem dyadicSquareRadius_le_oneSixtyFour
               ((1 / 2304 : Fraction.Rational) * 2304) * 1024 by ring1]
             have cancel2304 : (1 / 2304 : Fraction.Rational) * 2304 = 1 :=
               Fraction.Field.div_mul_cancel_of_ne _ _
-                (Fraction.Order.NatCast.natCast_pos_direct 2304 (by omega)).ne'
+                (NatCast.natCast_pos_direct 2304 (by omega)).ne'
             rw [cancel2304]
             ring1
           _ < 2304 := Fraction.Cast.Order.natCast_lt_direct
@@ -211,7 +213,7 @@ public theorem dyadicSquareRadius_le_oneSixtyFour
               2304 * ((1 / 1024 : Fraction.Rational) * 1024) by ring1]
             have cancel1024 : (1 / 1024 : Fraction.Rational) * 1024 = 1 :=
               Fraction.Field.div_mul_cancel_of_ne _ _
-                (Fraction.Order.NatCast.natCast_pos_direct 1024 (by omega)).ne'
+                (NatCast.natCast_pos_direct 1024 (by omega)).ne'
             rw [cancel1024]
             ring1
       have impossible : (1 / 1024 : Fraction.Rational) < 1 / 1024 := by

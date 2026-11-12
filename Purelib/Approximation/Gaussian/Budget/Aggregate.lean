@@ -8,8 +8,10 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
 public import Purelib.Approximation.Rational.Budget.Aggregate
 import Purelib.Data.Gaussian.Norm.Sum.Bounds
+import Purelib.Data.Gaussian.Norm.Sum.Indexed
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
+import Purelib.Tactic.Ring
 
 open Purelib
 
@@ -47,3 +49,30 @@ theorem normSq_sum_lt (values : List
 end Purelib.Approximation.Gaussian.Budget.Aggregate
 
 end
+
+public section
+
+namespace Purelib.Approximation.Gaussian.Budget.Aggregate
+
+open Purelib.Data.Gaussian.Basic (Canonical)
+open Purelib.Data.Gaussian.Norm.Basic (normSq)
+open Purelib.Data.Gaussian.Norm.Sum.Indexed (normSq_add_add_le)
+open Purelib.Data.Rat.Fraction
+
+/-- Three actual Gaussian remainders meet their whole target when each uses the original three-term allowance. -/
+theorem normSq_add_add_lt (first second third : Canonical) {target : Rational} (positive : 0 < target)
+    (firstBound : normSq first ≤ Aggregate.perTerm target 3)
+    (secondBound : normSq second ≤ Aggregate.perTerm target 3)
+    (thirdBound : normSq third ≤ Aggregate.perTerm target 3) :
+    normSq (first + second + third) < target := by
+  have combined := Order.Arithmetic.add_le_add_direct
+    (Order.Arithmetic.add_le_add_direct firstBound secondBound) thirdBound
+  have bounded := Order.Arithmetic.mul_le_mul_of_nonneg_left_direct combined
+    (by decide +kernel : (0 : Rational) ≤ 3)
+  have grouped : (3 : Rational) *
+      (Aggregate.perTerm target 3 + Aggregate.perTerm target 3 + Aggregate.perTerm target 3) =
+      3 * (3 * Aggregate.perTerm target 3) := by ring1
+  exact (normSq_add_add_le first second third).trans_lt
+    ((bounded.trans_eq grouped).trans_lt (Aggregate.count_mul_perTerm_lt positive 3))
+
+end Purelib.Approximation.Gaussian.Budget.Aggregate

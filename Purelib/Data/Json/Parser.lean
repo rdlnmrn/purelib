@@ -176,22 +176,39 @@ private def escapedCharacter : Parser Char := do
     else checkedCharacter scalar
   else fail "illegal \\u escape"
 
+/-- Locate the next quote, escape, control or end in one original string span.
+
+The cursor advances at original Unicode scalar boundaries. Ordinary scalars
+need no intermediate parser result or reconstructed character buffer. -/
+private partial def stringSpanEnd (input : String) (position : String.Pos.Raw) :
+    String.Pos.Raw :=
+  if String.Internal.atEnd input position then position
+  else
+    let character := (String.Internal.get input position).toNat
+    if character != 34 && character != 92 && 32 ≤ character && character ≤ 0x10ffff then
+      stringSpanEnd input (String.Internal.next input position)
+    else position
+
 /-- Read a quoted string after its opening quote, retaining original escape rules.
 
-Ordinary Unicode scalars append to the retained string accumulator. Unescaped
-controls fail after consumption; the closing quote is consumed exactly once. -/
-private partial def stringContents (retained : String) : Parser String := do
-  let character ← peek
-  if character.toNat == 34 then
-    skip
-    return retained
+Ordinary Unicode spans are copied directly from the original input. Unescaped
+controls fail after consumption; escapes retain their original rollback and the
+closing quote is consumed exactly once. -/
+private partial def stringContents (retained : String) : Parser String := fun input position =>
+  let stop := stringSpanEnd input position
+  let retained := append retained (String.Internal.extract input position stop)
+  if String.Internal.atEnd input stop then
+    .error (stop, "unexpected end of input")
   else
-    let character ← consume
-    if character.toNat == 92 then
-      stringContents (String.Internal.pushn retained (← escapedCharacter) 1)
-    else if 32 ≤ character.toNat && character.toNat ≤ 0x10ffff then
-      stringContents (String.Internal.pushn retained character 1)
-    else fail "unexpected character in string"
+    let character := (String.Internal.get input stop).toNat
+    let after := String.Internal.next input stop
+    if character == 34 then .ok (retained, after)
+    else if character == 92 then
+      match escapedCharacter input after with
+      | .error error => .error error
+      | .ok (decoded, after) =>
+          stringContents (String.Internal.pushn retained decoded 1) input after
+    else .error (after, "unexpected character in string")
 
 /-- Consume decimal digits while retaining their magnitude and exact digit count.
 

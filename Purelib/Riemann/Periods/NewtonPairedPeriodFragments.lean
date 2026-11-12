@@ -40,7 +40,7 @@ open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -65,14 +65,14 @@ set_option genInjectivity false in
 
 Each fragment retains its original program and requested accuracy; the common stage is the maximum of their cached
 comparison stages. -/
-structure NewtonFragments (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (grid :
+structure NewtonFragments (prepared : Prepared paired) (grid :
   NewtonGrid preparation bandTarget radius)
-    (differential index : Fin genus) (minimum : Nat) (target : Rat.Fraction.Rational) where
+    (differential index : Fin genus) (minimum : Nat) (target : Rational) where
   /-- Fragments for the original prepared A-period program on the retained Newton grid. -/ a :
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PeriodFragments.IncludedFragments (base := grid.punctured)
+    IncludedFragments (base := grid.punctured)
     (prepared.aWalk index) differential minimum target
   /-- Fragments for the original prepared B-period program on the retained Newton grid. -/ b :
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PeriodFragments.IncludedFragments (base := grid.punctured)
+    IncludedFragments (base := grid.punctured)
     (prepared.bWalk index) differential minimum target
   /-- The retained common comparison stage. -/ stage : Nat
   /-- The common stage is exactly the maximum of the two fragment stages. -/ stage_eq : stage = max a.comparison.stage
@@ -91,16 +91,16 @@ open Purelib.Curves in
 
 Transport both original programs through the retained grid inclusion and cache the maximum of their comparison stages.
 -/
-def ofRequests (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (grid : NewtonGrid
+def ofRequests (prepared : Prepared paired) (grid : NewtonGrid
   preparation bandTarget radius)
     (aRequest : CoveredPeriodRequest (prepared.aWalk index).initial
       (standardDifferentials genus) (standardDifferential differential) genus minimum target)
     (bRequest : CoveredPeriodRequest (prepared.bWalk index).initial
       (standardDifferentials genus) (standardDifferential differential) genus minimum target) :
     NewtonFragments prepared grid differential index minimum target :=
-  let a := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PeriodFragments.IncludedFragments.ofRequest (prepared.aWalk
+  let a := IncludedFragments.ofRequest (prepared.aWalk
     index) (lifted.vertices.coordinate_onGrid _) (newton_included grid) aRequest
-  let b := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PeriodFragments.IncludedFragments.ofRequest (prepared.bWalk
+  let b := IncludedFragments.ofRequest (prepared.bWalk
     index) (lifted.vertices.coordinate_onGrid _) (newton_included grid) bRequest
   ⟨a, b, max a.comparison.stage b.comparison.stage, rfl⟩
 
@@ -109,9 +109,9 @@ open Purelib.Data in
 /-- Acquire both covered period requests and construct their Newton fragments.
 
 The positive target bounds the fragment comparisons for the selected original A and B programs. -/
-def build (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (grid : NewtonGrid
+def build (prepared : Prepared paired) (grid : NewtonGrid
   preparation bandTarget radius)
-    (differential index : Fin genus) (minimum : Nat) (target : Rat.Fraction.Rational) (positive : 0 < target) :
+    (differential index : Fin genus) (minimum : Nat) (target : Rational) (positive : 0 < target) :
     NewtonFragments prepared grid differential index minimum target :=
   ofRequests prepared grid
     (CoveredPeriodRequest.acquire (prepared.aWalk index).initial
@@ -129,14 +129,14 @@ theorem stage_ge (request : NewtonFragments prepared grid differential index min
 /-- Beyond the common stage, the A-fragment sum approximates its original period reading within the target. -/
 theorem a_accurate (request : NewtonFragments prepared grid differential index minimum target)
     (stage : Nat) (later : request.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (request.a.fragments.sum -
+    normSq (request.a.fragments.sum -
       ((prepared.periodData.aProgram differential index).integral.model stage).integralSample) < target :=
   request.a.accurate stage ((Nat.Order.le_max_left _ _).trans (request.stage_eq ▸ later))
 
 /-- Beyond the common stage, the B-fragment sum approximates its original period reading within the target. -/
 theorem b_accurate (request : NewtonFragments prepared grid differential index minimum target)
     (stage : Nat) (later : request.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (request.b.fragments.sum -
+    normSq (request.b.fragments.sum -
       ((prepared.periodData.bProgram differential index).integral.model stage).integralSample) < target :=
   request.b.accurate stage ((Nat.Order.le_max_right _ _).trans (request.stage_eq ▸ later))
 

@@ -1,10 +1,5 @@
 module
 import Purelib.Data.List.DropWhile.Basic
-public import Purelib.Algebra.Field.ExplicitField
-
-import Lean.Elab.Tactic.Omega
-import Mathlib.Tactic.Ring.Basic
-import Purelib.Tactic.QuotientFreeOmega
 
 open Purelib
 
@@ -22,7 +17,9 @@ namespace Purelib.Data.List.DropWhile.Bounds
 
 open Purelib.Data.List
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K] [DecidableEq K]
+universe u
+
+variable {K : Type u} [OfNat K 0] [DecidableEq K]
 
 /-- Removing a leading zero prefix cannot increase the coefficient-list length. -/
 public theorem length_dropWhile_zero_le (as : List K) :

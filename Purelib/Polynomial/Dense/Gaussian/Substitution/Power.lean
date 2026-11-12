@@ -35,26 +35,26 @@ abbrev CanonicalScalar := Gaussian.Basic.Canonical
 
 Each step shifts the accumulator by the supplied natural exponent and adds the next constant coefficient. -/
 def substitute (polynomial : CoefficientPolynomial) (degree : Nat) : CoefficientPolynomial :=
-  polynomial.coeffs.foldl (fun value coefficient => Dense.Basic.DensePolynomial.shift degree value +
-    Dense.Basic.DensePolynomial.constant coefficient) 0
+  polynomial.coeffs.foldl (fun value coefficient => Basic.DensePolynomial.shift degree value +
+    Basic.DensePolynomial.constant coefficient) 0
 
 /-- Evaluation transports a power-substitution fold from any initial polynomial to scalar Horner evaluation. -/
 private theorem eval_from (degree : Nat) (point : CanonicalScalar) (coefficients : List
   CanonicalScalar) (initial : CoefficientPolynomial) :
-    (coefficients.foldl (fun value coefficient => Dense.Basic.DensePolynomial.shift degree value +
-      Dense.Basic.DensePolynomial.constant coefficient) initial).eval point =
+    (coefficients.foldl (fun value coefficient => Basic.DensePolynomial.shift degree value +
+      Basic.DensePolynomial.constant coefficient) initial).eval point =
       coefficients.foldl (fun value coefficient => value * point ^ degree + coefficient) (initial.eval point) := by
   induction coefficients generalizing initial with
   | nil => rfl
   | cons head tail ih =>
       simp only [List.foldl_cons]
-      rw [ih, Dense.Basic.DensePolynomial.eval_add, Dense.Basic.DensePolynomial.eval_shift,
-        Dense.Basic.DensePolynomial.eval_constant]
+      rw [ih, Basic.DensePolynomial.eval_add, Basic.DensePolynomial.eval_shift,
+        Basic.DensePolynomial.eval_constant]
 
 /-- Power substitution evaluates to the original polynomial at the corresponding power of the point. -/
 theorem eval_substitute (polynomial : CoefficientPolynomial) (degree : Nat) (point :
   CanonicalScalar) :
-    (Dense.Gaussian.Substitution.Power.substitute polynomial degree).eval point = polynomial.eval (point ^ degree) :=
-  Dense.Gaussian.Substitution.Power.eval_from degree point polynomial.coeffs 0
+    (substitute polynomial degree).eval point = polynomial.eval (point ^ degree) :=
+  eval_from degree point polynomial.coeffs 0
 
 end Purelib.Polynomial.Dense.Gaussian.Substitution.Power

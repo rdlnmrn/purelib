@@ -71,7 +71,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles
 open PhysicalComparison.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample.PhysicalSides
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -80,12 +80,12 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {lifted : LiftedPuncturedGrid request.single.grid.punctured}
   {excision : AllHoleExcision request.single.grid lifted}
   {prepared :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
+    PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
     excision} {first second : Fin genus}
   {domains : FaceDomainBank lifted.frames
     request.single.grid.faces.regulars}
   {comparison :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison
+    PairedComparison
     prepared first second domains}
   {cutTarget : Rational} {floor stage : Nat}
   {cut : CutPairingRequest lifted domains first
@@ -100,17 +100,17 @@ set_option genInjectivity false in
 The source, sewn annuli, physical sides and remaining excision share the acquired left/right surfaces. The cached
 correction retains both the exterior contribution and every physical-hole correction. -/
 structure CutAnnularReadings (comparison :
-  Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison prepared
+  PairedComparison prepared
   first second domains)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings cut cache) where
+    (readings : CutPairingRequest.Readings cut cache) where
   /-- The paired comparison sample on the exact left and right cut readings. -/ source :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.Sample
+    Sample
     comparison readings.left readings.right
   /-- The sewn annular sample using the retained left and right scalar surfaces. -/ annuli :
-    Hyperelliptic.Meshes.Newton.AllHoles.PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample
+    PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample
     source readings.leftSurface readings.rightSurface
   /-- The physical-side data of the same sewn annular sample. -/ sides :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PhysicalSides
+    PhysicalSides
     annuli
   /-- The remaining excision triangles of the same sewn annular sample. -/ remaining :
     PairedRemaining.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample.Excision
@@ -118,9 +118,9 @@ structure CutAnnularReadings (comparison :
   /-- The cached exterior and physical-hole correction sum. -/ correction : Gaussian.Basic.Canonical
   /-- The cache equals the exterior correction plus all retained physical-hole contributions. -/ correction_eq :
     correction =
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection readings.normalized
+    physicalComponentCorrection readings.normalized
       readings.neighbors readings.left readings.right .exterior +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sides.entries.map (fun entry =>
+      gaussianSum (sides.entries.map (fun entry =>
 
           remainingCorrection
           entry readings.normalized))
@@ -139,25 +139,25 @@ open Purelib.Data
 
 Build each dependent cache from its retained predecessor and compute the exact combined correction once. -/
 @[expose] def build (comparison :
-  Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison prepared
+  PairedComparison prepared
   first second domains)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings cut cache) :
+    (readings : CutPairingRequest.Readings cut cache) :
       CutAnnularReadings comparison readings :=
   let source :=
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.Sample.build
+    Sample.build
     comparison readings.left readings.right
   let annuli :=
     PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample.build
     source readings.leftSurface readings.rightSurface
   let sides :=
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PhysicalSides.build
+    PhysicalSides.build
     annuli
   let remaining :=
     PairedRemaining.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample.Excision.build
     annuli
-  let correction := Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection
+  let correction := physicalComponentCorrection
     readings.normalized readings.neighbors readings.left readings.right .exterior +
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (sides.entries.map (fun entry =>
+    gaussianSum (sides.entries.map (fun entry =>
 
         remainingCorrection
         entry readings.normalized))
@@ -166,16 +166,16 @@ Build each dependent cache from its retained predecessor and compute the exact c
 /-- Compute the physical-hole correction allowance from the cut sewing budget.
 
 The squared hole count retains aggregate multiplicity; the weight and error are those of the same sewing request. -/
-@[expose] def correctionAllowance (cut : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted
-  domains first second cutTarget floor) : Rat.Fraction.Rational :=
-  (request.single.grid.faces.holes.length : Rat.Fraction.Rational) *
-    ((request.single.grid.faces.holes.length : Rat.Fraction.Rational) *
+@[expose] def correctionAllowance (cut : CutPairingRequest lifted
+  domains first second cutTarget floor) : Rational :=
+  (request.single.grid.faces.holes.length : Rational) *
+    ((request.single.grid.faces.holes.length : Rational) *
       (8 * (8 * (cut.sewing.budget.weight * cut.sewing.budget.error))))
 
 /-- After the cut stage, annular correction plus physical reading differs from the cached correction by at most its
 allowance. -/
 theorem physical_accurate (cached : CutAnnularReadings comparison readings) (later : cut.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (cached.annuli.correction + readings.physical - cached.correction) ≤
+    normSq (cached.annuli.correction + readings.physical - cached.correction) ≤
       correctionAllowance cut := by
   rw [cached.correction_eq]
   exact
@@ -191,7 +191,7 @@ open Purelib.Data
 
 The stage has reached the cut request, and all terms use the retained comparison surfaces. -/
 theorem pairing_bound (cached : CutAnnularReadings comparison readings) (later : cut.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (readings.paired - cached.annuli.correction + cached.correction) ≤
+    normSq (readings.paired - cached.annuli.correction + cached.correction) ≤
       2 * (cutTarget + correctionAllowance cut) := by
   have paired := readings.corrected_bound later
   have physical := cached.physical_accurate later
@@ -200,24 +200,24 @@ theorem pairing_bound (cached : CutAnnularReadings comparison readings) (later :
         (cached.annuli.correction + readings.physical - cached.correction) := by ring1
   rw [equal]
   exact (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add paired physical) (by decide))
 
 /-- Combine a strict remaining-area estimate with a weak corrected-pair estimate.
 
 The quadrance of the corrected remainder is strictly below twice the sum of the two displayed bounds. -/
 private theorem remaining_estimate {remaining paired correction physical : Gaussian.Basic.Canonical}
-    {firstBound secondBound : Rat.Fraction.Rational}
-    (first : Data.Gaussian.Norm.Basic.normSq (remaining - (paired - correction)) < firstBound)
-    (second : Data.Gaussian.Norm.Basic.normSq (paired - correction + physical) ≤ secondBound) :
-    Data.Gaussian.Norm.Basic.normSq (remaining + physical) < 2 * (firstBound + secondBound) := by
+    {firstBound secondBound : Rational}
+    (first : normSq (remaining - (paired - correction)) < firstBound)
+    (second : normSq (paired - correction + physical) ≤ secondBound) :
+    normSq (remaining + physical) < 2 * (firstBound + secondBound) := by
   have equal : remaining + physical = (remaining - (paired - correction)) + (paired - correction + physical) := by ring1
   rw [equal]
   exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rat.Fraction.Rational) < 2)
-      ((Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct first (Data.Gaussian.Norm.Basic.normSq (paired -
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
+      ((Fraction.Order.Arithmetic.add_lt_add_right_direct first (normSq (paired -
         correction + physical))).trans_le
-        (Rat.Fraction.Order.Arithmetic.add_le_add_direct (le_refl firstBound) second)))
+        (Fraction.Order.Arithmetic.add_le_add_direct (le_refl firstBound) second)))
 
 /-- The corrected remaining triangles satisfy the combined cut and Newton comparison bound.
 
@@ -225,14 +225,14 @@ Both retained request stages have been reached, and the boundary readback is tra
 -/
 theorem remaining_bound (cached : CutAnnularReadings comparison readings)
     (cutLater : cut.index ≤ stage) (annuliLater : comparison.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (cached.remaining.remainingArea + cached.correction) <
+    normSq (cached.remaining.remainingArea + cached.correction) <
       2 * (target + 2 * (cutTarget + correctionAllowance cut)) := by
   have remaining := cached.remaining.remaining_bilinear_accurate readings.surface annuliLater
   have boundary : readings.surface.boundaryArea = readings.paired :=
     (readings.surface.boundary_eq_word readings.word).trans
       (congrArg (fun value => value + readings.word.closedCorrection)
         (readings.integral.contract_eq readings.word.values))
-  have transported := (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq
+  have transported := (congrArg (fun value => normSq
     (cached.remaining.remainingArea - (value - cached.annuli.correction))) boundary).symm.trans_lt remaining
   exact remaining_estimate transported (cached.pairing_bound cutLater)
 
@@ -245,15 +245,15 @@ open Purelib.Data
 The cache is acquired at the maximum of the cut and annular comparison stages, preserving both request indices and the
 exact dependent readings. -/
 @[expose] def Acquisition (comparison :
-  Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison prepared
+  PairedComparison prepared
   first second domains)
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted domains first second
+    (cut : CutPairingRequest lifted domains first second
       cutTarget floor) :=
-  (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains (max cut.index
+  (cache : Numerics domains (max cut.index
     comparison.index)) ×
-  (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings cut cache) ×
+  (readings : CutPairingRequest.Readings cut cache) ×
   { cached : CutAnnularReadings comparison readings //
-    Data.Gaussian.Norm.Basic.normSq (cached.remaining.remainingArea + cached.correction) <
+    normSq (cached.remaining.remainingArea + cached.correction) <
       2 * (target + 2 * (cutTarget + correctionAllowance cut)) }
 
 /-- Construct a complete cut-annulus acquisition at the maximum required stage.
@@ -261,15 +261,15 @@ exact dependent readings. -/
 Build one primitive bank per standard differential, derive the cut readings and annular caches from it, and retain the
 proved corrected remainder bound. -/
 @[expose] def acquire (comparison :
-  Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison prepared
+  PairedComparison prepared
   first second domains)
-    (cut : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted domains first second
+    (cut : CutPairingRequest lifted domains first second
       cutTarget floor) : Acquisition comparison cut :=
   let index := max cut.index comparison.index
   let cache := Vector.DependentVector.ofFn fun row =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build (standardDifferential row) index
+    FacePrimitiveBank.build (standardDifferential row) index
       domains
-  let readings := Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings.build cut cache
+  let readings := CutPairingRequest.Readings.build cut cache
   let cached := build comparison readings
   ⟨cache, readings, cached, cached.remaining_bound (Data.Nat.Order.le_max_left _ _) (Data.Nat.Order.le_max_right _ _)⟩
 

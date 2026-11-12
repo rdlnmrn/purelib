@@ -27,6 +27,8 @@ import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.RootIsolation.CCL.Persistent.Sample.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Data.CCL.Encoding.Parser
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 public section
@@ -74,7 +76,7 @@ inductive NextInspection
         formOverrides next.atom.form = none)
       (remaining : Curve.Boundary.RemainingBoundary p
         (LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.adjugate
-          (Data.CCL.Encoding.Parser.State.parse current.word).matrix)
+          (State.parse current.word).matrix)
         current.numerical.box denominatorMargin marginPositive next.atom)
 
 constructive_injectivity NextInspection
@@ -98,24 +100,24 @@ boundary provenance, and immediately apply universal equality ownership. -/
             intro bit possible
             apply terminalNone bit
             apply (Geometry.CCL.Parser.Formula.advanceFormula_iff
-              (Data.CCL.Encoding.Parser.State.parse current.word) bit
+              (State.parse current.word) bit
               next.tail).2
-            exact (Data.CCL.Encoding.Parser.Next.canStep_iff_canAdvanceAt
-              (Data.CCL.Encoding.Parser.State.parse current.word) sample.point
+            exact (Next.canStep_iff_canAdvanceAt
+              (State.parse current.word) sample.point
               next.tail
-              (Data.CCL.Encoding.Parser.State.parse_det_ne current.word)
+              (State.parse_det_ne current.word)
               next.represents bit).1 possible }
   | .next bit tailHolds _unique =>
-      let parser := Data.CCL.Encoding.Parser.State.parse current.word
+      let parser := State.parse current.word
       let reference := LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.adjugate parser.matrix
       let formula :=
         Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula parser bit
       have currentHolds : formula.Holds sample.point := by
-        exact CCL.Persistent.Sample.Extension.CompatibleSample.inputIncrementalAdvanceFormula_holds_of_advance
+        exact Sample.Extension.CompatibleSample.inputIncrementalAdvanceFormula_holds_of_advance
           sample bit tailHolds
       let descriptions :=
         Geometry.CCL.Parser.Formula.Description.inputIncremental parser
-          (Data.CCL.Encoding.Parser.State.parse_det_ne current.word) bit
+          (State.parse_det_ne current.word) bit
       match Curve.Boundary.inspectOwnerWith p reference ambient current.numerical.box
           denominatorMargin marginPositive [] formOverrides formula
           (fun atom member => descriptions.boundaryFor atom member)

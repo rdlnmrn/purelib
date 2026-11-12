@@ -30,6 +30,10 @@ import Purelib.Approximation.Gaussian.Sequence
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Squarefree
+
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -57,7 +61,7 @@ open Purelib.Data.Rat in
 private theorem cancel_radius_bound {radius scale magnitude rate : Fraction.Rational}
     (positive : 0 < radius) (bound : (scale * radius) * magnitude ≤ rate * radius ^ 2) :
     scale * magnitude ≤ rate * radius := by
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := radius) _ positive
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := radius) _ positive
   calc
     (scale * magnitude) * radius = (scale * radius) * magnitude := by ring1
     _ ≤ rate * radius ^ 2 := bound
@@ -66,10 +70,10 @@ private theorem cancel_radius_bound {radius scale magnitude rate : Fraction.Rati
 namespace Sample
 
 variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {squarefree :
-  Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
-  {current : Purelib.RootIsolation.State.Raw.RawWindingState p ambient} {profile : Profile squarefree current.box}
-  {epsilon : Purelib.Data.Rat.Fraction.Rational} (sample : Sample profile epsilon)
+  Geometry.Rational.Box} {squarefree :
+  Basic.SquarefreeCertificate p}
+  {current : RootIsolation.State.Raw.RawWindingState p ambient} {profile : Profile squarefree current.box}
+  {epsilon : Data.Rat.Fraction.Rational} (sample : Sample profile epsilon)
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -81,33 +85,33 @@ Original endpoint containment controls displacement, the same boundary point con
 retained root lower bound controls the quotient. -/
 theorem scaled_differential_bound (exponent : Nat) {start finish z value : Basic.Canonical}
     (startInside : sample.output.box.Contains start) (finishInside : sample.output.box.Contains finish)
-    (boundary : Box.Boundary.OnBoxBoundary sample.output.box z)
+    (boundary : OnBoxBoundary sample.output.box z)
     (rootLower : profile.scale * sample.output.radius ≤ 4 * normSq value) :
     profile.scale * normSq (((finish - start) * z ^ exponent) / value) ≤
       (128 * current.box.normSqBound ^ exponent) * sample.output.radius := by
   have displacement := (sample.output.box.normSq_sub_le_diagonalSq finishInside startInside).trans
     (sample.output.band.diagonalSq_le sample.output.radiusPositive)
   rw [Norm.Basic.normSq_eq_canonical] at displacement
-  have pointBound := Box.normSq_le_normSqBound ((Geometry.Rational.Box.Refinement.StrictInterior.refines
+  have pointBound := Box.normSq_le_normSqBound ((Box.Refinement.StrictInterior.refines
     sample.output.strictCurrent).contains boundary.1)
   rw [Norm.Basic.normSq_eq_canonical] at pointBound
-  have numeratorBound := Fraction.Order.Arithmetic.pow_le_pow_direct (Basic.Canonical.normSq_nonneg z) pointBound
+  have numeratorBound := Arithmetic.pow_le_pow_direct (normSq_nonneg z) pointBound
     exponent
   have powerNorm := Power.normSq_pow z exponent
   simp only [Norm.Basic.normSq_eq_canonical] at powerNorm
-  have productBound := Fraction.Order.Arithmetic.mul_le_mul_direct displacement numeratorBound
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (Basic.Canonical.normSq_nonneg z) exponent)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct sample.output.radius))
+  have productBound := Arithmetic.mul_le_mul_direct displacement numeratorBound
+    (Arithmetic.pow_nonneg_direct (normSq_nonneg z) exponent)
+    (Arithmetic.mul_nonneg_direct (by decide +kernel)
+      (Arithmetic.sq_nonneg_direct sample.output.radius))
   have quotient := ScaledRootBounds.scaled_quotient_bound
-    (Fraction.Order.Arithmetic.mul_pos_direct profile.scalePositive sample.output.radiusPositive)
+    (Arithmetic.mul_pos_direct profile.scalePositive sample.output.radiusPositive)
     rootLower ((finish - start) * z ^ exponent)
   apply cancel_radius_bound sample.output.radiusPositive
   calc
     _ ≤ 4 * normSq ((finish - start) * z ^ exponent) := quotient
-    _ = 4 * (normSq (finish - start) * normSq z ^ exponent) := by rw [Basic.Canonical.normSq_mul, powerNorm]
+    _ = 4 * (normSq (finish - start) * normSq z ^ exponent) := by rw [normSq_mul, powerNorm]
     _ ≤ 4 * ((32 * sample.output.radius ^ 2) * current.box.normSqBound ^ exponent) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct productBound (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct productBound (by decide)
     _ = (128 * current.box.normSqBound ^ exponent) * sample.output.radius ^ 2 := by ring1
 
 end Sample
@@ -120,9 +124,9 @@ set_option genInjectivity false in
 
 The numerator is the original box norm bound raised to that exponent; the rate retains the exact quotient by the
 original positive scale. -/
-structure DifferentialProfile {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+structure DifferentialProfile {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {squarefree :
-  Squarefree.Basic.SquarefreeCertificate p}
+  Basic.SquarefreeCertificate p}
     {current : Box} (profile : Profile squarefree current) (exponent : Nat) where
   /-- The cached original box norm bound raised to the retained exponent. -/ numerator : Fraction.Rational
   /-- The numerator cache equals that exact original power bound. -/ numerator_eq : numerator = current.normSqBound ^
@@ -136,8 +140,8 @@ constructive_injectivity DifferentialProfile
 open Purelib.Geometry.Rational in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Cache the original exponent numerator bound and its exact scale-normalized differential rate. -/
-def Profile.differential {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {squarefree
-  : Squarefree.Basic.SquarefreeCertificate p}
+def Profile.differential {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {squarefree
+  : Basic.SquarefreeCertificate p}
     {current : Box} (profile : Profile squarefree current) (exponent : Nat) :
     DifferentialProfile profile exponent :=
   let numerator := current.normSqBound ^ exponent
@@ -149,21 +153,21 @@ def Profile.differential {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficie
 namespace DifferentialProfile
 
 variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {squarefree :
-  Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
-  {current : Purelib.Geometry.Rational.Box} {profile : Profile squarefree current} {exponent : Nat}
+  Basic.SquarefreeCertificate p}
+  {current : Geometry.Rational.Box} {profile : Profile squarefree current} {exponent : Nat}
   (fixed : DifferentialProfile profile exponent)
 
 open Purelib.Data.Rat
 /-- The retained differential numerator bound is nonnegative. -/
 theorem numerator_nonnegative : 0 ≤ fixed.numerator := by
   rw [fixed.numerator_eq]
-  exact Fraction.Order.Arithmetic.pow_nonneg_direct current.normSqBound_nonneg exponent
+  exact Arithmetic.pow_nonneg_direct current.normSqBound_nonneg exponent
 
 /-- The retained differential rate is nonnegative. -/
 theorem rate_nonnegative : 0 ≤ fixed.rate := by
   rw [fixed.rate_eq]
-  exact Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) fixed.numerator_nonnegative)
+  exact Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) fixed.numerator_nonnegative)
     profile.scalePositive.le
 
 /-- Multiplying the retained rate by the original scale gives exactly 128 times its numerator cache. -/
@@ -176,10 +180,10 @@ end DifferentialProfile
 namespace Sample
 
 variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {squarefree :
-  Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
-  {current : Purelib.RootIsolation.State.Raw.RawWindingState p ambient} {profile : Profile squarefree current.box}
-  {epsilon : Purelib.Data.Rat.Fraction.Rational} (sample : Sample profile epsilon)
+  Geometry.Rational.Box} {squarefree :
+  Basic.SquarefreeCertificate p}
+  {current : RootIsolation.State.Raw.RawWindingState p ambient} {profile : Profile squarefree current.box}
+  {epsilon : Data.Rat.Fraction.Rational} (sample : Sample profile epsilon)
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -187,27 +191,27 @@ open Purelib.Geometry.Rational in
 open Purelib.Riemann.RootContinuation in
 /-- A boundary quotient coefficient is bounded by the original numerator cache and positive scaled band radius. -/
 theorem coefficient_bound {exponent : Nat} (fixed : DifferentialProfile profile exponent)
-    {z value : Basic.Canonical} (boundary : Box.Boundary.OnBoxBoundary sample.output.box z)
+    {z value : Basic.Canonical} (boundary : OnBoxBoundary sample.output.box z)
     (rootLower : profile.scale * sample.output.radius ≤ 4 * normSq value) :
     normSq (z ^ exponent / value) ≤ (4 * fixed.numerator) / (profile.scale * sample.output.radius) := by
-  have positive := Fraction.Order.Arithmetic.mul_pos_direct profile.scalePositive sample.output.radiusPositive
+  have positive := Arithmetic.mul_pos_direct profile.scalePositive sample.output.radiusPositive
   have quotient := ScaledRootBounds.scaled_quotient_bound positive rootLower (z ^ exponent)
-  have pointBound := Box.normSq_le_normSqBound ((Geometry.Rational.Box.Refinement.StrictInterior.refines
+  have pointBound := Box.normSq_le_normSqBound ((Box.Refinement.StrictInterior.refines
     sample.output.strictCurrent).contains boundary.1)
   rw [Norm.Basic.normSq_eq_canonical] at pointBound
-  have numeratorBound := Fraction.Order.Arithmetic.pow_le_pow_direct (Basic.Canonical.normSq_nonneg z) pointBound
+  have numeratorBound := Arithmetic.pow_le_pow_direct (normSq_nonneg z) pointBound
     exponent
   have powerNorm := Power.normSq_pow z exponent
   simp only [Norm.Basic.normSq_eq_canonical] at powerNorm
   rw [← fixed.numerator_eq] at numeratorBound
-  apply (Fraction.Order.Field.le_div_iff_pos positive).mpr
+  apply (Field.le_div_iff_pos positive).mpr
   calc
     _ = (profile.scale * sample.output.radius) * normSq (z ^ exponent / value) :=
       Fraction.Field.mul_comm _ _
     _ ≤ 4 * normSq (z ^ exponent) := quotient
     _ = 4 * normSq z ^ exponent := by rw [powerNorm]
     _ ≤ 4 * fixed.numerator :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct numeratorBound (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct numeratorBound (by decide)
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -216,12 +220,12 @@ open Purelib.Geometry.Rational in
 theorem differential_bound {exponent : Nat} (fixed : DifferentialProfile profile exponent)
     {start finish z value : Basic.Canonical}
     (startInside : sample.output.box.Contains start) (finishInside : sample.output.box.Contains finish)
-    (boundary : Box.Boundary.OnBoxBoundary sample.output.box z)
+    (boundary : OnBoxBoundary sample.output.box z)
     (rootLower : profile.scale * sample.output.radius ≤ 4 * normSq value) :
     normSq (((finish - start) * z ^ exponent) / value) ≤ fixed.rate * sample.output.radius := by
   have bound := scaled_differential_bound sample exponent startInside finishInside boundary rootLower
   rw [← fixed.numerator_eq] at bound
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := profile.scale) _ profile.scalePositive
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := profile.scale) _ profile.scalePositive
   calc
     _ = profile.scale * normSq (((finish - start) * z ^ exponent) / value) :=
       Fraction.Field.mul_comm _ _
@@ -234,7 +238,7 @@ open Purelib.Geometry.Rational in
 open Purelib.Riemann.Branches in
 /-- The exact differential quotient using the original boundary point, displacement, sheet and root-sample stage. -/
 def differentialReading (exponent : Nat) (start finish : Basic.Canonical) {z : Basic.Canonical}
-    (boundary : Box.Boundary.OnBoxBoundary sample.output.box z) (sheet : Fin 2) (stage : Nat) : Basic.Canonical :=
+    (boundary : OnBoxBoundary sample.output.box z) (sheet : Fin 2) (stage : Nat) : Basic.Canonical :=
   ((finish - start) * z ^ exponent) /
     (SquareRootSheets.approximation (sample.radicand_nonzero boundary) sheet).sample stage
 
@@ -244,7 +248,7 @@ open Purelib.Geometry.Rational in
 theorem differentialReading_bound {exponent : Nat} (fixed : DifferentialProfile profile exponent)
     {start finish z : Basic.Canonical}
     (startInside : sample.output.box.Contains start) (finishInside : sample.output.box.Contains finish)
-    (boundary : Box.Boundary.OnBoxBoundary sample.output.box z) (sheet : Fin 2) (stage : Nat) :
+    (boundary : OnBoxBoundary sample.output.box z) (sheet : Fin 2) (stage : Nat) :
     normSq (differentialReading sample exponent start finish boundary sheet stage) ≤ fixed.rate * sample.output.radius
       :=
   differential_bound sample fixed startInside finishInside boundary (sample.root_sample_lower boundary sheet stage)
@@ -259,9 +263,9 @@ set_option genInjectivity false in
 /-- A retained Newton-band request with a positive size and exact payment of the original differential target.
 
 The sample retains the original profile, and the payment bounds its actual extracted radius by the same stored rate. -/
-structure SmallDifferentialBand {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+structure SmallDifferentialBand {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box}
-    {squarefree : Squarefree.Basic.SquarefreeCertificate p} {current : State.Raw.RawWindingState p ambient}
+    {squarefree : Basic.SquarefreeCertificate p} {current : State.Raw.RawWindingState p ambient}
     {profile : Profile squarefree current.box} {exponent : Nat}
     (fixed : DifferentialProfile profile exponent) (target : Fraction.Rational) where
   /-- The positive size requested of the original Newton-band profile. -/ requestSize : Fraction.Rational
@@ -282,9 +286,9 @@ open Purelib.RootIsolation in
 
 The exact extracted sample and radius bound transfer the allowance certificate to the stored rate-times-radius payment.
 -/
-def DifferentialProfile.request {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+def DifferentialProfile.request {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box} {degreeBound : Nat}
-    {squarefree : Squarefree.Basic.SquarefreeCertificate p} {current : State.Raw.RawWindingState p ambient}
+    {squarefree : Basic.SquarefreeCertificate p} {current : State.Raw.RawWindingState p ambient}
     {profile : Profile squarefree current.box} {exponent : Nat}
     (fixed : DifferentialProfile profile exponent) (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound) {target :
@@ -297,13 +301,13 @@ def DifferentialProfile.request {p : Polynomial.Dense.Gaussian.Basic.CanonicalCo
     sample.radius_le.trans (by
       calc
         (1 / 8 : Fraction.Rational) * requestSize ≤ 1 * requestSize :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) requestPositive.le
+          Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) requestPositive.le
         _ = requestSize := _root_.one_mul _)
   exact
     { requestSize := requestSize
       requestPositive := requestPositive
       sample := sample
-      paid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusBound fixed.rate_nonnegative).trans
+      paid := (Arithmetic.mul_le_mul_of_nonneg_left_direct radiusBound fixed.rate_nonnegative).trans
         (Budget.Weighted.mul_allowance_le positive.le fixed.rate_nonnegative) }
 
 open Purelib.Data.Gaussian in
@@ -312,14 +316,14 @@ open Purelib.Geometry.Rational in
 open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.RootIsolation in
 /-- Every original reading in the retained small differential band satisfies its exact target. -/
-theorem SmallDifferentialBand.bound {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+theorem SmallDifferentialBand.bound {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box}
-    {squarefree : Squarefree.Basic.SquarefreeCertificate p} {current : State.Raw.RawWindingState p ambient}
+    {squarefree : Basic.SquarefreeCertificate p} {current : State.Raw.RawWindingState p ambient}
     {profile : Profile squarefree current.box} {exponent : Nat}
     {fixed : DifferentialProfile profile exponent} {target : Fraction.Rational}
     (small : SmallDifferentialBand fixed target) {start finish z : Basic.Canonical}
     (startInside : small.sample.output.box.Contains start) (finishInside : small.sample.output.box.Contains finish)
-    (boundary : Box.Boundary.OnBoxBoundary small.sample.output.box z) (sheet : Fin 2) (stage : Nat) :
+    (boundary : OnBoxBoundary small.sample.output.box z) (sheet : Fin 2) (stage : Nat) :
     normSq (Sample.differentialReading small.sample exponent start finish boundary sheet stage) ≤ target :=
   (Sample.differentialReading_bound small.sample fixed startInside finishInside boundary sheet stage).trans small.paid
 

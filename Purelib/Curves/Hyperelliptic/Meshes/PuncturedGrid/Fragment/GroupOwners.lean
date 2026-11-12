@@ -72,22 +72,22 @@ open Purelib.Riemann.Paths.OwnerTraceReadings (ownerName)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 open Purelib.Topology.Polygon.Stokes (OrientedEdge)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {source : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {axes :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    base.faces.regulars} {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
-  {count : Nat} {target : Purelib.Data.Rat.Fraction.Rational}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {source : Differential genus} {axes :
+    PrimitiveAxes base.bank.grid}
+  {domains : FaceDomainBank frames
+    base.faces.regulars} {mesh : LiftedMesh vertices edges base.faces}
+  {count : Nat} {target : Data.Rat.Fraction.Rational}
 
 /-- Two actual rooted fragments with matching query junctions and oriented physical endpoints select the same oriented
 retained indexed edge. -/
 private theorem oriented_junction {left right : RootedWords.LiftedFragment axes domains mesh source count target}
-    (joined : left.last = right.first) (roots : Gaussian.Equivalence.NamedEquivalent left.lastName right.firstName)
+    (joined : left.last = right.first) (roots : NamedEquivalent left.lastName right.firstName)
     (leftForward rightForward : Bool) {first last : Data.Gaussian.Basic.Canonical}
     (leftFirst : (if leftForward then left.fragment.source.start else left.fragment.source.finish) = first)
     (leftLast : (if leftForward then left.fragment.source.finish else left.fragment.source.start) = last)
@@ -112,14 +112,14 @@ private theorem last_owner (piece : RootedWords.LiftedFragment axes domains mesh
     (vertex : Fin vertices.count)
     (indexed : (if forward then piece.occurrence.side.edge else piece.occurrence.side.edge.reverse).finish = vertex)
     (coordinate : vertices.coordinate vertex = piece.last) :
-    Nonempty (Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames vertex))
+    Nonempty (NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames vertex))
       piece.lastName) := by
   have selected : (if !forward then piece.occurrence.side.edge.start else piece.occurrence.side.edge.finish) = vertex :=
     by
     cases forward <;> exact indexed
   have same := LiftedFragment.last_vertex_owner piece (!forward) ((congrArg vertices.coordinate selected).trans
     coordinate)
-  exact (congrArg (fun index => Nonempty (Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName
+  exact (congrArg (fun index => Nonempty (NamedEquivalent (OwnerTraceReadings.ownerName
     (vertices.owner frames index)) piece.lastName)) selected).mp same
 
 /-- Propagate a retained indexed edge's destination owner through its rooted tail.
@@ -131,18 +131,18 @@ private theorem tail_owner (previous : RootedWords.LiftedFragment axes domains m
     {first last : Data.Gaussian.Basic.Canonical}
     (previousFirst : (if forward then previous.fragment.source.start else previous.fragment.source.finish) = first)
     (previousLast : (if forward then previous.fragment.source.finish else previous.fragment.source.start) = last)
-    (indexed : Stokes.OrientedEdge vertices.count)
+    (indexed : OrientedEdge vertices.count)
     (edgeEq : (if forward then previous.occurrence.side.edge else previous.occurrence.side.edge.reverse) = indexed)
     (coordinate : vertices.coordinate indexed.finish = last)
     {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
     {lastName : Gaussian.Name.Basic.Named}
     (word : LiftedFragment.RootedWord pieces previous.last previous.lastName last lastName)
     (geometry : ∀ piece ∈ pieces, SourceGeometry.Presents piece first last) :
-    Nonempty (Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames indexed.finish))
+    Nonempty (NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames indexed.finish))
       lastName) := by
   cases word with
   | nil equal root =>
-      obtain ⟨same⟩ := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.GroupOwners.last_owner previous forward
+      obtain ⟨same⟩ := GroupOwners.last_owner previous forward
         indexed.finish (congrArg OrientedEdge.finish edgeEq)
         (coordinate.trans equal.symm)
       obtain ⟨root⟩ := root
@@ -152,9 +152,9 @@ private theorem tail_owner (previous : RootedWords.LiftedFragment axes domains m
       have go (direction : Bool)
           (firstEq : (if direction then piece.fragment.source.start else piece.fragment.source.finish) = first)
           (lastEq : (if direction then piece.fragment.source.finish else piece.fragment.source.start) = last) :=
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.GroupOwners.tail_owner piece direction firstEq lastEq
+        GroupOwners.tail_owner piece direction firstEq lastEq
           indexed
-          ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.GroupOwners.oriented_junction joined roots forward
+          ((GroupOwners.oriented_junction joined roots forward
             direction previousFirst previousLast firstEq lastEq).symm.trans edgeEq)
           coordinate tail (fun child member => geometry child (List.mem_cons_of_mem _ member))
       rcases geometry piece List.mem_cons_self with positive | negative
@@ -174,9 +174,9 @@ theorem RootedWord.routed_finish_owner {head : RootedWords.LiftedFragment axes d
     (geometry : ∀ piece ∈ head :: pieces, SourceGeometry.Presents piece first last)
     (edge : Walks.Edge base.bank.grid first last)
     (vertex : Fin vertices.count) (coordinate : vertices.coordinate vertex = first)
-    (root : Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames vertex))
+    (root : NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames vertex))
       firstName) :
-    Nonempty (Gaussian.Equivalence.NamedEquivalent
+    Nonempty (NamedEquivalent
       (OwnerTraceReadings.ownerName (vertices.owner frames (edges.indexedEdge vertices edge (vertices.sheet
         vertex)).finish)) lastName) := by
   cases word with
@@ -185,7 +185,7 @@ theorem RootedWord.routed_finish_owner {head : RootedWords.LiftedFragment axes d
       have go (direction : Bool)
           (firstEq : (if direction then head.fragment.source.start else head.fragment.source.finish) = first)
           (lastEq : (if direction then head.fragment.source.finish else head.fragment.source.start) = last) :=
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.GroupOwners.tail_owner head direction firstEq lastEq
+        GroupOwners.tail_owner head direction firstEq lastEq
           (edges.indexedEdge vertices edge (vertices.sheet vertex))
           (VertexEdges.edge_eq_of_first_vertex head direction edge firstEq lastEq equal.symm vertex coordinate
             (root.trans entry))

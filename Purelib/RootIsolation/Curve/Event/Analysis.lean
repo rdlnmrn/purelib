@@ -15,6 +15,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
 open Purelib.Data.Rat
 
 open Purelib.Polynomial
@@ -41,7 +43,7 @@ namespace Purelib.RootIsolation.Curve.Event
 /-- At least one denominator-cleared coordinate is a represented nonzero
 polynomial. -/
 structure Nontrivial
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve) :
+    (p : CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve) :
       Prop where
   /-- At least one of the original denominator-cleared coordinate polynomials is nonzero. -/ coordinateNonzero :
     (Curve.Substitution.realPolynomial p curve).isZero = false ∨
@@ -51,8 +53,8 @@ namespace Nontrivial
 
 /-- The gcd of a nontrivial cleared coordinate pair is nonzero. -/
 theorem gcdNonzero
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {curve : Curve.RationalCurve}
-    (data : Curve.Event.Nontrivial p curve) :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {curve : Curve.RationalCurve}
+    (data : Nontrivial p curve) :
     (Curve.Substitution.gcdPolynomial p curve).isZero = false :=
   Dense.GCD.gcd_isZero_false data.coordinateNonzero
 
@@ -63,7 +65,7 @@ set_option genInjectivity false in
 
 The three outcomes retain the original coordinate zero tests, constant-gcd exclusion certificate, or nontrivial
 positive-degree event data. -/
-inductive Analysis (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve :
+inductive Analysis (p : CanonicalCoefficients.CoefficientPolynomial) (curve :
   Curve.RationalCurve) where
   /-- Both denominator-cleared coordinate polynomials vanish identically, with both equations retained. -/ |
     identicallyZero
@@ -72,9 +74,9 @@ inductive Analysis (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.Co
       (imaginaryZero :
         (Curve.Substitution.imaginaryPolynomial p curve).isZero = true)
   /-- The retained constant-gcd certificate excludes roots on the non-pole curve. -/ | clear (certificate :
-    Curve.Clearance.Global.GlobalClear p curve)
+    Clearance.Global.GlobalClear p curve)
   /-- A nontrivial coordinate pair has a positive-degree gcd carrying its possible root events. -/ | events (data :
-    Curve.Event.Nontrivial p curve)
+    Nontrivial p curve)
       (gcdDegreePositive :
         0 < (Curve.Substitution.gcdPolynomial p curve).natDegree)
 
@@ -85,12 +87,12 @@ constant nonzero gcd, or nonconstant root-event polynomial.
 
 The original coordinate and gcd-degree decisions select the same typed outcome, retaining both zero equations or the
 same nontrivial coordinate witness. -/
-@[expose] def analyze (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve :
+@[expose] def analyze (p : CanonicalCoefficients.CoefficientPolynomial) (curve :
   Curve.RationalCurve) :
-    Curve.Event.Analysis p curve := by
+    Analysis p curve := by
   by_cases realNonzero :
       (Curve.Substitution.realPolynomial p curve).isZero = false
-  · let data : Curve.Event.Nontrivial p curve := ⟨Or.inl realNonzero⟩
+  · let data : Nontrivial p curve := ⟨Or.inl realNonzero⟩
     by_cases degreeZero :
         (Curve.Substitution.gcdPolynomial p curve).natDegree = 0
     · exact .clear ⟨data.coordinateNonzero, degreeZero⟩
@@ -102,7 +104,7 @@ same nontrivial coordinate witness. -/
       | true => rfl
     by_cases imaginaryNonzero :
         (Curve.Substitution.imaginaryPolynomial p curve).isZero = false
-    · let data : Curve.Event.Nontrivial p curve := ⟨Or.inr imaginaryNonzero⟩
+    · let data : Nontrivial p curve := ⟨Or.inr imaginaryNonzero⟩
       by_cases degreeZero :
           (Curve.Substitution.gcdPolynomial p curve).natDegree = 0
       · exact .clear ⟨data.coordinateNonzero, degreeZero⟩
@@ -118,7 +120,7 @@ same nontrivial coordinate witness. -/
 /-- The executable gcd vanishes at a displayed parameter exactly when both
 cleared coordinate polynomials vanish there. -/
 theorem gcd_eval_eq_zero_iff
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
+    (p : CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
     (parameter : Fraction.Rational) :
     (Curve.Substitution.gcdPolynomial p curve).eval parameter = 0 ↔
       (Curve.Substitution.realPolynomial p curve).eval parameter = 0 ∧
@@ -154,12 +156,12 @@ theorem gcd_eval_eq_zero_iff
 /-- Away from an explicitly excluded curve pole, the univariate gcd event is
 exactly a zero of the original Gaussian polynomial on the curve. -/
 theorem gcd_eval_eq_zero_iff_curve_root
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
+    (p : CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
     (parameter : Fraction.Rational)
     (denominatorNonzero : curve.denominatorAt parameter ≠ 0) :
     (Curve.Substitution.gcdPolynomial p curve).eval parameter = 0 ↔
       p.eval (curve.point parameter) = 0 :=
-  (Curve.Event.gcd_eval_eq_zero_iff p curve parameter).trans
+  (gcd_eval_eq_zero_iff p curve parameter).trans
     (Curve.cleared_pair_zero_iff
       p curve parameter denominatorNonzero)
 end Purelib.RootIsolation.Curve.Event

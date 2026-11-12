@@ -88,21 +88,21 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations (
   BasisParentSourceCovers BasisSourceLocations)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (RegularBasisPolynomials)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {allowance coefficientTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
+    UniformBounds regular.padded}
+  {parent : CenteredEdge curve differential} {patch :
+    PreparedPatch parent}
+  {data : UniformReciprocalModels.Data patch count}
+  {basis : BasisBounds bounds}
+  {allowance coefficientTarget : Coordinate} {coverFloor floor :
     Nat}
-  {index minimum readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {index minimum readingIndex : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEnergyPreparation (EnergyPreparation)
@@ -111,19 +111,19 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.NumericalSelectio
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank (BasisCommonParentEntry)
 
 variable {stage energyFloor radialDepth : Nat} {coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  GaussianVector genus}
 
 set_option genInjectivity false in
 /-- Prepared children and their summaries retain the exact selected numerical input. No source model, child integral or
 weighted summary is rebuilt. -/
-structure PreparedSelection (input : NumericalSelection.SelectedInput parent index)
-    (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (allowance coefficientTarget : InverseRootPolynomial.Coordinate) (coverFloor floor : Nat)
-    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+structure PreparedSelection (input : SelectedInput parent index)
+    (basis : BasisBounds bounds)
+    (allowance coefficientTarget : Coordinate) (coverFloor floor : Nat)
+    (polynomials : RegularBasisPolynomials cap index box) (coefficients :
+      GaussianVector genus)
       where
   /-- The original common-parent request on the selected numerical input's exact covers. -/ entry :
-    CommonParentBank.BasisCommonParentEntry input.cover input.sources basis allowance coefficientTarget coverFloor floor
+    BasisCommonParentEntry input.cover input.sources basis allowance coefficientTarget coverFloor floor
   /-- The actual prepared child integrals acquired on that retained input and polynomial bank. -/ integrals :
     entry.request.prepared.request.Acquisition polynomials input.numerical.originals input.numerical.cells
     coefficients entry.request.arcs.depth
@@ -137,13 +137,13 @@ constructive_injectivity PreparedSelection
 namespace PreparedSelection
 
 /-- Transport the scalar parent identity without rebuilding the selected input or any of its dependent prepared data. -/
-@[expose] def castParent {first last : PreparedSubdivisionModelCore.CenteredEdge curve differential}
+@[expose] def castParent {first last : CenteredEdge curve differential}
   (equal : first = last)
-    {input : NumericalSelection.SelectedInput first index}
+    {input : SelectedInput first index}
     (selected : PreparedSelection input basis
       allowance coefficientTarget coverFloor floor polynomials coefficients) :
     PreparedSelection (Eq.mp (congrArg (fun parent
-      => NumericalSelection.SelectedInput parent index) equal) input)
+      => SelectedInput parent index) equal) input)
       basis allowance coefficientTarget coverFloor floor polynomials coefficients := by
   cases equal
   exact selected
@@ -155,14 +155,14 @@ namespace PreparedSelection.Samples.PreparedComparisons
 /-- Select the original prepared comparison at a retained parent position.
 
 The returned entry, child integrals and weighted summaries are read directly from the existing dependent bank. -/
-@[expose] def select : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve
+@[expose] def select : {parents : List (CenteredEdge curve
   differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) → (inputs :
-      CommonParentPlans.NumericalBank index anchors sources) →
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage) →
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
+    (plans : Plans capSample polynomials minimum anchors sources bank) → (inputs :
+      NumericalBank index anchors sources) →
+    (readings : Readings anchors sources bank plans inputs stage) →
     (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings) →
     (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
       →

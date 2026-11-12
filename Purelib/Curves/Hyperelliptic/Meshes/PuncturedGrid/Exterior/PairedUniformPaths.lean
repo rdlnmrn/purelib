@@ -58,6 +58,10 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 
+open Purelib.Integration.Path.Dyadic
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -79,61 +83,61 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBa
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
 
 /-- Both polynomial components are sampled on each retained parent, at the
 same parameter vertices. No zip can silently discard unmatched increments. -/
-def pairedUniformPaths (left right : Normalization.InverseRootPolynomial.Polynomial) (depth : Nat) :
+def pairedUniformPaths (left right : InverseRootPolynomial.Polynomial) (depth : Nat) :
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} → {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers → List (List
+      UniformReciprocalCover.ParentCovers parents} →
+    SideBank regular covers → List (List
       Topology.Polygon.Stokes.PrimitivePoint)
   | [], _, .nil => []
   | parent :: _, _, .cons _ tail =>
-      Path.Dyadic.DyadicPairedPrimitivePaths.increments (fun parameter =>
+      DyadicPairedPrimitivePaths.increments (fun parameter =>
         ⟨left.eval ((parent.edge.point parameter)⁻¹), right.eval ((parent.edge.point parameter)⁻¹)⟩) depth 0 1 ::
         tail.pairedUniformPaths left right depth
 
 /-- The left projection of the complete paired uniform paths is the original left polynomial path bank. -/
-theorem pairedUniformPaths_left (left right : Normalization.InverseRootPolynomial.Polynomial) (depth : Nat)
+theorem pairedUniformPaths_left (left right : InverseRootPolynomial.Polynomial) (depth : Nat)
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers) :
+      UniformReciprocalCover.ParentCovers parents}
+    (bank : SideBank regular covers) :
     (bank.pairedUniformPaths left right depth).map (List.map Topology.Polygon.Stokes.PrimitivePoint.left) =
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths left depth bank := by
+      SideBank.uniformPrimitivePaths left depth bank := by
   induction bank with
   | nil => rfl
   | cons head tail ih =>
       change List.map Topology.Polygon.Stokes.PrimitivePoint.left
-        (Path.Dyadic.DyadicPairedPrimitivePaths.increments _ depth 0 1) :: _ = _
-      rw [Path.Dyadic.DyadicPairedPrimitivePaths.increments_left, ih]
+        (DyadicPairedPrimitivePaths.increments _ depth 0 1) :: _ = _
+      rw [DyadicPairedPrimitivePaths.increments_left, ih]
       rfl
 
 /-- The right projection of the complete paired uniform paths is the original right polynomial path bank. -/
-theorem pairedUniformPaths_right (left right : Normalization.InverseRootPolynomial.Polynomial) (depth : Nat)
+theorem pairedUniformPaths_right (left right : InverseRootPolynomial.Polynomial) (depth : Nat)
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers) :
+      UniformReciprocalCover.ParentCovers parents}
+    (bank : SideBank regular covers) :
     (bank.pairedUniformPaths left right depth).map (List.map Topology.Polygon.Stokes.PrimitivePoint.right) =
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths right depth bank := by
+      SideBank.uniformPrimitivePaths right depth bank := by
   induction bank with
   | nil => rfl
   | cons head tail ih =>
       change List.map Topology.Polygon.Stokes.PrimitivePoint.right
-        (Path.Dyadic.DyadicPairedPrimitivePaths.increments _ depth 0 1) :: _ = _
-      rw [Path.Dyadic.DyadicPairedPrimitivePaths.increments_right, ih]
+        (DyadicPairedPrimitivePaths.increments _ depth 0 1) :: _ = _
+      rw [DyadicPairedPrimitivePaths.increments_right, ih]
       rfl
 
 /-- Every parent contributes its actual dyadic boundary minus its endpoint
 chord. The polygon joining parent totals is retained by `area_flatten`. -/
-theorem pairedUniformPaths_areas (left right : Normalization.InverseRootPolynomial.Polynomial) (depth : Nat)
+theorem pairedUniformPaths_areas (left right : InverseRootPolynomial.Polynomial) (depth : Nat)
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers) :
+      UniformReciprocalCover.ParentCovers parents}
+    (bank : SideBank regular covers) :
     (bank.pairedUniformPaths left right depth).map Path.PairedIncrementArea.area =
       parents.map (fun parent =>
         let values := fun parameter => (⟨left.eval ((parent.edge.point parameter)⁻¹),
@@ -143,19 +147,19 @@ theorem pairedUniformPaths_areas (left right : Normalization.InverseRootPolynomi
   induction bank with
   | nil => rfl
   | cons head tail ih =>
-      change Path.PairedIncrementArea.area (Path.Dyadic.DyadicPairedPrimitivePaths.increments _ depth 0 1) :: _ = _
-      rw [Path.Dyadic.DyadicPairedPrimitivePaths.increments_area, ih]
+      change Path.PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments _ depth 0 1) :: _ = _
+      rw [DyadicPairedPrimitivePaths.increments_area, ih]
       rfl
 
 /-- The complete paired uniform path area is the sum of original parent areas and the polygon of their retained totals.
 
 Every parent contributes its dyadic boundary area minus its endpoint chord at the common explicit depth. -/
-theorem pairedUniformPaths_area (left right : Normalization.InverseRootPolynomial.Polynomial) (depth : Nat)
+theorem pairedUniformPaths_area (left right : InverseRootPolynomial.Polynomial) (depth : Nat)
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers) :
+      UniformReciprocalCover.ParentCovers parents}
+    (bank : SideBank regular covers) :
     Path.PairedIncrementArea.area (bank.pairedUniformPaths left right depth).flatten =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (parents.map (fun parent =>
+      Gaussian.Norm.Sum.Basic.gaussianSum (parents.map (fun parent =>
         let values := fun parameter => (⟨left.eval ((parent.edge.point parameter)⁻¹),
           right.eval ((parent.edge.point parameter)⁻¹)⟩ : Topology.Polygon.Stokes.PrimitivePoint)
         Periods.DyadicBilinearBoundaryRibbon.dyadicArea values depth 0 1 -
@@ -166,16 +170,16 @@ theorem pairedUniformPaths_area (left right : Normalization.InverseRootPolynomia
 
 /-- Recasting preserves every original parent path. Covers can have different
 internal depths; the explicit common depth fixes the sampled vertices. -/
-theorem uniformPrimitivePaths_recast (target : Hyperelliptic.Differentials.Basic.Differential genus) (value :
-  Normalization.InverseRootPolynomial.Polynomial) (depth : Nat)
+theorem uniformPrimitivePaths_recast (target : Differentials.Basic.Differential genus) (value :
+  InverseRootPolynomial.Polynomial) (depth : Nat)
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    (first : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers) :
-    ∀ {otherCovers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers (parents.map
+      UniformReciprocalCover.ParentCovers parents}
+    (first : SideBank regular covers) :
+    ∀ {otherCovers : UniformReciprocalCover.ParentCovers (parents.map
       (Integration.PreparedEdgeRecasting.recastCenteredEdge target))}
-      (last : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular otherCovers),
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths value depth last =
-        Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths value depth first := by
+      (last : SideBank regular otherCovers),
+      SideBank.uniformPrimitivePaths value depth last =
+        SideBank.uniformPrimitivePaths value depth first := by
   induction first with
   | nil => intro otherCovers last; cases last; rfl
   | cons head tail ih =>
@@ -183,7 +187,7 @@ theorem uniformPrimitivePaths_recast (target : Hyperelliptic.Differentials.Basic
       cases last with
       | cons otherHead otherTail =>
           exact congrArg (List.cons
-            (Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.Preparation.uniformPrimitivePath head value depth)) (ih
+            (Preparation.uniformPrimitivePath head value depth)) (ih
             otherTail)
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank
@@ -195,14 +199,14 @@ namespace SurfaceOccurrence
 open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram
   (AllSurfacePreparation SurfaceOccurrence)
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- The second differential's polynomial may be evaluated on the original
 bank's exact parent paths, with no endpoint-chord replacement. -/
@@ -210,13 +214,13 @@ theorem paired_uniform_paths (prepared :
   AllSurfacePreparation
   regular domains differential)
     (occurrence :
-      ExteriorProgram.SurfaceOccurrence
+      SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences)
-    (target : Hyperelliptic.Differentials.Basic.Differential genus) (value :
-      Normalization.InverseRootPolynomial.Polynomial) (depth : Nat) :
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths value depth
+    (target : Differentials.Basic.Differential genus) (value :
+      InverseRootPolynomial.Polynomial) (depth : Nat) :
+    SideBank.uniformPrimitivePaths value depth
       (occurrence.pairedCap prepared member target).path.bank =
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths value depth
+      SideBank.uniformPrimitivePaths value depth
         occurrence.cap.path.bank :=
   occurrence.cap.path.bank.uniformPrimitivePaths_recast target value depth
     (occurrence.pairedCap prepared member target).path.bank
@@ -227,13 +231,13 @@ theorem paired_uniform_right (prepared :
   AllSurfacePreparation
   regular domains differential)
     (occurrence :
-      ExteriorProgram.SurfaceOccurrence
+      SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences)
-    (target : Hyperelliptic.Differentials.Basic.Differential genus) (left right :
-      Normalization.InverseRootPolynomial.Polynomial) (depth : Nat) :
+    (target : Differentials.Basic.Differential genus) (left right :
+      InverseRootPolynomial.Polynomial) (depth : Nat) :
     (occurrence.cap.path.bank.pairedUniformPaths left right depth).map
         (List.map Topology.Polygon.Stokes.PrimitivePoint.right) =
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths right depth
+      SideBank.uniformPrimitivePaths right depth
         (occurrence.pairedCap prepared member target).path.bank :=
   (occurrence.cap.path.bank.pairedUniformPaths_right left right depth).trans
     (occurrence.paired_uniform_paths prepared member target right depth).symm
@@ -244,29 +248,29 @@ theorem paired_uniform_area_error (prepared :
   AllSurfacePreparation
   regular domains differential)
     (occurrence :
-      ExteriorProgram.SurfaceOccurrence
+      SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences)
-    {target : Hyperelliptic.Differentials.Basic.Differential genus} {stage fine common readingIndex minimum floor : Nat}
+    {target : Differentials.Basic.Differential genus} {stage fine common readingIndex minimum floor : Nat}
       {box : Rational.Box}
-    {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap target stage box}
-    {error totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate}
-    {capRequest : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest
+    {sample : Charts.Reciprocal.Cap.Primitives.Sample cap target stage box}
+    {error totalTarget areaTarget : InverseRootPolynomial.Coordinate}
+    {capRequest : Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest
       (occurrence.pairedCap prepared member target).path totalTarget areaTarget floor}
-    {original : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest.Evaluation capRequest sample fine
+    {original : Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest.Evaluation capRequest sample fine
       readingIndex}
-    {request : Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.Path.UniformAreaRequest
+    {request : Path.UniformAreaRequest
       (occurrence.pairedCap prepared member target).path sample error minimum}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.Path.UniformAreaRequest.Evaluation request original
+    (evaluated : Path.UniformAreaRequest.Evaluation request original
       common) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Path.IncrementArea.pathArea (Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths
+    Gaussian.Norm.Basic.normSq
+      (Path.IncrementArea.pathArea (SideBank.uniformPrimitivePaths
         sample.primitive.value common occurrence.cap.path.bank).flatten -
         original.cap.area) < error := by
   have paths := evaluated.paths_eq.trans (occurrence.paired_uniform_paths prepared member target sample.primitive.value
     common)
   have area := evaluated.summary.area_eq.trans (congrArg Path.IncrementArea.pathArea
     (evaluated.path_eq.trans (congrArg List.flatten paths)))
-  exact (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (value - original.cap.area)) area).symm.trans_lt
+  exact (congrArg (fun value => Gaussian.Norm.Basic.normSq (value - original.cap.area)) area).symm.trans_lt
     evaluated.area_error
 
 end SurfaceOccurrence

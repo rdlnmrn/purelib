@@ -1,5 +1,6 @@
 module
 import Purelib.Algebra.NatCast
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.List.Map
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Norm.Basic
@@ -37,6 +38,7 @@ import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 import Purelib.Riemann.Readings.RectangularExteriorBoundary
 import Purelib.Riemann.Readings.RectangularPrimitiveBoundary
 import Purelib.Riemann.Readings.UniformPreparedRequests
+import Purelib.Riemann.Readings.UniformPreparedRequests.Face.Shared
 import Purelib.RootIsolation.SquareRoot.Grid.RootFrames
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.AnalyticComparison
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData
@@ -80,6 +82,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -89,6 +93,8 @@ Every analytic subfragment pays both ownership discrepancies and its inverse
 residual. Exact telescoping leaves the two shared endpoint values; finite
 Cauchy--Schwarz retains the complete analytic-piece count.
 -/
+
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment
 
@@ -157,19 +163,19 @@ open Purelib.Algebra.FiniteSum.Rational.Squares (coordinateSum)
 open Purelib.Approximation.Rational.Budget.Aggregate (countCoordinate countCoordinate_eq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {source :
     Differential genus}
   {axes : PrimitiveAxes base.bank.grid}
     {parent : CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-    {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {cuts : List Data.Rat.Fraction.Rational} {partition : Partition 0 1 cuts}
+    {interval : Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
   {fragment : RegularPrimitiveFragment axes
     parent partition interval}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : DomainBanks.FaceDomainBank frames
     base.faces.regulars}
-  {count : Nat} {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {request :
+  {count : Nat} {target : InverseRootPolynomial.Coordinate} {request :
     LocalRequest parent count target}
   {assigned :
     SheetEntry fragment
@@ -177,13 +183,16 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 namespace SharedComparison
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
 /-- Read the retained primitive cache through its original face and domain.
 
 The numerical lookup uses the retained face, sheet and domain identities.
 It returns the original primitive, anchor, offset and corner caches. -/
-@[expose] def sharedPrimitives (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request) {index : Nat}
-    (numerics : PrimitiveData.FacePrimitiveBank source index domains) :
-    PrimitiveData.DomainPrimitives assigned.domain source index :=
+@[expose] def sharedPrimitives (assigned : SheetEntry fragment domains request) {index : Nat}
+    {numerator : CoefficientPolynomial}
+    (numerics : PrimitiveData.FacePrimitiveBank source index (numerator := numerator) domains) :
+    PrimitiveData.DomainPrimitives assigned.domain source index (numerator := numerator) :=
   (((numerics.get fragment.face.located.index).castFace fragment.face.located.indexed).atSheet
     assigned.entry.sheet).castDomain
     assigned.domain_eq.symm
@@ -194,162 +203,70 @@ variable
   {bounds : FragmentBounds assigned.domain.patch
     source}
   {globalBounds : PrimitiveOverlapBounds
-    fragment.face.located.face.clearance (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator
+    fragment.face.located.face.clearance (PreparedPrimitiveSamples.differentialNumerator
     source)}
-  {tolerance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {accuracy :
+  {tolerance : InverseRootPolynomial.Coordinate} {accuracy :
     GridPrimitiveAccuracy globalBounds assigned.domain.steps
     tolerance}
   {primitives : Primitives
-    (Purelib.Riemann.Branches.RectangularSheetGauge.Transitions.oriented (assigned.domain.patch.sheets.refine
+    (Transitions.oriented (assigned.domain.patch.sheets.refine
     accuracy.index).transitions (assigned.domain.patch.sheets.refine accuracy.index).gauge)
-    (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator source)}
+    (PreparedPrimitiveSamples.differentialNumerator source)}
   {anchors : PrimitiveAnchors primitives} {offsets :
-    LinearAlgebra.Grid.Offsets anchors.edges}
-  {points : List Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian}
+    Offsets anchors.edges}
+  {points : List InverseRootPolynomial.Gaussian}
   {mesh : CommonMesh
-    assigned.domain.geometry (Purelib.Riemann.Readings.RectangularExteriorBoundary.Geometry.allCells
+    assigned.domain.geometry (Geometry.allCells
     assigned.domain.geometry) points}
 
 namespace SharedComparison
 
 /-- Vertex lookups are proved from inclusion in the common mesh's point bank. They do not re-evaluate any primitive or
 prepare another root. -/
-theorem shared_piece_le (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request)
-    (bounds : FragmentReadings.FragmentBounds assigned.domain.patch source)
-    {globalBounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds fragment.face.located.face.clearance
+theorem shared_piece_le (assigned : SheetEntry fragment domains request)
+    (bounds : FragmentBounds assigned.domain.patch source)
+    {globalBounds : PrimitiveOverlapBounds fragment.face.located.face.clearance
       (PreparedPrimitiveSamples.differentialNumerator source)}
     {tolerance : InverseRootPolynomial.Coordinate} (accuracy : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy
       globalBounds assigned.domain.steps tolerance)
-    {primitives : RectangularPrimitiveModels.Primitives (Transitions.oriented (assigned.domain.patch.sheets.refine
+    {primitives : Primitives (Transitions.oriented (assigned.domain.patch.sheets.refine
       accuracy.index).transitions (assigned.domain.patch.sheets.refine accuracy.index).gauge)
       (PreparedPrimitiveSamples.differentialNumerator source)}
-    {anchors : RectangularPrimitiveGluing.PrimitiveAnchors primitives} {offsets : LinearAlgebra.Grid.Offsets
+    {anchors : PrimitiveAnchors primitives} {offsets : Offsets
       anchors.edges}
-    {points : List InverseRootPolynomial.Gaussian} (mesh : RectangularInverseModels.CommonMesh assigned.domain.geometry
+    {points : List InverseRootPolynomial.Gaussian} (mesh : CommonMesh assigned.domain.geometry
       (Geometry.allCells assigned.domain.geometry) points)
     (included : ∀ point ∈ assigned.split.points, point ∈ points)
     (readings : RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.surface)
-    (piece : RectangularSegmentSplitting.SegmentPiece assigned.domain.geometry fragment.located.first
+    (piece : SegmentPiece assigned.domain.geometry fragment.located.first
       fragment.located.last)
     (member : piece ∈ assigned.split.pieces) :
-    Data.Gaussian.Norm.Basic.normSq (((SharedPrimitiveValues.atPoint readings) piece.lastPoint -
-      (SharedPrimitiveValues.atPoint readings) piece.firstPoint) -
+    Basic.normSq (((SharedValues.atPoint readings) piece.lastPoint -
+      (SharedValues.atPoint readings) piece.firstPoint) -
       (request.request.model.primitive.value.eval piece.lastPoint - request.request.model.primitive.value.eval
         piece.firstPoint)) ≤
       32 * accuracy.globalBound + 2 * AnalyticComparison.pieceCharge assigned bounds piece accuracy.index := by
-  have ends := assigned.split.points_mem member
-  let first := mesh.lookup piece.firstPoint (included _ ends.1) piece.column piece.row
-    (Geometry.allCells_mem assigned.domain.geometry _ _) piece.first_inside
-  let last := mesh.lookup piece.lastPoint (included _ ends.2) piece.column piece.row
-    (Geometry.allCells_mem assigned.domain.geometry _ _) piece.last_inside
-  have firstEq : mesh.surface.mesh.coordinate first.index = piece.firstPoint := first.coordinate_eq
-  have lastEq : mesh.surface.mesh.coordinate last.index = piece.lastPoint := last.coordinate_eq
-  have ownership := GridPrimitiveAccuracy.shared_local_increment_bound
-    accuracy readings assigned.domain.patch.cell_refines
-    piece.column piece.row first.index last.index (firstEq.symm ▸ piece.first_inside)
-    (lastEq.symm ▸ piece.last_inside)
-  rw [← SharedPrimitiveValues.atPoint_coordinate readings first.index, ← SharedPrimitiveValues.atPoint_coordinate
-    readings last.index,
-    firstEq, lastEq] at ownership
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at ownership
-  have analytic := AnalyticComparison.piece_increment_le
-    assigned bounds piece member primitives
-  have identity : ((SharedPrimitiveValues.atPoint readings) piece.lastPoint - (SharedPrimitiveValues.atPoint readings)
-    piece.firstPoint) -
-      (request.request.model.primitive.value.eval piece.lastPoint - request.request.model.primitive.value.eval
-        piece.firstPoint) =
-      (((SharedPrimitiveValues.atPoint readings) piece.lastPoint - (SharedPrimitiveValues.atPoint readings)
-        piece.firstPoint) -
-        (primitives.value piece.column piece.row piece.lastPoint - primitives.value piece.column piece.row
-          piece.firstPoint)) +
-      ((primitives.value piece.column piece.row piece.lastPoint - primitives.value piece.column piece.row
-        piece.firstPoint) -
-        (request.request.model.primitive.value.eval piece.lastPoint - request.request.model.primitive.value.eval
-          piece.firstPoint)) := by ring1
-  rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add ownership analytic) (by decide)).trans_eq
-      (by ring1))
-
-/-- The finite sum of actual Gaussian squared norms is bounded by the sum of the supplied entrywise charges. -/
-private theorem normSum_map_le {α : Type} (items : List α) (values : α → InverseRootPolynomial.Gaussian) (charges : α →
-  InverseRootPolynomial.Coordinate)
-    (bounded : ∀ item ∈ items, Data.Gaussian.Norm.Basic.normSq (values item) ≤ charges item) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum (items.map values) ≤ Squares.coordinateSum (items.map charges) := by
-  induction items with
-  | nil => exact le_rfl
-  | cons head tail ih =>
-      have headBound := bounded head List.mem_cons_self
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at headBound
-      exact add_le_add headBound
-        (ih (fun item member => bounded item (List.mem_cons_of_mem _ member)))
-
-/-- Split the finite charge sum into ownership and analytic contributions.
-
-Each original occurrence contributes the fixed ownership and analytic factors.
-The equality separates their complete ordered sum without changing the entries. -/
-private theorem charge_sum {α : Type} (items : List α) (charges : α → InverseRootPolynomial.Coordinate) (constant :
-  InverseRootPolynomial.Coordinate) :
-    Squares.coordinateSum (items.map fun item => 32 * constant + 2 * charges item) =
-      32 * Aggregate.countCoordinate items.length * constant + 2 * Squares.coordinateSum (items.map charges) := by
-  simp only [Aggregate.countCoordinate_eq]
-  induction items with
-  | nil => change (0 : InverseRootPolynomial.Coordinate) = 32 * 0 * constant + 2 * 0; ring1
-  | cons head tail ih =>
-      simp only [List.map_cons, Squares.coordinateSum, List.length_cons, Algebra.NatCast.add, Nat.cast_one, ih]
-      ring1
+  exact request.faceSharedPiece_increment_le assigned.sample assigned.entry assigned.domain assigned.split
+    interval.lower assigned.fractionInside fragment.located.first_eq.symm
+    (AnalyticComparison.neighborhood_endpoints assigned).1 (AnalyticComparison.neighborhood_endpoints assigned).2
+    bounds accuracy mesh included readings piece member
 
 /-- The complete original fragment is compared to the shared values of the supplied mesh. Every analytic-piece and
 endpoint-ownership charge remains visible; no closed-path or zero-total cancellation is used. -/
 theorem shared_increment_le (readings : RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.surface)
     (included : ∀ point ∈ assigned.split.points, point ∈ points) :
-    Data.Gaussian.Norm.Basic.normSq (((SharedPrimitiveValues.atPoint readings) fragment.located.last -
-      (SharedPrimitiveValues.atPoint readings) fragment.located.first) -
+    Basic.normSq (((SharedValues.atPoint readings) fragment.located.last -
+      (SharedValues.atPoint readings) fragment.located.first) -
       (request.request.model.primitive.value.eval fragment.located.last -
         request.request.model.primitive.value.eval fragment.located.first)) ≤
       Aggregate.countCoordinate assigned.split.count * (32 * Aggregate.countCoordinate assigned.split.count *
         accuracy.globalBound +
         2 * Squares.coordinateSum (assigned.split.pieces.map fun piece => AnalyticComparison.pieceCharge assigned bounds
           piece accuracy.index)) := by
-  let error := fun (piece : RectangularSegmentSplitting.SegmentPiece assigned.domain.geometry fragment.located.first
-    fragment.located.last) =>
-    ((SharedPrimitiveValues.atPoint readings) piece.lastPoint - request.request.model.primitive.value.eval
-      piece.lastPoint) -
-      ((SharedPrimitiveValues.atPoint readings) piece.firstPoint - request.request.model.primitive.value.eval
-        piece.firstPoint)
-  let charges := fun piece => 32 * accuracy.globalBound + 2 * AnalyticComparison.pieceCharge assigned bounds piece
-    accuracy.index
-  have bounded : ∀ piece ∈ assigned.split.pieces, Data.Gaussian.Norm.Basic.normSq (error piece) ≤ charges piece
-    := by
-    intro piece member
-    have estimate := shared_piece_le assigned bounds
-      accuracy mesh included readings piece member
-    exact (by congr 1; dsimp only [error]; ring1 : Data.Gaussian.Norm.Basic.normSq (error piece) = _).trans_le
-      estimate
-  have total := Data.Gaussian.Norm.Sum.Basic.normSq_gaussianSum_le (assigned.split.pieces.map error)
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at total
-  rw [Data.List.Map.length_map] at total
-  have paid := total.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (normSum_map_le assigned.split.pieces error
-      charges bounded)
-    (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le assigned.split.pieces.length)))
-  have telescope := assigned.split.telescope (fun point => (SharedPrimitiveValues.atPoint readings) point -
-    request.request.model.primitive.value.eval point)
-  change Data.Gaussian.Norm.Sum.Basic.gaussianSum (assigned.split.pieces.map error) = _ at telescope
-  rw [telescope] at paid
-  have identity : ((SharedPrimitiveValues.atPoint readings) fragment.located.last - (SharedPrimitiveValues.atPoint
-    readings) fragment.located.first) -
-      (request.request.model.primitive.value.eval fragment.located.last - request.request.model.primitive.value.eval
-        fragment.located.first) =
-      ((SharedPrimitiveValues.atPoint readings) fragment.located.last - request.request.model.primitive.value.eval
-        fragment.located.last) -
-        ((SharedPrimitiveValues.atPoint readings) fragment.located.first - request.request.model.primitive.value.eval
-          fragment.located.first) := by ring1
-  rw [identity]
-  exact paid.trans_eq (by
-    dsimp only [charges]
-    rw [charge_sum, assigned.split.count_eq,
-      Aggregate.countCoordinate_eq])
+  exact request.faceSharedSplit_increment_le assigned.sample assigned.entry assigned.domain assigned.split
+    interval.lower assigned.fractionInside fragment.located.first_eq.symm
+    (AnalyticComparison.neighborhood_endpoints assigned).1 (AnalyticComparison.neighborhood_endpoints assigned).2
+    bounds accuracy mesh included readings
 
 end SharedComparison
 
@@ -362,7 +279,7 @@ structure SharedComparison (readings : RectangularSharedPrimitives.SharedPrimiti
   where
   /-- The cached difference of the two actual shared endpoint readings. -/ value : InverseRootPolynomial.Gaussian
   /-- The cached value is exactly the original fragment's shared last-minus-first reading. -/ value_eq : value =
-    (SharedPrimitiveValues.atPoint readings) fragment.located.last - (SharedPrimitiveValues.atPoint readings)
+    (SharedValues.atPoint readings) fragment.located.last - (SharedValues.atPoint readings)
     fragment.located.first
   /-- The cached sum of every original retained analytic-piece charge. -/ analyticCharge :
     InverseRootPolynomial.Coordinate
@@ -375,7 +292,7 @@ structure SharedComparison (readings : RectangularSharedPrimitives.SharedPrimiti
     Aggregate.countCoordinate assigned.split.count *
     (32 * Aggregate.countCoordinate assigned.split.count * accuracy.globalBound + 2 * analyticCharge)
   /-- The cached shared increment differs from the original prepared primitive increment by at most the retained full
-    bound. -/ accurate : Data.Gaussian.Norm.Basic.normSq (value - (request.request.model.primitive.value.eval
+    bound. -/ accurate : Basic.normSq (value - (request.request.model.primitive.value.eval
     fragment.located.last -
     request.request.model.primitive.value.eval fragment.located.first)) ≤ bound
 
@@ -392,7 +309,7 @@ bound. -/
       accuracy) readings :=
   let charge := Squares.coordinateSum (assigned.split.pieces.map fun piece => AnalyticComparison.pieceCharge assigned
     bounds piece accuracy.index)
-  ⟨(SharedPrimitiveValues.atPoint readings) fragment.located.last - (SharedPrimitiveValues.atPoint readings)
+  ⟨(SharedValues.atPoint readings) fragment.located.last - (SharedValues.atPoint readings)
     fragment.located.first, rfl, charge, rfl,
     Aggregate.countCoordinate assigned.split.count * (32 * Aggregate.countCoordinate assigned.split.count *
       accuracy.globalBound + 2 * charge), rfl,

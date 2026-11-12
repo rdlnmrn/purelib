@@ -68,6 +68,11 @@ def FoldPreparations (tau :
 
 namespace FoldPreparations
 
+/-- Transport a retained fold schedule through literal identity of its original ordered request. -/
+def transportRequest {tau : CoherentNamed} {first second : List IntegralMatrix}
+    (equal : first = second) (preparations : FoldPreparations tau first) :
+    FoldPreparations tau second := equal ▸ preparations
+
 /-- Preparation of the single exact folded matrix. -/
 def combined {tau :
   CoherentNamed} :

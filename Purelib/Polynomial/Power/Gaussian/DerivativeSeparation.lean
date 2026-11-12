@@ -61,49 +61,49 @@ open Purelib.Data.Gaussian
 when the exact parameter has quadrance one.  The threshold `1/4` and margin
 `1/8` do not depend on a completed root or on a compactness argument. -/
 def unitParameterDerivativeSeparation
-    {parameter : Gaussian.Basic.Canonical} (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    {parameter : Basic.Canonical} (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : Data.Nat.Positive.RootDegree) (_degreeAtLeastTwo : 2 ≤ degree.value)
     (ambient : Box) :
     Dense.Gaussian.Derivative.Separation.Basic.Certificate
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree) ambient where
+      (rootPolynomial parameter degree) ambient where
   threshold := 1 / 4
   threshold_pos := by decide
   margin := 1 / 8
   margin_pos := by decide
   lower := by
     intro point _inside residualSmall
-    have powerResidual : Data.Gaussian.Norm.Basic.normSq (point ^ degree.value - parameter) ≤
+    have powerResidual : Norm.Basic.normSq (point ^ degree.value - parameter) ≤
         (1 / 4 : Fraction.Rational) := by
-      rw [← Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval parameter point degree]
+      rw [← rootPolynomial_eval parameter point degree]
       exact residualSmall
     have powerLower := Purelib.Data.Gaussian.Power.Residual.Bounds.one_fourth_le_normSq_power_of_residual_le_quarter
       parameterUnit powerResidual
     have predecessorLower := Purelib.Data.Rat.Fraction.Power.Order.one_eighth_le_power_predecessor degree.positive
-      powerLower (Gaussian.Norm.Basic.normSq_nonneg point)
-    rw [Power.Gaussian.derivative_eval, Gaussian.Norm.Basic.normSq_mul, Purelib.Data.Gaussian.Power.normSq_pow]
+      powerLower (Norm.Basic.normSq_nonneg point)
+    rw [derivative_eval, Norm.Basic.normSq_mul, Power.normSq_pow]
     have degreeCastLower : (1 : Fraction.Rational) ≤
         (degree.value : Fraction.Rational) :=
-      Purelib.Data.Rat.Fraction.Cast.Order.natCast_le_direct degree.positive
+      Fraction.Cast.Order.natCast_le_direct degree.positive
     have degreeNormLower : (1 : Fraction.Rational) ≤
-        Data.Gaussian.Norm.Basic.normSq (degree.value : Gaussian.Basic.Canonical) := by
-      have identity : Data.Gaussian.Norm.Basic.normSq (degree.value : Gaussian.Basic.Canonical) =
+        Norm.Basic.normSq (degree.value : Basic.Canonical) := by
+      have identity : Norm.Basic.normSq (degree.value : Basic.Canonical) =
           (degree.value : Fraction.Rational) ^ 2 := by
-        simp only [Data.Gaussian.Norm.Basic.normSq,
-          Purelib.Data.Gaussian.Cast.natCast_re,
-          Purelib.Data.Gaussian.Cast.natCast_im]
+        simp only [Norm.Basic.normSq,
+          Cast.natCast_re,
+          Cast.natCast_im]
         ring1
       rw [identity]
       simpa only [one_pow] using
-        Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_le_pow_direct
+        Fraction.Order.Arithmetic.pow_le_pow_direct
           (show (0 : Fraction.Rational) ≤ 1 by decide) degreeCastLower 2
     calc
       (1 / 8 : Fraction.Rational) =
           1 * (1 / 8 : Fraction.Rational) := by ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (degree.value : Gaussian.Basic.Canonical) *
-          (Data.Gaussian.Norm.Basic.normSq point ^ (degree.value - 1)) :=
-        Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_direct degreeNormLower
+      _ ≤ Norm.Basic.normSq (degree.value : Basic.Canonical) *
+          (Norm.Basic.normSq point ^ (degree.value - 1)) :=
+        Fraction.Order.Arithmetic.mul_le_mul_direct degreeNormLower
           predecessorLower (by decide)
-          (Gaussian.Norm.Basic.normSq_nonneg (degree.value : Gaussian.Basic.Canonical))
+          (Norm.Basic.normSq_nonneg (degree.value : Basic.Canonical))
 end Purelib.Polynomial.Power.Gaussian.DerivativeSeparation
 
 end

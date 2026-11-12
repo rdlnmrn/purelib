@@ -1,4 +1,6 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
+import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Curves.Hyperelliptic.Basic
 import Purelib.Curves.Hyperelliptic.Differentials.Basic
@@ -76,6 +78,8 @@ open Purelib.Geometry.Rectangle.Partition.RectangularEdgeUniqueness
 open Purelib.Topology.Mesh.QuadrilateralDual (QuadOccurrence)
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open Purelib.Topology.Polygon.Stokes
 open Purelib.Data.Gaussian.Basic (Canonical)
@@ -102,24 +106,25 @@ or path data is rebuilt. -/
 def pairedEdgeRequest (domains : DomainBanks.FaceDomainBank frames faces.regulars) (differential :
   Differentials.Basic.Differential genus)
     (position : Fin faces.regulars.length) (kind : RectangleEdge.Kind) (target : InverseRootPolynomial.Coordinate)
-      (positive : 0 < target) :
+      (positive : 0 < target)
+    (numerator : CoefficientPolynomial := differentialNumerator differential) :
     PairedEdgeRequests.PairedEdgeRequest (domains.get position) differential
       (FaceCorners.point faces.regulars[position.val].cell.box (FaceCorners.quad.edge kind).start)
-      (FaceCorners.point faces.regulars[position.val].cell.box (FaceCorners.quad.edge kind).finish) target :=
+      (FaceCorners.point faces.regulars[position.val].cell.box (FaceCorners.quad.edge kind).finish) target numerator :=
   PairedEdgeRequest.build (domains.get position) differential _ _
-    (FaceCorners.inside _ _) (FaceCorners.inside _ _) target positive
+    (FaceCorners.inside _ _) (FaceCorners.inside _ _) target positive numerator
 
 /-- Coordinate agreement alone is not used as root closure. The negative root comparison, two grids, primitive offsets
 and both sheet occurrences have all been paid by the retained request. -/
-theorem opposite_edge_accurate {leftIndex rightIndex : Nat}
-    {leftBank : PrimitiveData.FacePrimitiveBank differential leftIndex domains} {rightBank :
-      PrimitiveData.FacePrimitiveBank differential rightIndex domains}
+theorem opposite_edge_accurate {numerator : CoefficientPolynomial} {leftIndex rightIndex : Nat}
+    {leftBank : PrimitiveData.FacePrimitiveBank differential leftIndex domains (numerator := numerator)} {rightBank :
+      PrimitiveData.FacePrimitiveBank differential rightIndex domains (numerator := numerator)}
     (left : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
     (position : Fin faces.regulars.length) (kind : RectangleEdge.Kind) {target : InverseRootPolynomial.Coordinate}
     (request : PairedEdgeRequests.PairedEdgeRequest (domains.get position) differential
       (FaceCorners.point faces.regulars[position.val].cell.box (FaceCorners.quad.edge kind).start)
-      (FaceCorners.point faces.regulars[position.val].cell.box (FaceCorners.quad.edge kind).finish) target)
+      (FaceCorners.point faces.regulars[position.val].cell.box (FaceCorners.quad.edge kind).finish) target numerator)
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) :
     Data.Gaussian.Norm.Basic.normSq ((left.values (mesh.triangleIndex position 0 (QuadOccurrence.upperSide
       kind)) (FaceCorners.lastCorner kind) -

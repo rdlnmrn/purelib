@@ -68,8 +68,8 @@ and Sturm event classifier.
 namespace Purelib.Geometry.Projective.Hermitian.Chart
 
 /-- A displayed point is reached by one parameter inside a bounded chart. -/
-def PointCoverage {form : Hermitian.HermitianForm}
-    (value : Data.Gaussian.Basic.Canonical) (chart : Chart.BoundedChart form) : Prop :=
+def PointCoverage {form : HermitianForm}
+    (value : Basic.Canonical) (chart : BoundedChart form) : Prop :=
   ∃ parameter,
     chart.cell.interval.Contains parameter ∧
       chart.parameterization.curve.denominatorAt parameter ≠ 0 ∧
@@ -78,10 +78,10 @@ def PointCoverage {form : Hermitian.HermitianForm}
 /-- The complete finite chart family: exactly two unit cells for a norm circle, and exactly one coefficient-bounded cell
 for a coordinate line. -/
 def charts
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    (source : Chart.CurveSource reference form)
+    {reference : GaussianMatrix} {form : HermitianForm}
+    (source : CurveSource reference form)
     (box : Rational.Box) (denominatorMargin : Fraction.Rational)
-    (marginPositive : 0 < denominatorMargin) : List (Chart.BoundedChart form) :=
+    (marginPositive : 0 < denominatorMargin) : List (BoundedChart form) :=
   match source with
   | .norm matrix determinantNonzero _lowerRow base _baseNonzero form_eq =>
       [{ parameterization :=
@@ -113,10 +113,10 @@ def charts
 
 /-- Coverage by one member of the finite chart family. -/
 def Covered
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    (source : Chart.CurveSource reference form) (box : Rational.Box)
+    {reference : GaussianMatrix} {form : HermitianForm}
+    (source : CurveSource reference form) (box : Rational.Box)
     (denominatorMargin : Fraction.Rational)
-    (marginPositive : 0 < denominatorMargin) (value : Data.Gaussian.Basic.Canonical) : Prop :=
+    (marginPositive : 0 < denominatorMargin) (value : Basic.Canonical) : Prop :=
   ∃ chart, chart ∈ charts source box denominatorMargin marginPositive ∧
     PointCoverage value chart
 
@@ -124,11 +124,11 @@ set_option genInjectivity false in
 /-- Executable proof-bearing form of finite chart coverage. Unlike the propositional `Covered` wrapper, this record can
 be consumed by later finite algorithms without eliminating an existential proposition into data. -/
 structure Coverage
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    (source : Chart.CurveSource reference form) (box : Rational.Box)
+    {reference : GaussianMatrix} {form : HermitianForm}
+    (source : CurveSource reference form) (box : Rational.Box)
     (denominatorMargin : Fraction.Rational)
-    (marginPositive : 0 < denominatorMargin) (value : Data.Gaussian.Basic.Canonical) where
-  /-- The selected bounded chart for the retained boundary form. -/ chart : Chart.BoundedChart form
+    (marginPositive : 0 < denominatorMargin) (value : Basic.Canonical) where
+  /-- The selected bounded chart for the retained boundary form. -/ chart : BoundedChart form
   /-- The chart belongs to the actual finite family produced from this source and box. -/ chartMember : chart ∈
     charts source box denominatorMargin marginPositive
   /-- The retained rational parameter representing the target point. -/ parameter : Fraction.Rational
@@ -143,10 +143,10 @@ constructive_injectivity Coverage
 
 /-- Forget the retained chart and parameter data to obtain propositional coverage. -/
 theorem Coverage.covered
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    {source : Chart.CurveSource reference form} {box : Rational.Box}
+    {reference : GaussianMatrix} {form : HermitianForm}
+    {source : CurveSource reference form} {box : Rational.Box}
     {denominatorMargin : Fraction.Rational}
-    {marginPositive : 0 < denominatorMargin} {value : Data.Gaussian.Basic.Canonical}
+    {marginPositive : 0 < denominatorMargin} {value : Basic.Canonical}
     (coverage : Coverage source box denominatorMargin marginPositive value) :
     Covered source box denominatorMargin marginPositive value :=
   ⟨coverage.chart, coverage.chartMember, coverage.parameter,
@@ -163,12 +163,12 @@ def realSource_cover
     (threshold : Fraction.Rational) (box : Rational.Box)
     {denominatorMargin : Fraction.Rational}
     (marginPositive : 0 < denominatorMargin)
-    (value : Data.Gaussian.Basic.Canonical) (inside : box.Contains value)
+    (value : Basic.Canonical) (inside : box.Contains value)
     (onBoundary :
-      (Hermitian.realComparisonForm matrix threshold).eval
+      (realComparisonForm matrix threshold).eval
         value = 0)
     (referenceLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
+      Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
     Coverage
       (.real matrix determinantNonzero lowerRow threshold rfl)
       box denominatorMargin marginPositive value := by
@@ -180,33 +180,33 @@ def realSource_cover
     simp only [Homography.Basic.denominator, left, right, -eq_self, -iff_self]
     rfl
   have denominatorLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) := by
+      Norm.Basic.normSq (Homography.Basic.denominator matrix value) := by
     rw [denominatorIdentity]
     exact referenceLower
   have denominatorNonzero :
       Homography.Basic.denominator matrix value ≠ 0 :=
     NormSq.denominator_ne_of_margin marginPositive denominatorLower
-  have tailNorm : Data.Gaussian.Norm.Basic.normSq tail ≤
+  have tailNorm : Norm.Basic.normSq tail ≤
       Homography.decodedNormMajorant matrix box denominatorMargin :=
     Homography.normSq_homographic_le_decodedNormMajorant matrix box marginPositive
       inside denominatorLower
   have bounds := NormSq.coordinate_bounds_of_normSq_le tail tailNorm
   have realEquality : tail.re = threshold :=
-    (Hermitian.real_homographic_eq_iff
+    (real_homographic_eq_iff
       matrix value threshold denominatorNonzero).2 onBoundary
   have sourcePoint :
       (Line.realLine threshold).point tail.im =
         tail := by
     rw [Line.realLine_point]
-    apply Data.Gaussian.Basic.ext
+    apply Basic.ext
     · exact realEquality.symm
     · rfl
   have transformed := Curve.inverseTransform_point matrix determinantNonzero
     (Line.realLine threshold) tail.im
     (Line.realLine_denominator_ne threshold tail.im)
     value denominatorNonzero sourcePoint
-  let chart : Chart.BoundedChart
-      (Hermitian.realComparisonForm matrix threshold) :=
+  let chart : BoundedChart
+      (realComparisonForm matrix threshold) :=
     { parameterization :=
         Parametrization.realComparison matrix
           determinantNonzero threshold
@@ -236,12 +236,12 @@ def imaginarySource_cover
     (threshold : Fraction.Rational) (box : Rational.Box)
     {denominatorMargin : Fraction.Rational}
     (marginPositive : 0 < denominatorMargin)
-    (value : Data.Gaussian.Basic.Canonical) (inside : box.Contains value)
+    (value : Basic.Canonical) (inside : box.Contains value)
     (onBoundary :
-      (Hermitian.imagComparisonForm matrix threshold).eval
+      (imagComparisonForm matrix threshold).eval
         value = 0)
     (referenceLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
+      Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
     Coverage
       (.imaginary matrix determinantNonzero lowerRow threshold rfl)
       box denominatorMargin marginPositive value := by
@@ -253,25 +253,25 @@ def imaginarySource_cover
     simp only [Homography.Basic.denominator, left, right, -eq_self, -iff_self]
     rfl
   have denominatorLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) := by
+      Norm.Basic.normSq (Homography.Basic.denominator matrix value) := by
     rw [denominatorIdentity]
     exact referenceLower
   have denominatorNonzero :
       Homography.Basic.denominator matrix value ≠ 0 :=
     NormSq.denominator_ne_of_margin marginPositive denominatorLower
-  have tailNorm : Data.Gaussian.Norm.Basic.normSq tail ≤
+  have tailNorm : Norm.Basic.normSq tail ≤
       Homography.decodedNormMajorant matrix box denominatorMargin :=
     Homography.normSq_homographic_le_decodedNormMajorant matrix box marginPositive
       inside denominatorLower
   have bounds := NormSq.coordinate_bounds_of_normSq_le tail tailNorm
   have imaginaryEquality : tail.im = threshold :=
-    (Hermitian.imag_homographic_eq_iff
+    (imag_homographic_eq_iff
       matrix value threshold denominatorNonzero).2 onBoundary
   have sourcePoint :
       (Line.imaginaryLine threshold).point tail.re =
         tail := by
     rw [Line.imaginaryLine_point]
-    apply Data.Gaussian.Basic.ext
+    apply Basic.ext
     · rfl
     · exact imaginaryEquality.symm
   have transformed := Curve.inverseTransform_point matrix determinantNonzero
@@ -279,8 +279,8 @@ def imaginarySource_cover
     (Line.imaginaryLine_denominator_ne threshold
       tail.re)
     value denominatorNonzero sourcePoint
-  let chart : Chart.BoundedChart
-      (Hermitian.imagComparisonForm matrix threshold) :=
+  let chart : BoundedChart
+      (imagComparisonForm matrix threshold) :=
     { parameterization :=
         Parametrization.imaginaryComparison matrix
           determinantNonzero threshold
@@ -306,15 +306,15 @@ def normSource_cover
     (determinantNonzero :
       BoundaryAdjugate.determinant matrix ≠ 0)
     (lowerRow : matrix.c = reference.c ∧ matrix.d = reference.d)
-    (base : Data.Gaussian.Basic.Canonical) (baseNonzero : base ≠ 0) (box : Rational.Box)
+    (base : Basic.Canonical) (baseNonzero : base ≠ 0) (box : Rational.Box)
     {denominatorMargin : Fraction.Rational}
     (marginPositive : 0 < denominatorMargin)
-    (value : Data.Gaussian.Basic.Canonical) (_inside : box.Contains value)
+    (value : Basic.Canonical) (_inside : box.Contains value)
     (onBoundary :
-      (Hermitian.normComparisonForm matrix (Data.Gaussian.Norm.Basic.normSq base)).eval
+      (normComparisonForm matrix (Norm.Basic.normSq base)).eval
         value = 0)
     (referenceLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
+      Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
     Coverage
       (.norm matrix determinantNonzero lowerRow base baseNonzero rfl)
       box denominatorMargin marginPositive value := by
@@ -326,35 +326,35 @@ def normSource_cover
     simp only [Homography.Basic.denominator, left, right, -eq_self, -iff_self]
     rfl
   have denominatorLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) := by
+      Norm.Basic.normSq (Homography.Basic.denominator matrix value) := by
     rw [denominatorIdentity]
     exact referenceLower
   have denominatorNonzero :
       Homography.Basic.denominator matrix value ≠ 0 :=
     NormSq.denominator_ne_of_margin marginPositive denominatorLower
-  have tailNorm : Data.Gaussian.Norm.Basic.normSq tail = Data.Gaussian.Norm.Basic.normSq base :=
-    (Hermitian.norm_homographic_eq_iff matrix value
-      (Data.Gaussian.Norm.Basic.normSq base) denominatorNonzero).2 onBoundary
+  have tailNorm : Norm.Basic.normSq tail = Norm.Basic.normSq base :=
+    (norm_homographic_eq_iff matrix value
+      (Norm.Basic.normSq base) denominatorNonzero).2 onBoundary
   by_cases baseZero : base = 0
   · exact (baseNonzero baseZero).elim
   · let unit := base⁻¹ * tail
-    have baseNormNonzero : Data.Gaussian.Norm.Basic.normSq base ≠ 0 :=
-      fun zero => baseZero (Data.Gaussian.Norm.Basic.normSq_eq_zero.mp zero)
-    have unitNorm : Data.Gaussian.Norm.Basic.normSq unit = 1 := by
+    have baseNormNonzero : Norm.Basic.normSq base ≠ 0 :=
+      fun zero => baseZero (Norm.Basic.normSq_eq_zero.mp zero)
+    have unitNorm : Norm.Basic.normSq unit = 1 := by
       dsimp only [unit]
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      rw [Data.Gaussian.Field.inv_eq,
-        Data.Gaussian.Field.normSq_inv base baseZero, tailNorm,
+      rw [Norm.Basic.normSq_mul]
+      rw [Field.inv_eq,
+        Field.normSq_inv base baseZero, tailNorm,
         Fraction.Field.inv_mul_cancel _ baseNormNonzero]
     have baseUnit : base * unit = tail := by
       dsimp only [unit]
       calc
         base * (base⁻¹ * tail) = (base * base⁻¹) * tail :=
-          (Data.Gaussian.Basic.mul_assoc _ _ _).symm
+          (Basic.mul_assoc _ _ _).symm
         _ = 1 * tail := by
-          rw [Data.Gaussian.Field.inv_eq,
-            Data.Gaussian.Field.mul_inv base baseZero]
-        _ = tail := Data.Gaussian.Basic.one_mul _
+          rw [Field.inv_eq,
+            Field.mul_inv base baseZero]
+        _ = tail := Basic.one_mul _
     by_cases realNonnegative : 0 ≤ unit.re
     · let parameter := unit.im / (1 + unit.re)
       have covered := Circle.primaryUnitCircle_covers unit unitNorm realNonnegative
@@ -370,9 +370,9 @@ def normSource_cover
         (Circle.circle base) parameter
         (Circle.circle_denominator_ne base parameter)
         value denominatorNonzero sourcePoint
-      let chart : Chart.BoundedChart
-          (Hermitian.normComparisonForm matrix
-            (Data.Gaussian.Norm.Basic.normSq base)) :=
+      let chart : BoundedChart
+          (normComparisonForm matrix
+            (Norm.Basic.normSq base)) :=
         { parameterization :=
             Parametrization.normComparison matrix
               determinantNonzero base
@@ -406,9 +406,9 @@ def normSource_cover
         (Circle.reciprocalCircle_denominator_ne
           base parameter)
         value denominatorNonzero sourcePoint
-      let chart : Chart.BoundedChart
-          (Hermitian.normComparisonForm matrix
-            (Data.Gaussian.Norm.Basic.normSq base)) :=
+      let chart : BoundedChart
+          (normComparisonForm matrix
+            (Norm.Basic.normSq base)) :=
         { parameterization :=
             Parametrization.normComparisonReciprocal matrix
               determinantNonzero base
@@ -430,14 +430,14 @@ def normSource_cover
 /-- Every curve-source boundary point in the current box is represented by one of the finite charts that is actually
 sent to event analysis. -/
 def CurveSource.cover
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    (source : Chart.CurveSource reference form) (box : Rational.Box)
+    {reference : GaussianMatrix} {form : HermitianForm}
+    (source : CurveSource reference form) (box : Rational.Box)
     {denominatorMargin : Fraction.Rational}
     (marginPositive : 0 < denominatorMargin)
-    (value : Data.Gaussian.Basic.Canonical) (inside : box.Contains value)
+    (value : Basic.Canonical) (inside : box.Contains value)
     (onBoundary : form.eval value = 0)
     (referenceLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
+      Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
     Coverage source box denominatorMargin marginPositive value := by
   cases source with
   | norm matrix determinantNonzero lowerRow base baseNonzero form_eq =>
@@ -456,22 +456,22 @@ def CurveSource.cover
 
 /-- Propositional compatibility wrapper around the executable coverage record. -/
 theorem CurveSource.covers
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    (source : Chart.CurveSource reference form) (box : Rational.Box)
+    {reference : GaussianMatrix} {form : HermitianForm}
+    (source : CurveSource reference form) (box : Rational.Box)
     {denominatorMargin : Fraction.Rational}
     (marginPositive : 0 < denominatorMargin)
-    (value : Data.Gaussian.Basic.Canonical) (inside : box.Contains value)
+    (value : Basic.Canonical) (inside : box.Contains value)
     (onBoundary : form.eval value = 0)
     (referenceLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
+      Norm.Basic.normSq (Homography.Basic.denominator reference value)) :
     Covered source box denominatorMargin marginPositive value :=
   (source.cover box marginPositive value inside onBoundary
     referenceLower).covered
 
 /-- Every geometric boundary source produces a nonempty bounded chart family. -/
 theorem charts_ne_nil
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    (source : Chart.CurveSource reference form)
+    {reference : GaussianMatrix} {form : HermitianForm}
+    (source : CurveSource reference form)
     (box : Rational.Box) (denominatorMargin : Fraction.Rational)
     (marginPositive : 0 < denominatorMargin) :
     charts source box denominatorMargin marginPositive ≠ [] := by
@@ -479,8 +479,8 @@ theorem charts_ne_nil
 
 /-- Every geometric boundary source produces at most two bounded charts. -/
 theorem charts_length_le_two
-    {reference : GaussianMatrix} {form : Hermitian.HermitianForm}
-    (source : Chart.CurveSource reference form)
+    {reference : GaussianMatrix} {form : HermitianForm}
+    (source : CurveSource reference form)
     (box : Rational.Box) (denominatorMargin : Fraction.Rational)
     (marginPositive : 0 < denominatorMargin) :
     (charts source box denominatorMargin marginPositive).length ≤ 2 := by

@@ -61,6 +61,10 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 public import Purelib.Riemann.Readings.RectangularObservationEnergy
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -137,7 +141,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy (BasisR
 open Purelib.Riemann.Integration.RectangularPrimitiveModels (ambient_numerator_inverse_le)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -149,15 +153,15 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds
 
 /-- A finite sum of nonnegative rational terms is nonnegative. -/
-private theorem sum_nonnegative {count : Nat} (values : Fin count → InverseRootPolynomial.Coordinate) (nonnegative : ∀
+private theorem sum_nonnegative {count : Nat} (values : Fin count → Coordinate) (nonnegative : ∀
   index, 0 ≤ values index) :
     0 ≤ FiniteSum.Fin.sumFin values := by
   have estimate := Order.Positivity.sumFin_mono (fun _ => 0) values nonnegative
   simpa only [FiniteSum.Fin.sumFin_zero] using estimate
 
 /-- A finite constant sum equals the retained index count times its value. -/
-private theorem sum_constant (count : Nat) (value : InverseRootPolynomial.Coordinate) : FiniteSum.Fin.sumFin (fun _ :
-  Fin count => value) = (count : InverseRootPolynomial.Coordinate) * value := by
+private theorem sum_constant (count : Nat) (value : Coordinate) : FiniteSum.Fin.sumFin (fun _ :
+  Fin count => value) = (count : Coordinate) * value := by
   induction count with
   | zero => change 0 = 0 * value; ring1
   | succ count ih => rw [FiniteSum.Fin.sumFin_succ, ih, Nat.cast_succ]; ring1
@@ -167,27 +171,27 @@ set_option genInjectivity false in
 
 The original models and standard-differential rows determine both scales before spatial refinement or linear-combination
 coefficients are selected. -/
-structure EnergyPreflight (domain : Periods.PeriodDomain models sheet) where
+structure EnergyPreflight (domain : PeriodDomain models sheet) where
   /-- The cached derivative bank on the exact retained coarse inverse models. -/ derivatives :
-    RectangularPrimitiveDerivative.DerivativeBank face.clearance domain.patch.models
+    DerivativeBank face.clearance domain.patch.models
   /-- The cached derivative bounds for each actual standard-differential numerator. -/ numerators :
-    Data.Vector.DependentVector (fun row : Fin genus =>
+    DependentVector (fun row : Fin genus =>
     DerivativeBank.Numerator derivatives (PreparedPrimitiveSamples.differentialNumerator
       (PeriodMatrix.standardDifferential row)))
-  /-- The cached primitive-overlap bounds for every retained basis row. -/ overlaps : Data.Vector.DependentVector (fun
+  /-- The cached primitive-overlap bounds for every retained basis row. -/ overlaps : DependentVector (fun
     row : Fin genus =>
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance (PreparedPrimitiveSamples.differentialNumerator
+    PrimitiveOverlapBounds face.clearance (PreparedPrimitiveSamples.differentialNumerator
       (PeriodMatrix.standardDifferential row)))
   /-- The cached common scale bounding finite affine coefficients. -/ coefficientScale :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The coefficient scale is the exact genus-weighted sum of the retained numerator and inverse bounds. -/
-    coefficientScale_eq : coefficientScale = (genus : InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row
+    coefficientScale_eq : coefficientScale = (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row
     =>
     (overlaps.get row).numeratorUpper * (overlaps.get row).inverseUpper)
   /-- The cached common scale bounding finite affine-increment remainders. -/ taylorScale :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The Taylor scale is the exact genus-weighted sum of the retained derivative totals. -/ taylorScale_eq :
-    taylorScale = 8 * (genus : InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row => (numerators.get
+    taylorScale = 8 * (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (numerators.get
     row).total)
 
 constructive_injectivity EnergyPreflight
@@ -199,8 +203,8 @@ section
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight
 
 /-- Cache all retained basis-row derivative and overlap bounds before selecting a mesh depth. -/
-@[expose] def build (domain : Periods.PeriodDomain models sheet) :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain :=
+@[expose] def build (domain : PeriodDomain models sheet) :
+  EnergyPreflight domain :=
   let derivatives := DerivativeBank.build face.clearance domain.patch.models domain.patch.cell_refines
   let numerators := DependentVector.ofFn fun row : Fin genus =>
     derivatives.forNumerator (PreparedPrimitiveSamples.differentialNumerator (PeriodMatrix.standardDifferential row))
@@ -218,31 +222,31 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.En
 
 /-- The retained common coefficient scale is nonnegative. -/
 theorem coefficientScale_nonnegative (preflight :
-  DomainBasisBounds.EnergyPreflight domain) : 0 ≤ preflight.coefficientScale
+  EnergyPreflight domain) : 0 ≤ preflight.coefficientScale
   := by
   rw [preflight.coefficientScale_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.sum_nonnegative _ (fun row =>
-      Fraction.Order.Arithmetic.mul_nonneg_direct
+  exact Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
+    (DomainBasisBounds.sum_nonnegative _ (fun row =>
+      Arithmetic.mul_nonneg_direct
       (preflight.overlaps.get row).numeratorUpper_nonnegative (preflight.overlaps.get row).inverseUpper_positive.le))
 
 /-- The retained common Taylor-error scale is nonnegative. -/
-theorem taylorScale_nonnegative (preflight : DomainBasisBounds.EnergyPreflight
+theorem taylorScale_nonnegative (preflight : EnergyPreflight
   domain) : 0 ≤ preflight.taylorScale := by
   rw [preflight.taylorScale_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le
       genus)))
-    (PuncturedGrid.DomainBasisBounds.sum_nonnegative _ (fun row => (preflight.numerators.get
+    (DomainBasisBounds.sum_nonnegative _ (fun row => (preflight.numerators.get
       row).total_nonnegative))
 
 set_option genInjectivity false in
 /-- The common index is selected before any requested inverse polynomial or primitive is built. All rows retain their
 individual exact error reports. -/
-structure Request (preflight : DomainBasisBounds.EnergyPreflight domain)
-  (target : InverseRootPolynomial.Coordinate) where
+structure Request (preflight : EnergyPreflight domain)
+  (target : Coordinate) where
   /-- The cached common polynomial index of all retained row requests. -/ index : Nat
-  /-- The original retained basis-row accuracy requests at the common index. -/ rows : Data.Vector.DependentVector (fun
+  /-- The original retained basis-row accuracy requests at the common index. -/ rows : DependentVector (fun
     row => RectangularPrimitiveAccuracy.GridPrimitiveAccuracy (preflight.overlaps.get row) domain.steps target)
   /-- Every actual retained row request has exactly the common index. -/ index_eq : ∀ row, (rows.get row).index = index
 
@@ -252,16 +256,16 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPr
 
 section
 
-variable {preflight : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain}
+variable {preflight : DomainBasisBounds.EnergyPreflight domain}
   {target : Coordinate}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request
 
 /-- Synchronize every original basis-row accuracy request at the exact finite maximum index before constructing
 primitive polynomials. -/
-@[expose] def build (preflight : DomainBasisBounds.EnergyPreflight domain)
-  (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request preflight target :=
+@[expose] def build (preflight : EnergyPreflight domain)
+  (target : Coordinate) (positive : 0 < target) :
+  Request preflight target :=
   let initial := DependentVector.ofFn fun row => GridPrimitiveAccuracy.build (preflight.overlaps.get row) domain.steps
     target positive
   let index := initial.maximum (fun _ request => request.index)
@@ -271,9 +275,9 @@ primitive polynomials. -/
     index_eq := fun row => by rw [DependentVector.ofFn_get]; rfl }
 
 /-- Raise all retained basis-row requests to a supplied later common index without replacing their error owners. -/
-@[expose] def refineIndex (request : EnergyPreflight.Request
+@[expose] def refineIndex (request : Request
   preflight target) (index : Nat) (later : request.index ≤ index) :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request preflight target :=
+  Request preflight target :=
   { index := index
     rows := DependentVector.ofFn fun row =>
       GridPrimitiveAccuracy.atIndex (request.rows.get row) index ((request.index_eq row).trans_le later)
@@ -288,7 +292,7 @@ section
 
 variable {stage : Nat}
   {cached : (row : Fin genus) → DomainPrimitives
-    domain (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential row) stage}
+    domain (PeriodMatrix.standardDifferential row) stage}
   {triangles : List (ModelTriangle domain.geometry)} {surface
     : OwnedTriangulation triangles}
 
@@ -296,28 +300,28 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.Ba
 
 /-- Each retained affine coefficient satisfies its cached row-specific numerator/inverse bound. -/
 theorem row_coefficient_bound
-  (readings : DomainBasisEnergy.BasisReadings cached surface) (preflight :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain)
+  (readings : BasisReadings cached surface) (preflight :
+  DomainBasisBounds.EnergyPreflight domain)
     (row : Fin genus) (index : Fin (triangles.map ModelTriangle.triangle).length) :
-    Data.Gaussian.Norm.Basic.normSq (readings.affine.coefficients row index) ≤
+    Basic.normSq (readings.affine.coefficients row index) ≤
       (preflight.overlaps.get row).numeratorUpper * (preflight.overlaps.get row).inverseUpper := by
-  rw [readings.coefficients_eq, SharedPrimitiveValues.faceCoefficients, Data.Vector.Basic.vectorOfFn_apply,
+  rw [readings.coefficients_eq, SharedPrimitiveValues.faceCoefficients, Basic.vectorOfFn_apply,
     (cached row).primitives.coefficient_eq]
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+  rw [Basic.normSq_eq_canonical]
   exact RectangularPrimitiveModels.ambient_numerator_inverse_le (preflight.overlaps.get row) _
     (preflight.derivatives.refines _ _) (surface.face_inside index).1
 
 /-- Each actual affine increment is bounded by its retained row coefficient ceiling times the supplied squared movement
 bound. -/
 theorem row_affine_bound
-  (readings : DomainBasisEnergy.BasisReadings cached surface) (preflight :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain)
+  (readings : BasisReadings cached surface) (preflight :
+  DomainBasisBounds.EnergyPreflight domain)
     (row : Fin genus) (index : Fin (triangles.map ModelTriangle.triangle).length) (last : Fin
       surface.mesh.vertices.length)
-    {distance : InverseRootPolynomial.Coordinate} (movement : Data.Gaussian.Norm.Basic.normSq
+    {distance : Coordinate} (movement : Basic.normSq
       (surface.mesh.coordinate last -
       surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) ≤ distance) :
-    Data.Gaussian.Norm.Basic.normSq (Purelib.Integration.Energy.AffineTriangle.affinePrimitiveIncrement
+    Basic.normSq (AffineTriangle.affinePrimitiveIncrement
       (readings.affine.coefficients row index)
       (surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) (surface.mesh.coordinate last)) ≤
       ((preflight.overlaps.get row).numeratorUpper * (preflight.overlaps.get row).inverseUpper) * distance := by
@@ -326,68 +330,68 @@ theorem row_affine_bound
       readings.affine.coefficients row index *
         (surface.mesh.coordinate last - surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) := by
     unfold AffineTriangle.affinePrimitiveIncrement; ring1
-  rw [equal, Data.Gaussian.Norm.Basic.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_le_mul_direct (readings.row_coefficient_bound preflight row index) movement
-    (Data.Gaussian.Norm.Basic.normSq_nonneg _) (Fraction.Order.Arithmetic.mul_nonneg_direct
+  rw [equal, Basic.normSq_mul]
+  exact Arithmetic.mul_le_mul_direct (readings.row_coefficient_bound preflight row index) movement
+    (Basic.normSq_nonneg _) (Arithmetic.mul_nonneg_direct
       (preflight.overlaps.get row).numeratorUpper_nonnegative (preflight.overlaps.get row).inverseUpper_positive.le)
 
 /-- Each retained affine-increment error is bounded by the paid row target and cached fourth-order movement remainder.
 -/
 theorem row_error_bound
-  (readings : DomainBasisEnergy.BasisReadings cached surface) (preflight :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain)
-    {target : InverseRootPolynomial.Coordinate} (request : preflight.Request target) (stage_eq : stage = request.index)
+  (readings : BasisReadings cached surface) (preflight :
+  DomainBasisBounds.EnergyPreflight domain)
+    {target : Coordinate} (request : preflight.Request target) (stage_eq : stage = request.index)
     (row : Fin genus) (index : Fin (triangles.map ModelTriangle.triangle).length) (last : Fin
       surface.mesh.vertices.length)
     (inside : (domain.geometry.box (surface.faceSource index).column (surface.faceSource index).row).Contains
       (surface.mesh.coordinate last)) :
-    Data.Gaussian.Norm.Basic.normSq (Purelib.Integration.Energy.AffineTriangle.affinePrimitiveIncrementError
+    Basic.normSq (AffineTriangle.affinePrimitiveIncrementError
       (readings.affine.coefficients row index)
       (surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) (surface.mesh.coordinate last)
       (readings.affine.values row (surface.mesh.triangulation.faces index).first) (readings.affine.values row last)) ≤
       32 * target + 8 * (preflight.numerators.get row).total *
-        Data.Gaussian.Norm.Basic.normSq (surface.mesh.coordinate last - surface.mesh.coordinate
+        Basic.normSq (surface.mesh.coordinate last - surface.mesh.coordinate
           (surface.mesh.triangulation.faces index).first) ^ 2 := by
   have estimate := (preflight.numerators.get row).shared_increment_bound (request.rows.get row)
     (stage_eq.trans (request.index_eq row).symm) (readings.rows.get row)
     (surface.faceSource index).column (surface.faceSource index).row
     (surface.mesh.triangulation.faces index).first last (surface.face_inside index).1 inside
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
+  rw [← Basic.normSq_eq_canonical] at estimate
+  rw [← Basic.normSq_eq_canonical] at estimate
   have upper : 32 * (request.rows.get row).globalBound +
       8 * (((preflight.numerators.get row).entries.get (surface.faceSource index).column).get (surface.faceSource
         index).row).bound *
-        Data.Gaussian.Norm.Basic.normSq (surface.mesh.coordinate last - surface.mesh.coordinate
+        Basic.normSq (surface.mesh.coordinate last - surface.mesh.coordinate
           (surface.mesh.triangulation.faces index).first) ^ 2 ≤
       32 * target + 8 * (preflight.numerators.get row).total *
-        Data.Gaussian.Norm.Basic.normSq (surface.mesh.coordinate last - surface.mesh.coordinate
+        Basic.normSq (surface.mesh.coordinate last - surface.mesh.coordinate
           (surface.mesh.triangulation.faces index).first) ^ 2 := add_le_add
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (request.rows.get row).accurate.le (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 32))
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        ((preflight.numerators.get row).entry_le_total _ _) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 8))
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (request.rows.get row).accurate.le (by
+        decide +kernel : (0 : Coordinate) ≤ 32))
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        ((preflight.numerators.get row).entry_le_total _ _) (by decide : (0 : Coordinate) ≤ 8))
+          (Arithmetic.sq_nonneg_direct _))
   rw [readings.coefficients_eq, readings.values_eq, readings.values_eq, SharedPrimitiveValues.faceCoefficients,
-    Data.Vector.Basic.vectorOfFn_apply]
+    Basic.vectorOfFn_apply]
   unfold AffineTriangle.affinePrimitiveIncrementError AffineTriangle.affinePrimitiveIncrement
   rw [← mul_sub]
   exact estimate.trans upper
 
 /-- The finite genus-weighted sum of retained affine increments satisfies the shared coefficient-scale ceiling. -/
 theorem affine_scale_bound
-  (readings : DomainBasisEnergy.BasisReadings cached surface) (preflight :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain)
+  (readings : BasisReadings cached surface) (preflight :
+  DomainBasisBounds.EnergyPreflight domain)
     (index : Fin (triangles.map ModelTriangle.triangle).length) (last : Fin surface.mesh.vertices.length)
-    {distance : InverseRootPolynomial.Coordinate} (movement : Data.Gaussian.Norm.Basic.normSq
+    {distance : Coordinate} (movement : Basic.normSq
       (surface.mesh.coordinate last -
       surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) ≤ distance) :
-    (genus : InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row =>
-      Data.Gaussian.Norm.Basic.normSq (AffineTriangle.affinePrimitiveIncrement (readings.affine.coefficients
+    (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row =>
+      Basic.normSq (AffineTriangle.affinePrimitiveIncrement (readings.affine.coefficients
       row index)
       (surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) (surface.mesh.coordinate last))) ≤
       preflight.coefficientScale * distance := by
-  have estimate := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have estimate := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (Order.Positivity.sumFin_mono _ _ (fun row => readings.row_affine_bound preflight row index last movement))
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
   rw [FiniteSum.Fin.sumFin_mul_right] at estimate
@@ -395,29 +399,29 @@ theorem affine_scale_bound
 
 /-- The finite genus-weighted sum of retained affine errors satisfies the common target and Taylor-scale ceiling. -/
 theorem error_scale_bound
-  (readings : DomainBasisEnergy.BasisReadings cached surface) (preflight :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain)
-    {target : InverseRootPolynomial.Coordinate} (request : preflight.Request target) (stage_eq : stage = request.index)
+  (readings : BasisReadings cached surface) (preflight :
+  DomainBasisBounds.EnergyPreflight domain)
+    {target : Coordinate} (request : preflight.Request target) (stage_eq : stage = request.index)
     (index : Fin (triangles.map ModelTriangle.triangle).length) (last : Fin surface.mesh.vertices.length)
     (inside : (domain.geometry.box (surface.faceSource index).column (surface.faceSource index).row).Contains
       (surface.mesh.coordinate last))
-    {distance : InverseRootPolynomial.Coordinate} (movement : Data.Gaussian.Norm.Basic.normSq
+    {distance : Coordinate} (movement : Basic.normSq
       (surface.mesh.coordinate last -
       surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) ≤ distance) :
-    (genus : InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row =>
-      Data.Gaussian.Norm.Basic.normSq (AffineTriangle.affinePrimitiveIncrementError
+    (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row =>
+      Basic.normSq (AffineTriangle.affinePrimitiveIncrementError
       (readings.affine.coefficients row index)
       (surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) (surface.mesh.coordinate last)
       (readings.affine.values row (surface.mesh.triangulation.faces index).first) (readings.affine.values row last))) ≤
-      32 * (genus : InverseRootPolynomial.Coordinate) ^ 2 * target + preflight.taylorScale * distance ^ 2 := by
+      32 * (genus : Coordinate) ^ 2 * target + preflight.taylorScale * distance ^ 2 := by
   have pointwise (row : Fin genus) := (readings.row_error_bound preflight request stage_eq row index last inside).trans
     (add_le_add (le_refl (32 * target))
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.pow_le_pow_direct (Data.Gaussian.Norm.Basic.normSq_nonneg _) movement 2)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (preflight.numerators.get row).total_nonnegative)))
-  have estimate := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.pow_le_pow_direct (Basic.normSq_nonneg _) movement 2)
+        (Arithmetic.mul_nonneg_direct (by decide) (preflight.numerators.get row).total_nonnegative)))
+  have estimate := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (Order.Positivity.sumFin_mono _ _ pointwise) (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
-  rw [FiniteSum.Fin.sumFin_add, Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.sum_constant,
+  rw [FiniteSum.Fin.sumFin_add, DomainBasisBounds.sum_constant,
     FiniteSum.Fin.sumFin_mul_right, FiniteSum.Fin.sumFin_mul_left] at estimate
   exact estimate.trans_eq (by rw [preflight.taylorScale_eq]; ring1)
 

@@ -37,6 +37,10 @@ import Purelib.Polynomial.Dense.Gaussian.Newton.Box.Certificate
 import Purelib.Polynomial.Dense.Gaussian.Newton.Box.Squarefree
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box
+
 open Purelib.Polynomial.Clearance.Box.Region (ProtectedAmbient)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic (SquarefreeCertificate)
@@ -82,12 +86,12 @@ variable {current : ProtectedAmbient p ambient}
 def seed
     (input : AnchoredInput squarefree current)
     (elimination : AxisEliminationCertificate p degreeBound) :
-    Newton.Restart.Seed squarefree elimination current := by
+    Seed squarefree elimination current := by
   let source := Box.Square.Anchored.anchoredSquare input.point input.radius
     input.radiusPositive.le
   have sourceRefines : source.Refines current.box := by
     simpa only [source] using input.sourceRefines
-  have sourceResidual : Data.Gaussian.Norm.Basic.normSq (p.eval source.anchor) ≤
+  have sourceResidual : Gaussian.Norm.Basic.normSq (p.eval source.anchor) ≤
       Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p current.box source := by
     simpa only [source, Box.Square.Anchored.anchoredSquare_anchor,
       Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound,
@@ -98,75 +102,75 @@ def seed
       Box.Square.Anchored.anchoredSquare_diagonalSq] using
       input.threshold
   have sourceDisplacementBudget :
-      Data.Gaussian.Norm.Basic.normSq (p.eval source.anchor) /
+      Gaussian.Norm.Basic.normSq (p.eval source.anchor) /
           Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box ≤ input.radius ^ 2 :=
             by
     simpa only [source, Box.Square.Anchored.anchoredSquare_anchor] using
       input.displacementBudget
-  let newton := Dense.Gaussian.Newton.Box.Prepare.Squarefree.computeNewtonCenterOfResidual p squarefree sourceRefines
+  let newton := Prepare.Squarefree.computeNewtonCenterOfResidual p squarefree sourceRefines
     sourceResidual sourceThreshold
   have displacement :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤
         input.radius ^ 2 :=
-    (Newton.Restart.Displacement.newton_displacementResidualMargin newton).trans sourceDisplacementBudget
+    (Displacement.newton_displacementResidualMargin newton).trans sourceDisplacementBudget
   have coordinateBounds :=
     Gaussian.Norm.Bounds.coordinate_bounds_of_normSq_le
       input.radiusPositive.le displacement
   have centerRealLower : input.point.re - input.radius ≤
-      (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).re := by
+      (Anchor.anchorNewtonCenter p source).re := by
     calc
       input.point.re - input.radius = -input.radius + input.point.re := by
         ring1
-      _ ≤ (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor).re +
+      _ ≤ (Anchor.anchorNewtonCenter p source - source.anchor).re +
           input.point.re :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct coordinateBounds.1
+        Arithmetic.add_le_add_right_direct coordinateBounds.1
           input.point.re
-      _ = (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).re := by
+      _ = (Anchor.anchorNewtonCenter p source).re := by
         simp only [source, Box.Square.Anchored.anchoredSquare_anchor, Gaussian.Basic.sub_re]
         ring1
-  have centerRealUpper : (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).re ≤
+  have centerRealUpper : (Anchor.anchorNewtonCenter p source).re ≤
       input.point.re + input.radius := by
     calc
-      (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).re =
-          (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor).re +
+      (Anchor.anchorNewtonCenter p source).re =
+          (Anchor.anchorNewtonCenter p source - source.anchor).re +
             input.point.re := by
         simp only [source, Box.Square.Anchored.anchoredSquare_anchor, Gaussian.Basic.sub_re]
         ring1
       _ ≤ input.radius + input.point.re :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
+        Arithmetic.add_le_add_right_direct
           coordinateBounds.2.1 input.point.re
       _ = input.point.re + input.radius := by ring1
   have centerImagLower : input.point.im - input.radius ≤
-      (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).im := by
+      (Anchor.anchorNewtonCenter p source).im := by
     calc
       input.point.im - input.radius = -input.radius + input.point.im := by
         ring1
-      _ ≤ (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor).im +
+      _ ≤ (Anchor.anchorNewtonCenter p source - source.anchor).im +
           input.point.im :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
+        Arithmetic.add_le_add_right_direct
           coordinateBounds.2.2.1 input.point.im
-      _ = (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).im := by
+      _ = (Anchor.anchorNewtonCenter p source).im := by
         simp only [source, Box.Square.Anchored.anchoredSquare_anchor, Gaussian.Basic.sub_im]
         ring1
-  have centerImagUpper : (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).im ≤
+  have centerImagUpper : (Anchor.anchorNewtonCenter p source).im ≤
       input.point.im + input.radius := by
     calc
-      (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).im =
-          (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor).im +
+      (Anchor.anchorNewtonCenter p source).im =
+          (Anchor.anchorNewtonCenter p source - source.anchor).im +
             input.point.im := by
         simp only [source, Box.Square.Anchored.anchoredSquare_anchor, Gaussian.Basic.sub_im]
         ring1
       _ ≤ input.radius + input.point.im :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
+        Arithmetic.add_le_add_right_direct
           coordinateBounds.2.2.2 input.point.im
       _ = input.point.im + input.radius := by ring1
-  let band := Elimination.Axis.Band.selectedBand elimination (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p
+  let band := Elimination.Axis.Band.selectedBand elimination (Anchor.anchorNewtonCenter p
     source)
     input.radius input.radiusPositive
   have leftPoint : current.box.xLower <
       input.point.re - 3 * input.radius := by
-    apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
+    apply Arithmetic.lt_of_add_lt_add_right_direct
       (c := 3 * input.radius)
     calc
       current.box.xLower + 3 * input.radius < input.point.re :=
@@ -177,7 +181,7 @@ def seed
       current.box.xUpper := input.rightMargin
   have bottomPoint : current.box.yLower <
       input.point.im - 3 * input.radius := by
-    apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
+    apply Arithmetic.lt_of_add_lt_add_right_direct
       (c := 3 * input.radius)
     calc
       current.box.yLower + 3 * input.radius < input.point.im :=
@@ -194,16 +198,16 @@ def seed
               leftPoint
             _ = (input.point.re - input.radius) - 2 * input.radius := by
               ring1
-            _ ≤ (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).re - 2 * input.radius :=
-              Fraction.Order.Arithmetic.sub_le_sub_right_direct centerRealLower _
+            _ ≤ (Anchor.anchorNewtonCenter p source).re - 2 * input.radius :=
+              Arithmetic.sub_le_sub_right_direct centerRealLower _
             _ ≤ band.box.xLower := band.left_lower
         right := by
           calc
             band.box.xUpper ≤
-                (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).re + 2 * input.radius :=
+                (Anchor.anchorNewtonCenter p source).re + 2 * input.radius :=
               band.right_upper
             _ ≤ (input.point.re + input.radius) + 2 * input.radius :=
-              Fraction.Order.Arithmetic.add_le_add_right_direct
+              Arithmetic.add_le_add_right_direct
                 centerRealUpper _
             _ = input.point.re + 3 * input.radius := by ring1
             _ < current.box.xUpper := rightPoint
@@ -213,16 +217,16 @@ def seed
               bottomPoint
             _ = (input.point.im - input.radius) - 2 * input.radius := by
               ring1
-            _ ≤ (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).im - 2 * input.radius :=
-              Fraction.Order.Arithmetic.sub_le_sub_right_direct centerImagLower _
+            _ ≤ (Anchor.anchorNewtonCenter p source).im - 2 * input.radius :=
+              Arithmetic.sub_le_sub_right_direct centerImagLower _
             _ ≤ band.box.yLower := band.bottom_lower
         top := by
           calc
             band.box.yUpper ≤
-                (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source).im + 2 * input.radius :=
+                (Anchor.anchorNewtonCenter p source).im + 2 * input.radius :=
               band.top_upper
             _ ≤ (input.point.im + input.radius) + 2 * input.radius :=
-              Fraction.Order.Arithmetic.add_le_add_right_direct
+              Arithmetic.add_le_add_right_direct
                 centerImagUpper _
             _ = input.point.im + 3 * input.radius := by ring1
             _ < current.box.yUpper := topPoint }
@@ -262,10 +266,10 @@ def Seed.seedOfResidual
     (current : ProtectedAmbient p ambient)
     (point : Gaussian.Basic.Canonical) (strict : current.box.StrictContains point)
     {cap : Fraction.Rational} (capPositive : 0 < cap)
-    (residual : Data.Gaussian.Norm.Basic.normSq (p.eval point) <
-      Newton.Restart.Anchored.Budget.anchoredResidualTarget squarefree current point cap) :
-    Newton.Restart.Seed squarefree elimination current :=
-  (Newton.Restart.Anchored.Prepare.anchoredInputOfResidual squarefree current point strict capPositive
+    (residual : Gaussian.Norm.Basic.normSq (p.eval point) <
+      Budget.anchoredResidualTarget squarefree current point cap) :
+    Seed squarefree elimination current :=
+  (Prepare.anchoredInputOfResidual squarefree current point strict capPositive
     residual).seed elimination
 
 /-- The automatically prepared residual seed respects the original positive external radius cap. -/
@@ -277,11 +281,11 @@ theorem Seed.seedOfResidual_radius_le_cap
     (current : ProtectedAmbient p ambient)
     (point : Gaussian.Basic.Canonical) (strict : current.box.StrictContains point)
     {cap : Fraction.Rational} (capPositive : 0 < cap)
-    (residual : Data.Gaussian.Norm.Basic.normSq (p.eval point) <
-      Newton.Restart.Anchored.Budget.anchoredResidualTarget squarefree current point cap) :
+    (residual : Gaussian.Norm.Basic.normSq (p.eval point) <
+      Budget.anchoredResidualTarget squarefree current point cap) :
     (Seed.seedOfResidual squarefree elimination current point strict capPositive
       residual).radius ≤ cap := by
-  exact Newton.Restart.Anchored.Budget.anchoredRadius_le_cap squarefree current point cap
+  exact Budget.anchoredRadius_le_cap squarefree current point cap
 
 end Purelib.RootIsolation.Newton.Restart.Anchored
 

@@ -25,6 +25,10 @@ import Purelib.Geometry.Projective.Hermitian.Formula.Basic
 import Purelib.RootIsolation.CCL.Persistent.Sample.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Geometry.CCL.Parser
+
+open Purelib.Data.CCL.Encoding.Parser
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 public section
@@ -62,11 +66,11 @@ structure StableNext
   /-- The next-bit formula has a stable truth value throughout the original numerical box. -/ stable :
     Geometry.Projective.Hermitian.Formula.Box.Stable
     ambient current.numerical.box
-    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-      (Data.CCL.Encoding.Parser.State.parse current.word) bit)
+    (Formula.inputIncrementalAdvanceFormula
+      (State.parse current.word) bit)
   /-- The original current sample satisfies this exact next-bit formula. -/ currentHolds :
-    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-    (Data.CCL.Encoding.Parser.State.parse current.word) bit).Holds current.currentSample.point
+    (Formula.inputIncrementalAdvanceFormula
+    (State.parse current.word) bit).Holds current.currentSample.point
 
 constructive_injectivity StableNext
 
@@ -80,8 +84,8 @@ strict atom-margin comparison for that child formula. -/
   match next.decision with
   | .terminal _ => none
   | .next bit tailHolds _ =>
-      let formula := Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-        (Data.CCL.Encoding.Parser.State.parse current.word) bit
+      let formula := Formula.inputIncrementalAdvanceFormula
+        (State.parse current.word) bit
       match Geometry.Projective.Hermitian.Formula.Box.stable? formula ambient
           current.numerical.box current.numerical.refinesAmbient
           sample.point sample.inside with
@@ -91,7 +95,7 @@ strict atom-margin comparison for that child formula. -/
             { bit := bit
               stable := stable
               currentHolds :=
-                CCL.Persistent.Sample.Extension.CompatibleSample.inputIncrementalAdvanceFormula_holds_of_advance
+                Sample.Extension.CompatibleSample.inputIncrementalAdvanceFormula_holds_of_advance
                   sample bit tailHolds }
 
 /-- The displayed current sample is locally terminal. -/
@@ -99,8 +103,8 @@ structure LocalTerminal
     {p : CoefficientPolynomial} {ambient : Box}
     (current : State p ambient) where
   /-- Neither raw bit can extend the original prefix at its displayed current sample. -/ none : ∀ bit,
-    ¬Data.CCL.Encoding.Parser.Semantics.Prefix.CanStep
-    (Data.CCL.Encoding.Parser.State.parse current.word) current.currentSample.point bit
+    ¬Semantics.Prefix.CanStep
+    (State.parse current.word) current.currentSample.point bit
 
 set_option genInjectivity false in
 /-- A nonterminal child whose structural box inspection stopped at one
@@ -111,15 +115,15 @@ structure BoundaryNext
   /-- The actual next bit selected at the original current sample. -/ bit : Bool
   /-- The concrete Hermitian atom left unresolved by the box inspection. -/ atom : Geometry.Projective.Hermitian.Atom
   /-- The unresolved atom belongs to the exact selected next-bit formula. -/ member : atom ∈
-    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-      (Data.CCL.Encoding.Parser.State.parse current.word) bit).atoms
+    (Formula.inputIncrementalAdvanceFormula
+      (State.parse current.word) bit).atoms
   /-- The original atom-margin checker returned no certificate on this exact box and sample. -/ failure :
     Geometry.Projective.Hermitian.Box.certificate?
     atom.form ambient current.numerical.box current.numerical.refinesAmbient
       current.currentSample.point current.currentSample.inside = none
   /-- The original displayed sample satisfies the selected next-bit formula. -/ currentHolds :
-    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-    (Data.CCL.Encoding.Parser.State.parse current.word) bit).Holds current.currentSample.point
+    (Formula.inputIncrementalAdvanceFormula
+    (State.parse current.word) bit).Holds current.currentSample.point
 
 constructive_injectivity BoundaryNext
 
@@ -150,17 +154,17 @@ when the full child formula is not yet box-stable. -/
         { none := by
             intro bit possible
             apply terminalNone bit
-            apply (Geometry.CCL.Parser.Formula.advanceFormula_iff
-              (Data.CCL.Encoding.Parser.State.parse current.word) bit next.tail).2
-            exact (Data.CCL.Encoding.Parser.Next.canStep_iff_canAdvanceAt
-              (Data.CCL.Encoding.Parser.State.parse current.word) sample.point next.tail
-              (Data.CCL.Encoding.Parser.State.parse_det_ne current.word)
+            apply (Formula.advanceFormula_iff
+              (State.parse current.word) bit next.tail).2
+            exact (Next.canStep_iff_canAdvanceAt
+              (State.parse current.word) sample.point next.tail
+              (State.parse_det_ne current.word)
               next.represents bit).1 possible }
   | .next bit tailHolds _unique =>
-      let formula := Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-        (Data.CCL.Encoding.Parser.State.parse current.word) bit
+      let formula := Formula.inputIncrementalAdvanceFormula
+        (State.parse current.word) bit
       have currentHolds : formula.Holds sample.point := by
-        exact CCL.Persistent.Sample.Extension.CompatibleSample.inputIncrementalAdvanceFormula_holds_of_advance
+        exact Sample.Extension.CompatibleSample.inputIncrementalAdvanceFormula_holds_of_advance
           sample bit tailHolds
       match Geometry.Projective.Hermitian.Formula.Box.inspect formula ambient
           current.numerical.box current.numerical.refinesAmbient sample.point
@@ -184,7 +188,7 @@ namespace StableNext
 all later supplied subboxes. -/
 @[expose] def state
     {p : CoefficientPolynomial} {ambient : Box}
-    {current : State p ambient} (next : CCL.Persistent.Next.Strict.StableNext current) :
+    {current : State p ambient} (next : StableNext current) :
     State p ambient where
   numerical := current.numerical
   word := current.word ++ [next.bit]
@@ -194,30 +198,30 @@ all later supplied subboxes. -/
         have priorInsideCurrent : current.numerical.box.Contains prior.point :=
           laterRefines.contains prior.inside
         have priorHolds :
-            (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-              (Data.CCL.Encoding.Parser.State.parse current.word) next.bit).Holds prior.point :=
+            (Formula.inputIncrementalAdvanceFormula
+              (State.parse current.word) next.bit).Holds prior.point :=
           (next.stable.holds_iff current.currentSample.inside
             priorInsideCurrent).1 next.currentHolds
-        CCL.Persistent.Sample.Extension.CompatibleSample.extendIncremental prior next.bit priorHolds }
+        Sample.Extension.CompatibleSample.extendIncremental prior next.bit priorHolds }
 
 /-- The stable next state appends exactly its retained bit to the original raw prefix. -/
 @[simp] theorem state_word
     {p : CoefficientPolynomial} {ambient : Box}
-    {current : State p ambient} (next : CCL.Persistent.Next.Strict.StableNext current) :
+    {current : State p ambient} (next : StableNext current) :
     next.state.word = current.word ++ [next.bit] := rfl
 
 /-- The stable next state retains the original numerical box. -/
 @[simp] theorem state_box
     {p : CoefficientPolynomial} {ambient : Box}
-    {current : State p ambient} (next : CCL.Persistent.Next.Strict.StableNext current) :
+    {current : State p ambient} (next : StableNext current) :
     next.state.numerical.box = current.numerical.box := rfl
 
 /-- Package the implemented strict-sign case in the abstract controller's
 one-step output contract. -/
 @[expose] def stepResult
     {p : CoefficientPolynomial} {ambient : Box}
-    {current : State p ambient} (next : CCL.Persistent.Next.Strict.StableNext current) :
-    CCL.Persistent.Controller.Basic.StepResult current :=
+    {current : State p ambient} (next : StableNext current) :
+    Controller.Basic.StepResult current :=
   .next next.bit next.state
     (Box.refines_refl current.numerical.box) rfl
 

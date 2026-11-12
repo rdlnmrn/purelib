@@ -224,7 +224,7 @@ theorem interval_path (chord : CutBoundaryWord word index) {anchor : Fin source}
       change PathBoundary.PathEndpoints _ _ (chord.first.entry.edge ::
         ((chord.last.before ++ [chord.last.entry]).map CutWordEntry.edge)) _ _
       rw [Map.map_append, List.map_cons, List.map_nil]
-      exact .cons (PathEndpoints.append inside (.cons (.nil _)))
+      exact .cons (PathBoundary.PathEndpoints.append inside (.cons (.nil _)))
 
 /-- Retain the chord's cut interval together with its exact projected surface path. -/
 @[expose] def path (chord : CutBoundaryWord word index) {anchor : Fin source}

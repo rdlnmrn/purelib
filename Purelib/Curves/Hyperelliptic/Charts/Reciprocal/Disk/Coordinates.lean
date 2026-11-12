@@ -113,12 +113,12 @@ open Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.Coherence (exact
 open Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed (mul)
 open Purelib.Polynomial.Approximation.Gaussian.Evaluation.Horner (polynomialEval)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {point :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian}
-  {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-    ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval point)}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {point :
+    Gaussian}
+  {owner : SquareRootContinuationChain.Owner
+    ((HyperellipticReciprocal.polynomial curve).eval point)}
 
 set_option genInjectivity false in
 /-- The actual reciprocal disk occurrence and its retained regular cap root, quotient coordinate and attached winding
@@ -126,9 +126,9 @@ owner.
 
 The indexed fields retain the supplied owners, channels and exact cached
 data. Their identities bind each displayed field to those same inputs. -/
-structure Overlap (cap : ReciprocalInnerInverse.Data curve collar) (point : InverseRootPolynomial.Gaussian)
+structure Overlap (cap : ReciprocalInnerInverse.Data curve collar) (point : Gaussian)
     (owner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval point)) where
-  /-- The retained original cap-model root channel at this exact reciprocal disk point. -/ regular : Owners.DiskPoint
+  /-- The retained original cap-model root channel at this exact reciprocal disk point. -/ regular : DiskPoint
     cap point
   /-- The retained certificate of the original supplied reciprocal winding owner. -/ reciprocal :
     CertifiedSquareRoot.Certificate ((HyperellipticReciprocal.polynomial curve).eval point)
@@ -145,9 +145,9 @@ constructive_injectivity Overlap
 namespace Overlap
 
 /-- Consume a previously retained disk root and the actual reciprocal owner. -/
-@[expose] def ofPoint (regular : Owners.DiskPoint cap point)
+@[expose] def ofPoint (regular : DiskPoint cap point)
     (owner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval point)) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner := by
+      Overlap cap point owner := by
   let reciprocal := owner.certificate owner.parameterNonzero
   have identity : cap.polynomial.eval point * point ^ HyperellipticReciprocal.originOrder curve =
       (HyperellipticReciprocal.polynomial curve).eval point := by
@@ -160,32 +160,32 @@ namespace Overlap
   exact ⟨regular, reciprocal, rfl, coordinate, SquareRootChannelOwnership.attach coordinate.certificate⟩
 
 /-- Build the retained original regular disk channel and quotient coordinates for the supplied reciprocal owner. -/
-@[expose] def build (cap : ReciprocalInnerInverse.Data curve collar) (point : InverseRootPolynomial.Gaussian)
+@[expose] def build (cap : ReciprocalInnerInverse.Data curve collar) (point : Gaussian)
     (inside : Reciprocal.Bounds.InDisk curve.polynomial point)
     (owner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval point)) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.ofPoint (DiskPoint.build cap point inside) owner
+      Overlap cap point owner :=
+  ofPoint (DiskPoint.build cap point inside) owner
 
 /-- The quotient coordinate reconstructs the very scaled root supplied at this point, including its operational
 presentation and sheet. -/
-@[expose] def reconstruct (overlap : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner) :
-    NamedEquivalent (Coherent.CoherentNamed.mul overlap.coordinate.prepared.denominator
+@[expose] def reconstruct (overlap : Overlap cap point owner) :
+    NamedEquivalent (mul overlap.coordinate.prepared.denominator
       overlap.regular.certificate.value).name
       overlap.reciprocal.value.name := overlap.coordinate.reconstruct
 
 /-- The same retained polynomial primitive used by the inner cap, evaluated at this disk point's operational coordinate.
 -/
-@[expose] def chartPrimitive (overlap : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner)
-  {differential : Differentials.Basic.Differential genus} {index : Nat} {box : Rational.Box}
+@[expose] def chartPrimitive (overlap : Overlap cap point owner)
+  {differential : Differential genus} {index : Nat} {box : Rational.Box}
     (sample : Primitives.Sample cap differential index box) : CoherentNamed :=
   if HyperellipticReciprocal.originOrder curve = 0 then
-    Coherent.CoherentNamed.mul overlap.coordinate.prepared.denominator (Horner.polynomialEval sample.primitive.value
-      (Coherent.CoherentNamed.Coherence.exact point))
-  else Horner.polynomialEval sample.primitive.value overlap.coordinate.prepared.denominator
+    mul overlap.coordinate.prepared.denominator (polynomialEval sample.primitive.value
+      (exact point))
+  else polynomialEval sample.primitive.value overlap.coordinate.prepared.denominator
 
 /-- At an inner-cap point the disk view preserves the existing coordinate channel. Both presentations use the same
 supplied reciprocal occurrence. -/
-@[expose] def innerCoordinate (outer : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner)
+@[expose] def innerCoordinate (outer : Overlap cap point owner)
   (inner : RootCoordinates.Overlap cap point owner) :
     NamedEquivalent outer.coordinate.prepared.denominator.name inner.coordinate.prepared.denominator.name :=
   outer.coordinate.equivalent inner.coordinate (by
@@ -198,25 +198,25 @@ supplied reciprocal occurrence. -/
 
 Both evaluators share the retained finite polynomial sample. The regular or
 ramified origin branch transports the same operational coordinate comparison. -/
-@[expose] def innerPrimitive (outer : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner)
+@[expose] def innerPrimitive (outer : Overlap cap point owner)
   (inner : RootCoordinates.Overlap cap point owner)
-    {differential : Differentials.Basic.Differential genus} {index : Nat} {box : Rational.Box}
+    {differential : Differential genus} {index : Nat} {box : Rational.Box}
     (sample : Primitives.Sample cap differential index box) :
     NamedEquivalent (outer.chartPrimitive sample).name (inner.chartPrimitive sample).name := by
   by_cases regular : HyperellipticReciprocal.originOrder curve = 0
-  · rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.chartPrimitive,
+  · rw [chartPrimitive,
       RootCoordinates.Overlap.chartPrimitive, if_pos regular, if_pos regular]
-    exact Coherent.Arithmetic.Product.Congruence.coherentMul_respects _ _ _ _ (outer.innerCoordinate inner)
+    exact Congruence.coherentMul_respects _ _ _ _ (outer.innerCoordinate inner)
       (Equivalence.NamedEquivalent.refl _)
-  · rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.chartPrimitive,
+  · rw [chartPrimitive,
       RootCoordinates.Overlap.chartPrimitive, if_neg regular, if_neg regular]
-    exact Horner.horner_respects _ _ (Coherent.CoherentNamed.Coherence.exact 0) (Coherent.CoherentNamed.Coherence.exact
+    exact Horner.horner_respects _ _ (exact 0) (exact
       0) (outer.innerCoordinate inner)
       (Equivalence.NamedEquivalent.refl _) sample.primitive.value.coeffs
 
 end Overlap
 
-variable {source : Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian}
+variable {source : Gaussian}
 
 set_option genInjectivity false in
 /-- The retained affine owner, its scaled root, its attached reciprocal owner, and its common cap coordinate all refer
@@ -224,15 +224,16 @@ to the actual inverse boundary point.
 
 The indexed fields retain the supplied owners, channels and exact cached
 data. Their identities bind each displayed field to those same inputs. -/
-structure BoundaryData {parameter : InverseRootPolynomial.Gaussian} (original : CertifiedSquareRoot.Certificate
+structure BoundaryData {parameter : Gaussian} (original : CertifiedSquareRoot.Certificate
   parameter)
-    (multiplier target : InverseRootPolynomial.Gaussian) (onBoundary : Prop)
-    (Coordinates : SquareRootContinuationChain.Owner target → Type 1) where
+    (multiplier : Gaussian) (radicand : HyperellipticReciprocal.GaussianPolynomial)
+    (point : Gaussian) (onBoundary : Prop)
+    (Coordinates : SquareRootContinuationChain.Owner (radicand.eval point) → Type 1) where
   /-- The original affine source point satisfies its retained ambient-boundary condition. -/ boundary : onBoundary
   /-- The retained exact reciprocal scaling of the original affine root certificate. -/ scaled : ScaledRoot original
-    multiplier target
+    multiplier radicand point
   /-- The retained winding owner attached to the exact original scaled affine root channel. -/ attached :
-    SquareRootChannelOwnership.Attachment scaled.prepared.denominator target
+    SquareRootChannelOwnership.Attachment scaled.prepared.denominator (radicand.eval point)
   /-- The original reciprocal disk coordinates built on this exact retained attached owner. -/ coordinates : Coordinates
     attached.owner
 
@@ -240,38 +241,38 @@ constructive_injectivity BoundaryData
 
 /-- The original affine boundary owner with its retained reciprocal scaling and cap-coordinate occurrence at the actual
 inverse point. -/
-abbrev BoundaryPoint (cap : ReciprocalInnerInverse.Data curve collar) (source : InverseRootPolynomial.Gaussian)
+abbrev BoundaryPoint (cap : ReciprocalInnerInverse.Data curve collar) (source : Gaussian)
     (original : SquareRootContinuationChain.Owner (curve.polynomial.eval source)) :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.BoundaryData (original.certificate original.parameterNonzero)
+  BoundaryData (original.certificate original.parameterNonzero)
     (factor genus source)
-    ((HyperellipticReciprocal.polynomial curve).eval source⁻¹)
+    (HyperellipticReciprocal.polynomial curve) source⁻¹
     (Boundary.OnBoxBoundary (Cuts.Ambient curve) source)
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap source⁻¹)
+      (Overlap cap source⁻¹)
 
 namespace BoundaryPoint
 
 /-- Retain the original affine boundary owner, its reciprocal root scaling and actual inverse-point disk coordinates. -/
-@[expose] def build (cap : ReciprocalInnerInverse.Data curve collar) {source : InverseRootPolynomial.Gaussian}
+@[expose] def build (cap : ReciprocalInnerInverse.Data curve collar) {source : Gaussian}
     (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve) source)
     (original : SquareRootContinuationChain.Owner (curve.polynomial.eval source)) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.BoundaryPoint cap source original :=
+      BoundaryPoint cap source original :=
   let scaled := ReciprocalRootNames.ofBoundaryOwner curve source boundary original
   let attached := ReciprocalRootOwners.attach scaled
-  ⟨boundary, scaled, attached, Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.ofPoint
-    (Owners.atInverseBoundary cap boundary) attached.owner⟩
+  ⟨boundary, scaled, attached, Overlap.ofPoint
+    (atInverseBoundary cap boundary) attached.owner⟩
 
 /-- The differential coefficient retains the reciprocal Jacobian sign and is operationally tied to the original affine
 root, at its actual point. -/
 @[expose] def coefficient_transport {original : SquareRootContinuationChain.Owner (curve.polynomial.eval source)}
-    (point : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.BoundaryPoint cap source original) (differential :
-      Differentials.Basic.Differential genus) :
-    NamedEquivalent (ReciprocalRootOwners.coefficient differential source point.attached.owner).name
-      (Coherent.CoherentNamed.mul (Coherent.CoherentNamed.Coherence.exact (-(source ^ 2))) (Value.differentialValue
+    (point : BoundaryPoint cap source original) (differential : Differential genus)
+    (owned : ReciprocalRootOwners.Coefficient point.scaled differential) :
+    NamedEquivalent (ReciprocalRootOwners.coefficient owned).name
+      (mul (exact (-(source ^ 2))) (Value.differentialValue
         differential source
         (original.certificate original.parameterNonzero).value (original.certificate
           original.parameterNonzero).apart)).name :=
   ReciprocalRootOwners.coefficient_transport differential source
-    (PreparedExteriorReciprocal.boundary_nonzero point.boundary) point.scaled point.attached
+    (PreparedExteriorReciprocal.boundary_nonzero point.boundary) owned
 
 end BoundaryPoint
 
@@ -280,12 +281,12 @@ namespace Overlap
 /-- Consume the reciprocal owner already retained by a source-boundary reading. The source point is the prepared cell's
 actual inverse centre. -/
 @[expose] def ofPrepared (cap : ReciprocalInnerInverse.Data curve collar)
-    {differential : Differentials.Basic.Differential genus} {parent : PreparedSubdivisionModelCore.CenteredEdge curve
+    {differential : Differential genus} {parent : PreparedSubdivisionModelCore.CenteredEdge curve
       differential}
     {boundary : PreparedBoundarySegments.ParentOnBoundary parent (Cuts.Ambient curve)}
     (attached : PreparedReciprocalSamples.Attachment parent boundary) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap (parent.edge.point 0)⁻¹ attached.owner :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.ofPoint (Owners.atInverseBoundary cap (boundary.point
+    Overlap cap (parent.edge.point 0)⁻¹ attached.owner :=
+  ofPoint (atInverseBoundary cap (boundary.point
     parent.edge.baseInside)) attached.owner
 
 end Overlap

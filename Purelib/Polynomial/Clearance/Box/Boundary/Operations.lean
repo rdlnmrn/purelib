@@ -6,6 +6,7 @@ public import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Gaussian.Basic
 public import Purelib.Polynomial.Dense.Multiplication
+public import Purelib.Polynomial.Dense.Gaussian.Factorization.Identity
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction
@@ -67,6 +68,27 @@ def mul
       (left.lower z boundary) (right.lower z boundary)
       right.positive.le
       (Gaussian.Basic.Canonical.normSq_nonneg (p.eval z))
+
+/-- Combine both factor clearances into a clearance for their original source polynomial.
+
+The checked coefficient product identity keeps the original source owner.
+The same factor bounds and their product are retained; scalar evaluation
+transport certifies that product bound on each actual source boundary value.
+-/
+def ofProductIdentity
+    {p left right : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
+    (factorization : Dense.Gaussian.Factorization.Identity.ProductIdentity p left right)
+    (leftClearance : BoundaryClearance left box) (rightClearance : BoundaryClearance right box) :
+    BoundaryClearance p box where
+  bound := leftClearance.bound * rightClearance.bound
+  positive := Rat.Fraction.Order.Arithmetic.mul_pos_direct leftClearance.positive rightClearance.positive
+  lower := by
+    intro point boundary
+    rewrite [Dense.Gaussian.Factorization.Identity.eval_factorization factorization point,
+      Gaussian.Basic.Canonical.normSq_mul]
+    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_direct
+      (leftClearance.lower point boundary) (rightClearance.lower point boundary)
+      rightClearance.positive.le (Gaussian.Basic.Canonical.normSq_nonneg (left.eval point))
 
 end
 

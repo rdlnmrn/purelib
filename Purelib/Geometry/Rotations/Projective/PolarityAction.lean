@@ -73,13 +73,13 @@ open Purelib.Geometry.Rotations.Cayley.Cap
 
 open Purelib.LinearAlgebra.Coordinates3
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 
 namespace Purelib.Geometry.Rotations.Projective.PolarityAction
 
 /-- A rotation cannot send a displayed nonzero vector to zero. -/
 theorem rowMul_rotation_ne_zero (rotation :
-  Rotations.Basic.Rotation K) (vector : Coordinates3.Vector K)
+  Rotation K) (vector : Coordinates3.Vector K)
     (nonzero : vector ≠ Coordinates3.Vector.zero) :
     Matrix3.rowMul vector rotation.matrix ≠ Coordinates3.Vector.zero := by
   intro imageZero
@@ -104,7 +104,7 @@ namespace Purelib.Geometry.Rotations.Projective.PolarityAction.Vector
 
 /-- Orthogonal action preserves the spread expression on two non-null displayed directions. -/
 theorem spread_rowMul_rotation (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (left right : Coordinates3.Vector K)
     (leftNonNull : left.quadrance ≠ 0)
     (rightNonNull : right.quadrance ≠ 0) :
@@ -122,11 +122,11 @@ end Purelib.Geometry.Rotations.Projective.PolarityAction.Vector
 namespace Purelib.Geometry.Rotations.Projective.PolarityAction
 
 /-- The identity rotation, used to state the projective action laws over an arbitrary explicit field. -/
-@[expose] def rotationIdentity : Rotations.Basic.Rotation K
+@[expose] def rotationIdentity : Rotation K
   where
   matrix := Matrix3.identity
   orthogonal := by
-    unfold Purelib.LinearAlgebra.Coordinates3.Matrix3.IsOrthogonal
+    unfold Matrix3.IsOrthogonal
     rw [Matrix3.transpose_identity, Matrix3.identity_mul]
   determinantOne := Matrix3.determinant_identity
 
@@ -137,23 +137,23 @@ section
 namespace Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint
 
 /-- The row-vector rotation action on a displayed projective point. -/
-@[expose] def act (point : Polarity.ProjectivePoint
-  K) (rotation : Rotations.Basic.Rotation K) :
-    Polarity.ProjectivePoint K where
+@[expose] def act (point : ProjectivePoint
+  K) (rotation : Rotation K) :
+    ProjectivePoint K where
   coordinates := Matrix3.rowMul point.coordinates rotation.matrix
-  nonzero := Rotations.Projective.PolarityAction.rowMul_rotation_ne_zero rotation point.coordinates
+  nonzero := Projective.PolarityAction.rowMul_rotation_ne_zero rotation point.coordinates
     point.nonzero
 
 /-- Rotation preserves non-nullness of the displayed projective point. -/
-theorem act_nonNull (point : Polarity.ProjectivePoint
-  K) (rotation : Rotations.Basic.Rotation K)
+theorem act_nonNull (point : ProjectivePoint
+  K) (rotation : Rotation K)
     (nonNull : point.IsNonNull) : (point.act rotation).IsNonNull :=
   Spread.rowMul_rotation_nonNull rotation point.coordinates nonNull
 
 /-- Rotation respects explicit nonzero-scale equivalence of projective points. -/
 theorem act_respects_equivalent {left right :
-  Polarity.ProjectivePoint K}
-    (equivalent : left.Equivalent right) (rotation : Rotations.Basic.Rotation K) :
+  ProjectivePoint K}
+    (equivalent : left.Equivalent right) (rotation : Rotation K) :
     (left.act rotation).Equivalent (right.act rotation) := by
   rcases equivalent with ⟨factor, factorNonzero, rightValue⟩
   refine ⟨factor, factorNonzero, ?_⟩
@@ -165,22 +165,22 @@ theorem act_respects_equivalent {left right :
 
 /-- The identity rotation fixes the displayed projective point. -/
 @[simp] theorem act_identity (point :
-  Polarity.ProjectivePoint K) :
-    point.act (Rotations.Projective.PolarityAction.rotationIdentity (K := K)) = point := by
+  ProjectivePoint K) :
+    point.act (Projective.PolarityAction.rotationIdentity (K := K)) = point := by
   apply ProjectivePoint.ext
   exact Matrix3.rowMul_identity point.coordinates
 
 /-- Successive actions on a projective point agree with the row-order rotation product. -/
-theorem act_product (point : Polarity.ProjectivePoint
-  K) (left right : Rotations.Basic.Rotation K) :
+theorem act_product (point : ProjectivePoint
+  K) (left right : Rotation K) :
     (point.act left).act right = point.act (Cayley.Product.rotationProduct left right) := by
   apply ProjectivePoint.ext
   exact Matrix3.rowMul_mul point.coordinates left.matrix right.matrix
 
 /-- Acting by a rotation and then its inverse recovers the original projective point. -/
 @[simp] theorem act_inverse_right (point :
-  Polarity.ProjectivePoint K)
-    (rotation : Rotations.Basic.Rotation K) :
+  ProjectivePoint K)
+    (rotation : Rotation K) :
     (point.act rotation).act (Handedness.inverseRotation rotation) = point := by
   apply ProjectivePoint.ext
   change Matrix3.rowMul
@@ -190,8 +190,8 @@ theorem act_product (point : Polarity.ProjectivePoint
 
 /-- Acting by the inverse and then the rotation recovers the original projective point. -/
 @[simp] theorem act_inverse_left (point :
-  Polarity.ProjectivePoint K)
-    (rotation : Rotations.Basic.Rotation K) :
+  ProjectivePoint K)
+    (rotation : Rotation K) :
     (point.act (Handedness.inverseRotation rotation)).act rotation = point := by
   apply ProjectivePoint.ext
   change Matrix3.rowMul
@@ -202,14 +202,14 @@ theorem act_product (point : Polarity.ProjectivePoint
 
 /-- Simultaneous rotation preserves the projective quadrance of two non-null points. -/
 theorem quadrance_act (left right :
-  Polarity.ProjectivePoint K)
-    (rotation : Rotations.Basic.Rotation K)
+  ProjectivePoint K)
+    (rotation : Rotation K)
     (leftNonNull : left.IsNonNull) (rightNonNull : right.IsNonNull) :
     (left.act rotation).quadrance (right.act rotation)
         (left.act_nonNull rotation leftNonNull)
         (right.act_nonNull rotation rightNonNull) =
       left.quadrance right leftNonNull rightNonNull :=
-  Rotations.Projective.PolarityAction.Vector.spread_rowMul_rotation rotation left.coordinates right.coordinates
+  Projective.PolarityAction.Vector.spread_rowMul_rotation rotation left.coordinates right.coordinates
     leftNonNull rightNonNull
 
 end Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint
@@ -222,37 +222,37 @@ namespace Purelib.Geometry.Projective.Space3.Polarity.PlaneNormal
 
 /-- Contravariant plane action. In the row-vector orthogonal convention its normal transforms by the same displayed
 rotation matrix: simultaneous point and normal action preserves their dot product. -/
-@[expose] def act (plane : Polarity.PlaneNormal K)
-  (rotation : Rotations.Basic.Rotation K) : Polarity.PlaneNormal K where
+@[expose] def act (plane : PlaneNormal K)
+  (rotation : Rotation K) : PlaneNormal K where
   normal := Matrix3.rowMul plane.normal rotation.matrix
-  nonzero := Rotations.Projective.PolarityAction.rowMul_rotation_ne_zero rotation plane.normal plane.nonzero
+  nonzero := Projective.PolarityAction.rowMul_rotation_ne_zero rotation plane.normal plane.nonzero
 
 /-- Any displayed fixed vector gives the corresponding exactly fixed polar plane. This is the direct adapter for
 fixed-axis theorems throughout the paper. -/
 theorem fixed_of_normal_fixed (rotation :
-  Rotations.Basic.Rotation K) (plane : Polarity.PlaneNormal K)
+  Rotation K) (plane : PlaneNormal K)
     (fixed : Matrix3.rowMul plane.normal rotation.matrix = plane.normal) :
     plane.act rotation = plane := by
   apply PlaneNormal.ext
   exact fixed
 
 /-- Rotation preserves non-nullness of the displayed plane normal. -/
-theorem act_nonNull (plane : Polarity.PlaneNormal K)
-  (rotation : Rotations.Basic.Rotation K)
+theorem act_nonNull (plane : PlaneNormal K)
+  (rotation : Rotation K)
     (nonNull : plane.IsNonNull) : (plane.act rotation).IsNonNull :=
   Spread.rowMul_rotation_nonNull rotation plane.normal nonNull
 
 /-- Rotation preserves the quadrance of the displayed plane normal. -/
 theorem act_preserves_quadrance (plane :
-  Polarity.PlaneNormal K)
-    (rotation : Rotations.Basic.Rotation K) :
+  PlaneNormal K)
+    (rotation : Rotation K) :
     (plane.act rotation).normal.quadrance = plane.normal.quadrance :=
   Spread.quadrance_rowMul_rotation rotation plane.normal
 
 /-- Rotation respects explicit nonzero-scale equivalence of plane normals. -/
 theorem act_respects_equivalent {left right :
-  Polarity.PlaneNormal K}
-    (equivalent : left.Equivalent right) (rotation : Rotations.Basic.Rotation K) :
+  PlaneNormal K}
+    (equivalent : left.Equivalent right) (rotation : Rotation K) :
     (left.act rotation).Equivalent (right.act rotation) := by
   rcases equivalent with ⟨factor, factorNonzero, rightValue⟩
   refine ⟨factor, factorNonzero, ?_⟩
@@ -263,22 +263,22 @@ theorem act_respects_equivalent {left right :
 
 /-- The identity rotation fixes the displayed plane normal. -/
 @[simp] theorem act_identity (plane :
-  Polarity.PlaneNormal K) :
-    plane.act (Rotations.Projective.PolarityAction.rotationIdentity (K := K)) = plane := by
+  PlaneNormal K) :
+    plane.act (Projective.PolarityAction.rotationIdentity (K := K)) = plane := by
   apply PlaneNormal.ext
   exact Matrix3.rowMul_identity plane.normal
 
 /-- Successive actions on a plane normal agree with the row-order rotation product. -/
-theorem act_product (plane : Polarity.PlaneNormal K)
-  (left right : Rotations.Basic.Rotation K) :
+theorem act_product (plane : PlaneNormal K)
+  (left right : Rotation K) :
     (plane.act left).act right = plane.act (Cayley.Product.rotationProduct left right) := by
   apply PlaneNormal.ext
   exact Matrix3.rowMul_mul plane.normal left.matrix right.matrix
 
 /-- Acting by a rotation and then its inverse recovers the original plane normal. -/
 @[simp] theorem act_inverse_right (plane :
-  Polarity.PlaneNormal K)
-    (rotation : Rotations.Basic.Rotation K) :
+  PlaneNormal K)
+    (rotation : Rotation K) :
     (plane.act rotation).act (Handedness.inverseRotation rotation) = plane := by
   apply PlaneNormal.ext
   change Matrix3.rowMul (Matrix3.rowMul plane.normal rotation.matrix)
@@ -287,8 +287,8 @@ theorem act_product (plane : Polarity.PlaneNormal K)
 
 /-- Acting by the inverse and then the rotation recovers the original plane normal. -/
 @[simp] theorem act_inverse_left (plane :
-  Polarity.PlaneNormal K)
-    (rotation : Rotations.Basic.Rotation K) :
+  PlaneNormal K)
+    (rotation : Rotation K) :
     (plane.act (Handedness.inverseRotation rotation)).act rotation = plane := by
   apply PlaneNormal.ext
   change Matrix3.rowMul
@@ -298,14 +298,14 @@ theorem act_product (plane : Polarity.PlaneNormal K)
     Matrix3.rowMul_identity]
 
 /-- Simultaneous rotation preserves the spread of two non-null plane normals. -/
-theorem spread_act (left right : Polarity.PlaneNormal K)
-  (rotation : Rotations.Basic.Rotation K)
+theorem spread_act (left right : PlaneNormal K)
+  (rotation : Rotation K)
     (leftNonNull : left.IsNonNull) (rightNonNull : right.IsNonNull) :
     (left.act rotation).spread (right.act rotation)
         (left.act_nonNull rotation leftNonNull)
         (right.act_nonNull rotation rightNonNull) =
       left.spread right leftNonNull rightNonNull :=
-  Rotations.Projective.PolarityAction.Vector.spread_rowMul_rotation rotation left.normal right.normal
+  Projective.PolarityAction.Vector.spread_rowMul_rotation rotation left.normal right.normal
     leftNonNull rightNonNull
 
 end Purelib.Geometry.Projective.Space3.Polarity.PlaneNormal
@@ -324,8 +324,8 @@ namespace Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint
 
 /-- Taking the polar dual commutes with rotation of a projective point. -/
 @[simp] theorem dual_act (point :
-  Polarity.ProjectivePoint K)
-    (rotation : Rotations.Basic.Rotation K) :
+  ProjectivePoint K)
+    (rotation : Rotation K) :
     (point.act rotation).dual = point.dual.act rotation := rfl
 
 end Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint
@@ -333,8 +333,8 @@ end Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint
 namespace Purelib.Geometry.Projective.Space3.Polarity.PlaneNormal
 
 /-- Taking the polar dual commutes with rotation of a plane normal. -/
-@[simp] theorem dual_act (plane : Polarity.PlaneNormal K)
-    (rotation : Rotations.Basic.Rotation K) :
+@[simp] theorem dual_act (plane : PlaneNormal K)
+    (rotation : Rotation K) :
     (plane.act rotation).dual = plane.dual.act rotation := rfl
 
 end Purelib.Geometry.Projective.Space3.Polarity.PlaneNormal
@@ -345,11 +345,11 @@ namespace Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint
 
 /-- Simultaneous rotation of a point and plane preserves incidence. -/
 theorem incident_act_iff (point :
-  Polarity.ProjectivePoint K) (plane : Polarity.PlaneNormal K)
-    (rotation : Rotations.Basic.Rotation K) :
+  ProjectivePoint K) (plane : PlaneNormal K)
+    (rotation : Rotation K) :
     (point.act rotation).Incident (plane.act rotation) ↔
       point.Incident plane := by
-  unfold ProjectivePoint.Incident act PlaneNormal.act
+  unfold Incident act PlaneNormal.act
   rw [Matrix3.dot_rowMul_of_isOrthogonal rotation.orthogonal]
 
 end Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint
@@ -363,22 +363,22 @@ namespace Purelib.Geometry.Rotations.Projective.PolarityAction
 /-- A theorem schema about a projective point and its rotated image. All other parameters and hypotheses can be closed
 over by `property`. -/
 @[expose] def PointActionStatement (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Prop) : Prop :=
-  ∀ point : Polarity.ProjectivePoint K,
+  ∀ point : ProjectivePoint K,
     property point.coordinates (point.act rotation).coordinates
 
 /-- The plane-normal dual of `PointActionStatement`. -/
 @[expose] def PlaneActionStatement (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Prop) : Prop :=
-  ∀ plane : Polarity.PlaneNormal K,
+  ∀ plane : PlaneNormal K,
     property plane.normal (plane.act rotation).normal
 
 /-- Every unary theorem about rotation acting on projective points is equivalent, constructively, to its derived theorem
 about plane normals. -/
 theorem pointActionStatement_iff_planeActionStatement
-    (rotation : Rotations.Basic.Rotation K) (property : Coordinates3.Vector K → Coordinates3.Vector K → Prop) :
+    (rotation : Rotation K) (property : Coordinates3.Vector K → Coordinates3.Vector K → Prop) :
     PointActionStatement rotation property ↔
       PlaneActionStatement rotation property := by
   constructor
@@ -390,7 +390,7 @@ theorem pointActionStatement_iff_planeActionStatement
 /-- Apply any existing raw-vector action theorem directly to displayed plane normals. This is the entry point for the
 paper's already formalized vector theorems. -/
 theorem planeActionStatement_of_vectorActionTheorem
-    (rotation : Rotations.Basic.Rotation K) (property : Coordinates3.Vector K → Coordinates3.Vector K → Prop)
+    (rotation : Rotation K) (property : Coordinates3.Vector K → Coordinates3.Vector K → Prop)
     (vectorTheorem : ∀ vector : Coordinates3.Vector K,
       property vector (Matrix3.rowMul vector rotation.matrix)) :
     PlaneActionStatement rotation property := by
@@ -399,19 +399,19 @@ theorem planeActionStatement_of_vectorActionTheorem
 
 /-- A theorem schema about two projective points and both rotated images. -/
 @[expose] def PointPairActionStatement (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Prop) :
     Prop :=
-  ∀ left right : Polarity.ProjectivePoint K,
+  ∀ left right : ProjectivePoint K,
     property left.coordinates right.coordinates
       (left.act rotation).coordinates (right.act rotation).coordinates
 
 /-- The plane-normal dual of `PointPairActionStatement`. -/
 @[expose] def PlanePairActionStatement (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Prop) :
     Prop :=
-  ∀ left right : Polarity.PlaneNormal K,
+  ∀ left right : PlaneNormal K,
     property left.normal right.normal
       (left.act rotation).normal (right.act rotation).normal
 
@@ -419,7 +419,7 @@ theorem planeActionStatement_of_vectorActionTheorem
 particular this transports all metrical relations expressible on two displayed representatives. -/
 theorem
   pointPairActionStatement_iff_planePairActionStatement
-    (rotation : Rotations.Basic.Rotation K)
+    (rotation : Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Prop) :
     PointPairActionStatement rotation property ↔
       PlanePairActionStatement rotation property := by
@@ -431,7 +431,7 @@ theorem
 
 /-- Apply any existing two-vector action theorem to two displayed plane normals. -/
 theorem planePairActionStatement_of_vectorActionTheorem
-    (rotation : Rotations.Basic.Rotation K)
+    (rotation : Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Prop)
     (vectorTheorem : ∀ left right : Coordinates3.Vector K,
       property left right
@@ -444,30 +444,30 @@ theorem planePairActionStatement_of_vectorActionTheorem
 /-- The completed finite content of Problem 72, packaged as one audited interface: involutive polarity, rotation
 equivariance, incidence invariance, quadrance--spread correspondence, and theorem-level unary and binary translation. -/
 structure ProblemSeventyTwoSolution (K : Type*)
-  [Algebra.Field.ExplicitField K] where
+  [Field.ExplicitField K] where
   /-- Taking the polar dual twice recovers every displayed projective point. -/ pointRoundTrip : ∀ point :
-    Polarity.ProjectivePoint K, point.dual.dual = point
+    ProjectivePoint K, point.dual.dual = point
   /-- Taking the polar dual twice recovers every displayed plane normal. -/ planeRoundTrip : ∀ plane :
-    Polarity.PlaneNormal K, plane.dual.dual = plane
-  /-- Point polarity commutes with every displayed rotation. -/ actionEquivariant : ∀ (point : Polarity.ProjectivePoint
-    K) (rotation : Rotations.Basic.Rotation K),
+    PlaneNormal K, plane.dual.dual = plane
+  /-- Point polarity commutes with every displayed rotation. -/ actionEquivariant : ∀ (point : ProjectivePoint
+    K) (rotation : Rotation K),
     (point.act rotation).dual = point.dual.act rotation
   /-- Simultaneous rotation preserves and reflects point-plane incidence. -/ incidenceInvariant : ∀ (point :
-    Polarity.ProjectivePoint K) (plane : Polarity.PlaneNormal K)
-    (rotation : Rotations.Basic.Rotation K),
+    ProjectivePoint K) (plane : PlaneNormal K)
+    (rotation : Rotation K),
     (point.act rotation).Incident (plane.act rotation) ↔ point.Incident plane
   /-- Projective point quadrance equals the spread of the polar planes. -/ metricCorrespondence : ∀ (left right :
-    Polarity.ProjectivePoint K)
+    ProjectivePoint K)
     (leftNonNull : left.IsNonNull) (rightNonNull : right.IsNonNull),
     left.quadrance right leftNonNull rightNonNull =
       left.dual.spread right.dual leftNonNull rightNonNull
   /-- Every unary point-action statement is equivalent to its plane-normal dual. -/ unaryTranslation : ∀ (rotation :
-    Rotations.Basic.Rotation K)
+    Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Prop),
     PointActionStatement rotation property ↔
       PlaneActionStatement rotation property
   /-- Every two-point action statement is equivalent to its two-plane-normal dual. -/ binaryTranslation : ∀ (rotation :
-    Rotations.Basic.Rotation K)
+    Rotation K)
     (property : Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Coordinates3.Vector K → Prop),
     PointPairActionStatement rotation property ↔
       PlanePairActionStatement rotation property
@@ -477,8 +477,8 @@ theorem problemSeventyTwoSolution :
   ProblemSeventyTwoSolution K where
   pointRoundTrip := ProjectivePoint.dual_dual
   planeRoundTrip := PlaneNormal.dual_dual
-  actionEquivariant := Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint.dual_act
-  incidenceInvariant := Purelib.Geometry.Projective.Space3.Polarity.ProjectivePoint.incident_act_iff
+  actionEquivariant := ProjectivePoint.dual_act
+  incidenceInvariant := ProjectivePoint.incident_act_iff
   metricCorrespondence := Polarity.projectiveQuadrance_eq_dualPlaneSpread
   unaryTranslation := pointActionStatement_iff_planeActionStatement
   binaryTranslation :=
@@ -496,7 +496,7 @@ namespace Purelib.Geometry.Projective.Space3.Polarity.PlaneNormal
 theorem halfTurn_axis_plane_fixed (axis :
   Coordinates3.Vector K)
     (axisNonNull : axis.quadrance ≠ 0) :
-    let plane : Polarity.PlaneNormal K :=
+    let plane : PlaneNormal K :=
       ⟨axis, Polarity.Vector.ne_zero_of_quadrance_ne_zero axisNonNull⟩
     plane.act (halfTurnRotation axis axisNonNull) = plane := by
   apply PlaneNormal.ext
@@ -507,10 +507,10 @@ projective plane. -/
 theorem halfTurn_perpendicular_plane_equivalent (axis :
   Coordinates3.Vector K)
     (axisNonNull : axis.quadrance ≠ 0) (twoNonzero : (2 : K) ≠ 0)
-    (plane : Polarity.PlaneNormal K) (perpendicular : plane.normal.Perpendicular axis) :
+    (plane : PlaneNormal K) (perpendicular : plane.normal.Perpendicular axis) :
     plane.Equivalent (plane.act (halfTurnRotation axis axisNonNull)) := by
   have oneNonzero : (1 : K) ≠ 0 :=
-    Polarity.one_ne_zero_of_vector_ne_zero plane.normal plane.nonzero
+    one_ne_zero_of_vector_ne_zero plane.normal plane.nonzero
   refine ⟨-1, (by intro negZero; have restored := congrArg (fun value : K => -value) negZero; rewrite [neg_neg,
     SubNegZeroMonoid.neg_zero] at restored; exact oneNonzero restored), ?_⟩
   change Matrix3.rowMul plane.normal (halfTurn axis axisNonNull) =
@@ -526,7 +526,7 @@ theorem reflectionProduct_axis_plane_fixed
     (secondNonNull : second.quadrance ≠ 0)
     (independent : Coordinates3.Vector.Independent first second)
     (twoNonzero : (2 : K) ≠ 0) :
-    let plane : Polarity.PlaneNormal K := ⟨Coordinates3.Vector.cross first second, independent⟩
+    let plane : PlaneNormal K := ⟨Coordinates3.Vector.cross first second, independent⟩
     plane.act (reflectionProductRotation first second firstNonNull secondNonNull) =
       plane := by
   apply PlaneNormal.ext
@@ -538,18 +538,18 @@ theorem cap_axis_plane_fixed (axis : Coordinates3.Vector
   K)
     (axisNonzero : axis ≠ Coordinates3.Vector.zero)
     (defined : capDenominator axis ≠ 0) :
-    let plane : Polarity.PlaneNormal K := ⟨axis, axisNonzero⟩
+    let plane : PlaneNormal K := ⟨axis, axisNonzero⟩
     plane.act (capRotation axis defined) = plane := by
   apply PlaneNormal.ext
   exact rowMul_self_cap axis defined
 
 /-- Dual of Theorem 35.3: away from the half-turn chart, the recovered anchor is the normal of a fixed plane. -/
 theorem recoveredAnchor_plane_fixed (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
     (twoNonzero : (2 : K) ≠ 0)
     (axisNonzero : Recovery.rotationAnchorVector rotation notHalfTurn ≠ Coordinates3.Vector.zero) :
-    let plane : Polarity.PlaneNormal K :=
+    let plane : PlaneNormal K :=
       ⟨Recovery.rotationAnchorVector rotation notHalfTurn, axisNonzero⟩
     plane.act rotation = plane := by
   apply PlaneNormal.ext
@@ -562,9 +562,9 @@ namespace Purelib.Geometry.Projective.Space3.Polarity.PlaneNormal.RotationAxisSp
 /-- The dual of the uniform fixed-axis result cached by the canonical axis/spread wrapper. The identity branch has zero
 canonical axis, so a nonzero hypothesis is exactly what is needed to obtain a projective plane. -/
 theorem axis_plane_fixed
-    {rotation : Rotations.Basic.Rotation K} (witness : Recovery.RotationAxisSpreadWitness rotation)
+    {rotation : Rotation K} (witness : Recovery.RotationAxisSpreadWitness rotation)
     (axisNonzero : witness.axis ≠ Coordinates3.Vector.zero) :
-    let plane : Polarity.PlaneNormal K := ⟨witness.axis, axisNonzero⟩
+    let plane : PlaneNormal K := ⟨witness.axis, axisNonzero⟩
     plane.act rotation = plane := by
   apply PlaneNormal.ext
   change Matrix3.rowMul witness.axis rotation.matrix = witness.axis
@@ -583,12 +583,12 @@ namespace Purelib.Geometry.Projective.Space3.Polarity.PlaneNormal
 /-- Dual of Theorem 31 in its uniform canonical form: the spread between a plane and its rotated image is the rotation's
 second spread polynomial. -/
 theorem canonical_plane_spread [DecidableEq K] (rotation
-  : Rotations.Basic.Rotation K)
+  : Rotation K)
     (twoNonzero : (2 : K) ≠ 0) :
     let normal := Recovery.canonicalRotationSpreadDirection rotation twoNonzero
     let normalNonNull :=
       Recovery.canonicalRotationSpreadDirection_nonNull rotation twoNonzero
-    let plane : Polarity.PlaneNormal K :=
+    let plane : PlaneNormal K :=
       ⟨normal, Polarity.Vector.ne_zero_of_quadrance_ne_zero normalNonNull⟩
     plane.spread (plane.act rotation) normalNonNull
         (plane.act_nonNull rotation normalNonNull) =
@@ -598,11 +598,11 @@ theorem canonical_plane_spread [DecidableEq K] (rotation
 /-- The same dual theorem with the second spread polynomial displayed literally. -/
 theorem canonical_plane_spread_eq_halfSpreadPolynomial
   [DecidableEq K]
-    (rotation : Rotations.Basic.Rotation K) (twoNonzero : (2 : K) ≠ 0) :
+    (rotation : Rotation K) (twoNonzero : (2 : K) ≠ 0) :
     let normal := Recovery.canonicalRotationSpreadDirection rotation twoNonzero
     let normalNonNull :=
       Recovery.canonicalRotationSpreadDirection_nonNull rotation twoNonzero
-    let plane : Polarity.PlaneNormal K :=
+    let plane : PlaneNormal K :=
       ⟨normal, Polarity.Vector.ne_zero_of_quadrance_ne_zero normalNonNull⟩
     plane.spread (plane.act rotation) normalNonNull
         (plane.act_nonNull rotation normalNonNull) =
@@ -613,8 +613,8 @@ theorem canonical_plane_spread_eq_halfSpreadPolynomial
 has the same plane displacement spread. -/
 theorem spread_of_normal_perpendicular_canonicalAxis
   [DecidableEq K]
-    (rotation : Rotations.Basic.Rotation K) (twoNonzero : (2 : K) ≠ 0)
-    (plane : Polarity.PlaneNormal K) (normalNonNull : plane.IsNonNull)
+    (rotation : Rotation K) (twoNonzero : (2 : K) ≠ 0)
+    (plane : PlaneNormal K) (normalNonNull : plane.IsNonNull)
     (perpendicular : plane.normal.Perpendicular
       (Recovery.canonicalRotationAxis rotation twoNonzero)) :
     plane.spread (plane.act rotation) normalNonNull
@@ -626,8 +626,8 @@ theorem spread_of_normal_perpendicular_canonicalAxis
 /-- The plane displacement spread is independent of which admissible perpendicular normal is supplied. -/
 theorem spread_independent_of_perpendicular_normals
   [DecidableEq K]
-    (rotation : Rotations.Basic.Rotation K) (twoNonzero : (2 : K) ≠ 0)
-    (first second : Polarity.PlaneNormal K)
+    (rotation : Rotation K) (twoNonzero : (2 : K) ≠ 0)
+    (first second : PlaneNormal K)
     (firstNonNull : first.IsNonNull) (secondNonNull : second.IsNonNull)
     (firstPerpendicular : first.normal.Perpendicular
       (Recovery.canonicalRotationAxis rotation twoNonzero))
